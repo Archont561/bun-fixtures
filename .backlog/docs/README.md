@@ -19,9 +19,23 @@ Working docs for the package and its ecosystem. User-facing documentation lives 
 | [M2](./milestones/M2-discovery.md) | Preload discovery + path-based merge | ✅ done |
 | [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit + scaffold) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
-| [M5](./milestones/M5-publish.md) | Publish to npm | ⬜ ready |
+| [M5](./milestones/M5-publish.md) | Publish to npm | 🟡 in progress |
+
+Beyond the original M1–M5 plan, the ecosystem packages ([ADR 0011](./adr/0011-brand-identity-and-modular-ecosystem.md)) are
+delivered but not all of them fully meet their acceptance criteria:
+
+| Package | Spec | Task | Status |
+|---------|------|------|--------|
+| `@bun-fixture/config` | [0008](./specs/0008-typescript-config-package.md) | `task_010` | ✅ done |
+| `apps/docs` (Starlight) | [0007](./specs/0007-apps-docs-starlight.md) | `task_009` | ✅ done |
+| `@bun-fixture/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011` | 🟡 not dogfooded by the core suite |
+| `@bun-fixture/fast-check` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012` | 🟡 no per-iteration fixture lifecycle |
+| `@bun-fixture/dom` · `@bun-fixture/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013` | 🟡 Playwright path untested |
+| `@bun-fixture/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014` | 🟡 no `__cassettes__/` convention |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
+Each 🟡 task carries the precise remaining gap in its description —
+`bunx backlog task show <id>`.
 
 ## Repository map
 
