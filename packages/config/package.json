@@ -2,15 +2,22 @@
   "name": "@bun-fixture/config",
   "version": "0.1.0",
   "description": "Shared TypeScript configurations for bun-fixture monorepo",
-  "private": true,
+  "license": "MIT OR Apache-2.0",
+  "author": "Archont561 (https://github.com/Archont561)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "directory": "packages/config"
+  },
+  "exports": {
+    "./base.json": "./base.json",
+    "./lib.json": "./lib.json",
+    "./app.json": "./app.json"
+  },
   "files": [
     "base.json",
     "lib.json",
     "app.json"
   ],
-  "exports": {
-    "./base.json": "./base.json",
-    "./lib.json": "./lib.json",
-    "./app.json": "./app.json"
-  }
+  "private": true
 }

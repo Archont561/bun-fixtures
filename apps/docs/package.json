@@ -1,8 +1,15 @@
 {
   "name": "docs",
   "version": "0.1.0",
-  "private": true,
+  "description": "Astro Starlight documentation site for bun-fixture",
   "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "author": "Archont561 (https://github.com/Archont561)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "directory": "apps/docs"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -15,5 +22,6 @@
   },
   "devDependencies": {
     "@bun-fixture/config": "workspace:*"
-  }
+  },
+  "private": true
 }
