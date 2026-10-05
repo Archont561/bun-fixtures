@@ -3,7 +3,28 @@
   "version": "0.1.0",
   "description": "Standard zero-dependency built-in fixtures (tmpdir, env, stdio) for bun-fixture",
   "type": "module",
-  "license": "MIT",
+  "license": "MIT OR Apache-2.0",
+  "author": "Archont561 (https://github.com/Archont561)",
+  "keywords": [
+    "bun",
+    "bun-test",
+    "bun-fixture",
+    "fixtures",
+    "testing",
+    "tmpdir",
+    "environment-variables",
+    "stdio",
+    "zero-dependency"
+  ],
+  "homepage": "https://archont561.github.io/bun-fixtures/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "directory": "packages/std"
+  },
+  "bugs": {
+    "url": "https://github.com/Archont561/bun-fixtures/issues"
+  },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
@@ -13,20 +34,25 @@
   },
   "files": [
     "src",
-    "README.md"
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "scripts": {
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
-    "bun-fixture": "workspace:*"
+    "bun-fixture": "workspace:^"
   },
   "devDependencies": {
     "@bun-fixture/config": "workspace:*",
     "bun-fixture": "workspace:*"
-  },
-  "engines": {
-    "bun": ">=1.1.0"
   }
 }

@@ -1,7 +1,7 @@
 # 0007 — Documentation site with Astro Starlight & GitHub Pages
 
 - **Status:** ready
-- **Implementation:** `apps/docs/`, `package.json`, `.github/workflows/deploy-docs.yml`
+- **Implementation:** `apps/docs/`, `package.json`, `.github/workflows/docs.yml`
 - **Tests:** `bun run docs:build` / `bun run --filter docs build`
 
 ## Problem
@@ -17,7 +17,7 @@ Documentation for `bun-fixture` currently lives inside internal markdown files a
 | R3 | Root `package.json` MUST provide convenience scripts (`docs:dev`, `docs:build`, `docs:preview`). |
 | R4 | `apps/docs/astro.config.mjs` MUST configure `@astrojs/starlight` with title, sidebar navigation, social links to GitHub, and search. |
 | R5 | GitHub Pages configuration MUST support custom or default base paths (e.g. `base: process.env.BASE_PATH || '/bun-fixtures/'`) and site URL. |
-| R6 | A GitHub Actions deployment workflow (`.github/workflows/deploy-docs.yml`) MUST be configured to build the Astro Starlight site and deploy to GitHub Pages on pushes to `main`. |
+| R6 | A GitHub Actions deployment workflow (`.github/workflows/docs.yml`) MUST be configured to build the Astro Starlight site and deploy to GitHub Pages on pushes to `main`. |
 | R7 | Documentation pages MUST cover: Getting Started / Quickstart, Scopes & Teardown, Preload Discovery & Merging, Parameterized Fixtures, CLI (`bun-fixture init`), and Architecture / Design notes. |
 
 ## Design
@@ -47,9 +47,9 @@ apps/docs/
 └── public/
 ```
 
-### GitHub Actions Workflow (`.github/workflows/deploy-docs.yml`)
+### GitHub Actions Workflow (`.github/workflows/docs.yml`)
 
-1. Trigger on `push` to branch `main` touching `apps/docs/**` or `.github/workflows/deploy-docs.yml`, plus `workflow_dispatch`.
+1. Trigger on `push` to branch `main` touching `apps/docs/**` or `.github/workflows/docs.yml`, plus `workflow_dispatch`.
 2. Concurrency group with cancel-in-progress enabled for pages.
 3. Steps:
    - Checkout repository

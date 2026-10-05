@@ -48,4 +48,7 @@ test("renders and clicks counter button", async ({ page }) => {
 });
 ```
 
-MIT
+## License
+
+Dual-licensed under either of [Apache-2.0](./LICENSE-APACHE) or
+[MIT](./LICENSE-MIT) at your option — SPDX `MIT OR Apache-2.0`.

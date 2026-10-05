@@ -13,12 +13,22 @@
 
 | Skill | Source | When it applies |
 |-------|--------|-----------------|
+| `session` | repo-local | start and end of a work session — bootstrap, survey, propose, report |
 | `tdd` | `mattpocock/skills` | any behaviour change — write the failing test first |
 | `refactor` | `github/awesome-copilot` | structural change with no behaviour change |
+| `grill-me` | `mattpocock/skills` | sharpening a plan or design before committing to it |
 | `skill-creator` | `anthropics/skills` | authoring a new skill for this repo |
 
 Skills are installed with `--copy`, so the files are real and committed rather
 than symlinked into `node_modules` (which is gitignored and not portable).
+`session` is authored here rather than vendored, so it carries no
+`skills-lock.json` entry — it encodes this repository's own commands and
+sandbox quirks, adapted from the same skill in
+[`Archont561/pixi-sandbox`](https://github.com/Archont561/pixi-sandbox).
+
+> `bunx skills add` writes ~50 agent directories (`.claude/`, `.qwen/`,
+> `.windsurf/`, …) plus `agent/`, `data/` and `skills/` at the repository root.
+> Only `.agents/skills/` is kept here — delete the rest before committing.
 
 ## Where things live
 

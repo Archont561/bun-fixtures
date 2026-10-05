@@ -152,9 +152,15 @@ tasks:
     updated_at: 2026-10-05T15:18:13.943Z
   - id: task_005
     title: M5 — Publish to npm
-    description: "Release 0.1.0. Spec: docs/specs/0005-packaging-and-release.md"
+    description: "Release 0.1.0. Spec: docs/specs/0005-packaging-and-release.md.
+      PROGRESS: CI runs lint, typecheck and test on push and PR; dual MIT OR
+      Apache-2.0 licensing is in place and verified to pack via bun pm pack;
+      @changesets/cli is configured for independent per-package versioning.
+      REMAINING: CHANGELOG, v0.1.0 tag, a bun pm pack smoke test installing the
+      tarball into a scratch project, npm publish, and the post-publish e2e
+      re-run. Scope now covers six publishable packages, not just bun-fixture."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P1
     labels:
       - milestone
@@ -190,7 +196,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-05T15:18:09.031Z
+    updated_at: 2026-10-05T18:30:45.511Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch
@@ -314,7 +320,7 @@ tasks:
       workflow for automated deployment to GitHub Pages. Spec:
       docs/specs/0007-apps-docs-starlight.md"
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - docs
@@ -328,8 +334,8 @@ tasks:
         scripts for docs:dev and docs:build
       - Astro configuration configured with site URL and base path suitable for
         GitHub Pages deployment
-      - GitHub Actions deployment workflow (.github/workflows/deploy-docs.yml)
-        created to build and publish docs to GitHub Pages on push to main
+      - GitHub Actions deployment workflow (.github/workflows/docs.yml) created
+        to build and publish docs to GitHub Pages on push to main
       - Build artifact verified via bun run --filter docs build (or workspace
         build)
     dependencies:
@@ -352,7 +358,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:02:40.662Z
-    updated_at: 2026-10-05T16:02:40.662Z
+    updated_at: 2026-10-05T18:31:19.959Z
   - id: task_010
     title: Create packages/config for monorepo-wide TypeScript configurations (base,
       apps, libs)
@@ -360,7 +366,7 @@ tasks:
       creating a shared packages/config workspace package with presets for base,
       apps, and libraries. Spec: docs/specs/0008-typescript-config-package.md"
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - typescript
@@ -397,15 +403,18 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:07:01.077Z
-    updated_at: 2026-10-05T16:07:01.077Z
+    updated_at: 2026-10-05T18:30:42.067Z
   - id: task_011
     title: Implement @bun-fixture/std standard built-in fixtures (tmpdir, env, stdio)
     description: "Provide zero-dependency standard fixtures for filesystem temporary
       scratchpads (tmpdir), environment variable sandboxing (env), and standard
       stream capture (stdio) with automatic LIFO restoration. Spec:
-      docs/specs/0009-standard-fixtures-std.md"
+      docs/specs/0009-standard-fixtures-std.md. STATUS: package implemented and
+      covered by packages/std/tests/std.test.ts. REMAINING: nothing under
+      packages/bun-fixture imports @bun-fixture/std, so the final acceptance
+      criterion (dogfooding in the core suite) is unmet."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P1
     labels:
       - std
@@ -439,15 +448,20 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:21.830Z
-    updated_at: 2026-10-05T16:25:21.830Z
+    updated_at: 2026-10-05T18:30:43.018Z
   - id: task_012
     title: Support Property-Based Testing (PBT) via fast-check integration (test.prop)
     description: "Integrate fast-check Arbitraries with fixture dependency
       injection, supporting test.prop with shrink-aware LIFO fixture teardown
       between iterations. Spec:
-      docs/specs/0010-property-based-testing-fastcheck.md"
+      docs/specs/0010-property-based-testing-fastcheck.md. STATUS: test.prop
+      generates and asserts correctly. REMAINING: fc.assert runs inside a single
+      runner.test call, so the fixture context is resolved once and reused for
+      every iteration and every shrink. Per-iteration fixtures are never
+      recreated or torn down between runs - acceptance criteria 2 and 3 are
+      unmet in the implementation, not merely untested."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P2
     labels:
       - pbt
@@ -480,16 +494,20 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:26.586Z
-    updated_at: 2026-10-05T16:25:26.586Z
+    updated_at: 2026-10-05T18:30:43.689Z
   - id: task_013
     title: Add DOM and Browser testing support (@bun-fixture/dom and Playwright
       fixtures)
     description: "Support browser-side JS testing through in-memory DOM fixtures
       (happy-dom) for UI components and session-scoped Playwright browser/page
       fixtures for real E2E testing. Spec:
-      docs/specs/0011-dom-and-browser-fixtures.md"
+      docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-fixture/dom
+      (window, document, page) and the ephemeral Bun.serve testServer fixture
+      are implemented and tested. REMAINING: the Playwright browser/context/page
+      fixtures have no test - playwright is an optionalDependency and is not
+      installed, so the E2E half of acceptance criterion 4 is unverified."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P2
     labels:
       - browser
@@ -524,16 +542,20 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:46.794Z
-    updated_at: 2026-10-05T16:25:46.794Z
+    updated_at: 2026-10-05T18:30:44.278Z
   - id: task_014
     title: Implement HTTP Cassette / VCR network record & replay fixture
       (@bun-fixture/vcr)
     description: "Provide a cassette / mockFetch fixture that intercepts global
       fetch to record live HTTP requests to disk and replay them
       deterministically in offline/CI test runs. Spec:
-      docs/specs/0012-http-cassette-vcr.md"
+      docs/specs/0012-http-cassette-vcr.md. STATUS: record/replay/passthrough
+      modes, VCR_MODE env switching, header redaction and fetch restoration all
+      work and are tested. REMAINING: save() and load() require an explicit file
+      path - there is no __cassettes__/ directory convention or automatic
+      per-test cassette naming, so acceptance criterion 1 is unmet."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P2
     labels:
       - vcr
@@ -567,4 +589,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:50.743Z
-    updated_at: 2026-10-05T16:25:50.743Z
+    updated_at: 2026-10-05T18:30:44.896Z

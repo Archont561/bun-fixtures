@@ -1,0 +1,219 @@
+---
+name: session
+description: Run a bun-fixture work session end to end — install the toolchain, restore the locked workspace, survey the Backlog, propose the session, and once work lands on main (a merged pull request or a direct push) report it and write the next session's opening prompt. Use at the start of any session on this repository, when the user says to initialize/bootstrap the environment, pick up tasks from the backlog, or asks what to work on; and again at the end, when work has landed or the user asks for a session report, a hand-off, or what the next session should start with.
+---
+
+# Session lifecycle for bun-fixture
+
+A session is a loop with five phases, and this file sequences all of them: **(1)** bring the
+toolchain up, **(2)** survey the Backlog, **(3)** propose the session and stop, **(4)** work the
+tasks under the house rules, **(5)** after the work lands, report and hand the next session its
+opening prompt. The four artifacts those phases produce have templates in
+[`standup-template.md`](standup-template.md), cited below as *template §1* … *template §4*.
+
+Two rules span the whole loop. Never propose work you cannot execute — a toolchain that is down
+changes what is possible. And never close on an unproven claim: a criterion you could not
+demonstrate is an open item, not a checked box. This repository has already paid for that
+lesson — six tasks sat at `ready` for a day while their code was merged and working, because
+nobody reconciled the board with the tree.
+
+## 1. Bring the toolchain up
+
+The workspace is a clone. **Bun is not preinstalled** — Node and npm are, so npm is the
+bootstrap. Check first, install only if needed:
+
+```bash
+bun --version 2>/dev/null || npm i -g bun@1.4.2
+bun --version          # must print 1.4.2
+bun install --frozen-lockfile
+```
+
+**Pin the version to `packageManager` in the root `package.json`** (`bun@1.4.2` today). Do not
+`npm i -g bun` unpinned — a newer Bun than CI uses turns a green local run into a red CI run,
+and the point of this step is that the two agree.
+
+**`--frozen-lockfile` is not optional.** It is what CI runs (`.github/workflows/ci.yml`), and it
+fails loudly if `bun.lock` and the manifests disagree instead of silently resolving something
+new. If it fails, that disagreement *is* the first finding of the session — report it before
+proposing work. Use a plain `bun install` only when you are deliberately adding a dependency.
+
+`bun install` also runs `prepare`, which is `lefthook install`. That is how the git hooks get
+into a fresh clone; without it, `pre-commit` and `commit-msg` silently do nothing.
+
+If the session is running inside the checked-in Dev Container
+([`.devcontainer/devcontainer.json`](../../../.devcontainer/devcontainer.json)), both steps have
+already happened — `postCreateCommand` is this same pair, with the version read from
+`packageManager` rather than hardcoded. Verify rather than assume (`bun --version`, then the
+baseline below); re-running them is harmless if it turns out you are on a bare machine.
+
+### Baseline before you propose anything
+
+```bash
+bun run lint && bun run typecheck && bun test
+```
+
+Write the test number down. On `1b4dec4` (2026-10-05): lint clean over 55 files, typecheck 6/6,
+**179 passing / 0 failing**. It must rise with new work, never fall. A baseline that does not
+match is the first thing worth saying out loud — it means the install did not produce the tree
+the last session left.
+
+Two traps in that one number, both of which have already caused a false alarm here:
+
+- **`bun test` and `bun run test` count different things.** `bun test` is Bun's own runner
+  walking the whole tree — one total, **179**. `bun run test` is `turbo run test`, which runs
+  the six packages separately and prints six totals: `bun-fixture` **168**, then `std` 2,
+  `fast-check` 2, `dom` 3, `browser` 2, `vcr` 2. They agree (168 + 11 = 179); quote whichever
+  you ran, and say which one it was. A report that says "168" without the qualifier reads as a
+  regression of eleven tests.
+- **Turbo caches, so a green run may not be a run at all.** `>>> FULL TURBO` and
+  `6 cached, 6 total` mean nothing executed. That is fine for a baseline on an unchanged tree
+  and misleading after you edit something — use `bun test` (uncached) or
+  `bunx turbo run test --force` when you need the gate to have actually fired.
+
+### Every repo task goes through bun
+
+```bash
+bun run lint | lint:fix | format      # Biome
+bun run typecheck                     # tsc --noEmit in every package, via Turbo
+bun test | test:unit | test:bdd       # all suites | dogfooding only | Gherkin only
+bun run docs:dev | docs:build         # Astro + Starlight
+bunx backlog status | task list       # Backlog
+bunx changeset                        # describe a release-worthy change
+bun pm pack --dry-run                 # inspect a package tarball (run inside packages/<pkg>)
+```
+
+Facts about this sandbox that shape every command:
+
+- **Egress is filtered.** github.com and the npm registry answer, so `git`, `gh`, `npm i -g`
+  and `bun install` all work. Arbitrary hosts may not — a plain `curl https://www.apache.org/…`
+  dies on TLS. Prefer `gh api` for GitHub and the npm registry for packages; when you need a
+  well-known text file, check `/usr/share/common-licenses/` before reaching for the network.
+- **`gh` is a read-only App installation token for repo metadata.** `gh api` reads fine, but
+  `gh repo edit`, the topics endpoint and `PATCH /repos/{owner}/{repo}` all return
+  `403 Resource not accessible by integration`. Description, topics and settings need the
+  user's own session — ask, do not retry.
+- **`bunx changeset init` is interactive** and hangs forever in a non-interactive shell. The
+  config is already committed at `.changeset/config.json`; never re-run `init`.
+- **`bunx backlog board` starts a server** and will block. Use `bunx backlog status` and
+  `bunx backlog task list` for reading; they return plain text.
+- **`bunx skills add` scatters litter.** It creates ~50 agent directories (`.claude/`,
+  `.qwen/`, `.windsurf/`, …) plus `agent/`, `data/` and `skills/` at the repo root. This
+  repository keeps skills in `.agents/skills/` only — delete the rest before committing.
+- **Playwright is an `optionalDependency` and is not installed**, so the
+  `@bun-fixture/browser` Playwright fixtures cannot be exercised here. The `Bun.serve`
+  test-server fixture in the same package can.
+- **Lefthook hooks run real gates**, so a commit is slower than you expect and a push slower
+  still: `pre-commit` = Biome over staged files + `turbo run typecheck`; `commit-msg` =
+  commitlint; `pre-push` = `turbo run test`.
+
+## 2. Survey the Backlog
+
+Backlog state lives in `.backlog/` and is the **source of truth** — the tables in
+`.backlog/docs/` mirror it and can drift.
+
+1. **Sync before proposing.** `git fetch origin`, then confirm the working branch is based on
+   `origin/main`'s tip. If it is behind, say so before anything else. Never edit on a stale base.
+2. **Read the standing context** (skim, do not quote back): the root `README.md` for the
+   repository map, [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.md) for the
+   working loop and definition of done, and `.backlog/docs/caveats.md` for the non-goals. The
+   ADRs in `.backlog/docs/adr/` are load-bearing; if you think one is wrong, bring a
+   measurement, not an opinion.
+3. **List the open work**:
+   ```bash
+   bunx backlog status                 # counts by state
+   bunx backlog task list              # id | priority | status | title
+   bunx backlog task show <task-id>    # description, acceptance criteria, dependencies
+   ```
+   Statuses are `backlog`, `ready`, `in_progress`, `review`, `done`, `blocked`, `archived`.
+   The specs each task points at live under `.backlog/docs/specs/`.
+4. **Filter honestly.** A task is a candidate only when every dependency is `done`. Order by
+   priority (P0 → P3), then by what unblocks the most. A task that unblocks several others may
+   jump the queue — say so explicitly when you propose it.
+5. **Trust the tree over the board, and reconcile the difference.** Before proposing a task,
+   confirm its acceptance criteria against the code: the board has been wrong in this
+   repository before. If a task is further along than its status claims, *fixing the status is
+   itself the first deliverable* — say so rather than silently re-doing finished work.
+6. **Do not re-propose finished work.** Check `git log --oneline -15`,
+   `gh pr list --state merged --limit 5`, and `git tag -l`. Done tasks and published releases
+   stay done.
+
+## 3. Propose the session, then stop
+
+Fill in the **Session standup** (template §2) in [`standup-template.md`](standup-template.md)
+and **wait for the user to pick** — do not start implementing.
+
+That file carries all four phases of the lifecycle, and a session is only closed when every one
+of them has been produced: the **opening prompt** (template §1) that started this session, the
+**standup** (template §2) you are writing now, a **task hand-off** (template §3) at the end of
+each task, and the **session report** (template §4) after the work lands — which ends by
+emitting the next opening prompt. Use them at those points rather than inventing a shape; the
+templates are the hand-off protocol between sessions, and the loop only closes because the last
+artifact is the first one.
+
+## 4. While you work — house rules
+
+The full loop is [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.md): claim → red
+→ green → refactor → verify.
+
+- **Claim the task.** `bunx backlog claim` — claims are enforced on commit
+  (`enforce_on_commit = true` in `.backlog/config.toml`).
+- **Red before green.** User-visible behaviour goes in `packages/bun-fixture/features/*.feature`
+  (`bun run test:bdd`); engine internals go in `packages/bun-fixture/tests/fixtures.test.ts`
+  (`bun run test:unit`), which dogfoods the engine through its own fixtures. Write the failing
+  test first — the `tdd` skill is installed for exactly this.
+- **One focused conventional commit per task.** commitlint enforces the format. Match your
+  rhythm to the hooks: they are split by cost, so `bun run lint && bun run typecheck` yourself
+  when you want the answer before `pre-commit` gives it to you, and `bun test` before
+  `pre-push` does.
+- **Definition of done** (from `workflow.md`, both halves required): `bun test` green from the
+  repository root *including* the behavioural suite, and `bun run typecheck` clean in every
+  package. A public API change also needs the README **and** the matching spec in
+  `.backlog/docs/specs/`. A design change needs a new ADR, with the superseded one marked.
+- **Move the task** when it is actually done: `bunx backlog task move <id> done`. If a criterion
+  is unmet, move it to `in_progress` and put the *specific* remaining gap in the description
+  (`bunx backlog task update <id> --description "…"`). "Mostly done" is not a status.
+- **Keep the mirror tables honest.** `.backlog/docs/specs/README.md`,
+  `.backlog/docs/milestones/README.md` and `.backlog/docs/README.md` restate task state. If you
+  move a task, update them in the same commit or they start lying immediately.
+- **Changesets, with one caveat.** A release-worthy change needs `bunx changeset`. But every
+  package is still at an unpublished `0.1.0`, and Changesets bumps *from* the current version —
+  a changeset landed now makes the first-ever release `0.1.1` and skips `0.1.0`. Until M5 cuts
+  `0.1.0`, do not add one; see [`.changeset/README.md`](../../../.changeset/README.md).
+- **Pull requests**: push the working branch, squash-merge, conventional title ending `(#N)`.
+  Watch the required checks; when a job fails, read its log before changing code.
+
+## 5. After the work lands on main — report, then hand the next session its prompt
+
+A merge is not the end of a session; it is the first moment you can tell the truth about it.
+The close is the same whether the work arrived by squash-merge or by a direct push to `main`
+(the report says `Merged: PR #N …` or `Pushed straight to main at <sha>`). Do these in order,
+and do not skip to the report:
+
+1. **Watch the post-merge runs.** `gh run list --branch main --limit 5`, then read the verdict
+   of every workflow the merge triggered — `ci` always, and `docs` when the change touched
+   `apps/docs/**`, `.backlog/docs/**`, `packages/**`, `package.json` or `bun.lock` (it is
+   path-filtered; check `.github/workflows/docs.yml` rather than guessing). A red post-merge run
+   belongs to **this** session — fix it before reporting, never leave it as the next session's
+   surprise. `gh run view <id> --log` often cannot stream from this sandbox; `gh run view <id>`
+   alone still gives job verdicts and annotations.
+2. **Close the task in house format** — every acceptance criterion verified against the code,
+   not against memory; status moved; the mirror tables in `.backlog/docs/` updated in the same
+   commit. **A criterion you could not prove is not a checked criterion.** When the remaining
+   proof needs a published package, an installed optional dependency or a maintainer's click,
+   leave the task `in_progress`, name the criterion and the missing proof in the description,
+   and carry that same sentence into the report.
+3. **Re-baseline on the merged tree.** `git fetch origin && git log --oneline origin/main -1`,
+   then `bun install --frozen-lockfile && bun test`. The number goes in the report and into the
+   next opening prompt; it must rise with new work, never fall.
+4. **Record what you did not implement.** Proposals weighed and rejected, measurements worth
+   keeping, and anything deferred go in the Backlog — as a task description, or a new task via
+   `bunx backlog task add`. Do not leave them only in the chat, and do not smuggle them into the
+   source files they speculate about.
+5. **Print both artifacts in the final message**: the **Session report** (template §4) and,
+   inside it, the **Session opening prompt** (template §1). Printing them *is* the hand-off.
+   The test is literal: the user should be able to paste that prompt back as the first message
+   of the next session and have an agent reach the same understanding you have now, without
+   reading the diff.
+
+A session that merged nothing still reports — "Merged: nothing", the ideas recorded, and an
+opening prompt that says what to decide first.
