@@ -52,7 +52,7 @@ times — so scope semantics matter more than usual:
 | `test` (default) | **Rebuilt per sample** — fresh instance, torn down LIFO before the next one |
 
 Under the hood this is the engine's
-[`opts.iterate` protocol](/bun-fixtures/reference/api/#the-iteration-protocol-iterate):
+[`opts.iterate` protocol](/bun-test-utils/reference/api/#the-iteration-protocol-iterate):
 every sample — and every candidate `fast-check` tries while shrinking a
 failure — runs through `ctx.iterate`, which builds the test-scoped fixtures
 fresh and unwinds them **even when the predicate throws**. A database

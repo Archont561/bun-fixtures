@@ -1,14 +1,14 @@
 # bun-test-utils
 
 <p align="center">
-  <a href="https://github.com/Archont561/bun-fixtures/actions/workflows/ci.yml"><img src="https://github.com/Archont561/bun-fixtures/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Archont561/bun-fixtures/actions/workflows/docs.yml"><img src="https://github.com/Archont561/bun-fixtures/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
-  <a href="https://github.com/Archont561/bun-fixtures/releases"><img src="https://img.shields.io/github/v/release/Archont561/bun-fixtures?label=release" alt="Release"></a>
-  <a href="https://archont561.github.io/bun-fixtures/"><img src="https://img.shields.io/badge/docs-starlight-6d28d9" alt="Documentation"></a>
-  <a href="https://github.com/Archont561/bun-fixtures/blob/main/LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="MIT OR Apache-2.0"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/releases"><img src="https://img.shields.io/github/v/release/Archont561/bun-test-utils?label=release" alt="Release"></a>
+  <a href="https://archont561.github.io/bun-test-utils/"><img src="https://img.shields.io/badge/docs-starlight-6d28d9" alt="Documentation"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/blob/main/LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="MIT OR Apache-2.0"></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-%E2%89%A51.1-black?logo=bun" alt="Bun >=1.1"></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript" alt="TypeScript strict"></a>
-  <a href="https://github.com/Archont561/bun-fixtures/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome"></a>
 </p>
 
 <p align="center">

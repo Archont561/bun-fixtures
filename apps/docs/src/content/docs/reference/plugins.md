@@ -28,7 +28,7 @@ export default {
 
 ### `bun-test-utils/pbt`
 
-Property-based testing integration — see the [Property-Based Testing guide](/bun-fixtures/guides/property-based-testing/):
+Property-based testing integration — see the [Property-Based Testing guide](/bun-test-utils/guides/property-based-testing/):
 
 - `test.prop(title, arbitraries, testFn, options)` combining `fast-check` with fixture injection.
 - Requested fixtures auto-detect from `testFn`'s destructured first parameter (or `options.fixtures`).
@@ -49,7 +49,7 @@ Headless browser & web server testing:
 
 ### `bun-test-utils/vcr`
 
-HTTP Cassette recording and replaying — see the [Recording HTTP Cassettes guide](/bun-fixtures/guides/recording-http-cassettes/):
+HTTP Cassette recording and replaying — see the [Recording HTTP Cassettes guide](/bun-test-utils/guides/recording-http-cassettes/):
 
 - `cassette`: Intercepts `globalThis.fetch` to record live HTTP requests to disk and replay them offline.
 - **Automatic cassette files**: `__cassettes__/<test name>.json` next to the test file — auto-saved on teardown in record mode, auto-loaded at setup in replay mode, exposed as `cassette.path`.
@@ -57,7 +57,7 @@ HTTP Cassette recording and replaying — see the [Recording HTTP Cassettes guid
 
 ### `bun-test-utils/snapshot`
 
-Value and file snapshot testing — see the [Snapshot Testing guide](/bun-fixtures/guides/snapshot-testing/):
+Value and file snapshot testing — see the [Snapshot Testing guide](/bun-test-utils/guides/snapshot-testing/):
 
 - `snapshot`: Serializes a value (or a file's contents via `matchFile`) and compares it against a stored snapshot, recording a new one on first run.
 - **Automatic snapshot files**: `__snapshots__/<test name>.snap.json` next to the test file, exposed as `snapshot.path`; multiple snapshots per test are auto-numbered or explicitly named.

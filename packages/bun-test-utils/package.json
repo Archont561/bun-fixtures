@@ -15,14 +15,14 @@
     "dependency-injection",
     "test-utils"
   ],
-  "homepage": "https://archont561.github.io/bun-fixtures/",
+  "homepage": "https://archont561.github.io/bun-test-utils/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "url": "https://github.com/Archont561/bun-test-utils.git",
     "directory": "packages/bun-test-utils"
   },
   "bugs": {
-    "url": "https://github.com/Archont561/bun-fixtures/issues"
+    "url": "https://github.com/Archont561/bun-test-utils/issues"
   },
   "main": "./src/plugin.ts",
   "module": "./src/plugin.ts",

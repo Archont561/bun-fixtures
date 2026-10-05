@@ -4,7 +4,7 @@ import { defineConfig } from "astro/config";
 // Deployed to GitHub Pages by .github/workflows/docs.yml.
 export default defineConfig({
   site: "https://archont561.github.io",
-  base: "/bun-fixtures",
+  base: "/bun-test-utils",
   integrations: [
     starlight({
       title: "bun-test-utils",
@@ -16,7 +16,7 @@ export default defineConfig({
         replacesTitle: false,
       },
       social: {
-        github: "https://github.com/Archont561/bun-fixtures",
+        github: "https://github.com/Archont561/bun-test-utils",
       },
       customCss: ["./src/styles/custom.css"],
       sidebar: [

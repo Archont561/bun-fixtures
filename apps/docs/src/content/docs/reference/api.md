@@ -59,7 +59,7 @@ Guarantees:
 - Session- and file-scoped instances are shared between the wrapper and
   every iteration, through the normal scope caches.
 - `ctx.iterate` returns the result of the function it ran.
-- [`bun-test-utils/pbt`](/bun-fixtures/guides/property-based-testing/)
+- [`bun-test-utils/pbt`](/bun-test-utils/guides/property-based-testing/)
   builds `test.prop` on this protocol: every generated sample — and every
   shrink candidate — runs through `ctx.iterate`, so no state can leak
   between iterations.

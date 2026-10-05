@@ -6,7 +6,7 @@
   "author": "Archont561 (https://github.com/Archont561)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "url": "https://github.com/Archont561/bun-test-utils.git",
     "directory": "packages/config"
   },
   "exports": {
