@@ -107,7 +107,7 @@
         "bun-fixture": "workspace:*",
       },
       "peerDependencies": {
-        "bun-fixture": "workspace:*",
+        "bun-fixture": "workspace:^",
       },
     },
     "packages/vcr": {

@@ -409,12 +409,18 @@ tasks:
     description: "Provide zero-dependency standard fixtures for filesystem temporary
       scratchpads (tmpdir), environment variable sandboxing (env), and standard
       stream capture (stdio) with automatic LIFO restoration. Spec:
-      docs/specs/0009-standard-fixtures-std.md. STATUS: package implemented and
-      covered by packages/std/tests/std.test.ts. REMAINING: nothing under
-      packages/bun-fixture imports @bun-fixture/std, so the final acceptance
-      criterion (dogfooding in the core suite) is unmet."
+      docs/specs/0009-standard-fixtures-std.md. STATUS (2026-10-05): complete.
+      Unit coverage in packages/std/tests/std.test.ts; dogfooded in the core
+      suite via packages/bun-fixture/tests/fixtures.ts (stdFixtures merged) and
+      packages/bun-fixture/tests/std.test.ts, which proves engine-driven
+      teardown: fresh tmpdir per test with the previous wiped, process.env
+      restored, real streams handed back. Note: the dogfood import resolves via
+      the workspace node_modules symlink and is deliberately not declared in
+      packages/bun-fixture devDependencies - std already dev-depends on
+      bun-fixture for FixtureDef types, and the reverse edge makes Turbo's task
+      graph cyclic."
     source_links: []
-    status: in_progress
+    status: done
     priority: P1
     labels:
       - std
@@ -448,7 +454,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:21.830Z
-    updated_at: 2026-10-05T18:30:43.018Z
+    updated_at: 2026-10-05T19:12:01.761Z
   - id: task_012
     title: Support Property-Based Testing (PBT) via fast-check integration (test.prop)
     description: "Integrate fast-check Arbitraries with fixture dependency

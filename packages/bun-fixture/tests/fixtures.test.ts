@@ -127,11 +127,14 @@ describe("engine internals", () => {
       "client",
       "config",
       "db",
+      "env",
       "events",
       "mode",
       "origin",
       "region",
+      "stdio",
       "tmp",
+      "tmpdir",
     ]);
   });
 
