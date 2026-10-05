@@ -1,0 +1,35 @@
+{
+  "name": "@bun-fixture/browser",
+  "version": "0.1.0",
+  "description": "Headless browser and ephemeral web server testing fixtures for bun-fixture",
+  "type": "module",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "bun-fixture": "workspace:*"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@bun-fixture/config": "workspace:*",
+    "bun-fixture": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}

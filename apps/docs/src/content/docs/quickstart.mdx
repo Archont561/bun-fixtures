@@ -1,0 +1,83 @@
+---
+title: Quickstart
+description: Get up and running with bun-fixture in 5 minutes.
+---
+
+In this quickstart, you will install `bun-fixture`, initialize your configuration, and write your first fixture-backed test.
+
+## 1. Install & Initialize
+
+Run the following commands in your Bun project:
+
+```bash
+bun add -d bun-fixture
+bunx bun-fixture init
+```
+
+The `init` command performs two actions:
+1. Adds the preload plugin to `bunfig.toml`:
+   ```toml
+   [test]
+   preload = ["./node_modules/bun-fixture/src/plugin.ts"]
+   ```
+2. Scaffolds a starter `fixtures.ts` at the root of your project.
+
+## 2. Declare a Fixture
+
+Open `fixtures.ts` and define your fixtures:
+
+```ts
+// fixtures.ts
+import type { FixtureMap } from "bun-fixture";
+
+export default {
+  server: {
+    scope: "session",
+    setup: async (use) => {
+      const server = await startTestServer();
+      await use(server);
+      await server.stop();
+    },
+  },
+
+  db: {
+    scope: "file",
+    setup: async (use, { server }) => {
+      const db = await server.connect();
+      await use(db);
+      await db.close();
+    },
+  },
+
+  user: {
+    setup: async (use, { db }) => {
+      const user = await db.insertUser({ name: "Ada" });
+      await use(user);
+    },
+  },
+} satisfies FixtureMap;
+```
+
+## 3. Write a Test
+
+Create a test file `users.test.ts`:
+
+```ts
+// users.test.ts
+import { test, expect } from "bun-fixture";
+
+test("finds created user", async ({ db, user }) => {
+  const found = await db.findUser(user.id);
+  expect(found.name).toBe("Ada");
+});
+```
+
+## 4. Run Tests
+
+Execute with `bun test`:
+
+```bash
+bun test
+```
+
+`bun-fixture` resolves `db` and `user`, verifies there are no dependency cycles, runs the test, and executes teardowns in reverse order (LIFO).

@@ -1,7 +1,7 @@
 # bun-fixture — documentation
 
-Working docs for the package. User-facing documentation lives in the
-[root README](../README.md); everything here is for people building `bun-fixture`.
+Working docs for the package and its ecosystem. User-facing documentation lives in the
+[root README](../../README.md) and individual package READMEs; everything here is for people building `bun-fixture`.
 
 | Area | What lives there |
 |------|------------------|
@@ -19,31 +19,31 @@ Working docs for the package. User-facing documentation lives in the
 | [M2](./milestones/M2-discovery.md) | Preload discovery + path-based merge | ✅ done |
 | [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit + scaffold) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
-| [M5](./milestones/M5-publish.md) | Publish to npm | ⬜ not started |
+| [M5](./milestones/M5-publish.md) | Publish to npm | ⬜ ready |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
 
 ## Repository map
 
-This is a Bun workspace ([ADR 0010](./adr/0010-monorepo-layout.md)): one
-publishable package, with project infrastructure at the root.
+This is a Bun workspace ([ADR 0010](./adr/0010-monorepo-layout.md), [ADR 0011](./adr/0011-brand-identity-and-modular-ecosystem.md)):
 
 ```
-packages/bun-fixture/
-  src/plugin.ts      preload discovery + fixture engine + public API
-  src/cli.ts         `bun-fixture init` (citty)
-  src/types.ts       FixtureDef, Scope, FixtureContext, TestOptions
-  tests/             dogfooding suite (fixtures.ts + nested/ prove the merge)
-  tests/steps/       Gherkin step definitions + scratch-project harness
-  features/          behavioural specs (*.feature)
-  test-plugins.ts    preloads the Gherkin loader next to src/plugin.ts
-  bunfig.toml        preload config when running from the package
-docs/                this directory
+packages/
+  bun-fixture/       core engine, CLI (init), and public API
+  std/               @bun-fixture/std (tmpdir, env, stdio)
+  fast-check/        @bun-fixture/fast-check (property-based testing)
+  dom/               @bun-fixture/dom (happy-dom in-memory component testing)
+  browser/           @bun-fixture/browser (Playwright & Bun.serve fixtures)
+  vcr/               @bun-fixture/vcr (HTTP record & replay cassette fixtures)
+  config/            @bun-fixture/config (shared TypeScript configurations)
+.backlog/            Backlog project state (tasks, claims, runs)
+.backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)
+.agents/skills/      agent skills (refactor, tdd, skill-creator)
+skills-lock.json     pinned skill sources
 bunfig.toml          preload config when running from the root
 package.json         private workspace root
-.agents/skills/      agent skills (refactor, tdd, skill-creator), agent-agnostic copies
-.claude/skills/      same skills, Claude Code layout
-.backlog/            Backlog project state (tasks, claims, runs)
+tsconfig.json        root TypeScript configuration
+turbo.json           Turborepo monorepo pipeline configuration
 ```
 
 > There is deliberately **no package-root `fixtures.ts`** — fixtures used by
