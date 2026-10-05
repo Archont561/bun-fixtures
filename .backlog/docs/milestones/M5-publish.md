@@ -17,7 +17,9 @@
 
 - [x] CI: `bun run lint` + `bun run typecheck` + `bun run test` on push and PR
       (`.github/workflows/ci.yml`)
-- [ ] `bun pm pack` smoke test — install the tarball into a scratch project and run the quickstart
+- [x] `bun pm pack` smoke test — install the tarball into a scratch project and run the quickstart
+      (`packages/bun-fixture/tests/pack.test.ts`: all six tarballs verified against spec 0005 —
+      contents, licences, workspace-range rewrite — and the core tarball installed and quickstarted)
 - [x] LICENSE files — dual MIT / Apache-2.0 (`LICENSE`, `LICENSE-MIT`, `LICENSE-APACHE`
       at the root and in all six publishable packages; manifests declare
       `MIT OR Apache-2.0` and list both texts in `files`)
@@ -25,8 +27,9 @@
       versions, `access: public`, private packages excluded (`.changeset/config.json`)
 - [x] Package metadata: `repository` (with `directory`), `homepage`, `bugs`,
       `author`, `keywords` and `publishConfig.access` on all six manifests
-- [ ] CHANGELOG + `v0.1.0` tag (cut `0.1.0` *before* landing any changeset, or
-      the first release becomes `0.1.1` — see `.changeset/README.md`)
+- [x] CHANGELOG — `0.1.0` entries in all six packages (cut `0.1.0` *before* landing
+      any changeset, or the first release becomes `0.1.1` — see `.changeset/README.md`)
+- [ ] `v0.1.0` git tag
 - [ ] `bun run release:publish` for all six packages (or trusted publishing from CI)
 - [ ] Post-publish: re-run the e2e harness against the published package
 

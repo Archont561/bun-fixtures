@@ -154,11 +154,17 @@ tasks:
     title: M5 — Publish to npm
     description: "Release 0.1.0. Spec: docs/specs/0005-packaging-and-release.md.
       PROGRESS: CI runs lint, typecheck and test on push and PR; dual MIT OR
-      Apache-2.0 licensing is in place and verified to pack via bun pm pack;
-      @changesets/cli is configured for independent per-package versioning.
-      REMAINING: CHANGELOG, v0.1.0 tag, a bun pm pack smoke test installing the
-      tarball into a scratch project, npm publish, and the post-publish e2e
-      re-run. Scope now covers six publishable packages, not just bun-fixture."
+      Apache-2.0 licensing verified to pack via bun pm pack; @changesets/cli
+      configured for independent per-package versioning; 0.1.0 CHANGELOGs
+      written for all six packages (2026-10-05); pack smoke test added
+      (packages/bun-fixture/tests/pack.test.ts) proving all six tarballs match
+      spec 0005 (contents, licences, workspace-range rewrite) and that the core
+      tarball installs into a scratch project and runs the quickstart through
+      the published bin. REMAINING: v0.1.0 git tag, bun run release:publish (npm
+      publish of all six, in dependency order - bun-fixture first), and the
+      post-publish e2e re-run. All three remaining steps need maintainer
+      sanction: they create public artifacts a sandbox cannot verify or undo.
+      Scope covers six publishable packages."
     source_links: []
     status: in_progress
     priority: P1
@@ -196,7 +202,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-05T18:30:45.511Z
+    updated_at: 2026-10-05T19:20:14.249Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch

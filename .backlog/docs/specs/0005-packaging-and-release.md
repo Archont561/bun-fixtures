@@ -1,6 +1,6 @@
 # 0005 — Packaging and release
 
-- **Status:** draft
+- **Status:** in progress
 - **Milestone:** M5
 - **Implementation:** `packages/bun-fixture/package.json`
 
