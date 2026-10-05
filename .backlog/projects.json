@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "WS-df06f48c",
+      "path": "/home/user/bun-fixtures",
+      "name": "bun-fixture",
+      "added_at": "2026-10-05T15:14:53.564Z",
+      "last_opened_at": "2026-10-05T15:14:53.564Z",
+      "location": "in_repo",
+      "migration_history": []
+    }
+  ]
+}

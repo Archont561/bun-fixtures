@@ -1,0 +1,540 @@
+version: 1
+tasks:
+  - id: task_001
+    title: M1 — Fixture engine (scopes, teardown, DI, params)
+    description: "Deliver the scoped fixture engine behind createTest/test. Spec:
+      docs/specs/0001-fixture-engine.md"
+    source_links: []
+    status: done
+    priority: P0
+    labels:
+      - milestone
+      - M1
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - session/file/test scopes cached and reused correctly
+      - LIFO teardown, verified by the event-log fixture
+      - unknown fixture, cycle and scope violation throw at registration
+      - parameterized fixtures expand to the cartesian product of bun test cases
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:17:57.550Z
+    updated_at: 2026-10-05T15:18:13.190Z
+  - id: task_002
+    title: M2 — Preload discovery + path-based merge
+    description: "Startup tree walk, directory map, root to leaf merge. Spec:
+      docs/specs/0002-discovery-and-merge.md"
+    source_links: []
+    status: done
+    priority: P0
+    labels:
+      - milestone
+      - M2
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - fixtures.ts / conftest.ts discovered, node_modules and build dirs skipped
+      - nearest directory wins, ancestors inherited, siblings invisible
+      - idempotent across preload and direct import
+      - BUN_FIXTURE_ROOT and BUN_FIXTURE_NO_AUTODISCOVER honoured
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:18:08.325Z
+    updated_at: 2026-10-05T15:18:13.469Z
+  - id: task_003
+    title: M3 — CLI init (bunfig.toml edit + fixtures scaffold)
+    description: "bun-fixture init. Spec: docs/specs/0003-cli-init.md"
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - milestone
+      - M3
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - appends ./node_modules/bun-fixture/src/plugin.ts to [test].preload
+      - idempotent, string preload normalized to a list, other sections preserved
+      - scaffolds root fixtures.ts, --force to overwrite
+      - warns about TOML comment loss
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:18:08.566Z
+    updated_at: 2026-10-05T15:18:13.710Z
+  - id: task_004
+    title: M4 — Types, docs, dogfooding tests
+    description: "Strict types, README, docs/, self-tested engine. Spec:
+      docs/specs/0004-public-api-and-types.md"
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - milestone
+      - M4
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - bunx tsc --noEmit clean under strict
+      - engine tested through its own fixtures, plus an end-to-end scratch
+        project
+      - README covers quickstart, scopes, DI, params, caveats
+      - docs/ carries specs, milestones, ADRs and the workflow
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:18:08.793Z
+    updated_at: 2026-10-05T15:18:13.943Z
+  - id: task_005
+    title: M5 — Publish to npm
+    description: "Release 0.1.0. Spec: docs/specs/0005-packaging-and-release.md"
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - milestone
+      - M5
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - CI runs bun test and tsc --noEmit on push
+      - bun pm pack smoke test installs the tarball into a scratch project and
+        runs the quickstart
+      - LICENSE, CHANGELOG and a v0.1.0 tag
+      - published package verified by rerunning the e2e harness
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:18:09.031Z
+    updated_at: 2026-10-05T15:18:09.031Z
+  - id: task_006
+    title: Behavioural (Gherkin) test suite
+    description: "User-level BDD suite running each scenario against a real scratch
+      project. Spec: docs/specs/0006-behavioural-test-suite.md"
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - testing
+      - bdd
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - features/*.feature cover scopes, teardown, discovery, validation,
+        params, CLI init
+      - steps drive only files, bun test output and exit codes — no engine
+        imports
+      - scratch projects removed after each scenario
+      - runs under plain bun test via tests/features.test.ts
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:25:41.881Z
+    updated_at: 2026-10-05T15:25:42.353Z
+  - id: task_007
+    title: Rebuild the CLI on citty
+    description: "Replace the hand-rolled argv parser with citty
+      defineCommand/runMain. ADR: docs/adr/0009-citty-for-the-cli.md"
+    source_links: []
+    status: done
+    priority: P2
+    labels:
+      - cli
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - typed args with defaults and generated help/version
+      - init body exported and callable in-process for tests
+      - argument parsing covered via citty runCommand
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:25:42.120Z
+    updated_at: 2026-10-05T15:25:42.602Z
+  - id: task_008
+    title: Restructure the repository as a Bun workspace monorepo
+    description: "Move the publishable code into packages/bun-fixture; keep Backlog,
+      skills and docs at the root. ADR: docs/adr/0010-monorepo-layout.md"
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - infra
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - packages/bun-fixture is the only publishable package; root is private
+      - bun test and bun run typecheck pass from the root and from the package
+      - Backlog, skills and docs stay at the repository root and out of the
+        tarball
+      - "@ alias still resolves to the package root from either cwd"
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T15:37:28.511Z
+    updated_at: 2026-10-05T15:37:28.769Z
+  - id: task_009
+    title: Add apps/docs documentation site with Astro Starlight published to GitHub
+      Pages
+    description: "Create an Astro Starlight documentation application under
+      apps/docs, configure root workspace integration, and set up GitHub Actions
+      workflow for automated deployment to GitHub Pages. Spec:
+      docs/specs/0007-apps-docs-starlight.md"
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - docs
+      - infra
+      - astro
+    repo_targets: []
+    acceptance_criteria:
+      - apps/docs initialized with Astro + @astrojs/starlight and configured
+        with project branding and navigation
+      - Workspace root package.json updated to include apps/* in workspaces and
+        scripts for docs:dev and docs:build
+      - Astro configuration configured with site URL and base path suitable for
+        GitHub Pages deployment
+      - GitHub Actions deployment workflow (.github/workflows/deploy-docs.yml)
+        created to build and publish docs to GitHub Pages on push to main
+      - Build artifact verified via bun run --filter docs build (or workspace
+        build)
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:02:40.662Z
+    updated_at: 2026-10-05T16:02:40.662Z
+  - id: task_010
+    title: Create packages/config for monorepo-wide TypeScript configurations (base,
+      apps, libs)
+    description: "Extract and share TypeScript configurations across the monorepo by
+      creating a shared packages/config workspace package with presets for base,
+      apps, and libraries. Spec: docs/specs/0008-typescript-config-package.md"
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - typescript
+      - infra
+      - monorepo
+    repo_targets: []
+    acceptance_criteria:
+      - packages/config initialized as a private workspace package exporting
+        base.json, app.json, and lib.json
+      - base.json establishes strict compiler settings, ESNext target/module,
+        skipLibCheck, and moduleResolution
+      - lib.json extends base.json for packages/libraries (such as bun-fixture)
+      - app.json extends base.json for web/documentation applications (such as
+        Astro Starlight)
+      - Existing tsconfig files (root and packages/bun-fixture) refactored to
+        extend shared configs
+      - bun run typecheck passes across all workspaces without errors
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:07:01.077Z
+    updated_at: 2026-10-05T16:07:01.077Z
+  - id: task_011
+    title: Implement @bun-fixture/std standard built-in fixtures (tmpdir, env, stdio)
+    description: "Provide zero-dependency standard fixtures for filesystem temporary
+      scratchpads (tmpdir), environment variable sandboxing (env), and standard
+      stream capture (stdio) with automatic LIFO restoration. Spec:
+      docs/specs/0009-standard-fixtures-std.md"
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - std
+      - fixtures
+    repo_targets: []
+    acceptance_criteria:
+      - tmpdir fixture creates isolated directory with helper methods (write,
+        read, exists) and wipes on teardown
+      - env fixture sandboxes process.env modifications and guarantees full
+        restoration on teardown
+      - stdio fixture captures stdout/stderr writes without leaking output and
+        restores streams on teardown
+      - Dogfooded in packages/bun-fixture test suites
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:25:21.830Z
+    updated_at: 2026-10-05T16:25:21.830Z
+  - id: task_012
+    title: Support Property-Based Testing (PBT) via fast-check integration (test.prop)
+    description: "Integrate fast-check Arbitraries with fixture dependency
+      injection, supporting test.prop with shrink-aware LIFO fixture teardown
+      between iterations. Spec:
+      docs/specs/0010-property-based-testing-fastcheck.md"
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - pbt
+      - fast-check
+    repo_targets: []
+    acceptance_criteria:
+      - test.prop API combines fast-check arbitraries with injected fixtures
+      - Session/file fixtures preserved across iterations while test/iteration
+        fixtures cleanly recreate or reset
+      - Shrink cycles properly execute fixture teardown without leaking state
+      - Full test coverage with example property test suites
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:25:26.586Z
+    updated_at: 2026-10-05T16:25:26.586Z
+  - id: task_013
+    title: Add DOM and Browser testing support (@bun-fixture/dom and Playwright
+      fixtures)
+    description: "Support browser-side JS testing through in-memory DOM fixtures
+      (happy-dom) for UI components and session-scoped Playwright browser/page
+      fixtures for real E2E testing. Spec:
+      docs/specs/0011-dom-and-browser-fixtures.md"
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - browser
+      - dom
+      - e2e
+    repo_targets: []
+    acceptance_criteria:
+      - "@bun-fixture/dom provides window, document, and page fixtures using
+        happy-dom with automatic cleanup"
+      - Playwright fixture bundle provides session-scoped browser and
+        test-scoped isolated page/context
+      - Ephemeral Bun.serve test server fixture for booting local web servers on
+        random free ports
+      - Component and E2E test examples verifying DOM and browser interaction
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:25:46.794Z
+    updated_at: 2026-10-05T16:25:46.794Z
+  - id: task_014
+    title: Implement HTTP Cassette / VCR network record & replay fixture
+      (@bun-fixture/vcr)
+    description: "Provide a cassette / mockFetch fixture that intercepts global
+      fetch to record live HTTP requests to disk and replay them
+      deterministically in offline/CI test runs. Spec:
+      docs/specs/0012-http-cassette-vcr.md"
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - vcr
+      - http
+      - mocking
+    repo_targets: []
+    acceptance_criteria:
+      - cassette fixture intercepts fetch and saves serialized
+        requests/responses to __cassettes__/
+      - Replay mode serves cached responses without network activity
+      - Supports record/replay modes via environment variable (e.g.
+        VCR_MODE=record|replay)
+      - Automatic fetch restoration on test teardown
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T16:25:50.743Z
+    updated_at: 2026-10-05T16:25:50.743Z
