@@ -33,6 +33,10 @@ describe("@bun-test-utils/snapshot", () => {
 
     try {
       await snapshotFixture.setup(async (snap) => {
+        // Force "match" regardless of ambient CI env detection — this test
+        // proves the fixture's own first-run recording behaviour against a
+        // scratch dir, not the "never record under CI" guard rail.
+        snap.setMode("match");
         expect(snap.path).toBe(snapshotPath);
         expect(existsSync(snapshotPath)).toBe(false);
         snap.match({ name: "widget", count: 3 });
@@ -44,6 +48,7 @@ describe("@bun-test-utils/snapshot", () => {
 
       // Second run: identical value against the now-stored snapshot passes.
       await snapshotFixture.setup(async (snap) => {
+        snap.setMode("match");
         expect(() => snap.match({ count: 3, name: "widget" })).not.toThrow();
       }, ctx);
     } finally {
@@ -130,6 +135,7 @@ describe("@bun-test-utils/snapshot", () => {
 
     try {
       await snapshotFixture.setup(async (snap) => {
+        snap.setMode("match");
         snap.match("a");
         snap.match("b");
         snap.match("c", "named");
@@ -153,6 +159,7 @@ describe("@bun-test-utils/snapshot", () => {
 
     try {
       await snapshotFixture.setup(async (snap) => {
+        snap.setMode("match");
         snap.addSerializer((value) =>
           value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
         );
@@ -178,6 +185,7 @@ describe("@bun-test-utils/snapshot", () => {
 
     try {
       await snapshotFixture.setup(async (snap) => {
+        snap.setMode("match");
         expect(() => snap.matchFile(reportPath, "report")).not.toThrow();
       }, ctx);
 
