@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import type { FixtureDef } from "bun-fixture";
 
 export type VcrMode = "record" | "replay" | "passthrough";
@@ -28,6 +28,12 @@ export interface CassetteHelper {
   setMode(mode: VcrMode): void;
   redactHeader(name: string): void;
   entries: CassetteEntry[];
+  /**
+   * The conventional cassette path for the current test:
+   * `__cassettes__/<test-name>.json` next to the test file. Useful for
+   * debugging and tooling; `save()`/`load()` still accept explicit paths.
+   */
+  path: string;
   save(filePath: string): void;
   load(filePath: string): void;
 }
@@ -53,17 +59,49 @@ function normalizeHeaders(
   return result;
 }
 
+/** Turns a test name into a stable, filesystem-safe cassette filename base. */
+function slugify(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 100) || "cassette"
+  );
+}
+
 export const cassetteFixture: FixtureDef<CassetteHelper> = {
   scope: "test",
-  setup: async (use) => {
+  setup: async (use, ctx) => {
     let mode: VcrMode = (process.env.VCR_MODE as VcrMode) || "record";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
     const origFetch = globalThis.fetch;
 
+    // Convention: `<test dir>/__cassettes__/<test name>.json` — replay
+    // auto-loads it at setup, record auto-saves it at teardown.
+    const cassettePath = join(
+      dirname(ctx.testFile),
+      "__cassettes__",
+      `${slugify(ctx.testName ?? "cassette")}.json`,
+    );
+
+    if (mode === "replay") {
+      if (!existsSync(cassettePath)) {
+        throw new Error(
+          `[bun-fixture/vcr] Replay mode but no cassette at ${cassettePath}. ` +
+            "Record it first with VCR_MODE=record.",
+        );
+      }
+      entries = JSON.parse(readFileSync(cassettePath, "utf8"));
+    }
+
     const helper: CassetteHelper = {
       get mode() {
         return mode;
+      },
+      get path() {
+        return cassettePath;
       },
       setMode(m: VcrMode) {
         mode = m;
@@ -149,6 +187,9 @@ export const cassetteFixture: FixtureDef<CassetteHelper> = {
       await use(helper);
     } finally {
       globalThis.fetch = origFetch;
+      if (mode === "record" && entries.length > 0) {
+        helper.save(cassettePath);
+      }
     }
   },
 };

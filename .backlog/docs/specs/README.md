@@ -17,7 +17,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 | [0009](./0009-standard-fixtures-std.md) | Standard Built-in Fixtures (tmpdir, env, stdio) | implemented | `packages/std/` |
 | [0010](./0010-property-based-testing-fastcheck.md) | Property-Based Testing Integration with fast-check | partial — no per-iteration fixture lifecycle | `packages/fast-check/` |
 | [0011](./0011-dom-and-browser-fixtures.md) | DOM and Browser Testing Support (happy-dom & Playwright) | partial — Playwright path untested | `packages/dom/`, `packages/browser/` |
-| [0012](./0012-http-cassette-vcr.md) | HTTP Cassette / VCR Testing Fixture | partial — no `__cassettes__/` convention | `packages/vcr/` |
+| [0012](./0012-http-cassette-vcr.md) | HTTP Cassette / VCR Testing Fixture | implemented | `packages/vcr/` |
 
 Start a new one from [`TEMPLATE.md`](./TEMPLATE.md).
 
