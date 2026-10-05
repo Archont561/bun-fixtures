@@ -9,28 +9,28 @@
 `bun add -d bun-fixture && bunx bun-fixture init` works for a stranger.
 
 > **Scope has grown.** This milestone was written when `bun-fixture` was the only
-> publishable package. There are now **six** (`bun-fixture`, `std`, `fast-check`,
-> `dom`, `browser`, `vcr`), each with its own version line. Every item below
-> applies to all six.
+> publishable package. There are now **seven** (`bun-fixture`, `std`, `fast-check`,
+> `dom`, `browser`, `vcr`, `snapshot`), each with its own version line. Every item
+> below applies to all seven.
 
 ## Scope
 
 - [x] CI: `bun run lint` + `bun run typecheck` + `bun run test` on push and PR
       (`.github/workflows/ci.yml`)
 - [x] `bun pm pack` smoke test — install the tarball into a scratch project and run the quickstart
-      (`packages/bun-fixture/tests/pack.test.ts`: all six tarballs verified against spec 0005 —
+      (`packages/bun-fixture/tests/pack.test.ts`: all seven tarballs verified against spec 0005 —
       contents, licences, workspace-range rewrite — and the core tarball installed and quickstarted)
 - [x] LICENSE files — dual MIT / Apache-2.0 (`LICENSE`, `LICENSE-MIT`, `LICENSE-APACHE`
-      at the root and in all six publishable packages; manifests declare
+      at the root and in all seven publishable packages; manifests declare
       `MIT OR Apache-2.0` and list both texts in `files`)
 - [x] Release tooling: `@changesets/cli` configured for independent per-package
       versions, `access: public`, private packages excluded (`.changeset/config.json`)
 - [x] Package metadata: `repository` (with `directory`), `homepage`, `bugs`,
-      `author`, `keywords` and `publishConfig.access` on all six manifests
-- [x] CHANGELOG — `0.1.0` entries in all six packages (cut `0.1.0` *before* landing
+      `author`, `keywords` and `publishConfig.access` on all seven manifests
+- [x] CHANGELOG — `0.1.0` entries in all seven packages (cut `0.1.0` *before* landing
       any changeset, or the first release becomes `0.1.1` — see `.changeset/README.md`)
 - [ ] `v0.1.0` git tag
-- [ ] `bun run release:publish` for all six packages (or trusted publishing from CI)
+- [ ] `bun run release:publish` for all seven packages (or trusted publishing from CI)
 - [ ] Post-publish: re-run the e2e harness against the published package
 
 ## Exit criteria

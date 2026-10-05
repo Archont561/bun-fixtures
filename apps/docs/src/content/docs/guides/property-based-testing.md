@@ -3,21 +3,26 @@ title: Property-Based Testing
 description: Generative tests with fast-check arbitraries over injected fixtures, with a per-sample fixture lifecycle.
 ---
 
-`@bun-fixture/fast-check` combines `fast-check` arbitraries with fixture
+`bun-test-utils/pbt` combines `fast-check` arbitraries with fixture
 injection: instead of hand-written examples, you state a property and the
 runner generates hundreds of samples — and shrinks any failure down to a
 minimal counterexample.
 
 ## Installation
 
+`pbt` ships inside `bun-test-utils` — `fast-check` is its one `optionalDependency`,
+installed automatically unless your platform or install flags skip optional deps:
+
 ```bash
-bun add -d bun-fixture @bun-fixture/fast-check fast-check
+bun add -d bun-test-utils
+# only if `bun install` skipped the optional dep:
+bun add -d fast-check
 ```
 
 ## Writing a property test
 
 ```ts
-import { test, expect, fc } from "@bun-fixture/fast-check";
+import { test, expect, fc } from "bun-test-utils/pbt";
 
 test.prop(
   "encoding is reversible",
@@ -47,7 +52,7 @@ times — so scope semantics matter more than usual:
 | `test` (default) | **Rebuilt per sample** — fresh instance, torn down LIFO before the next one |
 
 Under the hood this is the engine's
-[`opts.iterate` protocol](/bun-fixtures/reference/api/#the-iteration-protocol-iterate):
+[`opts.iterate` protocol](/bun-test-utils/reference/api/#the-iteration-protocol-iterate):
 every sample — and every candidate `fast-check` tries while shrinking a
 failure — runs through `ctx.iterate`, which builds the test-scoped fixtures
 fresh and unwinds them **even when the predicate throws**. A database
@@ -55,7 +60,7 @@ connection or temporary directory opened for one sample can never leak into
 the next.
 
 ```ts
-import { test, expect, fc } from "@bun-fixture/fast-check";
+import { test, expect, fc } from "bun-test-utils/pbt";
 
 test.prop(
   "orders survive a round-trip through the store",

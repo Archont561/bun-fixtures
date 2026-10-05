@@ -1,6 +1,6 @@
-# @bun-fixture/config
+# @bun-test-utils/config
 
-Shared TypeScript configurations for the `bun-fixture` monorepo.
+Shared TypeScript configurations for the `bun-test-utils` monorepo.
 
 ## Configurations
 
@@ -14,7 +14,7 @@ In a workspace package `tsconfig.json`:
 
 ```json
 {
-  "extends": "@bun-fixture/config/lib.json",
+  "extends": "@bun-test-utils/config/lib.json",
   "include": ["src", "tests"]
 }
 ```

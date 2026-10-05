@@ -650,3 +650,525 @@ tasks:
       push_comments: false
     created_at: 2026-10-05T19:58:51.969Z
     updated_at: 2026-10-05T20:01:52.955Z
+  - id: task_016
+    title: Audit bun-test-utils for publication readiness (single-package exports,
+      optional peer deps, docs)
+    description: >-
+      RESOLVED across two grill-me sessions (2026-10-05). The project's
+      architecture is now settled by task_020 (single published package,
+      internal workspace packages per capability, flat subpath exports) — this
+      task narrows to a pure audit/QA pass over that final shape, not a
+      packaging decision of its own. The earlier 'optional/* convention applies
+      only to new additions' framing from session 1 is superseded: there is no
+      longer a distinction between existing and new capabilities, every one of
+      them (std, pbt, dom, browser, vcr, snapshot, bdd) is an internal
+      package folded into the single artifact the same way. Note: the
+      capability formerly named "fast-check" is renamed to "pbt" (Property
+      Based Tests) per a later user decision (2026-10-05) — it still wraps
+      the third-party `fast-check` library, only our package/subpath name
+      changes.
+
+
+      CHECKLIST (applies to the single published bun-test-utils package and its
+      internal workspace packages):
+
+      1. package.json exports map correctness for every subpath (., ./std,
+      ./vcr, ./dom, ./browser, ./pbt, ./snapshot, ./bdd) — types resolve,
+      ESM/CJS as applicable, no broken paths.
+
+      2. optionalDependencies / peerDependenciesMeta.optional correctness for
+      every heavy dep (playwright, happy-dom, fast-check,
+      @aboviq/bun-test-cucumber, vcr's/snapshot's own deps if any) — installing
+      none of them still lets 'bun add bun-test-utils' plus the core API work;
+      importing a gated subpath without its peer throws a clear, actionable
+      error naming the missing package.
+
+      3. LICENSE-MIT/LICENSE-APACHE present once, at the published package root
+      (no longer duplicated per internal package).
+
+      4. One consolidated README with a clear section per subpath, replacing the
+      old six-plus-one-README split; JSDoc completeness on every public export
+      across every subpath.
+
+      5. tsconfig consistency (strict mode, aligned targets) across every
+      internal workspace package feeding the build.
+
+      6. Code quality: no hardcoded @ alias paths in published output, no
+      console logging outside CLI/init, no circular dependencies between
+      internal packages, documented error types/messages (including the new
+      'missing optional peer dependency' error), clean per-subpath index.ts
+      re-exports.
+
+      7. Internal workspace packages (std, pbt, dom, browser, vcr,
+      snapshot, bdd) are all private: true and never appear in any npm publish
+      step — verified by pack.test.ts / CI.
+
+
+      defineFixtures()/createFixture()/useFixture() DX helpers remain out of
+      scope here; re-file separately if still wanted.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - audit
+      - packaging
+      - dx
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - bun-test-utils's exports map (., std, vcr, dom, browser, pbt,
+        snapshot, bdd) resolves correctly with proper types, ESM/CJS as
+        applicable
+      - "optionalDependencies/peerDependenciesMeta.optional correctness
+        verified: core works with zero optional peers installed; each gated
+        subpath throws a clear actionable error when its peer is missing"
+      - One LICENSE pair at the package root, one consolidated README with a
+        section per subpath, full JSDoc on public exports
+      - tsconfig consistency across all internal workspace packages; no
+        hardcoded @ alias paths, no circular dependencies, documented error
+        types
+      - All internal workspace packages confirmed private:true and absent from
+        any npm publish step
+    dependencies:
+      - task_018
+      - task_020
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T20:52:23.509Z
+    updated_at: 2026-10-05T21:44:24.116Z
+  - id: task_017
+    title: Add value/file snapshot testing fixture (@bun-fixture/snapshot)
+    description: >-
+      User-requested ecosystem package, implemented directly (not spec-first).
+
+      Provide a snapshot fixture that serializes a value or a file's contents
+      and compares it against a stored snapshot, following the same __<noun>__/
+      convention as @bun-fixture/vcr's __cassettes__. Spec:
+      docs/specs/0013-snapshot-testing.md.
+
+      STATUS: complete. snapshot.match(value, name?) and
+      snapshot.matchFile(path, name?) implemented; snapshot files land at
+      __snapshots__/<test name>.snap.json next to the test file (exposed as
+      snapshot.path); match/update/ci modes switchable via SNAPSHOT_MODE env var
+      or setMode(), with ci auto-selected when process.env.CI is set; multiple
+      snapshots per test auto-numbered (value, value 2, ...) or explicitly
+      named; pluggable addSerializer() running ahead of built-in
+      string/Error/sorted-key-JSON/String() fallbacks. All 8 acceptance criteria
+      covered by packages/snapshot/tests/snapshot.test.ts using scratch
+      testFiles so snapshot writes never land in the repo. Wired into the
+      monorepo: root package.json devDependency, root tsconfig.json path
+      mapping, packages/bun-fixture/tests/pack.test.ts PUBLISHABLE list (now
+      seven packages), M5-publish.md seven-package scope note, docs guide +
+      sidebar + reference/plugins.md, root README ecosystem table/install
+      line/repo map/roadmap.
+    source_links: []
+    status: done
+    priority: P2
+    labels:
+      - snapshot
+      - testing
+      - ecosystem
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - snapshot fixture serializes a value (match) or a file's contents
+        (matchFile) and compares it against a stored snapshot
+      - Missing snapshot is recorded in match mode (default outside CI) and
+        fails in ci mode
+      - Snapshot files live at __snapshots__/<test name>.snap.json next to the
+        test file, exposed as snapshot.path
+      - Multiple snapshots per test are addressable via auto-numbered or
+        explicit names
+      - Mode is switchable via SNAPSHOT_MODE env var or setMode(), defaulting to
+        ci under process.env.CI
+      - Custom serializers are pluggable via addSerializer() and run before the
+        built-in fallbacks
+      - A mismatch throws an error including both the stored and received values
+      - Package wired into pack.test.ts, root tsconfig/package.json, README and
+        docs site like the other five ecosystem packages
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T21:03:31.855Z
+    updated_at: 2026-10-05T21:03:37.984Z
+  - id: task_018
+    title: Rename bun-fixture to bun-test-utils AND consolidate to a single
+      published package (new ADR superseding ADR 0011)
+    description: >-
+      RESOLVED across two grill-me sessions on 2026-10-05. Session 1 confirmed
+      the name (bun-test-utils / @bun-test-utils/*) with the six existing
+      packages kept separate and published independently. Session 2 REVERSED the
+      separate-packages half: there is no longer an 'ecosystem of independently
+      published companion packages.' Both halves of ADR 0011 ('Brand Identity
+      and Modular Ecosystem Architecture') are now reversed, not just the name:
+
+
+      1. Name: bun-fixture -> bun-test-utils (unchanged from session 1).
+
+      2. Architecture: ADR 0011's 'microkernel + modular ecosystem of
+      independently published companion packages' (std, fast-check, dom,
+      browser, vcr, snapshot each as its own npm package) is replaced by:
+      exactly ONE published npm package, bun-test-utils, containing the core
+      engine plus every capability bundled in as a flat subpath export
+      (bun-test-utils/std, bun-test-utils/vcr, bun-test-utils/dom,
+      bun-test-utils/browser, bun-test-utils/pbt,
+      bun-test-utils/snapshot, bun-test-utils/bdd). The six existing packages
+      (plus the new bdd package, see ADR 0012/spec 0014) become internal,
+      unpublished (private: true) Bun workspace packages used only for source
+      organization and dependency isolation; they are never published to npm on
+      their own. The actual fold/bundle-pipeline work is task_020, not this
+      task.
+
+      2a. Naming (2026-10-05, later decision): the `fast-check` package/subpath
+      is additionally renamed to `pbt` (Property Based Tests) — directory
+      packages/fast-check -> packages/pbt, package.json name
+      @bun-fixture/fast-check -> @bun-test-utils/pbt, eventual subpath
+      bun-test-utils/pbt. This only renames OUR package; the underlying
+      third-party `fast-check` library dependency and its own API are
+      unchanged and still called `fast-check`. Update packages/pbt's
+      package.json description/keywords, its README/CHANGELOG, test file
+      names (tests/fastcheck.test.ts -> tests/pbt.test.ts or similar), and
+      every cross-reference in root README.md, apps/docs (guides/
+      property-based-testing.md, reference/api.md, reference/plugins.md),
+      tsconfig.json path aliases, and packages/bun-fixture's own
+      plugin.ts/pack.test.ts references to @bun-fixture/fast-check.
+
+
+      THIS task's scope is the naming half plus the ADR:
+
+      - New ADR superseding ADR 0011, recording BOTH reversed decisions (rebrand
+      + architecture) with rationale: nothing is published yet under any name,
+      so there is zero backward-compat cost to changing either; one install
+      target removes version-skew and cross-package-discovery overhead for
+      consumers; heavy per-capability deps (playwright, happy-dom, fast-check)
+      become optionalDependencies/peerDependenciesMeta.optional on the single
+      package instead of being forced via separate package installs.
+
+      - Rename the core package directory/package.json: packages/bun-fixture ->
+      packages/bun-test-utils.
+
+      - Rename every existing workspace package's package.json 'name' field
+      (@bun-fixture/* -> @bun-test-utils/*) — this is now purely an
+      internal/cosmetic workspace-linking identifier since none of them publish
+      standalone; actual bundling into one artifact happens in task_020.
+
+      - Update every hardcoded string literal referencing the old name (error
+      message prefixes like '[bun-fixture] ...', the CLI's generated bunfig.toml
+      preload path, scaffolded fixtures.ts comments) — decide rename vs
+      keep-for-compat for the BUN_FIXTURE_ROOT / BUN_FIXTURE_NO_AUTODISCOVER env
+      vars.
+
+      - Root tsconfig.json path aliases, bunfig.toml preload entries,
+      turbo.json/biome.json references to old package names.
+
+      - Root README.md and apps/docs Starlight site (title/description/site
+      config, astro.config.mjs 'site'/'base') updated for the new name — note:
+      once task_020 lands, the six per-package docs pages collapse into one
+      package's docs with per-subpath sections, so don't over-invest in
+      polishing six separate READMEs here; a short 'renamed, restructuring in
+      task_020' stub is enough for now.
+
+      - GitHub repository rename (Archont561/bun-fixtures -> matching new name)
+      and git remote URL update — still the repository owner's manual action,
+      not something the agent performs unilaterally. package.json
+      'repository'/'homepage'/'bugs' fields update accordingly once the owner
+      confirms the new repo URL.
+
+      - Full lint + typecheck + test + docs:build green after the rename.
+
+
+      Sequencing: task_018 (this, naming settled) -> task_020 (fold into one
+      published package) -> BDD bridge built directly as packages/bdd, folded in
+      by task_020 -> task_019 (conformance tests against final subpath exports)
+      -> task_016 (publication-readiness audit of the single final artifact) ->
+      M5 publish, no fixed cutoff.
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - rename
+      - branding
+      - architecture
+      - breaking-change
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - New ADR superseding ADR 0011 is written and accepted, recording BOTH the
+        rebrand and the single-published-package architecture reversal
+      - Core package renamed (directory + package.json) and every existing
+        workspace package's internal name updated to @bun-test-utils/* scope
+      - The fast-check package specifically is renamed to pbt (directory,
+        package.json name, docs, test file names) while the third-party
+        fast-check library dependency it wraps keeps its own name
+      - All hardcoded string literals (error prefixes, CLI preload path, env var
+        names) referencing the old name are updated or deliberately kept for
+        compat with a documented reason
+      - Root tsconfig/bunfig/turbo/biome configs, root README, and docs site
+        reflect the new name
+      - GitHub repository rename and git remote URL update confirmed with the
+        repository owner, not performed unilaterally
+      - Full lint + typecheck + test + docs:build pass after the rename
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T21:17:21.172Z
+    updated_at: 2026-10-05T21:43:12.584Z
+  - id: task_019
+    title: "Cross-package conformance testing: verify subpath exports compose (vcr +
+      std + bdd and beyond)"
+    description: >-
+      Depends on task_018 (rename) and task_020 (fold into one bun-test-utils
+      package with subpath exports) landing first.
+
+
+      Every capability in bun-test-utils (std, pbt, dom, browser, vcr,
+      snapshot, bdd) is tested in isolation inside its own internal workspace
+      package: each one's own tests/ directory calls its own fixtures.setup()
+      directly against a scratch FixtureContext, never through a shared engine
+      instance alongside sibling subpaths. Nothing today proves that multiple
+      subpaths actually compose correctly when a real consumer imports several
+      of them (bun-test-utils/vcr, bun-test-utils/std, bun-test-utils/bdd, ...)
+      into one real fixtures.ts under the real engine (shared scope cache,
+      correct cross-subpath LIFO teardown order, no name collisions, no
+      double-instantiation of a dependency two subpaths both pull in).
+
+
+      Add a dedicated conformance test suite
+      (packages/bun-test-utils/tests/conformance/) that runs real test() cases
+      against fixtures.ts files combining multiple subpaths' FixtureMaps via the
+      real preload/discovery path (not direct fixture.setup() calls) and via
+      real bun-test-utils/<name> subpath imports (not internal
+      workspace-relative imports), proving they interoperate as real
+      published-package consumers would use them together.
+
+
+      MINIMUM MATRIX:
+
+      - vcr + std: a cassette fixture recording/replaying into a path derived
+      from std's tmpdir fixture (cross-subpath data dependency), proving
+      teardown order and that both subpaths' fixtures resolve from one merged
+      FixtureMap without name collisions.
+
+      - vcr + bdd: a Cucumber Given/When/Then step (via the bun-test-utils/bdd
+      subpath's withFixtures bridge) requesting the cassette fixture from
+      bun-test-utils/vcr, proving record/replay works identically whether
+      requested from test() or from a BDD step.
+
+      - std + bdd: env/stdio/tmpdir fixtures requested from a BDD step, proving
+      sandboxing and restoration still happen correctly outside a test()
+      wrapper.
+
+      - vcr + std + bdd together: one three-way scenario combining all three in
+      a single feature file/fixtures.ts.
+
+      - At least one negative case: two fixtures.ts files declaring a fixture
+      with the same name in sibling directories, proving the documented
+      nearest-wins merge behaviour still holds when the colliding fixtures come
+      from different subpaths, not just hand-written test fixtures.
+
+
+      Also worth covering while in there (not required for the minimum bar, note
+      as follow-up if descoped): dom + browser (happy-dom globals vs real
+      Playwright context coexisting, blocked on task_013), pbt + vcr
+      (property-based test driving cassette replay per sample, using the
+      fast-check library via the pbt subpath).
+
+
+      Wire the new suite into turbo.json / root package.json test script and CI
+      so it runs on every push/PR like the existing pack.test.ts smoke test.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - testing
+      - conformance
+      - ecosystem
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - "vcr + std interoperate: cassette path derived from tmpdir, correct
+        cross-subpath teardown order verified"
+      - "vcr + bdd interoperate: a Cucumber step using the bun-test-utils/bdd
+        bridge gets identical record/replay behaviour to a plain test()"
+      - "std + bdd interoperate: env/stdio/tmpdir sandboxing and restoration
+        work correctly when resolved outside test()"
+      - A three-way vcr + std + bdd scenario passes in one fixtures.ts / feature
+        file
+      - A documented negative case proves nearest-directory-wins merge still
+        holds when colliding fixture names come from different subpaths
+      - Suite imports via real bun-test-utils/<name> subpaths and runs through
+        the real preload/discovery path, not direct fixture.setup() calls; wired
+        into turbo.json/CI like pack.test.ts
+    dependencies:
+      - task_018
+      - task_020
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T21:17:51.484Z
+    updated_at: 2026-10-05T21:44:08.688Z
+  - id: task_020
+    title: Fold all ecosystem packages into the single bun-test-utils package
+      (internal workspace packages + subpath exports)
+    description: >-
+      Executes the architecture reversal recorded in the ADR superseding ADR
+      0011 (authored in task_018): there is exactly ONE published npm package,
+      bun-test-utils; every capability is an internal, unpublished (private:
+      true) Bun workspace package bundled into it. Depends on task_018 (names
+      must be settled first).
+
+
+      SCOPE:
+
+      - Convert packages/std, pbt (renamed from fast-check in task_018), dom,
+      browser, vcr, snapshot (post task_018 rename, @bun-test-utils/* internal
+      names) to private: true workspace packages — remove any standalone
+      npm-publish metadata (public LICENSE duplication, standalone README
+      framed as an npm landing page, publishConfig) since they no longer ship
+      on their own.
+
+      - New internal packages/bdd workspace package (per ADR 0012 / spec 0014),
+      built the same way as the others from day one — it should never exist as a
+      standalone-publishable package at all.
+
+      - Build pipeline inside packages/bun-test-utils that compiles/bundles each
+      internal package's source into packages/bun-test-utils/dist/<name>/, wired
+      through an 'exports' map on the published package.json producing FLAT
+      subpath imports: bun-test-utils/std, bun-test-utils/vcr,
+      bun-test-utils/dom, bun-test-utils/browser, bun-test-utils/pbt,
+      bun-test-utils/snapshot, bun-test-utils/bdd (plus the bare bun-test-utils
+      entrypoint for the core engine). Types must resolve correctly per subpath.
+
+      - Heavy per-capability deps (playwright for browser, happy-dom for dom,
+      the fast-check library for the pbt subpath, bdd's
+      @aboviq/bun-test-cucumber, vcr/snapshot's own deps if any) become
+      optionalDependencies +
+      peerDependenciesMeta.optional entries on the single bun-test-utils
+      package.json. Importing a gated subpath without its peer dep installed
+      MUST throw a clear, actionable error naming the missing package and the
+      install command — never a silent crash or an unhelpful stack trace from
+      deep inside the bundle.
+
+      - CLI (bunx bun-test-utils init or equivalent) and every docs instruction
+      updated from 'bun add @bun-fixture/vcr' style to single-package-install +
+      subpath-import style ('bun add bun-test-utils' once, then 'bun add
+      playwright' only if using the browser subpath, etc.).
+
+      - Consolidate the six-plus-one separate package READMEs into one README
+      with a clear section per subpath — merge useful content, don't just delete
+      it; historical per-package CHANGELOGs can stay as internal changelog notes
+      but are no longer npm-facing.
+
+      - apps/docs Starlight site: every per-package reference page's install
+      instructions updated to the single-package + optional-peer-dep pattern.
+
+      - pack.test.ts (or equivalent publishable-package smoke test) updated:
+      asserts exactly one package (bun-test-utils) is publishable; every
+      internal workspace package asserts private: true and must never appear in
+      any npm-publish step or CI publish matrix.
+
+      - CI: collapse any per-package publish step into a single publish step for
+      bun-test-utils.
+
+      - Full lint + typecheck + test + docs:build green with the new
+      single-artifact shape.
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - architecture
+      - packaging
+      - breaking-change
+    repo_targets:
+      - bun-fixture
+    acceptance_criteria:
+      - Exactly one package (bun-test-utils) is marked publishable;
+        std/pbt/dom/browser/vcr/snapshot/bdd are all private:true
+        internal workspace packages
+      - bun-test-utils's exports map exposes bun-test-utils/std, /vcr, /dom,
+        /browser, /pbt, /snapshot, /bdd each resolving to real bundled
+        output with correct types
+      - Heavy peer deps (playwright, happy-dom, fast-check,
+        @aboviq/bun-test-cucumber) are
+        optionalDependencies/peerDependenciesMeta.optional, with a clear thrown
+        error (not a silent failure) when a subpath is imported without its peer
+        dep present
+      - README/docs/CLI instructions updated to single-package-install +
+        subpath-import style throughout
+      - pack.test.ts / CI publish step only ever publishes bun-test-utils
+      - Full lint + typecheck + test + docs:build pass with the new shape
+    dependencies:
+      - task_018
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-05T21:43:46.116Z
+    updated_at: 2026-10-05T21:43:50.310Z

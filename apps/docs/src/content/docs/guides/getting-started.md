@@ -1,9 +1,9 @@
 ---
 title: Getting Started
-description: Deep dive into setting up bun-fixture in your project.
+description: Deep dive into setting up bun-test-utils in your project.
 ---
 
-`bun-fixture` integrates directly with Bun's native test runner (`bun test`) to provide scoped fixture injection without global monkey-patching.
+`bun-test-utils` integrates directly with Bun's native test runner (`bun test`) to provide scoped fixture injection without global monkey-patching.
 
 ## How it works
 

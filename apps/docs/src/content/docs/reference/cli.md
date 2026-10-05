@@ -1,16 +1,16 @@
 ---
 title: CLI Reference
-description: Command-line interface reference for bun-fixture init.
+description: Command-line interface reference for bun-test-utils init.
 ---
 
 ## Commands
 
-### `bun-fixture init`
+### `bun-test-utils init`
 
-Initializes `bun-fixture` in the current project or workspace.
+Initializes `bun-test-utils` in the current project or workspace.
 
 ```bash
-bunx bun-fixture init [options]
+bunx bun-test-utils init [options]
 ```
 
 #### Options

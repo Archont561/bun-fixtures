@@ -15,5 +15,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0009](./0009-citty-for-the-cli.md) | citty for the CLI | accepted |
 | [0010](./0010-monorepo-layout.md) | Monorepo layout | accepted |
 | [0011](./0011-brand-identity-and-modular-ecosystem.md) | Brand identity and modular ecosystem architecture | accepted |
+| [0012](./0012-bdd-fixture-bridge.md) | BDD fixture bridge: narrow the Gherkin non-goal | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

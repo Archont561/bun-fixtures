@@ -1,6 +1,6 @@
 # docs (apps/docs)
 
-Documentation website for `bun-fixture` built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/).
+Documentation website for `bun-test-utils` built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/).
 
 ## Commands
 

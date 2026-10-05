@@ -22,18 +22,25 @@ refactors, CI tweaks, and `.backlog/` edits do not.
 
 ## How this repo is configured
 
+As of the `bun-test-utils` rebrand and single-package consolidation (see the ADR
+superseding ADR 0011, `task_018`/`task_020`), exactly **one** package ever publishes:
+`bun-test-utils`. The six capability packages it bundles (`std`, `pbt`, `dom`, `browser`,
+`vcr`, `snapshot`) are internal, unpublished (`private: true`) workspace packages nested
+inside it — changesets ignores them automatically, the same way it already ignored
+`@bun-test-utils/config` and `docs`.
+
 | Setting | Value | Why |
 |---------|-------|-----|
-| `access` | `public` | the six packages publish to the public npm registry |
+| `access` | `public` | `bun-test-utils` publishes to the public npm registry |
 | `baseBranch` | `main` | changed-package detection diffs against `main` |
-| `privatePackages` | not versioned or tagged | `@bun-fixture/config` and `docs` are `private` and never publish |
-| `updateInternalDependencies` | `patch` | a dependent gets a patch bump when a workspace dependency it depends on moves |
-| `fixed` / `linked` | empty | each package versions independently, per [spec 0005](../.backlog/docs/specs/0005-packaging-and-release.md) |
+| `privatePackages` | not versioned or tagged | every `private: true` workspace package (`@bun-test-utils/config` and the six bundled internal packages) is skipped |
+| `updateInternalDependencies` | `patch` | kept for workspace hygiene; with a single published package this mostly has nothing to do |
+| `fixed` / `linked` | empty | only one package versions, so there is nothing left to fix or link |
 | `commit` | `false` | lefthook runs commitlint, so commits stay hand-written and conventional |
 
 ## Before the first release
 
-Every package is still at an unpublished `0.1.0`. Changesets bumps *from* the
-current version, so a changeset landed now would make the first-ever release
-`0.1.1` and skip `0.1.0` entirely. Cut `0.1.0` first (M5 / `task_005`), then
-start accumulating changesets for `0.1.1` and beyond.
+The package is still at an unpublished `0.1.0`. Changesets bumps *from* the current
+version, so a changeset landed now would make the first-ever release `0.1.1` and skip
+`0.1.0` entirely. Cut `0.1.0` first (M5 / `task_005`), then start accumulating changesets
+for `0.1.1` and beyond.

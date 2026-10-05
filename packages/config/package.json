@@ -1,12 +1,12 @@
 {
-  "name": "@bun-fixture/config",
+  "name": "@bun-test-utils/config",
   "version": "0.1.0",
-  "description": "Shared TypeScript configurations for bun-fixture monorepo",
+  "description": "Shared TypeScript configurations for the bun-test-utils monorepo",
   "license": "MIT OR Apache-2.0",
   "author": "Archont561 (https://github.com/Archont561)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Archont561/bun-fixtures.git",
+    "url": "https://github.com/Archont561/bun-test-utils.git",
     "directory": "packages/config"
   },
   "exports": {

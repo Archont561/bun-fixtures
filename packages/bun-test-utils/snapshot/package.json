@@ -1,0 +1,22 @@
+{
+  "name": "@bun-test-utils/snapshot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal workspace package — value and file snapshot-testing fixtures for bun-test-utils. Bundled into the published bun-test-utils package as the \"bun-test-utils/snapshot\" subpath; never published on its own.",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "devDependencies": {
+    "@bun-test-utils/config": "workspace:*",
+    "bun-test-utils": "workspace:*"
+  }
+}

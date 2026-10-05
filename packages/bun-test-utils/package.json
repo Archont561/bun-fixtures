@@ -1,0 +1,82 @@
+{
+  "name": "bun-test-utils",
+  "version": "0.1.0",
+  "description": "pytest-style scoped, injectable fixtures for `bun test` — autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "author": "Archont561 (https://github.com/Archont561)",
+  "keywords": [
+    "bun",
+    "bun-test",
+    "fixtures",
+    "pytest",
+    "conftest",
+    "testing",
+    "dependency-injection",
+    "test-utils"
+  ],
+  "homepage": "https://archont561.github.io/bun-test-utils/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Archont561/bun-test-utils.git",
+    "directory": "packages/bun-test-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/Archont561/bun-test-utils/issues"
+  },
+  "main": "./src/plugin.ts",
+  "module": "./src/plugin.ts",
+  "types": "./src/types.ts",
+  "exports": {
+    ".": "./src/plugin.ts",
+    "./plugin": "./src/plugin.ts",
+    "./types": "./src/types.ts",
+    "./std": "./std/src/index.ts",
+    "./pbt": "./pbt/src/index.ts",
+    "./dom": "./dom/src/index.ts",
+    "./browser": "./browser/src/index.ts",
+    "./vcr": "./vcr/src/index.ts",
+    "./snapshot": "./snapshot/src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "std/src",
+    "pbt/src",
+    "dom/src",
+    "browser/src",
+    "vcr/src",
+    "snapshot/src",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "test:unit": "bun test tests/fixtures.test.ts tests/nested",
+    "test:bdd": "bun test tests/features.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "citty": "^0.2.2",
+    "smol-toml": "^1.9.0"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.40.0",
+    "happy-dom": "^20.14.5",
+    "fast-check": "^4.10.2"
+  },
+  "devDependencies": {
+    "@aboviq/bun-test-cucumber": "^0.2.0",
+    "@bun-test-utils/config": "workspace:*"
+  },
+  "bin": {
+    "bun-test-utils": "./src/cli.ts"
+  }
+}

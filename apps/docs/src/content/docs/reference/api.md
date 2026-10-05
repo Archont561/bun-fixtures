@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: Core TypeScript API reference for bun-fixture.
+description: Core TypeScript API reference for bun-test-utils.
 ---
 
 ## Exports
@@ -59,7 +59,7 @@ Guarantees:
 - Session- and file-scoped instances are shared between the wrapper and
   every iteration, through the normal scope caches.
 - `ctx.iterate` returns the result of the function it ran.
-- [`@bun-fixture/fast-check`](/bun-fixtures/guides/property-based-testing/)
+- [`bun-test-utils/pbt`](/bun-test-utils/guides/property-based-testing/)
   builds `test.prop` on this protocol: every generated sample — and every
   shrink candidate — runs through `ctx.iterate`, so no state can leak
   between iterations.
@@ -92,7 +92,7 @@ The full public type surface:
 | `IterateFn` | The `ctx.iterate` runner signature |
 
 ```ts
-import type { FixtureDef } from "bun-fixture";
+import type { FixtureDef } from "bun-test-utils";
 
 const db: FixtureDef<Db> = {
   scope: "file", // "session" | "file" | "test" (default)
@@ -110,8 +110,8 @@ const db: FixtureDef<Db> = {
 
 | Variable | Behaviour |
 | :-- | :-- |
-| `BUN_FIXTURE_ROOT` | Overrides the tree root used by discovery (defaults to `process.cwd()`) |
-| `BUN_FIXTURE_NO_AUTODISCOVER` | Skips the startup tree walk entirely when set |
+| `BUN_TEST_UTILS_ROOT` | Overrides the tree root used by discovery (defaults to `process.cwd()`) |
+| `BUN_TEST_UTILS_NO_AUTODISCOVER` | Skips the startup tree walk entirely when set |
 
 ## Engine & tooling exports
 
@@ -131,7 +131,7 @@ themselves:
 | `teardownFile(file)` / `teardownSession()` | LIFO teardown of file / session scopes |
 
 `detectFixtures` and `callerFile` exist for companion runners whose own
-callbacks wrap the fixture context. `@bun-fixture/fast-check` uses both:
+callbacks wrap the fixture context. `bun-test-utils/pbt` uses both:
 `detectFixtures` sees through the `(fixtures, values)` signature of
 `test.prop`, and `callerFile(ownIndexPath)` binds the calling test file
 through the wrapper's own stack frames — mirroring how the top-level `test`
