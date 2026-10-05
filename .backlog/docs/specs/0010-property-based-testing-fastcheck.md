@@ -1,8 +1,8 @@
 # 0010 — Property-Based Testing Integration with fast-check
 
-- **Status:** ready
-- **Implementation:** `packages/fast-check/` or `packages/bun-fixture/src/fastcheck/`
-- **Tests:** `packages/bun-fixture/tests/fastcheck.test.ts`
+- **Status:** implemented
+- **Implementation:** `packages/fast-check/` (`test.prop` built on the engine's `opts.iterate` protocol in `packages/bun-fixture/src/plugin.ts`)
+- **Tests:** `packages/fast-check/tests/fastcheck.test.ts`, engine protocol in `packages/bun-fixture/tests/fixtures.test.ts` ("iteration protocol (opts.iterate)")
 
 ## Problem
 
@@ -39,3 +39,14 @@ test.prop(
 
 - Tests verifying shrinking reproducer output.
 - Verification that fixture teardown hooks execute once per sample or test as configured.
+
+## Notes on the shipped design
+
+`prop` registers the property inside one `bun test` case declared with
+`opts.iterate` (`ctx.iterate`), the engine's per-sample fixture protocol: the
+wrapper test builds only session/file fixtures, and every `fc.assert` sample —
+including shrink candidates — runs through `ctx.iterate`, which rebuilds the
+test-scoped fixtures and unwinds them LIFO even when the predicate throws.
+Requested fixtures are auto-detected from the test function's destructured
+first parameter; the top-level `prop` resolves the calling test file per call
+via the exported `callerFile`, exactly like the engine's top-level `test`.

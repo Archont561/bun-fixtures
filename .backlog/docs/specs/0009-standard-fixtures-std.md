@@ -1,8 +1,8 @@
 # 0009 — Standard Built-in Fixtures (@bun-fixture/std)
 
-- **Status:** ready
-- **Implementation:** `packages/std/` or `packages/bun-fixture/src/std/`
-- **Tests:** `packages/bun-fixture/tests/std.test.ts`
+- **Status:** implemented
+- **Implementation:** `packages/std/`
+- **Tests:** `packages/std/tests/std.test.ts` (unit) and `packages/bun-fixture/tests/std.test.ts` (dogfooded through the engine via `packages/bun-fixture/tests/fixtures.ts`)
 
 ## Problem
 

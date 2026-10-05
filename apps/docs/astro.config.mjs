@@ -46,6 +46,14 @@ export default defineConfig({
               label: "Parameterized Fixtures",
               slug: "guides/parameterized-fixtures",
             },
+            {
+              label: "Property-Based Testing",
+              slug: "guides/property-based-testing",
+            },
+            {
+              label: "Recording HTTP Cassettes",
+              slug: "guides/recording-http-cassettes",
+            },
           ],
         },
         {

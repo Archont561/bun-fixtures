@@ -6,6 +6,17 @@
 export type Scope = "session" | "file" | "test";
 
 /**
+ * Runs `fn` with a fresh set of test-scoped fixtures: session- and
+ * file-scoped instances are shared with the test (and across calls), while
+ * test-scoped fixtures are built for this one call and torn down afterwards —
+ * strictly LIFO, even when `fn` throws. Property runners use it to give every
+ * generated sample and every shrink step its own fixture lifecycle.
+ */
+export type IterateFn = <T>(
+  fn: (ctx: FixtureContext) => T | Promise<T>,
+) => Promise<T>;
+
+/**
  * The object handed to a test body (and to fixture `setup` functions).
  *
  * Resolved fixture values are exposed as plain properties keyed by fixture
@@ -21,6 +32,13 @@ export interface FixtureContext {
   param?: any;
   /** Scope the fixture being set up is cached in. */
   scope?: Scope;
+  /**
+   * Per-iteration fixture runner — present only when the test was declared
+   * with `opts.iterate`. With that option, test-scoped fixtures are not
+   * built for the wrapper context at all; each `iterate` call builds them
+   * for one sample and unwinds them afterwards.
+   */
+  iterate?: IterateFn;
   /** Resolved dependencies, by fixture name. */
   [fixture: string]: any;
 }
@@ -64,6 +82,14 @@ export interface TestOptions {
   fixtures?: string[];
   /** Per-test timeout in milliseconds, forwarded to `bun:test`. */
   timeout?: number;
+  /**
+   * Defer test-scoped fixtures: the test's context receives session- and
+   * file-scoped values plus an `iterate` runner, and each `ctx.iterate(fn)`
+   * call builds (and unwinds) the test-scoped fixtures for one sample. For
+   * property-based tests and other companions that re-run a body many times
+   * inside one `bun test` case.
+   */
+  iterate?: boolean;
 }
 
 export type TestFn = (

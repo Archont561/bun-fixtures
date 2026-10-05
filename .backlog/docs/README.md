@@ -28,10 +28,10 @@ delivered but not all of them fully meet their acceptance criteria:
 |---------|------|------|--------|
 | `@bun-fixture/config` | [0008](./specs/0008-typescript-config-package.md) | `task_010` | ✅ done |
 | `apps/docs` (Starlight) | [0007](./specs/0007-apps-docs-starlight.md) | `task_009` | ✅ done |
-| `@bun-fixture/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011` | 🟡 not dogfooded by the core suite |
-| `@bun-fixture/fast-check` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012` | 🟡 no per-iteration fixture lifecycle |
+| `@bun-fixture/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011` | ✅ done |
+| `@bun-fixture/fast-check` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012` | ✅ done |
 | `@bun-fixture/dom` · `@bun-fixture/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013` | 🟡 Playwright path untested |
-| `@bun-fixture/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014` | 🟡 no `__cassettes__/` convention |
+| `@bun-fixture/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014` | ✅ done |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
 Each 🟡 task carries the precise remaining gap in its description —

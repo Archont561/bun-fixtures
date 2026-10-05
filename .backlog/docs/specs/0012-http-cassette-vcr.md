@@ -1,6 +1,6 @@
 # 0012 — HTTP Cassette / VCR Testing Fixture
 
-- **Status:** ready
+- **Status:** implemented
 - **Implementation:** `packages/vcr/` or `@bun-fixture/vcr`
 - **Tests:** `packages/vcr/tests/`
 
