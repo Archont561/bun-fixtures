@@ -1,19 +1,16 @@
 {
+  "extends": "./packages/config/base.json",
   "compilerOptions": {
-    "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-    "strict": true,
-    "skipLibCheck": true,
     "types": ["bun"],
-    "resolveJsonModule": true,
     "paths": {
       "@": ["./packages/bun-fixture/src/plugin.ts"],
-      "@/*": ["./packages/bun-fixture/*"]
+      "@/*": ["./packages/bun-fixture/*"],
+      "@bun-fixture/config/*": ["./packages/config/*"],
+      "@bun-fixture/std": ["./packages/std/src/index.ts"],
+      "@bun-fixture/fast-check": ["./packages/fast-check/src/index.ts"],
+      "@bun-fixture/dom": ["./packages/dom/src/index.ts"],
+      "@bun-fixture/browser": ["./packages/browser/src/index.ts"],
+      "@bun-fixture/vcr": ["./packages/vcr/src/index.ts"]
     }
   },
   "include": [

@@ -224,8 +224,8 @@ preserves the rest of the file) and scaffolds a root `fixtures.ts`.
 ---
 
 Limits, trade-offs, and what this deliberately does not do:
-[docs/caveats.md](../../docs/caveats.md). Design rationale:
-[docs/adr](../../docs/adr). Contributing: [the workspace
+[.backlog/docs/caveats.md](../../.backlog/docs/caveats.md). Design rationale:
+[.backlog/docs/adr](../../.backlog/docs/adr). Contributing: [the workspace
 root](../../README.md).
 
 MIT

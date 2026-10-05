@@ -5,9 +5,9 @@
 | Tool | Command | Use |
 |------|---------|-----|
 | Backlog | `bunx backlog status`, `bunx backlog board` | tasks, claims, orchestration (`.backlog/`) |
-| Skills | `bunx skills list` | agent skills installed into `.agents/skills` + `.claude/skills` |
+| Skills | `bunx skills list` | agent skills installed into `.agents/skills` |
 | Bun | `bun test`, `bun run typecheck` | the only build/test toolchain — no compile step |
-| Cucumber | `bun run test:bdd` | behavioural suite: `features/*.feature` + `tests/steps/` |
+| Cucumber | `bun run test:bdd` | behavioural suite: `packages/bun-fixture/features/*.feature` + `packages/bun-fixture/tests/steps/` |
 
 ## Installed skills
 
@@ -23,8 +23,8 @@ than symlinked into `node_modules` (which is gitignored and not portable).
 ## Where things live
 
 The repository is a Bun workspace. Package code and its tests are in
-`packages/bun-fixture`; Backlog, skills, and docs are at the root. `bun test`
-and `bun run typecheck` work from either place.
+`packages/bun-fixture`; Backlog, skills, and docs are at the root (docs in
+`.backlog/docs`). `bun test` and `bun run typecheck` work from either place.
 
 ## Loop
 
@@ -36,12 +36,12 @@ and `bun run typecheck` work from either place.
    through its own fixtures.
 4. **Green** — minimum change in `src/`.
 5. **Refactor** — apply the `refactor` skill; tests must stay green.
-6. **Verify** — `bun test && bunx tsc --noEmit`. Both are the definition of done.
+6. **Verify** — `bun test && bun run typecheck`. Both are the definition of done.
 7. **Move** the task: `bunx backlog task move <id> done`.
 
 ## Definition of done
 
 - `bun test` green from the repository root, including the behavioural suite.
 - `bun run typecheck` clean in every workspace package.
-- Public API change → README updated **and** the matching spec in `docs/specs/`.
-- Design change → a new ADR in `docs/adr/`, with the superseded one marked.
+- Public API change → README updated **and** the matching spec in `.backlog/docs/specs/`.
+- Design change → a new ADR in `.backlog/docs/adr/`, with the superseded one marked.

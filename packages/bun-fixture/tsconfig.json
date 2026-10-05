@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../config/lib.json",
   "compilerOptions": {
     "paths": {
       "@": ["./src/plugin.ts"],

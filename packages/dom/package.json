@@ -1,0 +1,35 @@
+{
+  "name": "@bun-fixture/dom",
+  "version": "0.1.0",
+  "description": "In-memory DOM and UI component testing fixtures for bun-fixture using happy-dom",
+  "type": "module",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "happy-dom": "^20.14.5"
+  },
+  "peerDependencies": {
+    "bun-fixture": "workspace:*"
+  },
+  "devDependencies": {
+    "@bun-fixture/config": "workspace:*",
+    "bun-fixture": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}

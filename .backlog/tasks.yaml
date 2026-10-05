@@ -53,7 +53,8 @@ tasks:
       - nearest directory wins, ancestors inherited, siblings invisible
       - idempotent across preload and direct import
       - BUN_FIXTURE_ROOT and BUN_FIXTURE_NO_AUTODISCOVER honoured
-    dependencies: []
+    dependencies:
+      - task_001
     planning:
       split_status: pending
       risk: medium
@@ -88,7 +89,9 @@ tasks:
       - idempotent, string preload normalized to a list, other sections preserved
       - scaffolds root fixtures.ts, --force to overwrite
       - warns about TOML comment loss
-    dependencies: []
+    dependencies:
+      - task_001
+      - task_002
     planning:
       split_status: pending
       risk: medium
@@ -125,7 +128,10 @@ tasks:
         project
       - README covers quickstart, scopes, DI, params, caveats
       - docs/ carries specs, milestones, ADRs and the workflow
-    dependencies: []
+    dependencies:
+      - task_001
+      - task_002
+      - task_003
     planning:
       split_status: pending
       risk: medium
@@ -161,7 +167,12 @@ tasks:
         runs the quickstart
       - LICENSE, CHANGELOG and a v0.1.0 tag
       - published package verified by rerunning the e2e harness
-    dependencies: []
+    dependencies:
+      - task_001
+      - task_002
+      - task_003
+      - task_004
+      - task_008
     planning:
       split_status: pending
       risk: medium
@@ -199,7 +210,10 @@ tasks:
         imports
       - scratch projects removed after each scenario
       - runs under plain bun test via tests/features.test.ts
-    dependencies: []
+    dependencies:
+      - task_001
+      - task_002
+      - task_003
     planning:
       split_status: pending
       risk: medium
@@ -233,7 +247,8 @@ tasks:
       - typed args with defaults and generated help/version
       - init body exported and callable in-process for tests
       - argument parsing covered via citty runCommand
-    dependencies: []
+    dependencies:
+      - task_003
     planning:
       split_status: pending
       risk: medium
@@ -269,7 +284,10 @@ tasks:
       - Backlog, skills and docs stay at the repository root and out of the
         tarball
       - "@ alias still resolves to the package root from either cwd"
-    dependencies: []
+    dependencies:
+      - task_004
+      - task_006
+      - task_007
     planning:
       split_status: pending
       risk: medium
@@ -314,7 +332,9 @@ tasks:
         created to build and publish docs to GitHub Pages on push to main
       - Build artifact verified via bun run --filter docs build (or workspace
         build)
-    dependencies: []
+    dependencies:
+      - task_008
+      - task_010
     planning:
       split_status: pending
       risk: medium
@@ -358,7 +378,8 @@ tasks:
       - Existing tsconfig files (root and packages/bun-fixture) refactored to
         extend shared configs
       - bun run typecheck passes across all workspaces without errors
-    dependencies: []
+    dependencies:
+      - task_008
     planning:
       split_status: pending
       risk: medium
@@ -398,7 +419,9 @@ tasks:
       - stdio fixture captures stdout/stderr writes without leaking output and
         restores streams on teardown
       - Dogfooded in packages/bun-fixture test suites
-    dependencies: []
+    dependencies:
+      - task_008
+      - task_010
     planning:
       split_status: pending
       risk: medium
@@ -436,7 +459,10 @@ tasks:
         fixtures cleanly recreate or reset
       - Shrink cycles properly execute fixture teardown without leaking state
       - Full test coverage with example property test suites
-    dependencies: []
+    dependencies:
+      - task_008
+      - task_010
+      - task_011
     planning:
       split_status: pending
       risk: medium
@@ -478,7 +504,9 @@ tasks:
       - Ephemeral Bun.serve test server fixture for booting local web servers on
         random free ports
       - Component and E2E test examples verifying DOM and browser interaction
-    dependencies: []
+    dependencies:
+      - task_008
+      - task_010
     planning:
       split_status: pending
       risk: medium
@@ -519,7 +547,9 @@ tasks:
       - Supports record/replay modes via environment variable (e.g.
         VCR_MODE=record|replay)
       - Automatic fetch restoration on test teardown
-    dependencies: []
+    dependencies:
+      - task_008
+      - task_010
     planning:
       split_status: pending
       risk: medium

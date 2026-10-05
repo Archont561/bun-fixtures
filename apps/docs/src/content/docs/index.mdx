@@ -1,0 +1,107 @@
+---
+title: bun-fixture
+description: pytest-style scoped, injectable fixtures for bun test — autodiscovered per directory.
+template: splash
+hero:
+  tagline: Scoped, injectable, autodiscovered fixtures for bun test with guaranteed LIFO teardown and zero globals.
+  image:
+    file: ../../assets/logo-light.svg
+  actions:
+    - text: Get Started
+      link: /bun-fixtures/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/Archont561/bun-fixtures
+      icon: external
+      variant: minimal
+---
+
+## Why bun-fixture?
+
+`bun:test` is blazing fast, but test setup in complex projects quickly degenerates into brittle `beforeEach` chains, duplicated boilerplate, and leaky teardown state.
+
+`bun-fixture` brings **pytest-style dependency injection** to `bun test`:
+
+```ts
+import { test, expect } from "bun-fixture";
+
+test("creates and verifies a user", async ({ db, user }) => {
+  expect(await db.find(user.id)).toMatchObject({ name: "ada" });
+});
+```
+
+No manual wiring, no global mocks. `db` and `user` are declared in `fixtures.ts`, built in topological order, injected into tests, and cleanly destroyed in reverse (LIFO) order.
+
+---
+
+## Core Capabilities
+
+<div class="feature-grid">
+  <div class="feature-card">
+    <h3>⏱️ Scoped Lifecycles</h3>
+    <p>Declare fixtures at <code>session</code>, <code>file</code>, or <code>test</code> scope. Long-lived dependencies are cached and shared; short-lived ones reset per test.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🌳 Directory Inheritance</h3>
+    <p>Place <code>fixtures.ts</code> anywhere in your folder structure. Child folders inherit fixtures from ancestors with nearest-wins overrides.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🔄 Guaranteed LIFO Teardown</h3>
+    <p>One setup function handles both preparation and teardown via <code>await use(val)</code>. Cleanup is guaranteed even when test assertions fail.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>✖️ Parameter Matrices</h3>
+    <p>Parameterize fixtures to automatically run tests across the Cartesian product of combinations.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🛡️ Fail-Fast Validation</h3>
+    <p>Dependency cycles, missing fixtures, and lifetime scope violations are caught during test collection before any assertion executes.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>📦 Modular Ecosystem</h3>
+    <p>Cherry-pick official companion plugins: <code>@bun-fixture/std</code>, <code>@bun-fixture/fast-check</code>, <code>@bun-fixture/dom</code>, <code>@bun-fixture/browser</code>, and <code>@bun-fixture/vcr</code>.</p>
+  </div>
+</div>
+
+---
+
+## Quick Setup
+
+Initialize your repository in one command:
+
+```bash
+bun add -d bun-fixture
+bunx bun-fixture init
+```
+
+This updates your `bunfig.toml` preload configuration and scaffolds a starter `fixtures.ts`:
+
+```ts
+// fixtures.ts
+export default {
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close(); // teardown runs here!
+    },
+  },
+};
+```
+
+---
+
+## Next Steps
+
+- [Quickstart](/bun-fixtures/quickstart/) — 5-minute tutorial
+- [Getting Started Guide](/bun-fixtures/guides/getting-started/) — Comprehensive setup
+- [Scopes & Teardown](/bun-fixtures/guides/scopes-and-teardown/) — Session, file, and test lifetimes
+- [Plugins & Ecosystem](/bun-fixtures/reference/plugins/) — Standard fixtures, DOM, VCR & PBT
+- [API Reference](/bun-fixtures/reference/api/) — Complete engine and type documentation

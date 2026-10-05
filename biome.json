@@ -12,8 +12,9 @@
       "!.agents",
       "!.backlog",
       "!node_modules",
-      "!dist",
-      "!build"
+      "!**/dist",
+      "!**/build",
+      "!**/.astro"
     ]
   },
   "formatter": {

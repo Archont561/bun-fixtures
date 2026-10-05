@@ -6,12 +6,12 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 
 | # | Spec | Status | Implementation |
 |---|------|--------|----------------|
-| [0001](./0001-fixture-engine.md) | Fixture engine — scopes, teardown, DI, params | implemented | `src/plugin.ts` |
-| [0002](./0002-discovery-and-merge.md) | Preload discovery + directory merge | implemented | `src/plugin.ts` |
-| [0003](./0003-cli-init.md) | CLI `init` | implemented | `src/cli.ts` |
-| [0004](./0004-public-api-and-types.md) | Public API + types | implemented | `src/plugin.ts`, `src/types.ts` |
-| [0005](./0005-packaging-and-release.md) | Packaging and release | draft | `package.json` |
-| [0006](./0006-behavioural-test-suite.md) | Behavioural (Gherkin) test suite | implemented | `features/`, `tests/steps/` |
+| [0001](./0001-fixture-engine.md) | Fixture engine — scopes, teardown, DI, params | implemented | `packages/bun-fixture/src/plugin.ts` |
+| [0002](./0002-discovery-and-merge.md) | Preload discovery + directory merge | implemented | `packages/bun-fixture/src/plugin.ts` |
+| [0003](./0003-cli-init.md) | CLI `init` | implemented | `packages/bun-fixture/src/cli.ts` |
+| [0004](./0004-public-api-and-types.md) | Public API + types | implemented | `packages/bun-fixture/src/plugin.ts`, `packages/bun-fixture/src/types.ts` |
+| [0005](./0005-packaging-and-release.md) | Packaging and release | ready | `packages/bun-fixture/package.json` |
+| [0006](./0006-behavioural-test-suite.md) | Behavioural (Gherkin) test suite | implemented | `packages/bun-fixture/features/`, `packages/bun-fixture/tests/steps/` |
 | [0007](./0007-apps-docs-starlight.md) | Documentation site with Astro Starlight & GitHub Pages | ready | `apps/docs/`, `.github/workflows/deploy-docs.yml` |
 | [0008](./0008-typescript-config-package.md) | Monorepo-wide TypeScript Configuration Package | ready | `packages/config/`, `tsconfig.json` |
 | [0009](./0009-standard-fixtures-std.md) | Standard Built-in Fixtures (tmpdir, env, stdio) | ready | `packages/std/`, `packages/bun-fixture/` |
