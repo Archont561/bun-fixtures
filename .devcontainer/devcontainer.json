@@ -1,0 +1,63 @@
+{
+  "name": "bun-fixture",
+
+  // Node is the base image because Bun is installed through npm below — the
+  // same bootstrap CI and .agents/skills/session use. Node also stays useful
+  // on its own: `npm publish` and `node -p` are part of the release path.
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22-bookworm",
+
+  "features": {
+    // The session skill drives `gh` for PRs, runs and post-merge checks.
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Pin Bun to whatever `packageManager` says instead of hardcoding a version
+  // here — one source of truth, so this file cannot drift from the manifest.
+  // `--frozen-lockfile` matches CI: it fails loudly when bun.lock and the
+  // manifests disagree rather than quietly resolving something new. It also
+  // runs `prepare` (lefthook install), which is what puts the git hooks into
+  // a fresh clone.
+  "postCreateCommand": "npm i -g $(node -p \"require('./package.json').packageManager\") && bun install --frozen-lockfile",
+  "waitFor": "postCreateCommand",
+
+  "forwardPorts": [4321, 7878],
+  "portsAttributes": {
+    "4321": {
+      "label": "Docs (Astro + Starlight)",
+      "onAutoForward": "notify"
+    },
+    "7878": {
+      "label": "Backlog board",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "oven.bun-vscode",
+        "biomejs.biome",
+        "astro-build.astro-vscode",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "quickfix.biome": "explicit",
+          "source.organizeImports.biome": "explicit"
+        },
+        "[json][jsonc][yaml][markdown]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+        "files.eol": "\n",
+        // Use the workspace TypeScript, not the one bundled with VS Code.
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "remoteUser": "node"
+}
