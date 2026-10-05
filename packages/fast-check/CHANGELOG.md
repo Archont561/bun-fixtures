@@ -4,7 +4,5 @@
 
 Initial release: property-based testing with fixture injection, powered by `fast-check`.
 
-- `test.prop` combines `fast-check` arbitraries with injected `bun-fixture` fixtures, and reports minimal counterexamples alongside the active fixture context.
-- Session and file scoped fixtures are preserved across property iterations.
-
-Known limitation: test-scoped fixtures are resolved once per property run, not recreated per iteration or shrink — the per-iteration fixture lifecycle is tracked for a follow-up release.
+- `test.prop` combines `fast-check` arbitraries with injected `bun-fixture` fixtures, and reports minimal counterexamples alongside the active fixture parameters. Requested fixtures are auto-detected from the test function's destructured first parameter, or listed with `opts.fixtures`.
+- Per-iteration fixture lifecycle: session and file scoped fixtures are shared across the property run, while test-scoped fixtures are rebuilt for every generated sample — and every shrink step — and torn down LIFO, with no state leaked between iterations (engine `opts.iterate` protocol, `bun-fixture >= 0.1.0`).

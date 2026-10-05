@@ -118,6 +118,84 @@ describe("parameterization", () => {
   });
 });
 
+describe("iteration protocol (opts.iterate)", () => {
+  test(
+    "builds test-scoped fixtures per ctx.iterate call while session/file stay shared",
+    async (ctx) => {
+      // The wrapper context holds no test-scope values…
+      expect("tmp" in ctx).toBe(false);
+      // …but session and file fixtures are built eagerly.
+      expect(Array.isArray(ctx.events)).toBe(true);
+      expect(Array.isArray(ctx.db.rows)).toBe(true);
+
+      const before = ctx.events.length;
+      const rowsBefore = ctx.db.rows.length;
+      const first = await ctx.iterate!((i) => {
+        i.db.rows.push("from-iteration-1");
+        return i.tmp;
+      });
+      const second = await ctx.iterate!((i) => i.tmp);
+
+      // A fresh test-scope instance per call…
+      expect(first).not.toBe(second);
+      // …while the file-scope instance is shared — across iterations and
+      // with the wrapper.
+      expect(ctx.db.rows.slice(rowsBefore)).toEqual(["from-iteration-1"]);
+
+      // Each call built tmp and tore it down, strictly LIFO.
+      expect(ctx.events.slice(before)).toEqual([
+        "tmp:setup",
+        "tmp:teardown",
+        "tmp:setup",
+        "tmp:teardown",
+      ]);
+    },
+    { fixtures: ["events", "db", "tmp"], iterate: true },
+  );
+
+  test(
+    "runs full teardown on every iterate call, even when the body throws",
+    async (ctx) => {
+      const before = ctx.events.length;
+      let calls = 0;
+      const run = (fail: boolean) =>
+        ctx.iterate!(() => {
+          calls++;
+          if (fail) throw new Error("predicate failed — a shrink step");
+        });
+
+      await run(false);
+      await expect(run(true)).rejects.toThrow("predicate failed");
+      await run(false);
+
+      expect(calls).toBe(3);
+      // Property runners need exactly this guarantee for shrink cycles:
+      // teardown executes per sample and nothing leaks across failures.
+      expect(ctx.events.slice(before)).toEqual([
+        "tmp:setup",
+        "tmp:teardown",
+        "tmp:setup",
+        "tmp:teardown",
+        "tmp:setup",
+        "tmp:teardown",
+      ]);
+    },
+    { fixtures: ["events", "tmp"], iterate: true },
+  );
+
+  test(
+    "returns the body result and skips test-scope instantiation at the wrapper",
+    async (ctx) => {
+      const before = ctx.events.length;
+      const out = await ctx.iterate!(() => 42);
+      expect(out).toBe(42);
+      // Nothing happened before the iterate call — tmp is built per call.
+      expect(ctx.events.slice(before)).toEqual(["tmp:setup", "tmp:teardown"]);
+    },
+    { fixtures: ["events", "tmp"], iterate: true },
+  );
+});
+
 describe("engine internals", () => {
   const map = fixturesFor(here);
 

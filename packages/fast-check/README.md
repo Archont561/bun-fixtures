@@ -4,9 +4,9 @@ Property-Based Testing (PBT) integration for `bun-fixture` powered by `fast-chec
 
 ## Features
 
-- **`test.prop`**: Seamlessly combine `fast-check` Arbitraries with injected `bun-fixture` fixtures.
-- **Fixture Lifecycle**: Preserves session and file fixtures across iteration runs.
-- **Shrinking**: Automatically reports minimal counterexamples alongside active test fixtures.
+- **`test.prop`**: Seamlessly combine `fast-check` Arbitraries with injected `bun-fixture` fixtures — requested fixtures are auto-detected from the destructured first parameter, or listed explicitly via `opts.fixtures`.
+- **Per-iteration Fixture Lifecycle**: session and file fixtures are shared across the whole property run, while test-scoped fixtures are rebuilt and torn down (LIFO) for every generated sample — and for every shrink step (powered by the engine's `opts.iterate` protocol).
+- **Shrinking**: Automatically reports minimal counterexamples alongside the active fixture parameters.
 
 ## Installation
 

@@ -123,12 +123,13 @@ Teardown is **LIFO** — dependents before their dependencies.
 
 | Surface | API today | Role |
 | --- | --- | --- |
-| Test | `test(name, fn, opts?)` | Fixture-aware test; finds its own file from the stack |
+| Test | `test(name, fn, opts?)` | Fixture-aware test; finds its own file from the stack. `opts`: `{ fixtures?, timeout?, iterate? }` |
 | Test | `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
 | Test | `expect`, `describe` | Re-exported from `bun:test`, unchanged |
+| Iteration | `opts.iterate` → `ctx.iterate(fn)` | Defer test-scoped fixtures: each `ctx.iterate` call builds them fresh and unwinds them LIFO — the per-sample lifecycle property runners use (see [`@bun-fixture/fast-check`](./packages/fast-check)) |
 | CLI | `bunx bun-fixture init [--dir] [--entry] [--force]` | Append the preload to `bunfig.toml` and scaffold a root `fixtures.ts` |
-| Types | `FixtureDef`, `FixtureMap`, `FixtureContext`, `Scope`, `TestOptions` | The public type surface |
-| Engine | `discoverFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `teardownFile`, `teardownSession` | Internals exported for tooling and for testing fixture trees |
+| Types | `FixtureDef`, `FixtureMap`, `FixtureContext`, `Scope`, `TestOptions`, `IterateFn` | The public type surface |
+| Engine | `discoverFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession` | Internals exported for tooling and for testing fixture trees |
 
 Two environment variables override discovery: `BUN_FIXTURE_ROOT` sets the tree root, and
 `BUN_FIXTURE_NO_AUTODISCOVER` disables the startup walk entirely.

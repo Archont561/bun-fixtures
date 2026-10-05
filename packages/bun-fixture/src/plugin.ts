@@ -22,6 +22,7 @@ import type {
   FixtureContext,
   FixtureDef,
   FixtureMap,
+  IterateFn,
   Scope,
   TestFn,
   TestOptions,
@@ -31,6 +32,7 @@ export type {
   FixtureContext,
   FixtureDef,
   FixtureMap,
+  IterateFn,
   Scope,
   TestFn,
   TestOptions,
@@ -68,7 +70,13 @@ interface State {
 }
 
 /** Context keys that are metadata, not fixtures — ignored during auto-detection. */
-const META_KEYS = new Set(["testFile", "testName", "param", "scope"]);
+const META_KEYS = new Set([
+  "testFile",
+  "testName",
+  "param",
+  "scope",
+  "iterate",
+]);
 
 const SCOPE_RANK: Record<Scope, number> = { session: 0, file: 1, test: 2 };
 const FIXTURE_FILENAMES = [
@@ -221,6 +229,19 @@ export function fixturesFor(testFile: string): FixtureMap {
 /* -------------------------------------------------------------------------- */
 /* Dependency / parameter planning                                            */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Auto-detection of the fixtures a function requests from its destructured
+ * parameter, metadata keys excluded. Exported for companion runners
+ * (e.g. @bun-fixture/fast-check) whose own callback signatures wrap the
+ * fixture context.
+ */
+export function detectFixtures(
+  fn: (...args: any[]) => any,
+  index: number,
+): string[] {
+  return destructuredKeys(fn, index).filter((n) => !META_KEYS.has(n));
+}
 
 /** Extracts the identifiers of a destructured parameter: `(use, { db, api })`. */
 export function destructuredKeys(
@@ -567,9 +588,7 @@ function makeTest(file: string): TestFn {
   const abs = resolve(file);
   return (name, fn, opts?: TestOptions) => {
     const map = fixturesFor(abs);
-    const requested =
-      opts?.fixtures ??
-      destructuredKeys(fn, 0).filter((n) => !META_KEYS.has(n));
+    const requested = opts?.fixtures ?? detectFixtures(fn, 0);
     const order = resolveOrder(requested, map, abs);
     const combos = paramCombos(order, map);
 
@@ -579,16 +598,52 @@ function makeTest(file: string): TestFn {
         await enterFile(abs);
         const testStack: Array<() => Promise<void>> = [];
         const ctx: FixtureContext = { testFile: abs, testName };
-        try {
-          for (const fixture of order) {
-            ctx[fixture] = await instantiate(
+
+        const buildAll = async (
+          target: FixtureContext,
+          stack: Array<() => Promise<void>>,
+          names: string[],
+        ) => {
+          for (const fixture of names) {
+            target[fixture] = await instantiate(
               fixture,
               map,
-              ctx,
+              target,
               abs,
               combo,
-              testStack,
+              stack,
             );
+          }
+        };
+
+        try {
+          if (opts?.iterate) {
+            // Defer test-scope fixtures to ctx.iterate: the wrapper context
+            // holds only session/file values, and each iterate() call builds
+            // a fresh set of test-scope fixtures with LIFO unwind — the
+            // per-sample lifecycle property runners need.
+            ctx.iterate = (async <T>(
+              fn2: (iterCtx: FixtureContext) => T | Promise<T>,
+            ): Promise<T> => {
+              const iterStack: Array<() => Promise<void>> = [];
+              const iterCtx: FixtureContext = {
+                testFile: abs,
+                testName,
+              };
+              try {
+                await buildAll(iterCtx, iterStack, order);
+                return await fn2(iterCtx);
+              } finally {
+                await unwind(iterStack);
+              }
+            }) satisfies IterateFn;
+            await buildAll(
+              ctx,
+              testStack,
+              order.filter((n) => scopeOf(map[n]!) !== "test"),
+            );
+          } else {
+            await buildAll(ctx, testStack, order);
           }
           await fn(ctx);
         } finally {
@@ -667,12 +722,28 @@ const SELF_PATHS = new Set(
   ].filter(Boolean),
 );
 
-function callerFile(): string {
+/**
+ * Detects the nearest caller file outside this module (and outside
+ * `extraSelf`, when given) from the stack trace.
+ *
+ * Exported for companion runners such as @bun-fixture/fast-check: their
+ * wrappers (`test.prop`, `createPropTest`) sit between the test file and the
+ * engine, so they detect their caller with `callerFile(ownIndexPath)` and
+ * bind a per-file runner of their own — mirroring the top-level `test`.
+ */
+export function callerFile(extraSelf?: string | string[]): string {
+  const skip =
+    extraSelf === undefined
+      ? SELF_PATHS
+      : new Set([
+          ...SELF_PATHS,
+          ...(Array.isArray(extraSelf) ? extraSelf : [extraSelf]),
+        ]);
   const stack = new Error().stack ?? "";
   const re = /((?:\/|[A-Za-z]:\\)[^\s()]+?\.(?:[cm]?[tj]sx?)):\d+(?::\d+)?/g;
   for (const match of stack.matchAll(re)) {
     const file = match[1]!;
-    if (SELF_PATHS.has(file)) continue;
+    if (skip.has(file)) continue;
     if (file.includes(`${sep}node_modules${sep}bun-fixture${sep}`)) continue;
     if (file.startsWith("bun:") || file.includes("node:internal")) continue;
     return file;

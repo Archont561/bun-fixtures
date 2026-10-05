@@ -12,10 +12,10 @@
 | R1 | `import { test, expect, describe } from "bun-fixture"` MUST work with no global monkey-patching |
 | R2 | The top-level `test` MUST detect its own file from the stack trace, including frames without a column number and through symlinked (`npm link`, `bunx`) package paths |
 | R3 | `createTest(file?)` MUST return `{ test, describe, expect }` bound to an explicit file |
-| R4 | `test(name, fn, opts?)` MUST accept `{ fixtures?: string[]; timeout?: number }` |
-| R5 | Context metadata (`testFile`, `testName`, `param`, `scope`) MUST be injectable but MUST NOT be treated as fixtures |
-| R6 | `FixtureDef`, `Scope`, `FixtureContext`, `FixtureMap`, `TestOptions`, `UseFn` MUST be exported as types |
-| R7 | Engine internals (`discoverFixtures`, `registerFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `destructuredKeys`, `teardownFile`, `teardownSession`) SHOULD be exported for tooling |
+| R4 | `test(name, fn, opts?)` MUST accept `{ fixtures?: string[]; timeout?: number; iterate?: boolean }`; with `iterate: true` the context MUST carry an `iterate` runner and MUST NOT hold test-scoped values |
+| R5 | Context metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) MUST be injectable but MUST NOT be treated as fixtures |
+| R6 | `FixtureDef`, `Scope`, `FixtureContext`, `FixtureMap`, `TestOptions`, `UseFn`, `IterateFn` MUST be exported as types |
+| R7 | Engine internals (`discoverFixtures`, `registerFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `destructuredKeys`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession`) SHOULD be exported for tooling |
 | R8 | The package MUST typecheck under `strict` with no `any` leaking into signatures other than fixture values |
 
 ## Design
@@ -38,6 +38,6 @@ than in `import.meta`.
 |-------------|------|
 | R2 | every test in `tests/fixtures.test.ts` (top-level `test`), "exposes test metadata on the context" |
 | R3 | "createTest binds to an explicit file", all of `tests/nested/nested.test.ts` |
-| R4 | "supports an explicit fixture list", "a fresh project…" (`{ timeout: 30_000 }`) |
+| R4 | "supports an explicit fixture list", "a fresh project…" (`{ timeout: 30_000 }`), all of "iteration protocol (opts.iterate)" |
 | R5 | "exposes test metadata on the context" |
 | R8 | `bunx tsc --noEmit` in CI |
