@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.tmp-*
+.backlog/cache/
+.backlog/worktrees/
+.turbo/

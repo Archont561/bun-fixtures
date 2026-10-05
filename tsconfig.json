@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["bun"],
+    "resolveJsonModule": true,
+    "paths": {
+      "@": ["./packages/bun-fixture/src/plugin.ts"],
+      "@/*": ["./packages/bun-fixture/*"]
+    }
+  },
+  "include": [
+    "packages/*/src",
+    "packages/*/tests",
+    "packages/*/test-plugins.ts",
+    "apps/**/*"
+  ]
+}

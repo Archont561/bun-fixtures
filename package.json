@@ -1,0 +1,39 @@
+{
+  "name": "bun-fixture-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:bdd": "turbo run test:bdd",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "dev": "turbo run dev",
+    "prepare": "lefthook install",
+    "board": "backlog board",
+    "status": "backlog status"
+  },
+  "packageManager": "bun@1.4.2",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@types/bun": "^1.4.2",
+    "backlog": "^1.4.56",
+    "bun-fixture": "workspace:*",
+    "lefthook": "^2.1.17",
+    "skills": "^1.7.0",
+    "turbo": "^2.11.7",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}

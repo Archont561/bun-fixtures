@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@": ["./src/plugin.ts"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["src", "tests", "test-plugins.ts"]
+}

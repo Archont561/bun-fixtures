@@ -1,0 +1,7 @@
+# Monorepo-wide test config: `bun test` from the repository root.
+# Each package also has its own bunfig.toml for `cd packages/<pkg> && bun test`.
+[test]
+preload = [
+  "./packages/bun-fixture/src/plugin.ts",
+  "./packages/bun-fixture/test-plugins.ts",
+]

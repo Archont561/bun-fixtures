@@ -1,0 +1,22 @@
+# Lefthook Git hooks
+# https://github.com/evilmartians/lefthook
+
+commit-msg:
+  commands:
+    commitlint:
+      run: bunx commitlint --edit {1}
+
+pre-commit:
+  parallel: true
+  commands:
+    biome-check:
+      glob: "*.{js,ts,cjs,mjs,json,jsonc}"
+      run: bunx biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    typecheck:
+      run: bunx turbo run typecheck
+
+pre-push:
+  commands:
+    test:
+      run: bunx turbo run test
