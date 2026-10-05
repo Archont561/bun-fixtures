@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["bun"],
     "paths": {
-      "bun-fixture": ["../../packages/bun-fixture/src/plugin.ts"]
+      "bun-test-utils": ["../../packages/bun-test-utils/src/plugin.ts"]
     }
   },
   "include": [".astro/types.d.ts", "**/*"]

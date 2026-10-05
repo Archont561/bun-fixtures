@@ -1,9 +1,9 @@
 ---
 name: session
-description: Run a bun-fixture work session end to end — install the toolchain, restore the locked workspace, survey the Backlog, propose the session, and once work lands on main (a merged pull request or a direct push) report it and write the next session's opening prompt. Use at the start of any session on this repository, when the user says to initialize/bootstrap the environment, pick up tasks from the backlog, or asks what to work on; and again at the end, when work has landed or the user asks for a session report, a hand-off, or what the next session should start with.
+description: Run a bun-test-utils work session end to end — install the toolchain, restore the locked workspace, survey the Backlog, propose the session, and once work lands on main (a merged pull request or a direct push) report it and write the next session's opening prompt. Use at the start of any session on this repository, when the user says to initialize/bootstrap the environment, pick up tasks from the backlog, or asks what to work on; and again at the end, when work has landed or the user asks for a session report, a hand-off, or what the next session should start with.
 ---
 
-# Session lifecycle for bun-fixture
+# Session lifecycle for bun-test-utils
 
 A session is a loop with five phases, and this file sequences all of them: **(1)** bring the
 toolchain up, **(2)** survey the Backlog, **(3)** propose the session and stop, **(4)** work the
@@ -61,7 +61,7 @@ Two traps in that one number, both of which have already caused a false alarm he
 
 - **`bun test` and `bun run test` count different things.** `bun test` is Bun's own runner
   walking the whole tree — one total, **179**. `bun run test` is `turbo run test`, which runs
-  the six packages separately and prints six totals: `bun-fixture` **168**, then `std` 2,
+  the six packages separately and prints six totals: `bun-test-utils` **168**, then `std` 2,
   `fast-check` 2, `dom` 3, `browser` 2, `vcr` 2. They agree (168 + 11 = 179); quote whichever
   you ran, and say which one it was. A report that says "168" without the qualifier reads as a
   regression of eleven tests.
@@ -100,7 +100,7 @@ Facts about this sandbox that shape every command:
   `.qwen/`, `.windsurf/`, …) plus `agent/`, `data/` and `skills/` at the repo root. This
   repository keeps skills in `.agents/skills/` only — delete the rest before committing.
 - **Playwright is an `optionalDependency` and is not installed**, so the
-  `@bun-fixture/browser` Playwright fixtures cannot be exercised here. The `Bun.serve`
+  `@bun-test-utils/browser` Playwright fixtures cannot be exercised here. The `Bun.serve`
   test-server fixture in the same package can.
 - **Lefthook hooks run real gates**, so a commit is slower than you expect and a push slower
   still: `pre-commit` = Biome over staged files + `turbo run typecheck`; `commit-msg` =
@@ -157,8 +157,8 @@ The full loop is [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.m
 
 - **Claim the task.** `bunx backlog claim` — claims are enforced on commit
   (`enforce_on_commit = true` in `.backlog/config.toml`).
-- **Red before green.** User-visible behaviour goes in `packages/bun-fixture/features/*.feature`
-  (`bun run test:bdd`); engine internals go in `packages/bun-fixture/tests/fixtures.test.ts`
+- **Red before green.** User-visible behaviour goes in `packages/bun-test-utils/features/*.feature`
+  (`bun run test:bdd`); engine internals go in `packages/bun-test-utils/tests/fixtures.test.ts`
   (`bun run test:unit`), which dogfoods the engine through its own fixtures. Write the failing
   test first — the `tdd` skill is installed for exactly this.
 - **One focused conventional commit per task.** commitlint enforces the format. Match your

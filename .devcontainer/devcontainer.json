@@ -1,5 +1,5 @@
 {
-  "name": "bun-fixture",
+  "name": "bun-test-utils",
 
   // Node is the base image because Bun is installed through npm below — the
   // same bootstrap CI and .agents/skills/session use. Node also stays useful

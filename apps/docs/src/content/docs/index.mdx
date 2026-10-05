@@ -1,5 +1,5 @@
 ---
-title: bun-fixture
+title: bun-test-utils
 description: pytest-style scoped, injectable fixtures for bun test — autodiscovered per directory.
 template: splash
 hero:
@@ -17,14 +17,14 @@ hero:
       variant: minimal
 ---
 
-## Why bun-fixture?
+## Why bun-test-utils?
 
 `bun:test` is blazing fast, but test setup in complex projects quickly degenerates into brittle `beforeEach` chains, duplicated boilerplate, and leaky teardown state.
 
-`bun-fixture` brings **pytest-style dependency injection** to `bun test`:
+`bun-test-utils` brings **pytest-style dependency injection** to `bun test`:
 
 ```ts
-import { test, expect } from "bun-fixture";
+import { test, expect } from "bun-test-utils";
 
 test("creates and verifies a user", async ({ db, user }) => {
   expect(await db.find(user.id)).toMatchObject({ name: "ada" });
@@ -65,7 +65,7 @@ No manual wiring, no global mocks. `db` and `user` are declared in `fixtures.ts`
 
   <div class="feature-card">
     <h3>📦 Modular Ecosystem</h3>
-    <p>Cherry-pick official companion plugins: <code>@bun-fixture/std</code>, <code>@bun-fixture/fast-check</code>, <code>@bun-fixture/dom</code>, <code>@bun-fixture/browser</code>, and <code>@bun-fixture/vcr</code>.</p>
+    <p>Cherry-pick bundled subpaths — no extra install: <code>bun-test-utils/std</code>, <code>bun-test-utils/pbt</code>, <code>bun-test-utils/dom</code>, <code>bun-test-utils/browser</code>, and <code>bun-test-utils/vcr</code>.</p>
   </div>
 </div>
 
@@ -76,8 +76,8 @@ No manual wiring, no global mocks. `db` and `user` are declared in `fixtures.ts`
 Initialize your repository in one command:
 
 ```bash
-bun add -d bun-fixture
-bunx bun-fixture init
+bun add -d bun-test-utils
+bunx bun-test-utils init
 ```
 
 This updates your `bunfig.toml` preload configuration and scaffolds a starter `fixtures.ts`:

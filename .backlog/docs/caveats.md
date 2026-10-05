@@ -10,7 +10,7 @@ API.
 |---------------|-----|
 | `autouse` fixtures | implicit setup is the thing this package argues against; ask for what you need |
 | A `request` object | `request.param` is `ctx.param`; `request.node` has no Bun equivalent |
-| Gherkin / BDD feature files | separate concern — see [`@aboviq/bun-test-cucumber`](https://www.npmjs.com/package/@aboviq/bun-test-cucumber), which this repo uses for its own behavioural suite |
+| Parsing or running Gherkin `.feature` files | separate concern — see [`@aboviq/bun-test-cucumber`](https://www.npmjs.com/package/@aboviq/bun-test-cucumber), which this repo uses for its own behavioural suite. **Narrowed by [ADR 0012](./adr/0012-bdd-fixture-bridge.md):** this only means `bun-fixture` won't be a Gherkin runner — making fixtures reachable from BDD step definitions is in scope, proposed in [spec 0014](./specs/0014-bdd-fixture-bridge.md) |
 | `test.each`, `test.skip/only/todo` with fixtures | use `params` for the first; the rest are unimplemented, not refused |
 | Non-Bun runtimes | the package ships raw TypeScript and imports `bun:test` ([ADR 0003](./adr/0003-raw-ts-distribution.md)) |
 

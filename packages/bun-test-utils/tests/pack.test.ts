@@ -1,0 +1,228 @@
+/**
+ * M5 pack smoke test (spec 0005 R7, milestone M5 exit criteria 1–2).
+ *
+ * Packs the single publishable package with `bun pm pack`, proves the tarball
+ * contains only what the spec allows (the core `src/`, each internal
+ * workspace package's `src/` bundled as a subpath, README + both licences +
+ * manifest, no `workspace:` ranges left in the manifest), then installs the
+ * tarball into a scratch project — no workspace, no symlinks — and runs the
+ * quickstart (`bun-test-utils init` → `bun test`) against it, including a
+ * subpath import. What is verified here is what a consumer downloading from
+ * npm will get.
+ *
+ * Since the single-package consolidation (ADR superseding ADR 0011,
+ * task_018/task_020), `std`, `pbt`, `dom`, `browser`, `vcr`, and `snapshot`
+ * are internal, unpublished (`private: true`) workspace packages nested
+ * inside this one — they must never be packed or published on their own.
+ */
+
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, test } from "bun-test-utils";
+
+const BUN = process.execPath;
+const PACKAGE_DIR = join(import.meta.dir, "..");
+
+/** The one publishable package — everything else it bundles is `private: true`. */
+const PACKAGE_NAME = "bun-test-utils";
+
+/** Internal workspace packages bundled in as subpaths; never published on their own. */
+const BUNDLED_SUBPATHS = [
+  "std",
+  "pbt",
+  "dom",
+  "browser",
+  "vcr",
+  "snapshot",
+] as const;
+
+/** Files the tarball may contain besides `src/` and each bundled subpath's `src/`. */
+const ALLOWED_TOP_LEVEL = new Set([
+  "package.json",
+  "README.md",
+  "LICENSE-MIT",
+  "LICENSE-APACHE",
+]);
+
+interface Packed {
+  tgz: string;
+  entries: string[];
+  manifest: Record<string, any>;
+}
+
+function run(cmd: string[], cwd?: string): string {
+  const proc = Bun.spawnSync({
+    cmd,
+    cwd,
+    env: { ...process.env, FORCE_COLOR: "0" },
+  });
+  // stdout + stderr, which is where `bun test` splits its reporting.
+  const output = `${proc.stdout.toString()}${proc.stderr.toString()}`;
+  if (proc.exitCode !== 0) {
+    throw new Error(`${cmd.join(" ")} failed (${proc.exitCode}):\n${output}`);
+  }
+  return output;
+}
+
+/** Packs the package and reads back its tarball. */
+function pack(scratch: string): Packed {
+  const tgz = join(scratch, `${PACKAGE_NAME}.tgz`);
+  run([BUN, "pm", "pack", "--quiet", "--filename", tgz], PACKAGE_DIR);
+  expect(existsSync(tgz)).toBe(true);
+
+  const listing = run(["tar", "-tzf", tgz]).trim().split("\n");
+  expect(listing.every((e) => e.startsWith("package/"))).toBe(true);
+  const entries = listing.map((e) => e.slice("package/".length));
+
+  const unpack = join(scratch, "unpack");
+  mkdirSync(unpack, { recursive: true });
+  run(["tar", "-xzf", tgz, "-C", unpack, "package/package.json"]);
+  const manifest = JSON.parse(
+    readFileSync(join(unpack, "package", "package.json"), "utf8"),
+  );
+  return { tgz, entries, manifest };
+}
+
+describe("bun pm pack smoke test", () => {
+  test(
+    "the one publishable tarball matches the spec",
+    () => {
+      const scratch = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-"));
+      try {
+        const { entries, manifest } = pack(scratch);
+
+        expect(manifest.name).toBe(PACKAGE_NAME);
+        expect(manifest.private).toBeUndefined();
+        expect(manifest.license).toBe("MIT OR Apache-2.0");
+        // `bun pm pack` must rewrite workspace-ranges (e.g. workspace:^ → ^0.1.0) —
+        // moot today since the published manifest has none, but guards regressions.
+        expect(JSON.stringify(manifest)).not.toContain("workspace:");
+
+        for (const required of ALLOWED_TOP_LEVEL) {
+          expect(entries).toContain(required);
+        }
+        expect(entries.some((e) => e.startsWith("src/"))).toBe(true);
+        for (const sub of BUNDLED_SUBPATHS) {
+          expect(
+            entries.some((e) => e.startsWith(`${sub}/src/`)),
+            `tarball is missing bundled subpath "${sub}/src/"`,
+          ).toBe(true);
+          expect(manifest.exports?.[`./${sub}`]).toBe(`./${sub}/src/index.ts`);
+          // Only `src/` from each bundled package — not its own package.json,
+          // tests/, or tsconfig.json (those stayed out of "files" on purpose).
+          for (const entry of entries) {
+            if (entry.startsWith(`${sub}/`)) {
+              expect(
+                entry.startsWith(`${sub}/src/`),
+                `tarball contains unexpected ${entry} from the "${sub}" internal package`,
+              ).toBe(true);
+            }
+          }
+        }
+        // Nothing else at the top level — no tests/, features/, .backlog/, docs/…
+        for (const entry of entries) {
+          const topLevel = entry.split("/")[0];
+          const ok =
+            ALLOWED_TOP_LEVEL.has(entry) ||
+            topLevel === "src" ||
+            (BUNDLED_SUBPATHS as readonly string[]).includes(topLevel);
+          expect(ok, `tarball contains unexpected ${entry}`).toBe(true);
+        }
+      } finally {
+        rmSync(scratch, { recursive: true, force: true });
+      }
+    },
+    { timeout: 120_000 },
+  );
+
+  test(
+    "the tarball installs and runs the quickstart, including a bundled subpath",
+    () => {
+      const packDir = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-core-"));
+      const project = mkdtempSync(join(tmpdir(), "bun-test-utils-quickstart-"));
+      try {
+        const { manifest } = pack(packDir);
+
+        writeFileSync(
+          join(project, "package.json"),
+          JSON.stringify({ name: "quickstart-smoke", type: "module" }),
+        );
+        run([BUN, "add", join(packDir, `${PACKAGE_NAME}.tgz`)], project);
+        expect(
+          existsSync(
+            join(project, "node_modules", PACKAGE_NAME, "src", "plugin.ts"),
+          ),
+        ).toBe(true);
+        expect(
+          existsSync(
+            join(
+              project,
+              "node_modules",
+              PACKAGE_NAME,
+              "std",
+              "src",
+              "index.ts",
+            ),
+          ),
+        ).toBe(true);
+
+        // `bunx bun-test-utils init` — through the installed bin, like a consumer.
+        run(
+          [
+            BUN,
+            join(project, "node_modules", ".bin", "bun-test-utils"),
+            "init",
+            "--dir",
+            project,
+            "--force",
+          ],
+          project,
+        );
+        expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
+          "node_modules/bun-test-utils/src/plugin.ts",
+        );
+        expect(readFileSync(join(project, "fixtures.ts"), "utf8")).toContain(
+          "export default",
+        );
+
+        // The README quickstart against the tarball: init's scaffolded
+        // fixtures flow through discovery and injection, and a bundled
+        // subpath (`bun-test-utils/std`) resolves with no extra install.
+        writeFileSync(
+          join(project, "quickstart.test.ts"),
+          `import { test, expect } from "bun-test-utils";
+import { tmpdirFixture } from "bun-test-utils/std";
+
+test("quickstart: scaffolded fixtures inject", async ({ config, tmpDir }) => {
+  expect(config).toEqual({ env: "test" });
+  expect(typeof tmpDir).toBe("string");
+  expect(tmpDir.length).toBeGreaterThan(0);
+});
+
+test("quickstart: bundled subpath resolves with no extra install", () => {
+  expect(typeof tmpdirFixture.setup).toBe("function");
+});
+`,
+        );
+        const output = run([BUN, "test"], project);
+        expect(output).toContain("2 pass");
+        expect(output).toContain("0 fail");
+
+        // Sanity: the packed manifest is what a registry consumer sees.
+        expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
+      } finally {
+        rmSync(packDir, { recursive: true, force: true });
+        rmSync(project, { recursive: true, force: true });
+      }
+    },
+    { timeout: 180_000 },
+  );
+});

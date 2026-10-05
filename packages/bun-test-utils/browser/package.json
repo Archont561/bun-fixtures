@@ -1,0 +1,25 @@
+{
+  "name": "@bun-test-utils/browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal workspace package — headless browser and ephemeral web server testing fixtures for bun-test-utils. Bundled into the published bun-test-utils package as the \"bun-test-utils/browser\" subpath; never published on its own.",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@bun-test-utils/config": "workspace:*",
+    "bun-test-utils": "workspace:*"
+  }
+}

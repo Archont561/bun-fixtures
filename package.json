@@ -1,10 +1,11 @@
 {
-  "name": "bun-fixture-monorepo",
+  "name": "bun-test-utils-monorepo",
   "private": true,
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/bun-test-utils/*"
   ],
   "scripts": {
     "build": "turbo run build",
@@ -29,20 +30,13 @@
   "packageManager": "bun@1.4.2",
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@bun-fixture/browser": "workspace:*",
-    "@bun-fixture/config": "workspace:*",
-    "@bun-fixture/dom": "workspace:*",
-    "@bun-fixture/fast-check": "workspace:*",
-    "@bun-fixture/std": "workspace:*",
-    "@bun-fixture/vcr": "workspace:*",
+    "@bun-test-utils/config": "workspace:*",
     "@changesets/cli": "^3.0.3",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@types/bun": "^1.4.2",
     "backlog": "^1.4.56",
-    "bun-fixture": "workspace:*",
-    "fast-check": "^4.10.2",
-    "happy-dom": "^20.14.5",
+    "bun-test-utils": "workspace:*",
     "lefthook": "^2.1.17",
     "skills": "^1.7.0",
     "turbo": "^2.11.7",

@@ -1,22 +1,24 @@
 ---
 title: Recording HTTP Cassettes
-description: Record live fetch traffic to __cassettes__/ and replay it offline with @bun-fixture/vcr.
+description: Record live fetch traffic to __cassettes__/ and replay it offline with bun-test-utils/vcr.
 ---
 
-`@bun-fixture/vcr` intercepts `globalThis.fetch` during a test: live HTTP
+`bun-test-utils/vcr` intercepts `globalThis.fetch` during a test: live HTTP
 traffic is recorded to disk once, then replayed deterministically — offline,
 fast, and immune to rate limits and flaky third parties.
 
 ## Installation
 
+`vcr` ships inside `bun-test-utils` — zero extra dependencies:
+
 ```bash
-bun add -d bun-fixture @bun-fixture/vcr
+bun add -d bun-test-utils
 ```
 
 Register the bundle in your `fixtures.ts`:
 
 ```ts
-import vcrFixtures from "@bun-fixture/vcr";
+import vcrFixtures from "bun-test-utils/vcr";
 
 export default {
   ...vcrFixtures,
@@ -26,7 +28,7 @@ export default {
 ## Using the cassette fixture
 
 ```ts
-import { test, expect } from "bun-fixture";
+import { test, expect } from "bun-test-utils";
 
 test("fetches user details", async ({ cassette }) => {
   const res = await fetch("https://api.github.com/users/octocat");

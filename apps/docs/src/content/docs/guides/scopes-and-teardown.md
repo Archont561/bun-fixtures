@@ -17,7 +17,7 @@ A longer-lived fixture **cannot** depend on a shorter-lived fixture. For example
 - A `session` fixture cannot depend on a `file` or `test` fixture.
 - A `file` fixture cannot depend on a `test` fixture.
 
-If a scope violation is detected, `bun-fixture` throws a clear error during test registration before any tests run.
+If a scope violation is detected, `bun-test-utils` throws a clear error during test registration before any tests run.
 
 ## LIFO Teardown
 

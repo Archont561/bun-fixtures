@@ -1,24 +1,24 @@
 ---
 title: Quickstart
-description: Get up and running with bun-fixture in 5 minutes.
+description: Get up and running with bun-test-utils in 5 minutes.
 ---
 
-In this quickstart, you will install `bun-fixture`, initialize your configuration, and write your first fixture-backed test.
+In this quickstart, you will install `bun-test-utils`, initialize your configuration, and write your first fixture-backed test.
 
 ## 1. Install & Initialize
 
 Run the following commands in your Bun project:
 
 ```bash
-bun add -d bun-fixture
-bunx bun-fixture init
+bun add -d bun-test-utils
+bunx bun-test-utils init
 ```
 
 The `init` command performs two actions:
 1. Adds the preload plugin to `bunfig.toml`:
    ```toml
    [test]
-   preload = ["./node_modules/bun-fixture/src/plugin.ts"]
+   preload = ["./node_modules/bun-test-utils/src/plugin.ts"]
    ```
 2. Scaffolds a starter `fixtures.ts` at the root of your project.
 
@@ -28,7 +28,7 @@ Open `fixtures.ts` and define your fixtures:
 
 ```ts
 // fixtures.ts
-import type { FixtureMap } from "bun-fixture";
+import type { FixtureMap } from "bun-test-utils";
 
 export default {
   server: {
@@ -64,7 +64,7 @@ Create a test file `users.test.ts`:
 
 ```ts
 // users.test.ts
-import { test, expect } from "bun-fixture";
+import { test, expect } from "bun-test-utils";
 
 test("finds created user", async ({ db, user }) => {
   const found = await db.findUser(user.id);
@@ -80,4 +80,4 @@ Execute with `bun test`:
 bun test
 ```
 
-`bun-fixture` resolves `db` and `user`, verifies there are no dependency cycles, runs the test, and executes teardowns in reverse order (LIFO).
+`bun-test-utils` resolves `db` and `user`, verifies there are no dependency cycles, runs the test, and executes teardowns in reverse order (LIFO).

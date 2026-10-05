@@ -1,6 +1,6 @@
 ---
 title: Discovery & Merging
-description: How bun-fixture walks your directory tree and merges fixture definitions.
+description: How bun-test-utils walks your directory tree and merges fixture definitions.
 ---
 
 ## Directory Hierarchy

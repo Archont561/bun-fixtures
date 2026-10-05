@@ -7,7 +7,7 @@ export default defineConfig({
   base: "/bun-fixtures",
   integrations: [
     starlight({
-      title: "bun-fixture",
+      title: "bun-test-utils",
       description:
         "pytest-style scoped, injectable fixtures for bun test — autodiscovered per directory",
       logo: {
@@ -53,6 +53,10 @@ export default defineConfig({
             {
               label: "Recording HTTP Cassettes",
               slug: "guides/recording-http-cassettes",
+            },
+            {
+              label: "Snapshot Testing",
+              slug: "guides/snapshot-testing",
             },
           ],
         },
