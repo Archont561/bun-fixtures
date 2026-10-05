@@ -1,0 +1,29 @@
+# License
+
+`bun-fixture` and every package in this workspace are dual-licensed under
+either of:
+
+- **Apache License, Version 2.0** — [`LICENSE-APACHE`](./LICENSE-APACHE)
+  ([spdx: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html))
+- **MIT License** — [`LICENSE-MIT`](./LICENSE-MIT)
+  ([spdx: MIT](https://spdx.org/licenses/MIT.html))
+
+at your option. The SPDX expression for this is `MIT OR Apache-2.0`.
+
+You may use this software under the terms of *either* licence. You do not have
+to comply with both. Pick whichever fits your project and keep the
+corresponding notice.
+
+## Why both
+
+This is the same arrangement the Rust ecosystem settled on. MIT is short,
+permissive, and universally understood; Apache-2.0 adds an explicit patent
+grant and a patent-retaliation clause that some organisations require before
+they can take a dependency. Offering both means neither constituency has to
+negotiate.
+
+## Contribution
+
+Unless you state otherwise, any contribution you intentionally submit for
+inclusion in this work — as defined in the Apache-2.0 licence — shall be
+dual-licensed as above, with no additional terms or conditions.
