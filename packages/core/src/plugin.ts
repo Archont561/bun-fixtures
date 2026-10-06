@@ -187,6 +187,7 @@ function collectFixtureFiles(dir: string, acc: string[], depth = 0): string[] {
  *
  * Idempotent — safe to call from both the preload and a plain import.
  */
+/** @internal Test-only compatibility hook; consumers should use test.extend(). */
 export async function discoverFixtures(
   root: string = state.root,
 ): Promise<Map<string, FixtureMap>> {
@@ -998,4 +999,4 @@ try {
 }
 hookProcessExit();
 
-export default { discoverFixtures, fixturesFor, createTest, test, expect };
+export default { fixturesFor, createTest, test, expect };
