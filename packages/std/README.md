@@ -1,82 +1,41 @@
-# @bun-test-utils/std
+# Standard fixtures
 
-> **Internal workspace.** Bundled into the published
-> [`bun-test-utils`](https://github.com/Archont561/bun-test-utils) package as the
-> `bun-test-utils/std` subpath; never published on its own.
+`bun-test-utils/std` provides zero-dependency isolation for ordinary tests. The fixtures are available from the published package's `std` subpath.
 
-Zero-dependency fixtures for common test isolation: temporary directories, environment
-variables, and stdio capture, each with automatic restoration on teardown.
+## Temporary files and environment
 
 ```ts
-import stdFixtures, { tmpdirFixture, envFixture, stdioFixture } from "bun-test-utils/std";
-```
+import { expect, test } from "bun-test-utils/std";
 
-No third-party dependencies — nothing extra to install.
+test("writes isolated state and reads test configuration", async ({ tmpdir, env }) => {
+  env.set("APP_MODE", "test");
+  tmpdir.write("notes/todo.txt", "buy milk");
 
-## Fixtures
-
-| Fixture | Scope | Helper | What it does |
-| --- | --- | --- | --- |
-| `tmpdir` | test | `TmpDirHelper` | Unique scratch directory, recursively removed on teardown |
-| `env` | test | `EnvHelper` | Snapshots `process.env` and restores it on teardown |
-| `stdio` | test | `StdioHelper` | Captures stdout/stderr, restores the real streams on teardown |
-
-### `tmpdir`
-
-```ts
-test("writes files", async ({ tmpdir }) => {
-  tmpdir.write("notes/todo.txt", "buy milk");     // creates parents, returns the path
+  expect(env.get("APP_MODE")).toBe("test");
   expect(tmpdir.read("notes/todo.txt")).toBe("buy milk");
   expect(tmpdir.exists("notes")).toBe(true);
-  tmpdir.path("..");                              // resolve relative to the scratch dir
-  tmpdir.remove("notes/todo.txt");
-  // tmpdir.dir is the absolute path of the scratch directory
 });
 ```
 
-### `env`
+`tmpdir` is removed and `env` is restored after the test.
+
+## Capturing output
 
 ```ts
-test("reads config from env", async ({ env }) => {
-  env.set("APP_MODE", "test");
-  env.delete("APP_SECRET");
-  expect(env.get("APP_MODE")).toBe("test");
-  const before = env.snapshot();                  // Record<string, string | undefined>
+import { expect, test } from "bun-test-utils/std";
+
+test("captures application output", async ({ stdio }) => {
+  console.log("started");
+  console.error("warning");
+
+  expect(stdio.stdout()).toContain("started");
+  expect(stdio.stderr()).toContain("warning");
+  expect(stdio.output()).toContain("started");
 });
 ```
 
-### `stdio`
+The public helpers are `tmpdir`, `env`, and `stdio`. They are test-scoped and restore process state during teardown.
 
-```ts
-test("logs on failure", async ({ stdio }) => {
-  console.log("hello");
-  console.error("oops");
-  expect(stdio.stdout()).toContain("hello");
-  expect(stdio.stderr()).toContain("oops");
-  expect(stdio.output()).toContain("hello");      // combined
-  stdio.clear();
-});
-```
+See the [standard fixture guide](https://archont561.github.io/bun-test-utils/reference/plugins/#bun-test-utilsstd) and [`tests/`](./tests/) for more cases.
 
-## Composing
-
-All three ship inside the default `stdFixtures` map — register or merge it into your
-`test.extend()` map like any other `FixtureMap`:
-
-```ts
-import stdFixtures from "bun-test-utils/std";
-
-export default {
-  ...stdFixtures,
-  // …your own fixtures
-};
-```
-
-## Further reading
-
-- Spec: [0009 standard fixtures](../../.backlog/docs/specs/0009-standard-fixtures-std.md)
-- Sources in `src/`, focused tests in `tests/` (one test file per source module)
-
-## License
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE), same as the repository.
+[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

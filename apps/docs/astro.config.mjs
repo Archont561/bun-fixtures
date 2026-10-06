@@ -47,6 +47,10 @@ export default defineConfig({
               slug: "guides/parameterized-fixtures",
             },
             {
+              label: "Scenarios & Fluent API",
+              slug: "guides/scenarios-and-fluent-api",
+            },
+            {
               label: "Property-Based Testing",
               slug: "guides/property-based-testing",
             },

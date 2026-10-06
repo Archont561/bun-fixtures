@@ -1,55 +1,51 @@
-# @bun-test-utils/pbt
+# Property-based testing
 
-> **Internal workspace.** Bundled into the published
-> [`bun-test-utils`](https://github.com/Archont561/bun-test-utils) package as the
-> `bun-test-utils/pbt` subpath; never published on its own.
+`bun-test-utils/pbt` adds fast-check properties to the fixture-aware test API. Install the optional generator dependency when needed:
 
-Property-based testing with [fast-check](https://fast-check.dev) on top of fixture
-injection. `test.prop` combines arbitraries with the fixture engine: session and file
-fixtures are shared across samples, while test-scoped fixtures are **rebuilt and torn down
-for every generated sample and every shrink step** — the engine's `opts.iterate` lifecycle
-is what makes that per-iteration isolation possible.
+```bash
+bun add -d bun-test-utils fast-check
+```
+
+## A property test
 
 ```ts
 import { expect, fc, test } from "bun-test-utils/pbt";
 
-test.prop("reverses twice", [fc.string()], async ({ tmpdir }, value) => {
-  expect(value.split("").reverse().reverse().join("")).toBe(value);
-});
+test.prop(
+  "reversing twice preserves a string",
+  { value: fc.string() },
+  async (_fixtures, { value }) => {
+    expect(value.split("").reverse().reverse().join("")).toBe(value);
+  },
+  { numRuns: 100 },
+);
 ```
 
-## Peer dependency
+Generated values are the second callback argument. Fixtures are the first argument and can be auto-detected or listed with `fixtures`.
 
-`fast-check` is an optional dependency — install it yourself if your package manager
-skipped it:
+## Properties with scenarios
 
-```bash
-bun add -d fast-check
+Generated values and values returned from `given` and `when` are available in every later step:
+
+```ts
+test.scenario.prop("calculates a total", {
+  price: fc.integer({ min: 0, max: 100 }),
+})
+  .given("a quantity", () => ({ quantity: 2 }))
+  .when("the total is calculated", ({ price, quantity }) => ({
+    total: price * quantity,
+  }))
+  .then("the total is non-negative", ({ total, expect }) => {
+    expect(total).toBeGreaterThanOrEqual(0);
+  });
 ```
 
-Importing this subpath without it installed throws a clear error naming the missing
-package; it never fails silently.
+Session and file fixtures are shared across generated samples. Test-scoped fixtures are rebuilt and torn down for every sample and shrink attempt.
 
-## Exports
+## Options
 
-| Export | Role |
-| --- | --- |
-| `test` / `test.prop` | Fixture-aware test with `.prop(name, arbitraries, fn, params?)` for property runs |
-| `prop` | Standalone property runner (`createPropTest` binds it to an explicit file) |
-| `fc` | fast-check re-export, for arbitraries and `fc.assert`-style helpers |
-| `expect`, `describe` | Re-exported from `bun:test`, unchanged |
-| `createPropTest(file?)` | `{ test, prop, ... }` bound to `import.meta.path` |
-| `PropTestOptions`, `ArbitraryRecord`, `GeneratedValues` | Types; `PropTestOptions extends fc.Parameters` so fast-check settings pass straight through |
+`numRuns`, `seed`, shrinking controls, `timeout`, and explicit `fixtures` are accepted through the property options. `fc` is re-exported for composing arbitraries.
 
-`params` accepts any fast-check run parameter (`numRuns`, `seed`, …) via `PropTestOptions`,
-plus fixture test options (`fixtures?`, `timeout?`).
+See the [property testing guide](https://archont561.github.io/bun-test-utils/guides/property-based-testing/) and [`tests/`](./tests/) for lifecycle and shrinking examples.
 
-## Further reading
-
-- Docs guide: [property-based testing](https://archont561.github.io/bun-test-utils/guides/property-based-testing/)
-- Spec: [0010 property-based testing with fast-check](../../.backlog/docs/specs/0010-property-based-testing-fastcheck.md)
-- Sources in `src/`, focused tests in `tests/`
-
-## License
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE), same as the repository.
+[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

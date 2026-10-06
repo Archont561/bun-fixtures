@@ -64,4 +64,4 @@ Fixtures can depend on one another, have session, file, or test scope, and run t
 bun test
 ```
 
-There is no implicit fixture discovery. Every fixture available to a test comes from the explicit `test.extend()` chain imported by that test file.
+Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.

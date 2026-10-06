@@ -1,44 +1,36 @@
-# @bun-test-utils/snapshot
+# Snapshot fixtures
 
-> **Internal workspace.** Bundled into the published
-> [`bun-test-utils`](https://github.com/Archont561/bun-test-utils) package as the
-> `bun-test-utils/snapshot` subpath; never published on its own.
+`bun-test-utils/snapshot` records values and files beside the test, with deterministic serialization and CI-safe modes.
 
-Value and file snapshot testing: the `snapshot` fixture records, matches, or updates named
-snapshots, with pluggable serializers and a CI-strict mode that refuses to write missing
-snapshots on CI.
+## Snapshot a value
 
 ```ts
-import snapshotFixtures, { snapshotFixture } from "bun-test-utils/snapshot";
+import { expect, test } from "bun-test-utils/snapshot";
 
-test("renders a greeting", async ({ snapshot }) => {
-  snapshot.match({ greeting: "hello ada", ok: true }, "greeting");
-});
-
-test("binary artifact", async ({ snapshot, tmpdir }) => {
-  const file = tmpdir.write("report.html", "<h1>report</h1>");
-  snapshot.matchFile(file, "report-html");
+test("matches a rendered model", async ({ snapshot }) => {
+  snapshot.setMode("match");
+  snapshot.match({ component: "card", count: 2 }, "card");
+  expect(snapshot.mode).toBe("match");
 });
 ```
 
-No third-party dependencies — nothing extra to install.
+Missing snapshots are recorded in normal `match` mode. Use `update` to accept changes and `ci` to fail instead of creating files.
 
-## The `SnapshotHelper`
+## Snapshot a file with standard fixtures
 
-| Member | Role |
-| --- | --- |
-| `mode` / `setMode(mode)` | `"match"` (default), `"update"` (rewrite snapshots), `"ci"` (fail when a snapshot is missing instead of writing it) |
-| `match(value, name?)` | Compare a value to its stored snapshot; anonymous calls get deterministic numbering |
-| `matchFile(filePath, name?)` | Same, reading the actual value from a file on disk |
-| `addSerializer(serializer)` | Custom `Serializer`; registered serializers run before the built-ins, most recent first |
-| `path` | Directory holding the snapshot files |
+```ts
+import { expect, test } from "bun-test-utils";
 
-## Further reading
+test("matches generated markup", async ({ snapshot, tmpdir }) => {
+  const file = tmpdir.write("report.html", "<h1>Report</h1>\n");
+  snapshot.setMode("match");
+  snapshot.matchFile(file, "report");
+  expect(snapshot.path).toContain("__snapshots__");
+});
+```
 
-- Docs guide: [snapshot testing](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/)
-- Spec: [0013 snapshot testing](../../.backlog/docs/specs/0013-snapshot-testing.md)
-- Sources in `src/`, focused tests in `tests/`
+Custom serializers run before built-ins, anonymous snapshots are numbered, and snapshot files live at `__snapshots__/<test-name>.snap.json`.
 
-## License
+See the [snapshot guide](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/) and [`tests/`](./tests/) for update, CI, file, serializer, and mismatch cases.
 
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE), same as the repository.
+[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
