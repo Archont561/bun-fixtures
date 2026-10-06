@@ -1,7 +1,8 @@
 /**
  * Dogfooding built-in standard fixtures through the public root API.
  *
- * The standard fixtures (`tmpdir`, `env`, `stdio`) are not called directly
+ * The standard fixtures (`tmpdir`, `env`, `stdio`, `clock`, `seed`, and
+ * `networkGuard`) are not called directly
  * here — the public `bun-test-utils` test export composes them explicitly,
  * so this file proves the package works the way a real consumer sees it:
  * explicit composition, name-based DI, and engine-driven LIFO teardown.
@@ -93,5 +94,33 @@ describe("built-in standard fixtures", () => {
       expect(process.stdout.write).toBe(realStdoutWrite);
       expect(process.stderr.write).toBe(realStderrWrite);
     });
+  });
+
+  test("exposes deterministic clock and random fixtures", async ({
+    clock,
+    seed,
+  }) => {
+    clock.freeze("2026-10-06T12:00:00Z");
+    seed.set(40);
+    expect(clock.now().toISOString()).toBe("2026-10-06T12:00:00.000Z");
+    expect([Math.random(), Math.random()]).toEqual([
+      0.6392705824691802, 0.8165256746578962,
+    ]);
+  });
+
+  test("composes the network guard with httpMock and vcr", async ({
+    networkGuard,
+    httpMock,
+    cassette,
+  }) => {
+    cassette.setMode("passthrough");
+    httpMock.get(
+      "https://api.example.test/handled",
+      () => new Response("mocked"),
+    );
+    expect(await (await fetch("https://api.example.test/handled")).text()).toBe(
+      "mocked",
+    );
+    expect(networkGuard.calls()).toEqual([]);
   });
 });
