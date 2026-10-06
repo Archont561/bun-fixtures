@@ -25,7 +25,7 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 ## Repo-wide BDD gate
 
 The repository's behavioural specs live under `packages/*/features/*.feature` and
-are loaded by the root-owned entrypoint `tests/bdd/features.test.ts`. Run the
+are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint. Run the
 same gate locally and in CI with:
 
 ```bash

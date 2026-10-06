@@ -1,9 +1,9 @@
 /** Repo-wide Behavioural suite entrypoint.
  *
  * Bun's test scanner only picks up .ts/.js files, so package-owned
- * features/*.feature files are loaded from this root-owned test. Step
- * definitions live beside the packages they exercise and are discovered from
- * one repository-wide plugin configuration.
+ * features/*.feature files are loaded from this shared configuration-owned test.
+ * Step definitions live beside the packages they exercise and are discovered
+ * from one repository-wide plugin configuration.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -13,7 +13,7 @@ import { bunTestCucumber, loadFeatures } from "@aboviq/bun-test-cucumber";
 import { plugin } from "bun";
 import { featureExemptions } from "./feature-exemptions";
 
-const repoRoot = resolve(import.meta.dir, "..", "..");
+const repoRoot = resolve(import.meta.dir, "..", "..", "..");
 const packagesRoot = resolve(repoRoot, "packages");
 
 const runtimePackages = [
