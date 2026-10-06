@@ -1,6 +1,8 @@
-import type { FixtureDef, FixtureMap } from "@bun-test-utils/core";
 import {
   BunTestUtilsError,
+  test as baseTest,
+  type FixtureDef,
+  type FixtureMap,
   MissingOptionalDependencyError,
 } from "@bun-test-utils/core";
 import type { GlobalWindow } from "happy-dom";
@@ -159,6 +161,9 @@ export const domFixtures: FixtureMap = {
   document: documentFixture,
   page: pageFixture,
 };
+
+/** Playwright-style test preconfigured with the DOM fixtures. */
+export const test = baseTest.extend(domFixtures);
 
 export default domFixtures;
 

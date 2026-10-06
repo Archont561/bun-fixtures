@@ -1,5 +1,9 @@
-import type { FixtureDef, FixtureMap } from "@bun-test-utils/core";
-import { MissingOptionalDependencyError } from "@bun-test-utils/core";
+import {
+  test as baseTest,
+  type FixtureDef,
+  type FixtureMap,
+  MissingOptionalDependencyError,
+} from "@bun-test-utils/core";
 import type { Server } from "bun";
 
 export interface TestServerHelper {
@@ -116,6 +120,9 @@ export const browserFixtures: FixtureMap = {
   browserContext: browserContextFixture,
   browserPage: browserPageFixture,
 };
+
+/** Playwright-style test preconfigured with browser fixtures. */
+export const test = baseTest.extend(browserFixtures);
 
 export default browserFixtures;
 

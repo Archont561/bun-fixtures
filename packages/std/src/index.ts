@@ -1,4 +1,4 @@
-import type { FixtureMap } from "@bun-test-utils/core";
+import { test as baseTest, type FixtureMap } from "@bun-test-utils/core";
 import { envFixture } from "./env.ts";
 import { stdioFixture } from "./stdio.ts";
 import { tmpdirFixture } from "./tmpdir.ts";
@@ -15,5 +15,8 @@ export const stdFixtures: FixtureMap = {
   env: envFixture,
   stdio: stdioFixture,
 };
+
+/** Playwright-style test preconfigured with the standard fixtures. */
+export const test = baseTest.extend(stdFixtures);
 
 export default stdFixtures;
