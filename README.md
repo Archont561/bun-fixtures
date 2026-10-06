@@ -136,11 +136,11 @@ README:
 | Subpath | Contents | Status |
 | --- | --- | --- |
 | [`bun-test-utils`](./packages/core#readme) (root) | Fixture engine — scopes, teardown, DI, params, CLI | ✅ Done |
-| [`bun-test-utils/std`](./packages/std#readme) | `tmpdir`, `env`, `stdio` — zero-dependency isolation | 🚧 Not yet dogfooded by the core suite |
-| [`bun-test-utils/pbt`](./packages/pbt#readme) | `test.prop` property-based testing (fast-check) | 🚧 No per-iteration fixture lifecycle |
+| [`bun-test-utils/std`](./packages/std#readme) | `tmpdir`, `env`, `stdio` — zero-dependency isolation | ✅ Done |
+| [`bun-test-utils/pbt`](./packages/pbt#readme) | `test.prop` property-based testing (fast-check) | ✅ Done |
 | [`bun-test-utils/dom`](./packages/dom#readme) | `window`, `document`, `page` via happy-dom | ✅ Done |
 | [`bun-test-utils/browser`](./packages/browser#readme) | `testServer`/`serverUrl`, Playwright `browser`/`context`/`page` | ✅ Done |
-| [`bun-test-utils/vcr`](./packages/vcr#readme) | HTTP cassette record/replay | 🚧 No `__cassettes__/` convention |
+| [`bun-test-utils/vcr`](./packages/vcr#readme) | HTTP cassette record/replay | ✅ Done |
 | [`bun-test-utils/snapshot`](./packages/snapshot#readme) | Value and file snapshots, serializers, CI-strict mode | ✅ Done |
 | [`bun-test-utils/bdd`](./packages/bdd#readme) | Gherkin hook bridge (`fixtureSteps`, `openFixtures`) | ✅ Done |
 

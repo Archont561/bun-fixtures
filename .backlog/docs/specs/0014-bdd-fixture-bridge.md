@@ -1,6 +1,6 @@
 # 0014 — BDD Fixture Bridge (`withFixtures` + `bun-test-utils/bdd`)
 
-- **Status:** implemented in the `bun-test-utils/bdd` subpath; scenario-chain API revision in progress under task_021
+- **Status:** implemented in the `bun-test-utils/bdd` subpath; scenario-chain API revision landed (task_021)
 - **ADR:** [0012](../adr/0012-bdd-fixture-bridge.md)
 - **Implementation:** `packages/core/src/plugin.ts` (`openFixtures`/`withFixtures`),
   `packages/bdd/` (internal workspace package,

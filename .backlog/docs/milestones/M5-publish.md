@@ -19,8 +19,8 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 - [x] The published package declares dual MIT OR Apache-2.0 licensing and includes both texts.
 - [x] Release tooling is configured; private internal workspaces are excluded from publishing.
 - [x] Package metadata and the `0.1.0` changelog are present.
-- [ ] Playwright-style testing API (`test.extend` and typed scenario chains) is landed and covered by tests (`task_021`).
-- [ ] Publication-readiness audit is complete (`task_016`).
+- [x] Playwright-style testing API (`test.extend` and typed scenario chains) is landed and covered by tests (`task_021`).
+- [x] Publication-readiness audit is complete (`task_016`).
 - [ ] `v0.1.0` git tag.
 - [ ] Publish `bun-test-utils@0.1.0` (or configure trusted publishing).
 - [ ] Re-run the installed-consumer harness against the registry package.
