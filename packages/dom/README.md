@@ -22,4 +22,6 @@ happy-dom or a real Playwright page, request the root `webPage` fixture and
 select `BUN_TEST_UTILS_WEB_ENV=dom` (default) or `browser`; do not overload
 `page` or `browserPage`.
 
+These fixtures are exercised in [`tests/`](./tests/) through this package's own `test.extend(...)` composition. Requesting `{ page }` alone is enough — the engine resolves the `window` → `document` → `page` dependency chain and restores the patched globals on teardown.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
