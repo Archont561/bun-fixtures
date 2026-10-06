@@ -11,7 +11,9 @@
   "scripts": {
     "build": "bunup",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:bdd": "bun test ../../config/bdd/features.test.ts",
+    "test:e2e": "bun test e2e"
   },
   "engines": {
     "bun": ">=1.1.0"

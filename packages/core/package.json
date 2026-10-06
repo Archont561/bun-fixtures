@@ -11,7 +11,9 @@
     "build": "bunup",
     "test": "bun test",
     "test:unit": "bun test tests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:bdd": "bun test ../../config/bdd/features.test.ts",
+    "test:e2e": "bun test e2e"
   },
   "dependencies": {
     "citty": "^0.2.2",

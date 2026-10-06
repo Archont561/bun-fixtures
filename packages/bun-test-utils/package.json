@@ -46,7 +46,8 @@
     "test": "bun test tests",
     "test:unit": "bun test tests/conformance",
     "test:e2e": "bun test e2e",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:bdd": "bun test ../../config/bdd/features.test.ts"
   },
   "engines": {
     "bun": ">=1.1.0"

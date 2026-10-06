@@ -7,38 +7,10 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
 import { bunTestCucumber, loadFeatures } from "@aboviq/bun-test-cucumber";
 import { plugin } from "bun";
 import { featureExemptions } from "./feature-exemptions";
-
-const repoRoot = resolve(import.meta.dir, "..", "..", "..");
-const packagesRoot = resolve(repoRoot, "packages");
-
-const runtimePackages = [
-  "bdd",
-  "browser",
-  "bun-test-utils",
-  "core",
-  "dom",
-  "pbt",
-  "snapshot",
-  "std",
-  "vcr",
-] as const;
-
-function workspacePackages(): string[] {
-  return readdirSync(packagesRoot)
-    .filter((packageName) =>
-      existsSync(resolve(packagesRoot, packageName, "package.json")),
-    )
-    .sort();
-}
-
-function hasFeatureDirectory(packageName: string): boolean {
-  return existsSync(resolve(packagesRoot, packageName, "features"));
-}
+import { hasFeatureDirectory, packagesRoot, repoRoot, runtimePackages, workspacePackages } from "@bun-test-utils/config/bdd";
 
 await plugin(
   bunTestCucumber({
