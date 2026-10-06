@@ -24,16 +24,19 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 
 ## Repo-wide BDD gate
 
-The repository's behavioural specs live under `packages/*/features/*.feature` and
-are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint. Run the
-same gate locally and in CI with:
+The repository's behavioural specs live under `packages/*/e2e/bdd/features/*.feature`,
+and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint
+that calls the shared `runPackageFeatures` helper. Run the same gate locally and in CI
+with:
 
 ```bash
 bun run test:bdd
 ```
 
-The entrypoint also checks that every runtime workspace either has meaningful
-feature coverage or a documented exemption. Package-local `bunfig` files are not required for Gherkin discovery.
+A layout conformance test asserts the other half: every package that owns feature files
+has that entrypoint, and that the entrypoint is exactly the one-line helper call — so the
+wiring cannot drift package by package. Package-local `bunfig` files are not required for
+Gherkin discovery.
 
 ## Fixtures
 

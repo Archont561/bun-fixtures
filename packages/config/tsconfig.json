@@ -1,0 +1,9 @@
+{
+  "extends": "./lib.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["bdd", "tests", "bunup.ts"]
+}
