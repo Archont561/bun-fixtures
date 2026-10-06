@@ -10,8 +10,8 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { FixtureContext } from "bun-test-utils";
-import type { CassetteEntry } from "../src/index.ts";
-import { cassetteFixture } from "../src/index.ts";
+import type { CassetteEntry } from "@/index.ts";
+import { cassetteFixture } from "@/index.ts";
 
 /**
  * Direct fixture calls pass a scratch `testFile` in `tmp` so any automatic

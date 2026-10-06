@@ -49,6 +49,8 @@ packages/
   dom/               @bun-test-utils/dom (happy-dom in-memory component testing)
   browser/           @bun-test-utils/browser (Playwright & Bun.serve fixtures)
   vcr/               @bun-test-utils/vcr (HTTP record & replay cassette fixtures)
+  snapshot/          @bun-test-utils/snapshot (value and file snapshots)
+  bdd/               @bun-test-utils/bdd (Cucumber fixture bridge)
   config/            @bun-test-utils/config (shared TypeScript configurations)
 .backlog/            Backlog project state (tasks, claims, runs)
 .backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)

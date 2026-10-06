@@ -32,6 +32,25 @@
         "@bun-test-utils/config": "workspace:*",
       },
     },
+    "packages/bdd": {
+      "name": "@bun-test-utils/bdd",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@bun-test-utils/config": "workspace:*",
+        "bun-test-utils": "workspace:*",
+      },
+    },
+    "packages/browser": {
+      "name": "@bun-test-utils/browser",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@bun-test-utils/config": "workspace:*",
+        "bun-test-utils": "workspace:*",
+      },
+      "optionalDependencies": {
+        "playwright": "^1.40.0",
+      },
+    },
     "packages/bun-test-utils": {
       "name": "bun-test-utils",
       "version": "0.1.0",
@@ -62,26 +81,11 @@
         "playwright",
       ],
     },
-    "packages/bun-test-utils/bdd": {
-      "name": "@bun-test-utils/bdd",
+    "packages/config": {
+      "name": "@bun-test-utils/config",
       "version": "0.1.0",
-      "devDependencies": {
-        "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
-      },
     },
-    "packages/bun-test-utils/browser": {
-      "name": "@bun-test-utils/browser",
-      "version": "0.1.0",
-      "devDependencies": {
-        "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
-      },
-      "optionalDependencies": {
-        "playwright": "^1.40.0",
-      },
-    },
-    "packages/bun-test-utils/dom": {
+    "packages/dom": {
       "name": "@bun-test-utils/dom",
       "version": "0.1.0",
       "dependencies": {
@@ -92,7 +96,7 @@
         "bun-test-utils": "workspace:*",
       },
     },
-    "packages/bun-test-utils/pbt": {
+    "packages/pbt": {
       "name": "@bun-test-utils/pbt",
       "version": "0.1.0",
       "dependencies": {
@@ -103,7 +107,7 @@
         "bun-test-utils": "workspace:*",
       },
     },
-    "packages/bun-test-utils/snapshot": {
+    "packages/snapshot": {
       "name": "@bun-test-utils/snapshot",
       "version": "0.1.0",
       "devDependencies": {
@@ -111,7 +115,7 @@
         "bun-test-utils": "workspace:*",
       },
     },
-    "packages/bun-test-utils/std": {
+    "packages/std": {
       "name": "@bun-test-utils/std",
       "version": "0.1.0",
       "devDependencies": {
@@ -119,17 +123,13 @@
         "bun-test-utils": "workspace:*",
       },
     },
-    "packages/bun-test-utils/vcr": {
+    "packages/vcr": {
       "name": "@bun-test-utils/vcr",
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
         "bun-test-utils": "workspace:*",
       },
-    },
-    "packages/config": {
-      "name": "@bun-test-utils/config",
-      "version": "0.1.0",
     },
   },
   "packages": {
@@ -185,21 +185,21 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.15", "", { "os": "win32", "cpu": "x64" }, "sha512-yAzh4UqEImV6Hcy0zjUqNfJAsUhoD64FBQCdTG8Md/Z2wQeVP/ZmJ3XRYAs1g8J9fjTFyl2fCtc5FB5til47+g=="],
 
-    "@bun-test-utils/bdd": ["@bun-test-utils/bdd@workspace:packages/bun-test-utils/bdd"],
+    "@bun-test-utils/bdd": ["@bun-test-utils/bdd@workspace:packages/bdd"],
 
-    "@bun-test-utils/browser": ["@bun-test-utils/browser@workspace:packages/bun-test-utils/browser"],
+    "@bun-test-utils/browser": ["@bun-test-utils/browser@workspace:packages/browser"],
 
     "@bun-test-utils/config": ["@bun-test-utils/config@workspace:packages/config"],
 
-    "@bun-test-utils/dom": ["@bun-test-utils/dom@workspace:packages/bun-test-utils/dom"],
+    "@bun-test-utils/dom": ["@bun-test-utils/dom@workspace:packages/dom"],
 
-    "@bun-test-utils/pbt": ["@bun-test-utils/pbt@workspace:packages/bun-test-utils/pbt"],
+    "@bun-test-utils/pbt": ["@bun-test-utils/pbt@workspace:packages/pbt"],
 
-    "@bun-test-utils/snapshot": ["@bun-test-utils/snapshot@workspace:packages/bun-test-utils/snapshot"],
+    "@bun-test-utils/snapshot": ["@bun-test-utils/snapshot@workspace:packages/snapshot"],
 
-    "@bun-test-utils/std": ["@bun-test-utils/std@workspace:packages/bun-test-utils/std"],
+    "@bun-test-utils/std": ["@bun-test-utils/std@workspace:packages/std"],
 
-    "@bun-test-utils/vcr": ["@bun-test-utils/vcr@workspace:packages/bun-test-utils/vcr"],
+    "@bun-test-utils/vcr": ["@bun-test-utils/vcr@workspace:packages/vcr"],
 
     "@capsizecss/unpack": ["@capsizecss/unpack@4.0.1", "", { "dependencies": { "fontkitten": "^1.0.3" } }, "sha512-CuNiSqg7+e1cO/GjffyMOm5Tt2jUF9CWHHnvQ/UkqvtkGfHdgwEC0wpmq7fkN3gxwpRnrAN0WzO3vREKmNolMQ=="],
 

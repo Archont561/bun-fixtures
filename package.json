@@ -4,8 +4,7 @@
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "packages/bun-test-utils/*"
+    "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",
@@ -23,7 +22,8 @@
     "changeset": "changeset",
     "release:version": "changeset version",
     "release:publish": "changeset publish",
-    "prepare": "lefthook install",
+    "stage:subpaths": "bun packages/bun-test-utils/scripts/stage-subpaths.ts",
+    "prepare": "bun run stage:subpaths && lefthook install",
     "board": "backlog board",
     "status": "backlog status"
   },

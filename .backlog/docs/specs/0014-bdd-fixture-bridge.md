@@ -3,7 +3,7 @@
 - **Status:** implemented in the `bun-test-utils/bdd` subpath; scenario-chain API revision documented below
 - **ADR:** [0012](../adr/0012-bdd-fixture-bridge.md)
 - **Implementation:** `packages/bun-test-utils/src/plugin.ts` (`openFixtures`/`withFixtures`),
-  `packages/bun-test-utils/bdd/` (internal workspace package,
+  `packages/bdd/` (internal workspace package,
   bundled into the published `bun-test-utils` package as the
   `bun-test-utils/bdd` subpath export)
 - **Tests:** `packages/bun-test-utils/tests/conformance/conformance.test.ts`,

@@ -6,23 +6,18 @@
       "@": ["./packages/bun-test-utils/src/plugin.ts"],
       "@/*": ["./packages/bun-test-utils/*"],
       "@bun-test-utils/config/*": ["./packages/config/*"],
-      "@bun-test-utils/std": ["./packages/bun-test-utils/std/src/index.ts"],
-      "@bun-test-utils/pbt": ["./packages/bun-test-utils/pbt/src/index.ts"],
-      "@bun-test-utils/dom": ["./packages/bun-test-utils/dom/src/index.ts"],
-      "@bun-test-utils/browser": [
-        "./packages/bun-test-utils/browser/src/index.ts"
-      ],
-      "@bun-test-utils/vcr": ["./packages/bun-test-utils/vcr/src/index.ts"],
-      "@bun-test-utils/snapshot": [
-        "./packages/bun-test-utils/snapshot/src/index.ts"
-      ]
+      "@bun-test-utils/bdd": ["./packages/bdd/src/index.ts"],
+      "@bun-test-utils/browser": ["./packages/browser/src/index.ts"],
+      "@bun-test-utils/dom": ["./packages/dom/src/index.ts"],
+      "@bun-test-utils/pbt": ["./packages/pbt/src/index.ts"],
+      "@bun-test-utils/snapshot": ["./packages/snapshot/src/index.ts"],
+      "@bun-test-utils/std": ["./packages/std/src/index.ts"],
+      "@bun-test-utils/vcr": ["./packages/vcr/src/index.ts"]
     }
   },
   "include": [
     "packages/*/src",
     "packages/*/tests",
-    "packages/bun-test-utils/*/src",
-    "packages/bun-test-utils/*/tests",
     "packages/bun-test-utils/test-plugins.ts",
     "apps/**/*"
   ]

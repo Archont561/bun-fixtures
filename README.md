@@ -126,7 +126,7 @@ Teardown is **LIFO** — dependents before their dependencies.
 | Test | `test(name, fn, opts?)` | Fixture-aware test; finds its own file from the stack. `opts`: `{ fixtures?, timeout?, iterate? }` |
 | Test | `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
 | Test | `expect`, `describe` | Re-exported from `bun:test`, unchanged |
-| Iteration | `opts.iterate` → `ctx.iterate(fn)` | Defer test-scoped fixtures: each `ctx.iterate` call builds them fresh and unwinds them LIFO — the per-sample lifecycle property runners use (see [`@bun-test-utils/pbt`](./packages/bun-test-utils/pbt)) |
+| Iteration | `opts.iterate` → `ctx.iterate(fn)` | Defer test-scoped fixtures: each `ctx.iterate` call builds them fresh and unwinds them LIFO — the per-sample lifecycle property runners use (see [`@bun-test-utils/pbt`](./packages/pbt)) |
 | CLI | `bunx bun-test-utils init [--dir] [--entry] [--force]` | Append the preload to `bunfig.toml` and scaffold a root `fixtures.ts` |
 | Types | `FixtureDef`, `FixtureMap`, `FixtureContext`, `Scope`, `TestOptions`, `IterateFn` | The public type surface |
 | Engine | `discoverFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession` | Internals exported for tooling and for testing fixture trees |
@@ -161,12 +161,12 @@ Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tre
 | Layer | Package | Role |
 | --- | --- | --- |
 | Engine | [`bun-test-utils`](./packages/bun-test-utils) | Discovery, scope cache, DI, parameterization, `init` CLI |
-| Fixtures | [`@bun-test-utils/std`](./packages/bun-test-utils/std) | Zero-dependency `tmpdir`, `env`, `stdio` with automatic restoration |
-| Fixtures | [`@bun-test-utils/pbt`](./packages/bun-test-utils/pbt) | `test.prop` — property-based testing over injected fixtures |
-| Fixtures | [`@bun-test-utils/dom`](./packages/bun-test-utils/dom) | `window`, `document`, `page` via happy-dom, globals restored on teardown |
-| Fixtures | [`@bun-test-utils/browser`](./packages/bun-test-utils/browser) | Ephemeral `Bun.serve` test server and Playwright `browser`/`context`/`page` |
-| Fixtures | [`@bun-test-utils/vcr`](./packages/bun-test-utils/vcr) | Cassette fixture that records and replays `fetch` deterministically |
-| Fixtures | [`@bun-test-utils/snapshot`](./packages/bun-test-utils/snapshot) | Value and file snapshot fixture with pluggable serializers and CI-strict mode |
+| Fixtures | [`@bun-test-utils/std`](./packages/std) | Zero-dependency `tmpdir`, `env`, `stdio` with automatic restoration |
+| Fixtures | [`@bun-test-utils/pbt`](./packages/pbt) | `test.prop` — property-based testing over injected fixtures |
+| Fixtures | [`@bun-test-utils/dom`](./packages/dom) | `window`, `document`, `page` via happy-dom, globals restored on teardown |
+| Fixtures | [`@bun-test-utils/browser`](./packages/browser) | Ephemeral `Bun.serve` test server and Playwright `browser`/`context`/`page` |
+| Fixtures | [`@bun-test-utils/vcr`](./packages/vcr) | Cassette fixture that records and replays `fetch` deterministically |
+| Fixtures | [`@bun-test-utils/snapshot`](./packages/snapshot) | Value and file snapshot fixture with pluggable serializers and CI-strict mode |
 | Internal | [`@bun-test-utils/config`](./packages/config) | Shared `base`/`lib`/`app` TypeScript configurations (private) |
 
 Every "Fixtures" row above is an internal, unpublished (`private: true`) workspace package —
@@ -311,7 +311,7 @@ bun run lint       # Biome
 | --- | --- | --- |
 | unit / dogfooding | `packages/bun-test-utils/tests/` | Engine internals, in-process, using its own fixtures |
 | behavioural (Gherkin) | `packages/bun-test-utils/features/` + `tests/steps/` | User-visible behaviour in real scratch projects, driven only through files, `bun test` output and exit codes |
-| plugin | `packages/bun-test-utils/*/tests/` | Each internal fixture pack's own capabilities |
+| plugin | `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/tests/` | Each internal fixture pack's own capabilities |
 
 Lefthook runs Biome and `typecheck` on commit, commitlint on the message, and the full test
 suite on push — so CI and a local commit can only disagree if the lockfile did.
@@ -321,7 +321,7 @@ suite on push — so CI and a local commit can only disagree if the lockfile did
 | Path | Purpose |
 | --- | --- |
 | `packages/bun-test-utils/` | Core engine, `init` CLI, public API, and the single publishable npm package |
-| `packages/bun-test-utils/{std,pbt,dom,browser,vcr,snapshot}/` | Internal, unpublished (`private: true`) workspace packages — bundled into `bun-test-utils` as flat subpath exports (`bun-test-utils/std`, `bun-test-utils/pbt`, ...), never published on their own |
+| `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/` | Internal, unpublished (`private: true`) workspace packages — bundled into `bun-test-utils` as flat subpath exports (`bun-test-utils/std`, `bun-test-utils/pbt`, ...), never published on their own |
 | `packages/config/` | Shared `base`/`lib`/`app` tsconfigs (private) |
 | `apps/docs/` | Astro + Starlight documentation site |
 | `.backlog/` | Backlog project state — tasks, claims, runs |
@@ -333,9 +333,10 @@ suite on push — so CI and a local commit can only disagree if the lockfile did
 | `turbo.json` · `biome.json` · `lefthook.yml` | Pipeline, lint/format and Git hooks |
 
 The root `package.json` is `private: true`; `packages/bun-test-utils/` is the only package that
-ever publishes to npm — everything under `packages/bun-test-utils/{std,pbt,dom,browser,vcr,snapshot}/`
-is an internal workspace package bundled into it. The `@` alias resolves to the `bun-test-utils`
-package root from either cwd — `@` maps to `src/plugin.ts` and `@/*` to the package root.
+ever publishes to npm — everything under `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/`
+is an internal workspace package bundled into it. In the core project, `@` maps to
+`src/plugin.ts` and `@/*` to its package root; each internal workspace maps its own `@/*`
+alias to its local `src/*`.
 
 > [!TIP]
 > There is deliberately **no package-root `fixtures.ts`** ([ADR 0008](.backlog/docs/adr/0008-no-root-fixtures-file.md)).

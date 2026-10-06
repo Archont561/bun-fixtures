@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { documentFixture, pageFixture, windowFixture } from "../src/index.ts";
+import { documentFixture, pageFixture, windowFixture } from "@/index.ts";
 
 describe("@bun-test-utils/dom", () => {
   test("initializes window and restores globals upon teardown", async () => {

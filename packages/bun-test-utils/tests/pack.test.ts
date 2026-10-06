@@ -12,8 +12,8 @@
  *
  * Since the single-package consolidation (ADR superseding ADR 0011,
  * task_018/task_020), `std`, `pbt`, `dom`, `browser`, `vcr`, and `snapshot`
- * are internal, unpublished (`private: true`) workspace packages nested
- * inside this one — they must never be packed or published on their own.
+ * are sibling internal, unpublished (`private: true`) workspace packages staged
+ * into this one before packing — they must never be packed or published on their own.
  */
 
 import {
@@ -93,6 +93,15 @@ function pack(scratch: string): Packed {
 }
 
 describe("bun pm pack smoke test", () => {
+  test("internal workspace sources live beside the publishable package", () => {
+    for (const sub of BUNDLED_SUBPATHS) {
+      expect(existsSync(join(PACKAGE_DIR, "..", sub, "package.json"))).toBe(
+        true,
+      );
+      expect(existsSync(join(PACKAGE_DIR, sub, "package.json"))).toBe(false);
+    }
+  });
+
   test(
     "the one publishable tarball matches the spec",
     () => {

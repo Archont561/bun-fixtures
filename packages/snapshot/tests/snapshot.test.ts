@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FixtureContext } from "bun-test-utils";
-import { snapshotFixture } from "../src/index.ts";
+import { snapshotFixture } from "@/index.ts";
 
 /**
  * Direct fixture calls pass a scratch `testFile` in `tmp` so any automatic

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { serverUrlFixture, testServerFixture } from "../src/index.ts";
+import { serverUrlFixture, testServerFixture } from "@/index.ts";
 
 describe("@bun-test-utils/browser", () => {
   test("boots ephemeral HTTP server on random port and shuts down on teardown", async () => {

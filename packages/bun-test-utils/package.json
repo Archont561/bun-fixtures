@@ -54,6 +54,7 @@
     "LICENSE-APACHE"
   ],
   "scripts": {
+    "prepack": "bun scripts/stage-subpaths.ts",
     "test": "bun test",
     "test:unit": "bun test tests/fixtures.test.ts tests/nested",
     "test:bdd": "bun test tests/features.test.ts",

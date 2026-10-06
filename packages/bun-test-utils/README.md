@@ -233,12 +233,12 @@ naming the missing package and the install command, it never fails silently.
 
 | Subpath | Wraps | Needs |
 |---------|-------|-------|
-| [`bun-test-utils/std`](./std/README.md) | — (zero-dependency) | nothing extra |
-| [`bun-test-utils/pbt`](./pbt/README.md) | [`fast-check`](https://fast-check.dev) | `bun add -d fast-check` |
-| [`bun-test-utils/dom`](./dom/README.md) | [`happy-dom`](https://github.com/capricorn86/happy-dom) | `bun add -d happy-dom` |
-| [`bun-test-utils/browser`](./browser/README.md) | [`playwright`](https://playwright.dev) | `bun add -d playwright` |
-| [`bun-test-utils/vcr`](./vcr/README.md) | — (zero-dependency) | nothing extra |
-| [`bun-test-utils/snapshot`](./snapshot/README.md) | — (zero-dependency) | nothing extra |
+| [`bun-test-utils/std`](https://github.com/Archont561/bun-test-utils/tree/main/packages/std#readme) | — (zero-dependency) | nothing extra |
+| [`bun-test-utils/pbt`](https://github.com/Archont561/bun-test-utils/tree/main/packages/pbt#readme) | [`fast-check`](https://fast-check.dev) | `bun add -d fast-check` |
+| [`bun-test-utils/dom`](https://github.com/Archont561/bun-test-utils/tree/main/packages/dom#readme) | [`happy-dom`](https://github.com/capricorn86/happy-dom) | `bun add -d happy-dom` |
+| [`bun-test-utils/browser`](https://github.com/Archont561/bun-test-utils/tree/main/packages/browser#readme) | [`playwright`](https://playwright.dev) | `bun add -d playwright` |
+| [`bun-test-utils/vcr`](https://github.com/Archont561/bun-test-utils/tree/main/packages/vcr#readme) | — (zero-dependency) | nothing extra |
+| [`bun-test-utils/snapshot`](https://github.com/Archont561/bun-test-utils/tree/main/packages/snapshot#readme) | — (zero-dependency) | nothing extra |
 
 Each linked README covers that subpath's fixtures in full; this table is the index. These
 are internal, unpublished (`private: true`) workspace packages — they exist for source

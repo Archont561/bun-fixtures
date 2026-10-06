@@ -1,4 +1,4 @@
-import { describe, expect, fc, test } from "../src/index.ts";
+import { describe, expect, fc, test } from "@/index.ts";
 
 describe("@bun-test-utils/pbt", () => {
   test.prop(

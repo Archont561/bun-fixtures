@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { envFixture } from "../src/env.ts";
-import { stdioFixture } from "../src/stdio.ts";
-import { tmpdirFixture } from "../src/tmpdir.ts";
+import { envFixture } from "@/env.ts";
+import { stdioFixture } from "@/stdio.ts";
+import { tmpdirFixture } from "@/tmpdir.ts";
 
 describe("@bun-test-utils/std", () => {
   describe("tmpdir", () => {

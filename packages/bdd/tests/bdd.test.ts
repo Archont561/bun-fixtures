@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { fixtureSteps } from "./index.ts";
+import { fixtureSteps } from "@/index.ts";
 
 test("registers before and after hooks", () => {
   const hooks = {
