@@ -14,33 +14,26 @@ import { parse, stringify } from "smol-toml";
 
 export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/dist/plugin.js";
 
-export const FIXTURES_TEMPLATE = `import type { FixtureMap } from "bun-test-utils";
+export const TEST_TEMPLATE = `import { test as base } from "bun-test-utils";
+import { stdFixtures } from "bun-test-utils/std";
 
 /**
- * Root fixtures. Any directory may add its own \`fixtures.ts\`;
- * deeper directories override shallower ones (root → leaf).
- *
- * Scopes: "session" (whole run) | "file" (per test file) | "test" (default).
- * Everything after \`await use(value)\` is teardown.
+ * Playwright-style fixture composition. Add project fixtures to this map and
+ * import the resulting test from this file in your test modules.
  */
-export default {
+export const test = base.extend({
+  ...stdFixtures,
   config: {
     scope: "session",
     setup: async (use) => {
       await use({ env: "test" });
     },
   },
-
-  tmpDir: {
-    setup: async (use) => {
-      const dir = \`\${process.env.TMPDIR ?? "/tmp"}/test-\${crypto.randomUUID().slice(0, 8)}\`;
-      await Bun.$\`mkdir -p \${dir}\`.quiet();
-      await use(dir);
-      await Bun.$\`rm -rf \${dir}\`.quiet();
-    },
-  },
-} satisfies FixtureMap;
+});
 `;
+
+/** @deprecated Use TEST_TEMPLATE. Kept as an internal alias for tooling. */
+export const FIXTURES_TEMPLATE = TEST_TEMPLATE;
 
 /**
  * Adds `entry` to `[test].preload`, preserving whatever is already there.
@@ -98,28 +91,29 @@ export async function init({ dir, entry, force }: InitOptions): Promise<void> {
     console.log(`bunfig.toml already preloads "${entry}" — unchanged`);
   }
 
-  const fixturesPath = join(root, "fixtures.ts");
-  if (existsSync(fixturesPath) && !force) {
+  const testPath = join(root, "test.ts");
+  if (existsSync(testPath) && !force) {
     console.log(
-      "fixtures.ts already exists — left untouched (use --force to overwrite)",
+      "test.ts already exists — left untouched (use --force to overwrite)",
     );
   } else {
-    await mkdir(dirname(fixturesPath), { recursive: true });
-    await writeFile(fixturesPath, FIXTURES_TEMPLATE);
-    console.log(`${force ? "wrote" : "created"} fixtures.ts`);
+    await mkdir(dirname(testPath), { recursive: true });
+    await writeFile(testPath, TEST_TEMPLATE);
+    console.log(`${force ? "wrote" : "created"} test.ts`);
   }
 
-  console.log("\nNext: in a test file —\n");
-  console.log('  import { test, expect } from "bun-test-utils";\n');
-  console.log('  test("it works", async ({ tmpDir }) => {');
-  console.log("    expect(tmpDir).toBeTruthy();");
+  console.log("\nNext: import the composed test in a test file —\n");
+  console.log('  import { test } from "./test";\n');
+  console.log('  test("it works", async ({ tmpdir }) => {');
+  console.log("    console.log(tmpdir);");
   console.log("  });\n");
 }
 
 export const initCommand = defineCommand({
   meta: {
     name: "init",
-    description: "Set up bunfig.toml preload and scaffold a root fixtures.ts",
+    description:
+      "Set up bunfig.toml preload and scaffold an extendable test.ts",
   },
   args: {
     dir: {

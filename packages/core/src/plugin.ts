@@ -970,6 +970,9 @@ function warn(
 // `test.extend()`. The test-only legacy bootstrap calls discoverFixtures()
 // directly for the engine's historical conformance fixtures; it is not part
 // of the published preload path.
+if (process.env.BUN_TEST_UTILS_LEGACY_DISCOVERY === "1") {
+  await discoverFixtures();
+}
 
 /**
  * When this module is loaded as a preload script, `afterAll` registers a

@@ -30,26 +30,25 @@ describe("end to end", () => {
       expect(init.exitCode).toBe(0);
 
       writeFileSync(
-        join(dir, "fixtures.ts"),
-        `export default {
-         server: {
-           scope: "session",
-           setup: async (use) => { console.log("up"); await use({ port: 1234 }); console.log("down"); },
-         },
-       };\n`,
-      );
-      writeFileSync(
-        join(dir, "sub", "fixtures.ts"),
-        `export default {
-         user: { setup: async (use, { server }) => { await use({ name: "ada", port: server.port }); } },
-       };\n`,
+        join(dir, "test.ts"),
+        `import { test as base } from "bun-test-utils";
+export const test = base.extend({
+  server: {
+    scope: "session",
+    setup: async (use) => { console.log("up"); await use({ port: 1234 }); console.log("down"); },
+  },
+  user: {
+    setup: async (use, { server }) => { await use({ name: "ada", port: server.port }); },
+  },
+});\n`,
       );
       writeFileSync(
         join(dir, "sub", "e2e.test.ts"),
-        `import { test, expect } from "bun-test-utils";
-       test("injects across directories", async ({ user }) => {
-         expect(user).toEqual({ name: "ada", port: 1234 });
-       });\n`,
+        `import { expect } from "bun-test-utils";
+import { test } from "../test";
+test("injects across directories", async ({ user }) => {
+  expect(user).toEqual({ name: "ada", port: 1234 });
+});\n`,
       );
 
       const run = Bun.spawnSync({ cmd: ["bun", "test"], cwd: dir });

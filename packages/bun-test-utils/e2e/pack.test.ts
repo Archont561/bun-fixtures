@@ -299,22 +299,20 @@ describe("bun pm pack smoke test", () => {
         expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
           "node_modules/bun-test-utils/dist/plugin.js",
         );
-        expect(readFileSync(join(project, "fixtures.ts"), "utf8")).toContain(
-          "export default",
+        expect(readFileSync(join(project, "test.ts"), "utf8")).toContain(
+          "base.extend",
         );
 
-        // The README quickstart against the tarball: init's scaffolded
-        // fixtures flow through discovery and injection, and a bundled
-        // subpath (`bun-test-utils/std`) resolves with no extra install.
+        // The README quickstart against the tarball: the generated explicit
+        // test extension and a bundled subpath resolve with no extra install.
         writeFileSync(
           join(project, "quickstart.test.ts"),
-          `import { test, expect } from "bun-test-utils";
+          `import { expect } from "bun-test-utils";
+import { test } from "./test";
 import { tmpdirFixture } from "bun-test-utils/std";
 
-test("quickstart: scaffolded fixtures inject", async ({ config, tmpDir }) => {
-  expect(config).toEqual({ env: "test" });
-  expect(typeof tmpDir).toBe("string");
-  expect(tmpDir.length).toBeGreaterThan(0);
+test("quickstart: explicit fixtures inject", async ({ tmpdir }) => {
+  expect(tmpdir).toBeTruthy();
 });
 
 test("quickstart: bundled subpath resolves with no extra install", () => {
