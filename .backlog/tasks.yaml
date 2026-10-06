@@ -37,9 +37,8 @@ tasks:
     created_at: 2026-10-05T15:17:57.550Z
     updated_at: 2026-10-05T15:18:13.190Z
   - id: task_002
-    title: M2 — Preload discovery + path-based merge
-    description: "Startup tree walk, directory map, root to leaf merge. Spec:
-      docs/specs/0002-discovery-and-merge.md"
+    title: M2 — Legacy preload discovery + path-based merge (superseded)
+    description: "Historical startup tree walk and directory merge; superseded by explicit test.extend() composition. Spec: docs/specs/0002-discovery-and-merge.md"
     source_links: []
     status: done
     priority: P0
@@ -49,10 +48,10 @@ tasks:
     repo_targets:
       - bun-fixture
     acceptance_criteria:
-      - fixtures.ts / conftest.ts discovered, node_modules and build dirs skipped
-      - nearest directory wins, ancestors inherited, siblings invisible
+      - legacy fixture-file discovery was removed; fixtures.ts/conftest.ts are ordinary modules
+      - explicit test.extend() chains replace nearest-directory/ancestor inheritance semantics
       - idempotent across preload and direct import
-      - BUN_FIXTURE_ROOT and BUN_FIXTURE_NO_AUTODISCOVER honoured
+      - superseded: no fixture-file scan root or opt-out flags exist
     dependencies:
       - task_001
     planning:
@@ -74,8 +73,8 @@ tasks:
     created_at: 2026-10-05T15:18:08.325Z
     updated_at: 2026-10-05T15:18:13.469Z
   - id: task_003
-    title: M3 — CLI init (bunfig.toml edit + fixtures scaffold)
-    description: "bun-fixture init. Spec: docs/specs/0003-cli-init.md"
+    title: M3 — CLI init (bunfig.toml edit)
+    description: "test-utils init. Spec: docs/specs/0003-cli-init.md"
     source_links: []
     status: done
     priority: P1
@@ -85,9 +84,9 @@ tasks:
     repo_targets:
       - bun-fixture
     acceptance_criteria:
-      - appends ./node_modules/bun-fixture/src/plugin.ts to [test].preload
+      - appends ./node_modules/bun-test-utils/dist/plugin.js to [test].preload
       - idempotent, string preload normalized to a list, other sections preserved
-      - scaffolds root fixtures.ts, --force to overwrite
+      - does not scaffold fixture files; --force retained for compatibility
       - warns about TOML comment loss
     dependencies:
       - task_001
@@ -217,7 +216,7 @@ tasks:
     repo_targets:
       - bun-fixture
     acceptance_criteria:
-      - features/*.feature cover scopes, teardown, discovery, validation,
+      - features/*.feature cover scopes, teardown, explicit composition, validation,
         params, CLI init
       - steps drive only files, bun test output and exit codes — no engine
         imports
@@ -418,8 +417,7 @@ tasks:
       stream capture (stdio) with automatic LIFO restoration. Spec:
       docs/specs/0009-standard-fixtures-std.md. STATUS (2026-10-05): complete.
       Unit coverage in packages/std/tests/std.test.ts; dogfooded in the core
-      suite via packages/bun-fixture/tests/fixtures.ts (stdFixtures merged) and
-      packages/bun-fixture/tests/std.test.ts, which proves engine-driven
+      suite via explicit test.extend() composition in conformance tests, which proves engine-driven
       teardown: fresh tmpdir per test with the previous wiped, process.env
       restored, real streams handed back. Note: the dogfood import resolves via
       the workspace node_modules symlink and is deliberately not declared in
@@ -833,7 +831,7 @@ tasks:
       - New ADR superseding ADR 0011, recording BOTH reversed decisions (rebrand
       + architecture) with rationale: nothing is published yet under any name,
       so there is zero backward-compat cost to changing either; one install
-      target removes version-skew and cross-package-discovery overhead for
+      target removes version-skew and cross-package setup overhead for
       consumers; heavy per-capability deps (playwright, happy-dom, fast-check)
       become optionalDependencies/peerDependenciesMeta.optional on the single
       package instead of being forced via separate package installs.
@@ -847,10 +845,9 @@ tasks:
       standalone; actual bundling into one artifact happens in task_020.
 
       - Update every hardcoded string literal referencing the old name (error
-      message prefixes like '[bun-fixture] ...', the CLI's generated bunfig.toml
-      preload path, scaffolded fixtures.ts comments) — decide rename vs
-      keep-for-compat for the BUN_FIXTURE_ROOT / BUN_FIXTURE_NO_AUTODISCOVER env
-      vars.
+      message prefixes like '[bun-fixture] ...' and the CLI's generated bunfig.toml
+      preload path). Legacy fixture-file scaffold comments and discovery env vars
+      have since been removed.
 
       - Root tsconfig.json path aliases, bunfig.toml preload entries,
       turbo.json/biome.json references to old package names.
@@ -936,15 +933,15 @@ tasks:
       alongside sibling subpaths. Nothing today proves that multiple subpaths
       actually compose correctly when a real consumer imports several of them
       (bun-test-utils/vcr, bun-test-utils/std, bun-test-utils/bdd, ...) into one
-      real fixtures.ts under the real engine (shared scope cache, correct
+      explicit fixture maps under the real engine (shared scope cache, correct
       cross-subpath LIFO teardown order, no name collisions, no
       double-instantiation of a dependency two subpaths both pull in).
 
 
       Add a dedicated conformance test suite
       (packages/bun-test-utils/tests/conformance/) that runs real test() cases
-      against fixtures.ts files combining multiple subpaths' FixtureMaps via the
-      real preload/discovery path (not direct fixture.setup() calls) and via
+      against explicit test.extend() chains combining multiple subpaths' FixtureMaps via the
+      real public path (not direct fixture.setup() calls) and via
       real bun-test-utils/<name> subpath imports (not internal
       workspace-relative imports), proving they interoperate as real
       published-package consumers would use them together.
@@ -967,12 +964,11 @@ tasks:
       wrapper.
 
       - vcr + std + bdd together: one three-way scenario combining all three in
-      a single feature file/fixtures.ts.
+      a single explicit fixture module.
 
-      - At least one negative case: two fixtures.ts files declaring a fixture
-      with the same name in sibling directories, proving the documented
-      nearest-wins merge behaviour still holds when the colliding fixtures come
-      from different subpaths, not just hand-written test fixtures.
+      - At least one negative case: two explicit fixture maps declaring a fixture
+      with the same name, proving imported test.extend() order controls overrides
+      and sibling directories do not contribute fixtures implicitly.
 
 
       Also worth covering while in there (not required for the minimum bar, note
@@ -1000,12 +996,12 @@ tasks:
         bridge gets identical record/replay behaviour to a plain test()"
       - "std + bdd interoperate: env/stdio/tmpdir sandboxing and restoration
         work correctly when resolved outside test()"
-      - A three-way vcr + std + bdd scenario passes in one fixtures.ts / feature
+      - A three-way vcr + std + bdd scenario passes through one explicit fixture module / feature
         file
-      - A documented negative case proves nearest-directory-wins merge still
+      - A documented negative case proves explicit override behavior still
         holds when colliding fixture names come from different subpaths
       - Suite imports via real bun-test-utils/<name> subpaths and runs through
-        the real preload/discovery path, not direct fixture.setup() calls; wired
+        the real explicit-composition path, not direct fixture.setup() calls; wired
         into turbo.json/CI like pack.test.ts
     dependencies:
       - task_018
@@ -1373,7 +1369,7 @@ tasks:
     description: "Implemented opt-in, dependency-free core diagnostics. Added
       DiagnosticEvent and DiagnosticsSink types, configureDiagnostics(sink) with
       restore semantics, reportDiagnostic(), structured
-      discovery/session-teardown event codes, and BUN_TEST_UTILS_DEBUG=1 stderr
+      composition/session-teardown event codes, and BUN_TEST_UTILS_DEBUG=1 stderr
       fallback. Core library no longer uses console.warn; CLI console output
       remains unchanged. Documented the integration in the root and core READMEs
       and added unit coverage for injected structured diagnostics. Lint,
@@ -1589,13 +1585,7 @@ tasks:
     updated_at: 2026-10-06T10:00:32.208Z
   - id: task_032
     title: Adopt Playwright-style fixture extension API
-    description: "Public migration complete: the published preload no longer
-      auto-discovers fixtures; test.extend() is the documented
-      fixture-definition API; capability packages export preconfigured
-      extendable tests; CLI scaffolds test.ts; README/docs and quickstart use
-      explicit composition. Legacy discovery remains only as an internal/test
-      compatibility hook for the historical conformance scenarios. All gates are
-      green."
+    description: "Public migration complete: the published preload does not load fixture files automatically; test.extend() is the documented fixture-definition API; capability packages export preconfigured extendable tests; README/docs and quickstart use explicit composition. The legacy discovery scanner and compatibility hook have been removed. All gates are green."
     source_links: []
     status: done
     priority: P1

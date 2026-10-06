@@ -3,11 +3,14 @@ title: CLI Reference
 description: Command-line interface reference for test-utils init.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 ## Commands
 
 ### `test-utils init`
 
-Initializes `bun-test-utils` in the current project or workspace.
+Initializes `bun-test-utils` in the current project or workspace by adding the preload hook to `bunfig.toml`. Create your own `test.ts` and compose fixtures with `test.extend()`.
 
 ```bash
 bunx test-utils init [options]
@@ -17,4 +20,4 @@ bunx test-utils init [options]
 
 - `--dir <path>`: Working directory (defaults to current directory).
 - `--entry <path>`: Path to preload script entrypoint.
-- `--force`: Overwrite existing `test.ts` if present.
+- `--force`: Accepted for backward compatibility; `init` does not overwrite project files.

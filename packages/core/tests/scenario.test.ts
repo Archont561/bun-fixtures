@@ -30,7 +30,18 @@ describe("extended scenario chains", () => {
       expect(requestId).toBe("req-1");
     });
 
-  test("extend composes fixtures", async ({ api }) => {
+  extended("extend composes fixtures", async ({ api }) => {
     expect(await api.save({ name: "Grace" })).toEqual({ name: "Grace", id: 1 });
+  });
+
+  test("base test does not see fixtures from an extended chain", () => {
+    expect(() =>
+      test("uncomposed scenario fixture", async ({ api }) => {
+        expect(await api.save({ name: "Grace" })).toEqual({
+          name: "Grace",
+          id: 1,
+        });
+      }),
+    ).toThrow(/unknown fixture "api".*test\.extend/s);
   });
 });

@@ -9,7 +9,7 @@ export default defineConfig({
     starlight({
       title: "bun-test-utils",
       description:
-        "pytest-style scoped, injectable fixtures for bun test — autodiscovered per directory",
+        "pytest-style scoped, injectable fixtures for bun test — explicit test.extend() composition",
       logo: {
         light: "./src/assets/logo-light.svg",
         dark: "./src/assets/logo-dark.svg",
@@ -39,8 +39,8 @@ export default defineConfig({
               slug: "guides/scopes-and-teardown",
             },
             {
-              label: "Discovery & Merging",
-              slug: "guides/discovery-and-merging",
+              label: "Explicit Composition",
+              slug: "guides/explicit-composition",
             },
             {
               label: "Parameterized Fixtures",

@@ -12,7 +12,7 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-The `init` command adds the preload plugin to `bunfig.toml` and scaffolds an extendable `test.ts` module.
+The `init` command adds the preload plugin to `bunfig.toml`. It does not auto-load fixture files; create an extendable `test.ts` module for explicit composition.
 
 ## 2. Compose Fixtures
 
@@ -64,4 +64,4 @@ Fixtures can depend on one another, have session, file, or test scope, and run t
 bun test
 ```
 
-Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.
+`fixtures.ts` and `conftest.ts` are not automatically loaded. Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.

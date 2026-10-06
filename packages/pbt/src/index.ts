@@ -1,14 +1,15 @@
 import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   BunTestUtilsError,
-  test as baseTest,
   callerFile,
   createTest,
   describe,
   detectFixtures,
   expect,
+  type FixtureAwareTest,
   type FixtureContext,
-  fixturesFor,
+  type FixtureMap,
   type GivenChain,
   type ScenarioContext,
   type ScenarioFactory,
@@ -40,6 +41,22 @@ try {
 
 export type { Arbitrary } from "fast-check";
 export { describe, expect, fc };
+
+const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
+
+export type PbtFixtureAwareTest = FixtureAwareTest & {
+  prop: PropFn;
+  extend: (fixtures: FixtureMap) => PbtFixtureAwareTest;
+  scenario: ScenarioFactory;
+};
+
+function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
+  return ((test as any)[FIXTURE_MAP_SYMBOL] ?? {}) as FixtureMap;
+}
+
+function explicitTestFor(file: string, map: FixtureMap): FixtureAwareTest {
+  return createTest(file).test.extend(map);
+}
 
 export interface PropTestOptions extends FcParameters {
   fixtures?: string[];
@@ -100,7 +117,10 @@ function makeProp(runnerTest: TestFn): PropFn {
   };
 }
 
-function makeScenarioProp(): ScenarioFactory["prop"] {
+function makeScenarioProp(
+  map: FixtureMap,
+  propFn: PropFn,
+): ScenarioFactory["prop"] {
   return ((title: string, strategies: ArbitraryRecord) => {
     const steps: Array<{
       phase: "given" | "when" | "then";
@@ -126,16 +146,12 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
           ...new Set(
             steps
               .flatMap((step) => detectFixtures(step.fn, 0))
-              .filter(
-                (name) =>
-                  !generatedNames.has(name) &&
-                  name in fixturesFor(callerFile()),
-              ),
+              .filter((name) => !generatedNames.has(name) && name in map),
           ),
         ];
         if (!registered) {
           registered = true;
-          prop(
+          propFn(
             title,
             strategies,
             async (fixtures, values) => {
@@ -169,11 +185,14 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
  * ```
  */
 export function createPropTest(testFile?: string) {
-  const runner = createTest(testFile);
+  const file = resolve(testFile ?? callerFile([...SELF_PATHS]));
+  const runner = createTest(file);
+  const test = makePbtTest(fixtureMapOf(runner.test), file);
 
   return {
     ...runner,
-    prop: makeProp(runner.test),
+    test,
+    prop: test.prop,
     fc,
   };
 }
@@ -197,24 +216,63 @@ const SELF_PATHS = new Set(
   ].filter(Boolean) as string[],
 );
 
-const propCache = new Map<string, PropFn>();
-const topLevelProp: PropFn = (title, arbs, testFn, opts) => {
-  const file = callerFile([...SELF_PATHS]);
-  let runnerProp = propCache.get(file);
-  if (!runnerProp) {
-    runnerProp = makeProp(createTest(file).test);
-    propCache.set(file, runnerProp);
-  }
-  return runnerProp(title, arbs, testFn, opts);
-};
-export const prop: PropFn = topLevelProp;
+function makeExplicitProp(
+  map: FixtureMap,
+  fixedFile?: string,
+  runnerFor?: (file: string) => FixtureAwareTest,
+): PropFn {
+  const cache = new Map<string, FixtureAwareTest>();
+  const getRunner =
+    runnerFor ??
+    ((file: string) => {
+      let runner = cache.get(file);
+      if (!runner) {
+        runner = explicitTestFor(file, map);
+        cache.set(file, runner);
+      }
+      return runner;
+    });
+  return (title, arbs, testFn, opts) => {
+    const file = resolve(fixedFile ?? callerFile([...SELF_PATHS]));
+    return makeProp(getRunner(file))(title, arbs, testFn, opts);
+  };
+}
 
-const scenario = Object.assign(
-  ((title: string) => baseTest.scenario(title)) as ScenarioFactory,
-  { prop: makeScenarioProp() },
-);
+function makePbtTest(
+  fixtures: FixtureMap = {},
+  fixedFile?: string,
+): PbtFixtureAwareTest {
+  const map = { ...fixtures };
+  const runnerCache = new Map<string, FixtureAwareTest>();
+  const resolveFile = () => resolve(fixedFile ?? callerFile([...SELF_PATHS]));
+  const runnerFor = (file: string) => {
+    let runner = runnerCache.get(file);
+    if (!runner) {
+      runner = explicitTestFor(file, map);
+      runnerCache.set(file, runner);
+    }
+    return runner;
+  };
+  const runner = () => runnerFor(resolveFile());
+  const prop = makeExplicitProp(map, fixedFile, runnerFor);
+  const pbtTest = ((name: string, fn: any, opts?: any) =>
+    runner()(name, fn, opts)) as PbtFixtureAwareTest;
+  pbtTest.extend = (more) => makePbtTest({ ...map, ...more }, fixedFile);
+  pbtTest.prop = prop;
+  pbtTest.scenario = Object.assign(
+    ((title: string) => runner().scenario(title)) as ScenarioFactory,
+    { prop: makeScenarioProp(map, prop) },
+  );
+  Object.defineProperty(pbtTest, FIXTURE_MAP_SYMBOL, {
+    value: map,
+    enumerable: false,
+  });
+  return pbtTest;
+}
 
-export const test = Object.assign(baseTest, { prop, scenario });
+export const prop: PropFn = makeExplicitProp({});
+
+export const test: PbtFixtureAwareTest = makePbtTest();
 
 export default {
   fc,

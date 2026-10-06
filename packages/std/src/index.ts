@@ -9,7 +9,7 @@ export { type EnvHelper, envFixture } from "./env.ts";
 export { type StdioHelper, stdioFixture } from "./stdio.ts";
 export { type TmpDirHelper, tmpdirFixture } from "./tmpdir.ts";
 
-/** Standard fixtures bundle for export from fixtures.ts */
+/** Standard fixtures bundle for explicit test.extend() composition. */
 export const stdFixtures: FixtureMap = {
   tmpdir: tmpdirFixture,
   env: envFixture,

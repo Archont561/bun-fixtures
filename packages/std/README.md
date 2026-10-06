@@ -2,6 +2,8 @@
 
 `bun-test-utils/std` provides zero-dependency isolation for ordinary tests. The fixtures are available from the published package's `std` subpath.
 
+> These fixtures are available from `bun-test-utils/std` or by spreading `stdFixtures` into your own `test.extend()` chain. `fixtures.ts` and `conftest.ts` are not automatically loaded; import the runner that composes the fixtures you need.
+
 ## Temporary files and environment
 
 ```ts

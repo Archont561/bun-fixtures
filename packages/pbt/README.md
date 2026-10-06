@@ -2,6 +2,8 @@
 
 `bun-test-utils/pbt` adds fast-check properties to the fixture-aware test API. Install the optional generator dependency when needed:
 
+> Property tests use the same explicit fixture model as ordinary tests. `fixtures.ts` and `conftest.ts` are not automatically loaded; call `test.extend()` and use the returned `test.prop` when a property needs fixtures.
+
 ```bash
 bun add -d bun-test-utils fast-check
 ```

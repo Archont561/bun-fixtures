@@ -1,7 +1,7 @@
 {
   "name": "bun-test-utils",
   "version": "0.1.0",
-  "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
+  "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 explicit test.extend() composition, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "author": "Archont561 (https://github.com/Archont561)",
@@ -10,7 +10,6 @@
     "bun-test",
     "fixtures",
     "pytest",
-    "conftest",
     "testing",
     "dependency-injection",
     "test-utils"

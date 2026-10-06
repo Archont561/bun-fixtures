@@ -3,6 +3,9 @@ title: Plugins & Ecosystem
 description: Official companion packages for standard, DOM, browser, and property testing.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 ## Bundled Ecosystem Subpaths
 
 Every subpath below ships inside the single `bun-test-utils` npm package — no extra

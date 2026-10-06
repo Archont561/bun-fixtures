@@ -2,6 +2,8 @@
 
 `bun-test-utils/vcr` records and replays `fetch` traffic. It has no extra runtime dependency.
 
+> VCR fixtures are included only by importing `bun-test-utils/vcr` or composing `vcrFixtures` with `test.extend()`. `fixtures.ts` and `conftest.ts` are not automatically loaded.
+
 ## Record and replay callback work
 
 ```ts

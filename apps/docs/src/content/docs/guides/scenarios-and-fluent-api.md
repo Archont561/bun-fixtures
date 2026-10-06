@@ -3,6 +3,9 @@ title: Scenarios and fluent API
 description: Share state across given, when, and then steps with typed fluent scenarios.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 Scenarios are a readable wrapper around one fixture-aware test. Each `given` and `when` step may return an object; its properties are merged into the next step's context.
 
 ## A fluent scenario

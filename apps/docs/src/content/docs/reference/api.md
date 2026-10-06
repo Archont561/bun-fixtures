@@ -3,12 +3,17 @@ title: API Reference
 description: Core TypeScript API reference for bun-test-utils.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 ## Exports
 
 ### `test(name, fn, options?)`
 
-Defines a fixture-aware test. Requested fixtures are auto-detected from the
-first parameter's destructuring pattern:
+Defines a fixture-aware test. Only fixtures from the imported `test.extend()`
+chain are available; `fixtures.ts` and `conftest.ts` files are not loaded
+automatically. Requested fixtures are detected from the first parameter's
+destructuring pattern:
 
 ```ts
 test("my test", async ({ db }) => {
@@ -90,6 +95,7 @@ trace inspection is not desired):
 
 ```ts
 const { test, describe, expect } = createTest(import.meta.path);
+const dbTest = test.extend({ db: dbFixture });
 ```
 
 ### `expect` and `describe`
@@ -130,24 +136,25 @@ const db: FixtureDef<Db> = {
 
 | Variable | Behaviour |
 | :-- | :-- |
-| `BUN_TEST_UTILS_ROOT` | Overrides the tree root used by discovery (defaults to `process.cwd()`) |
-| `BUN_TEST_UTILS_NO_AUTODISCOVER` | Skips the startup tree walk entirely when set |
+| `BUN_TEST_UTILS_DEBUG` | Emits opt-in diagnostics to stderr when set to `1` |
+
+There are no fixture discovery environment variables. The preload does not walk
+your project tree, and `fixtures.ts` / `conftest.ts` are not special filenames.
 
 ## Engine & tooling exports
 
-Exported for tooling, companion runners, and testing fixture trees
-themselves:
+Exported for tooling, companion runners, and tests of reusable fixture maps:
 
 | Export | Purpose |
 | :-- | :-- |
-| `registerFixtures(dir, map)` | Register a fixture map programmatically |
-| `fixturesFor(testFile)` | Internal fixture lookup helper; prefer explicit `test.extend()` composition |
 | `resolveOrder(requested, map, where)` | Topological order over requested fixtures — throws on cycles, unknown names, scope violations |
 | `paramCombos(order, map)` | Cartesian product of every parameterized fixture |
 | `destructuredKeys(fn, index)` | Identifiers of a destructured parameter |
 | `detectFixtures(fn, index)` | Requested fixtures from a destructured parameter, metadata excluded |
 | `callerFile(extraSelf?)` | Nearest caller file outside the engine (and `extraSelf`) from the stack trace |
+| `openFixtures(map, names, context?)` / `withFixtures(...)` | Explicitly open a fixture map for integrations that manage their own lifecycle |
 | `teardownFile(file)` / `teardownSession()` | LIFO teardown of file / session scopes |
+| `configureDiagnostics(sink?)` / `reportDiagnostic(event)` | Opt-in structured diagnostics for integrations |
 
 `detectFixtures` and `callerFile` exist for companion runners whose own
 callbacks wrap the fixture context. `bun-test-utils/pbt` uses both:

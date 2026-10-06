@@ -57,6 +57,39 @@ test("returns the fixture value", async ({ user }) => {
 });
 ```
 
+
+## Fixture composition
+
+There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and parent or sibling directories never contribute fixtures by location. Compose fixtures explicitly with `test.extend()` and import that extended test wherever the fixtures are needed.
+
+### Migration from fixture files
+
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+});
+```
+
+```ts
+// users.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
+
+test("uses the explicit fixture", async ({ db }) => {
+  expect(await db.health()).toBe("ok");
+});
+```
+
 For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Runnable examples live in the package READMEs:
 
 - [Core fixture engine](packages/core/README.md)

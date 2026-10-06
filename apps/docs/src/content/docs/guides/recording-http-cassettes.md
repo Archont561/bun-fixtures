@@ -3,6 +3,9 @@ title: Recording HTTP Cassettes
 description: Record live fetch traffic to __cassettes__/ and replay it offline with bun-test-utils/vcr.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 `bun-test-utils/vcr` intercepts `globalThis.fetch` during a test: live HTTP
 traffic is recorded to disk once, then replayed deterministically — offline,
 fast, and immune to rate limits and flaky third parties.

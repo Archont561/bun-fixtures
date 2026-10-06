@@ -1,2 +1,4 @@
+# Core tests preload the engine only for run-global teardown hooks.
+# Fixtures are composed explicitly with test.extend().
 [test]
-preload = ["./tests/legacy-discovery.ts"]
+preload = ["./src/plugin.ts"]

@@ -16,8 +16,8 @@ Working docs for the package and its ecosystem. User-facing documentation lives 
 | Milestone | Deliverable | Status |
 |-----------|-------------|--------|
 | [M1](./milestones/M1-fixture-engine.md) | Fixture engine (scopes, teardown, params) + `createTest` | ✅ done |
-| [M2](./milestones/M2-discovery.md) | Preload discovery + path-based merge | ✅ done |
-| [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit + scaffold) | ✅ done |
+| [M2](./milestones/M2-discovery.md) | Legacy preload discovery + path-based merge | superseded |
+| [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
 | [M5](./milestones/M5-publish.md) | Publish to npm | 🟡 in progress |
 
@@ -63,7 +63,6 @@ tsconfig.json        root TypeScript configuration
 turbo.json           Turborepo monorepo pipeline configuration
 ```
 
-> There is deliberately **no package-root `fixtures.ts`** — fixtures used by
-> the suite live under `tests/`. Root-level discovery is still covered, by the
-> end-to-end test and the behavioural suite, both of which scaffold throwaway
-> projects in `tmpdir`.
+> Explicit composition only: `fixtures.ts` and `conftest.ts` are ordinary
+> module names and are not automatically loaded. Tests import a `test.extend()`
+> runner (or pass explicit fixture maps to integration helpers).

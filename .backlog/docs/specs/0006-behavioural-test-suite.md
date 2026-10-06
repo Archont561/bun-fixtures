@@ -7,29 +7,23 @@
 
 ## Problem
 
-The dogfooding suite tests the engine *from the inside*: it imports
-`resolveOrder`, inspects `fixturesFor`, and shares a process with the fixtures
-it exercises. That is fast and precise, but it cannot catch anything about the
-experience of actually using the package — preload wiring, discovery from a
-real cwd, `bun test` output, exit codes, CLI side effects — and it is coupled
-to internal names.
+The dogfooding suite tests focused engine internals in process. That is fast and precise, but it cannot catch everything about the experience of actually using the package — preload wiring, explicit `test.extend()` composition from real files, `bun test` output, exit codes, CLI side effects — and it is coupled to internal names.
 
 ## Requirements
 
 | # | Requirement |
 |---|-------------|
 | R1 | Behaviour MUST be specified in Gherkin, readable without knowing the implementation |
-| R2 | Each scenario MUST run against a real throwaway project: its own directory, `bunfig.toml`, `node_modules/bun-fixture`, and a real `bun test` subprocess |
+| R2 | Each scenario MUST run against a real throwaway project: its own directory, `bunfig.toml`, `node_modules/bun-test-utils`, and a real `bun test` subprocess |
 | R3 | Steps MUST NOT import the fixture engine — only files, process output, and exit codes |
-| R4 | Scenarios MUST cover scopes, LIFO teardown, teardown after failure, directory discovery and overriding, graph validation errors, parameterization, and CLI `init` |
+| R4 | Scenarios MUST cover scopes, LIFO teardown, teardown after failure, explicit composition and overriding, graph validation errors, parameterization, and CLI `init` |
 | R5 | Scratch projects MUST be removed after each scenario |
 | R6 | The suite MUST run under plain `bun test` alongside the unit suite |
 
 ## Design
 
 `@aboviq/bun-test-cucumber` compiles each `.feature` into `describe`/`it` via a
-Bun loader plugin, registered in `test-plugins.ts` and preloaded next to
-`src/plugin.ts`. Bun's scanner ignores `.feature` files
+Bun loader plugin, registered in `test-plugins.ts`. Bun's scanner ignores `.feature` files
 ([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so
 `e2e/features.test.ts` loads them with `loadFeatures`. The top-level `e2e/` directory is kept
 beside `tests/` to make its assembled-product responsibility distinct from in-process tests.
@@ -45,7 +39,7 @@ step that broke, and each step gets its own timeout.
 
 ## Relationship to the unit suite
 
-| | `tests/fixtures.test.ts` | `features/*.feature` |
+| | unit tests | `features/*.feature` |
 |---|---|---|
 | Level | internals, in-process | user-visible, subprocess |
 | Speed | ~100 ms | ~400 ms |
@@ -55,6 +49,6 @@ Both are required; neither replaces the other.
 
 ## Verification
 
-`bun run test:bdd` — 5 feature files, 20 scenarios. Verified sensitive by
+`bun run test:bdd` — feature files covering explicit composition, scopes, validation, parameterization, CLI init, and capability packs. Verified sensitive by
 mutation: flipping an expected occurrence count in
 `features/fixture-scopes.feature` fails exactly the step that asserts it.

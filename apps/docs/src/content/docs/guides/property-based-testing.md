@@ -3,6 +3,9 @@ title: Property-Based Testing
 description: Generative tests with fast-check arbitraries over injected fixtures, with a per-sample fixture lifecycle.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 `bun-test-utils/pbt` combines `fast-check` arbitraries with fixture
 injection: instead of hand-written examples, you state a property and the
 runner generates hundreds of samples — and shrinks any failure down to a

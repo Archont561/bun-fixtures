@@ -2,6 +2,8 @@
 
 `bun-test-utils/snapshot` records values and files beside the test, with deterministic serialization and CI-safe modes.
 
+> Snapshot fixtures are included only by importing `bun-test-utils/snapshot` or composing `snapshotFixtures` with `test.extend()`. `fixtures.ts` and `conftest.ts` are not automatically loaded.
+
 ## Snapshot a value
 
 ```ts

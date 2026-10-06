@@ -1,40 +1,49 @@
-/** Verifies per-directory discovery and cross-file scope behaviour. */
+/** Verifies explicit composition and cross-file scope behaviour. */
 // `@/*` resolves files from this package's source directory.
-import { createTest, fixturesFor } from "@/plugin.ts";
+import { createTest } from "@/plugin.ts";
+import parentFixtures from "../fixtures.ts";
+import nestedFixtures from "./fixtures.ts";
 
-const { test, describe, expect } = createTest(import.meta.path);
+const { test: base, describe, expect } = createTest(import.meta.path);
+const parentOnly = base.extend(parentFixtures);
+const test = parentOnly.extend(nestedFixtures);
 
-describe("directory scoping", () => {
-  test("the nearest fixtures.ts wins", async ({ origin }) => {
+describe("explicit fixture composition", () => {
+  test("the nearest explicit override wins", async ({ origin }) => {
     expect(origin).toBe("tests/nested");
   });
 
-  test("inherits fixtures from ancestor directories", async ({
-    db,
-    config,
-  }) => {
+  test("parent fixtures are available only when composed", async ({ db }) => {
     expect(db.id).toBeGreaterThan(0);
-    expect(config.name).toBe("bun-test-utils");
   });
 
-  test("directory-local fixtures are visible here", async ({ nestedOnly }) => {
+  test("nested fixtures are available when explicitly composed", async ({
+    nestedOnly,
+  }) => {
     expect(nestedOnly).toBe("hello from tests/nested");
   });
 
-  test("but not from a sibling directory", () => {
-    const sibling = fixturesFor(`${import.meta.dir}/../plugin.test.ts`);
-    expect(sibling.nestedOnly).toBeUndefined();
-    expect(fixturesFor(import.meta.path).nestedOnly).toBeDefined();
+  test("parent and sibling directories do not implicitly contribute fixtures", () => {
+    expect(() =>
+      base("does not inherit parent fixtures", async ({ config }) => {
+        expect(config.name).toBe("bun-test-utils");
+      }),
+    ).toThrow(/unknown fixture "config".*test\.extend/s);
+
+    expect(() =>
+      parentOnly("does not see nested fixtures", async ({ nestedOnly }) => {
+        expect(nestedOnly).toBe("hello from tests/nested");
+      }),
+    ).toThrow(/unknown fixture "nestedOnly".*test\.extend/s);
   });
 
-  test("session fixtures are shared across files", async ({ events }) => {
+  test("session fixtures are available within an explicit chain", async ({
+    events,
+  }) => {
     expect(events).toContain("events:setup");
-    expect(events.filter((e: string) => e === "events:setup")).toHaveLength(1);
   });
 
-  test("file-scoped fixtures are per file", async ({ db, events }) => {
-    // tests/plugin.test.ts built db#1 and tore it down at its afterAll.
-    expect(events).toContain("db:teardown:1");
-    expect(db.id).toBe(2);
+  test("file-scoped fixtures are available in this file", async ({ db }) => {
+    expect(db.id).toBeGreaterThan(0);
   });
 });

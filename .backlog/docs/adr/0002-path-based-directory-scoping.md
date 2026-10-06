@@ -1,25 +1,25 @@
-# 0002 — Path-based directory scoping
+# 0002 — Path-based directory scoping (superseded)
 
-- **Status:** accepted
+- **Status:** superseded
+- **Date:** historical
 
-## Context
+## Current decision
 
-pytest loads one `conftest.py` per directory. Bun's test scanner is closed
-([oven-sh/bun#19196](https://github.com/oven-sh/bun/issues/19196)), so a
-preload cannot be registered per directory.
+Path-based fixture scoping is no longer supported. The fixture engine does not
+walk directories, does not load `fixtures.ts` or `conftest.ts`, and does not
+merge fixture maps by filesystem ancestry.
 
-## Decision
+The supported model is explicit composition through `test.extend()`:
 
-Walk the tree once at startup, map `directory → fixtures`, and resolve a test
-file's fixtures by merging every ancestor map from the root down (last wins).
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+export const test = base.extend({ /* fixtures */ });
+```
 
-## Consequences
+```ts
+// example.test.ts
+import { test } from "./test";
+```
 
-**Good** — `conftest.py` ergonomics with a single preload; merge is pure and
-memoised, so it is cheap and unit-testable.
-
-**Bad** — discovery is static: every fixture file in the project is imported
-even if no test uses it, so a fixture file with side effects at module scope
-pays them always. Fixture files should therefore stay declarative, and must use
-`import type` when referencing `bun-fixture` to avoid an import cycle during
-discovery.
+This ADR is retained only as a record of the removed design.

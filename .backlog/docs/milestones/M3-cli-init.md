@@ -7,14 +7,14 @@
 
 ## Goal
 
-`bunx bun-fixture init` leaves a project ready to write its first fixture test.
+`bunx test-utils init` leaves a project ready to compose fixtures explicitly.
 
 ## Scope
 
 - [x] `bunfig.toml` created or updated, `[test].preload` appended
 - [x] Idempotent; string `preload` normalized to a list; other sections preserved
-- [x] Root `fixtures.ts` scaffold, `--force` to overwrite
-- [x] `--dir`, `--entry`, `--help`, `--version`
+- [x] No fixture-file scaffold; users create a `test.extend()` module explicitly
+- [x] `--dir`, `--entry`, `--help`, `--version`; `--force` retained for compatibility
 - [x] Warn about comment loss in the TOML round-trip
 
 ## Exit criteria
@@ -22,9 +22,9 @@
 | # | Criterion | Evidence |
 |---|-----------|----------|
 | 1 | TOML mutation is pure and tested | `cli` suite |
-| 2 | Scaffolded project actually runs | "`init` scaffolds a project end to end" |
+| 2 | Initialized project runs with explicit composition | "`init` initializes a project end to end" |
 
 ## Notes
 
-The preload entry is `./node_modules/bun-fixture/src/plugin.ts`; Bun rejects the
-bare `node_modules/...` form with `preload not found`.
+The published preload entry is `./node_modules/bun-test-utils/dist/plugin.js`;
+Bun rejects the bare `node_modules/...` form with `preload not found`.

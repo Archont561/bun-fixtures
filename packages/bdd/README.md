@@ -2,6 +2,8 @@
 
 `bun-test-utils/bdd` connects a Gherkin runner's scenario lifecycle to fixture setup and teardown. It does not implement a Gherkin parser; it adapts any runner with `Before` and `After` hooks.
 
+> BDD integrations use explicit fixture maps. `fixtures.ts` and `conftest.ts` are not automatically loaded; pass the fixtures you want to `fixtureSteps()` or compose them with `test.extend()` in Bun tests.
+
 ## Attach fixtures to a world
 
 ```ts

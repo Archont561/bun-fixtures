@@ -3,6 +3,9 @@ title: Snapshot Testing
 description: Compare values and files against stored snapshots with bun-test-utils/snapshot.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 `bun-test-utils/snapshot` serializes a value (or the contents of a file) and
 compares it against a snapshot stored on disk, recording a new one the first
 time a test runs.

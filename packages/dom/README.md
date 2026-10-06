@@ -2,6 +2,8 @@
 
 `bun-test-utils/dom` provides an isolated in-memory DOM through happy-dom.
 
+> DOM fixtures are included only by importing `bun-test-utils/dom` or composing `domFixtures` with `test.extend()`. `fixtures.ts` and `conftest.ts` are not automatically loaded.
+
 ```bash
 bun add -d bun-test-utils happy-dom
 ```

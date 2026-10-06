@@ -1,12 +1,11 @@
 /**
- * bun-test-utils — preload plugin + fixture engine + public API.
+ * bun-test-utils — preload hook + fixture engine + public API.
  *
- * This single module is both:
- *   1. the preload script (`bunfig.toml` → `[test].preload`), which walks the
- *      project tree and builds the directory → fixtures map, and
- *   2. the package entrypoint (`import { test, expect } from "bun-test-utils"`).
+ * This single module is both the optional preload script (`bunfig.toml` →
+ * `[test].preload`) that installs run-global teardown hooks and the package
+ * entrypoint (`import { test, expect } from "bun-test-utils"`).
  *
- * Loading it twice is harmless: all state lives on a global singleton.
+ * Loading it twice is harmless: all lifecycle state lives on a global singleton.
  */
 
 import {
@@ -15,8 +14,8 @@ import {
   expect as bunExpect,
   test as bunTest,
 } from "bun:test";
-import { type Dirent, readdirSync, realpathSync, statSync } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { realpathSync } from "node:fs";
+import { relative, resolve, sep } from "node:path";
 import {
   FixtureDependencyError,
   FixtureLifecycleError,
@@ -82,12 +81,6 @@ interface Instance {
 }
 
 interface State {
-  root: string;
-  /** absolute dir → fixtures declared in that dir */
-  dirMap: Map<string, FixtureMap>;
-  /** memoised merged map per test file */
-  mergedCache: Map<string, FixtureMap>;
-  discovered: boolean;
   session: Map<string, Instance>;
   sessionStack: Array<() => Promise<void>>;
   files: Map<
@@ -101,10 +94,12 @@ interface State {
   afterAllHooked: boolean;
   defIds: WeakMap<object, number>;
   nextDefId: number;
+  mapIds: WeakMap<object, number>;
+  nextMapId: number;
   diagnostics?: DiagnosticsSink;
 }
 
-/** Context keys that are metadata, not fixtures — ignored during auto-detection. */
+/** Context keys that are metadata, not fixtures — ignored during fixture-name detection. */
 const META_KEYS = new Set([
   "testFile",
   "testName",
@@ -114,36 +109,11 @@ const META_KEYS = new Set([
 ]);
 
 const SCOPE_RANK: Record<Scope, number> = { session: 0, file: 1, test: 2 };
-const FIXTURE_FILENAMES = [
-  "fixtures.ts",
-  "fixtures.tsx",
-  "conftest.ts",
-  "conftest.tsx",
-];
-const SKIP_DIRS = new Set([
-  "node_modules",
-  ".git",
-  ".bun",
-  "dist",
-  "build",
-  "out",
-  "coverage",
-  ".next",
-  ".nuxt",
-  ".svelte-kit",
-  ".turbo",
-  ".cache",
-  "vendor",
-  "__pycache__",
-]);
+const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
 
 const g = globalThis as any;
 
 const state: State = (g.__BUN_TEST_UTILS__ ??= {
-  root: resolve(process.env.BUN_TEST_UTILS_ROOT ?? process.cwd()),
-  dirMap: new Map(),
-  mergedCache: new Map(),
-  discovered: false,
   session: new Map(),
   sessionStack: [],
   files: new Map(),
@@ -152,124 +122,9 @@ const state: State = (g.__BUN_TEST_UTILS__ ??= {
   afterAllHooked: false,
   defIds: new WeakMap(),
   nextDefId: 1,
+  mapIds: new WeakMap(),
+  nextMapId: 1,
 } satisfies State);
-
-/* -------------------------------------------------------------------------- */
-/* Discovery                                                                  */
-/* -------------------------------------------------------------------------- */
-
-function collectFixtureFiles(dir: string, acc: string[], depth = 0): string[] {
-  if (depth > 24) return acc;
-  let entries: Dirent[] = [];
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return acc;
-  }
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (
-        SKIP_DIRS.has(entry.name) ||
-        (entry.name.startsWith(".") && entry.name !== ".")
-      )
-        continue;
-      collectFixtureFiles(full, acc, depth + 1);
-    } else if (FIXTURE_FILENAMES.includes(entry.name)) {
-      acc.push(full);
-    }
-  }
-  return acc;
-}
-
-/**
- * Walks the project tree, imports every `fixtures.ts` / `conftest.ts` and
- * records its default export against the directory it lives in.
- *
- * Idempotent — safe to call from both the preload and a plain import.
- */
-/** @internal Test-only compatibility hook; consumers should use test.extend(). */
-export async function discoverFixtures(
-  root: string = state.root,
-): Promise<Map<string, FixtureMap>> {
-  if (state.discovered) return state.dirMap;
-  state.discovered = true;
-  state.root = resolve(root);
-
-  let dirExists = false;
-  try {
-    dirExists = statSync(state.root).isDirectory();
-  } catch {
-    dirExists = false;
-  }
-  if (!dirExists) return state.dirMap;
-
-  const files = collectFixtureFiles(state.root, []).sort(
-    (a, b) => a.split(sep).length - b.split(sep).length || a.localeCompare(b),
-  );
-
-  for (const file of files) {
-    try {
-      const mod = await import(file);
-      const map: FixtureMap | undefined = mod.default ?? mod.fixtures;
-      if (!map || typeof map !== "object") {
-        warn(
-          `${rel(file)} has no default export of fixtures — skipped.`,
-          "FIXTURE_DISCOVERY",
-          { file },
-        );
-        continue;
-      }
-      const dir = dirname(file);
-      state.dirMap.set(dir, { ...(state.dirMap.get(dir) ?? {}), ...map });
-    } catch (err) {
-      warn(
-        `failed to load ${rel(file)}: ${(err as Error).message}`,
-        "FIXTURE_DISCOVERY",
-        { file, cause: (err as Error).message },
-      );
-    }
-  }
-  state.mergedCache.clear();
-  return state.dirMap;
-}
-
-/** Registers fixtures programmatically for a directory (useful in tests / tooling). */
-export function registerFixtures(dir: string, map: FixtureMap): void {
-  const abs = resolve(dir);
-  state.dirMap.set(abs, { ...(state.dirMap.get(abs) ?? {}), ...map });
-  state.mergedCache.clear();
-}
-
-/**
- * Merges every fixture map from the project root down to the directory of
- * `testFile`. Deeper directories win (last-wins merge), emulating conftest.py.
- */
-export function fixturesFor(testFile: string): FixtureMap {
-  const abs = resolve(testFile);
-  const cached = state.mergedCache.get(abs);
-  if (cached) return cached;
-
-  const dir = dirname(abs);
-  const chain: string[] = [];
-  const relPath = relative(state.root, dir);
-  if (!relPath.startsWith("..") && !isAbsolute(relPath)) {
-    let current = state.root;
-    chain.push(current);
-    for (const part of relPath.split(sep).filter(Boolean)) {
-      current = join(current, part);
-      chain.push(current);
-    }
-  } else {
-    // Test file outside the discovered root: only its own directory applies.
-    chain.push(dir);
-  }
-
-  const merged: FixtureMap = {};
-  for (const d of chain) Object.assign(merged, state.dirMap.get(d) ?? {});
-  state.mergedCache.set(abs, merged);
-  return merged;
-}
 
 /* -------------------------------------------------------------------------- */
 /* Dependency / parameter planning                                            */
@@ -380,12 +235,16 @@ export function resolveOrder(
     }
     const def = map[name];
     if (!def) {
-      const known = Object.keys(map).sort().join(", ") || "<none>";
+      const available = Object.keys(map).sort();
+      const known = available.join(", ") || "<none>";
       throw new UnknownFixtureError(
         name,
-        Object.keys(map).sort(),
+        available,
         where,
-        `[bun-test-utils] unknown fixture "${name}" requested in ${rel(where)}. Available: ${known}`,
+        `[bun-test-utils] unknown fixture "${name}" requested in ${rel(where)}. ` +
+          `Available in this explicit test.extend(...) chain: ${known}. ` +
+          `Compose the fixture with test.extend({ ${name}: ... }) and import that extended test into this file; ` +
+          `fixtures.ts and conftest.ts are not loaded automatically.`,
       );
     }
     visiting.add(name);
@@ -444,6 +303,15 @@ function defId(def: FixtureDef): number {
   if (!id) {
     id = state.nextDefId++;
     state.defIds.set(def, id);
+  }
+  return id;
+}
+
+function mapId(map: FixtureMap): number {
+  let id = state.mapIds.get(map);
+  if (!id) {
+    id = state.nextMapId++;
+    state.mapIds.set(map, id);
   }
   return id;
 }
@@ -535,7 +403,7 @@ async function instantiate(
   const def = map[name]!;
   const scope = scopeOf(def);
   const paramIndex = name in combo ? combo[name] : undefined;
-  const key = `${name}#${defId(def)}${paramIndex === undefined ? "" : `[${paramIndex}]`}`;
+  const key = `${mapId(map)}:${name}#${defId(def)}${paramIndex === undefined ? "" : `[${paramIndex}]`}`;
 
   if (scope === "session") {
     const hit = state.session.get(key);
@@ -678,10 +546,9 @@ function format(value: unknown): string {
   }
 }
 
-function makeTest(file: string): TestFn {
+function makeTest(file: string, map: FixtureMap): TestFn {
   const abs = resolve(file);
   return (name, fn, opts?: TestOptions) => {
-    const map = fixturesFor(abs);
     const requested = opts?.fixtures ?? detectFixtures(fn, 0);
     const order = resolveOrder(requested, map, abs);
     const combos = paramCombos(order, map);
@@ -765,14 +632,6 @@ async function enterFile(file: string): Promise<void> {
 }
 
 /**
- * Creates a fixture-aware `test` bound to a specific file.
- *
- * ```ts
- * const { test, expect } = createTest(import.meta.path);
- * test("uses db", async ({ db }) => { ... });
- * ```
- */
-/**
  * Declares a fixture with an inferred public type.
  *
  * Capability packages use this instead of depending on the `FixtureDef` type
@@ -783,27 +642,29 @@ export function createFixture<T>(definition: FixtureDef<T>): FixtureDef<T> {
   return definition;
 }
 
+/**
+ * Creates a fixture-aware `test` bound to a specific file.
+ *
+ * ```ts
+ * const { test, expect } = createTest(import.meta.path);
+ * const dbTest = test.extend({ db });
+ * dbTest("uses db", async ({ db }) => { ... });
+ * ```
+ */
 export function createTest(testFile?: string): {
-  test: TestFn;
+  test: FixtureAwareTest;
   describe: typeof bunDescribe;
   expect: typeof bunExpect;
 } {
   const file = resolve(testFile ?? callerFile());
-  return { test: makeTest(file), describe: bunDescribe, expect: bunExpect };
+  return {
+    test: makeAwareTest({}, file),
+    describe: bunDescribe,
+    expect: bunExpect,
+  };
 }
 
-const testCache = new Map<string, TestFn>();
-
-function runnerFor(file: string): TestFn {
-  let runner = testCache.get(file);
-  if (!runner) {
-    runner = makeTest(file);
-    testCache.set(file, runner);
-  }
-  return runner;
-}
-
-function scenarioFactory(file: string): ScenarioFactory {
+function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
   const create = <S extends object = Record<string, unknown>>(
     title: string,
   ): ScenarioChain<S> => {
@@ -836,7 +697,7 @@ function scenarioFactory(file: string): ScenarioFactory {
         steps.push({ phase: "then", name, fn });
         if (!registered) {
           registered = true;
-          runnerFor(file)(
+          makeTest(file, map)(
             title,
             async (fixtures) => {
               const context = Object.assign(fixtures, { expect: bunExpect });
@@ -855,7 +716,7 @@ function scenarioFactory(file: string): ScenarioFactory {
                 ...new Set(
                   steps
                     .flatMap((step) => detectFixtures(step.fn, 0))
-                    .filter((name) => name in fixturesFor(file)),
+                    .filter((name) => name in map),
                 ),
               ],
             },
@@ -876,18 +737,24 @@ function scenarioFactory(file: string): ScenarioFactory {
   return factory;
 }
 
-function makeAwareTest(fixtures?: FixtureMap): FixtureAwareTest {
-  if (fixtures) registerFixtures(dirname(callerFile()), fixtures);
+function makeAwareTest(
+  fixtures: FixtureMap = {},
+  fixedFile?: string,
+): FixtureAwareTest {
+  const map = { ...fixtures };
+  const resolveFile = () => resolve(fixedFile ?? callerFile());
   const aware = ((name: string, fn: any, opts?: TestOptions) => {
-    const file = callerFile();
-    if (fixtures) registerFixtures(dirname(file), fixtures);
-    return runnerFor(file)(name, fn, opts);
+    return makeTest(resolveFile(), map)(name, fn, opts);
   }) as FixtureAwareTest;
-  aware.extend = (more) => makeAwareTest({ ...(fixtures ?? {}), ...more });
+  aware.extend = (more) => makeAwareTest({ ...map, ...more }, fixedFile);
   aware.scenario = ((title: string) =>
-    scenarioFactory(callerFile())(title)) as ScenarioFactory;
+    scenarioFactory(resolveFile(), map)(title)) as ScenarioFactory;
   aware.scenario.prop = (title, strategies) =>
-    scenarioFactory(callerFile()).prop(title, strategies);
+    scenarioFactory(resolveFile(), map).prop(title, strategies);
+  Object.defineProperty(aware, FIXTURE_MAP_SYMBOL, {
+    value: map,
+    enumerable: false,
+  });
   return aware;
 }
 
@@ -946,7 +813,7 @@ export function callerFile(extraSelf?: string | string[]): string {
 }
 
 function rel(p: string): string {
-  const r = relative(state.root, p);
+  const r = relative(process.cwd(), p);
   return r.startsWith("..") ? p : r || p;
 }
 
@@ -977,7 +844,7 @@ export function reportDiagnostic(event: DiagnosticEvent): void {
 
 function warn(
   message: string,
-  code: DiagnosticEvent["code"] = "FIXTURE_DISCOVERY",
+  code: DiagnosticEvent["code"] = "FIXTURE_COMPOSITION",
   details?: Record<string, unknown>,
 ): void {
   reportDiagnostic({ code, message, details });
@@ -986,14 +853,6 @@ function warn(
 /* -------------------------------------------------------------------------- */
 /* Preload entry                                                               */
 /* -------------------------------------------------------------------------- */
-
-// Fixture registration is explicit: consumers compose fixtures with
-// `test.extend()`. The test-only legacy bootstrap calls discoverFixtures()
-// directly for the engine's historical conformance fixtures; it is not part
-// of the published preload path.
-if (process.env.BUN_TEST_UTILS_LEGACY_DISCOVERY === "1") {
-  await discoverFixtures();
-}
 
 /**
  * When this module is loaded as a preload script, `afterAll` registers a
@@ -1023,4 +882,4 @@ try {
 }
 hookProcessExit();
 
-export default { fixturesFor, createTest, test, expect };
+export default { createTest, test, expect };

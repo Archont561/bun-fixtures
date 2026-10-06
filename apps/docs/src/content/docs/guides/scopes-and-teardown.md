@@ -3,6 +3,9 @@ title: Scopes & Teardown
 description: Understanding fixture lifetimes and LIFO teardown guarantees.
 ---
 
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+
+
 ## Available Scopes
 
 | Scope | Instantiation | Teardown | Typical Use Case |

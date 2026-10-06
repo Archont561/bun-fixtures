@@ -7,6 +7,37 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
+
+## Explicit composition only
+
+There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Use `test.extend()` and import the extended runner from each test file that needs those fixtures.
+
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+});
+```
+
+```ts
+// users.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
+
+test("uses the explicit fixture", async ({ db }) => {
+  expect(await db.health()).toBe("ok");
+});
+```
+
 ## Cross-cutting examples
 
 The root API combines fixtures with ordinary tests:

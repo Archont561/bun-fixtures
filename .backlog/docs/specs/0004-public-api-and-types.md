@@ -2,20 +2,20 @@
 
 - **Status:** implemented
 - **Milestone:** M4
-- **Implementation:** `packages/bun-fixture/src/plugin.ts`, `src/types.ts`
-- **Tests:** `packages/core/tests/plugin.test.ts`, `bunx tsc --noEmit`
+- **Implementation:** `packages/core/src/plugin.ts`, `packages/core/src/types.ts`
+- **Tests:** `packages/core/tests/plugin.test.ts`, `bun run typecheck`
 
 ## Requirements
 
 | # | Requirement |
 |---|-------------|
-| R1 | `import { test, expect, describe } from "bun-fixture"` MUST work with no global monkey-patching |
+| R1 | `import { test, expect, describe } from "bun-test-utils"` MUST work with no global monkey-patching |
 | R2 | The top-level `test` MUST detect its own file from the stack trace, including frames without a column number and through symlinked (`npm link`, `bunx`) package paths |
 | R3 | `createTest(file?)` MUST return `{ test, describe, expect }` bound to an explicit file |
 | R4 | `test(name, fn, opts?)` MUST accept `{ fixtures?: string[]; timeout?: number; iterate?: boolean }`; with `iterate: true` the context MUST carry an `iterate` runner and MUST NOT hold test-scoped values |
 | R5 | Context metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) MUST be injectable but MUST NOT be treated as fixtures |
 | R6 | `FixtureDef`, `Scope`, `FixtureContext`, `FixtureMap`, `TestOptions`, `UseFn`, `IterateFn` MUST be exported as types |
-| R7 | Engine internals (`discoverFixtures`, `registerFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `destructuredKeys`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession`) SHOULD be exported for tooling |
+| R7 | Discovery internals MUST NOT be exported. Supported tooling exports are explicit-composition helpers such as `resolveOrder`, `paramCombos`, `destructuredKeys`, `detectFixtures`, `callerFile`, `openFixtures`, `withFixtures`, `teardownFile`, and `teardownSession`. |
 | R8 | The package MUST typecheck under `strict` with no `any` leaking into signatures other than fixture values |
 
 ## Design
@@ -37,7 +37,7 @@ than in `import.meta`.
 | Requirement | Test |
 |-------------|------|
 | R2 | every test in `tests/plugin.test.ts` (top-level `test`), "exposes test metadata on the context" |
-| R3 | "createTest binds to an explicit file", all of `tests/nested/nested.test.ts` |
+| R3 | "createTest binds to an explicit file", explicit-composition coverage in `tests/nested/nested.test.ts` |
 | R4 | "supports an explicit fixture list", "a fresh project…" (`{ timeout: 30_000 }`), all of "iteration protocol (opts.iterate)" |
 | R5 | "exposes test metadata on the context" |
-| R8 | `bunx tsc --noEmit` in CI |
+| R8 | `bun run typecheck` in CI |

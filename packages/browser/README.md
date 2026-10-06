@@ -2,6 +2,8 @@
 
 `bun-test-utils/browser` covers ephemeral HTTP servers and Playwright browser sessions.
 
+> Browser fixtures are included only by importing `bun-test-utils/browser` or composing `browserFixtures` with `test.extend()`. `fixtures.ts` and `conftest.ts` are not automatically loaded.
+
 ```bash
 bun add -d bun-test-utils playwright
 bunx playwright install chromium

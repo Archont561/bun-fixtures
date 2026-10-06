@@ -2,9 +2,9 @@
  * Dogfooding @bun-test-utils/std in the core suite.
  *
  * The standard fixtures (`tmpdir`, `env`, `stdio`) are not called directly
- * here — they are merged into `tests/fixtures.ts` and injected by the engine,
+ * here — the public `bun-test-utils` test export composes them explicitly,
  * so this file proves the package works the way a real consumer sees it:
- * directory discovery, name-based DI, and engine-driven LIFO teardown.
+ * explicit composition, name-based DI, and engine-driven LIFO teardown.
  *
  * Teardown is observed across test boundaries via module-scope breadcrumbs:
  * Bun runs tests in file order, so a later test can assert on the state the

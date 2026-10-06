@@ -1,7 +1,7 @@
 # Monorepo-wide test config: `bun test` from the repository root.
-# The core package (and some nested ones) also have their own bunfig.toml.
+# The engine preload installs run-global teardown hooks only; fixtures are composed explicitly.
 [test]
 preload = [
-  "./packages/bun-test-utils/tests/legacy-discovery.ts",
+  "./packages/core/src/plugin.ts",
   "./packages/bun-test-utils/test-plugins.ts",
 ]
