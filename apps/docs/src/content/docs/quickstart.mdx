@@ -87,8 +87,9 @@ test("renders mocked data", async ({ webPage, httpMock }) => {
 
 ## Repository feature suites
 
-In this monorepo, package feature files live at `packages/*/features/*.feature`
-and are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint. Run the repo-wide BDD gate with:
+In this monorepo, package feature files live at `packages/*/e2e/bdd/features/*.feature`
+and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint
+(`await runPackageFeatures("<package>", import.meta)`). Run the repo-wide BDD gate with:
 
 ```bash
 bun run test:bdd

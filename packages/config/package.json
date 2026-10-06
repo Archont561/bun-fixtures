@@ -9,6 +9,10 @@
     "url": "https://github.com/Archont561/bun-test-utils.git",
     "directory": "packages/config"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests"
+  },
   "exports": {
     "./base.json": "./base.json",
     "./lib.json": "./lib.json",

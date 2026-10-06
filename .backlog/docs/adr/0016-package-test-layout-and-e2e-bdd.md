@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR-0017](./0017-shared-bdd-runner-helper.md): the BDD plugin
+wiring moved into a `runPackageFeatures` helper in `@bun-test-utils/config/bdd`, and that
+package now owns unit tests for its own exports. Packages still own the entrypoint file,
+its location, and the package it names.
 
 ## Decision
 

@@ -23,10 +23,24 @@ The workspace is a clone. **Bun is not preinstalled** — Node and npm are, so n
 bootstrap. Check first, install only if needed:
 
 ```bash
-bun --version 2>/dev/null || npm i -g bun@1.4.2
+export PATH=/home/user/.tools/bin:$PATH   # every shell starts without it
+bun --version 2>/dev/null || npm i -g --prefix /home/user/.tools bun@1.4.2
 bun --version          # must print 1.4.2
 bun install --frozen-lockfile
 ```
+
+**Assume the toolchain is gone and reinstall it — nothing outside the git tree survives.**
+`bun` and `node_modules/` are both pruned between sessions, and have disappeared *mid*-session
+here; the install prefix makes no difference (`/usr/local` and a workspace-local
+`/home/user/.tools` were both wiped). So the two commands above are not a one-time bootstrap:
+run them again, without ceremony, whenever a command that worked ten minutes ago reports
+`bun: command not found` or an import resolves to nothing. Each `bash` call is also a fresh
+shell, so the `export` has to be repeated every time.
+
+**The same reset can roll local `HEAD` back to the branch point.** The files stay, the
+commits vanish. Before concluding you lost work, `git fetch origin` and compare against
+`origin/<branch>`: anything pushed is still there, and the fix is `git reset --hard` onto it
+rather than re-committing the whole tree as one blob. Push early for exactly this reason.
 
 **Pin the version to `packageManager` in the root `package.json`** (`bun@1.4.2` today). Do not
 `npm i -g bun` unpinned — a newer Bun than CI uses turns a green local run into a red CI run,
@@ -49,22 +63,30 @@ baseline below); re-running them is harmless if it turns out you are on a bare m
 ### Baseline before you propose anything
 
 ```bash
-bun run lint && bun run typecheck && bun test
+bun run build && bun run lint && bun run typecheck && bun test
 ```
 
-Write the test number down. On `1b4dec4` (2026-10-05): lint clean over 55 files, typecheck 6/6,
-**179 passing / 0 failing**. It must rise with new work, never fall. A baseline that does not
-match is the first thing worth saying out loud — it means the install did not produce the tree
-the last session left.
+Write the test number down. On `1bc38fe` (2026-10-06): lint clean over 112 files, typecheck
+19/19 Turbo tasks, **303 passing / 3 skipped / 0 failing across 32 files**. It must rise with
+new work, never fall. A baseline that does not match is the first thing worth saying out loud
+— it means the install did not produce the tree the last session left.
+
+**Build before the root `bun test`, or read 50+ false failures.** The wrapper's e2e suites
+preload `node_modules/bun-test-utils/dist/plugin.js`, and `dist/` is gitignored, so a fresh
+clone has none. Turbo knows this (`test:e2e` and `test:bdd` depend on `bun-test-utils#build`),
+so `bun run test:all` builds for you; the bare `bun test` does not. `Cannot find package
+'bun-test-utils'` and `preload not found` mean a missing build, not a broken tree.
 
 Two traps in that one number, both of which have already caused a false alarm here:
 
 - **`bun test` and `bun run test` count different things.** `bun test` is Bun's own runner
-  walking the whole tree — one total, **179**. `bun run test` is `turbo run test`, which runs
-  the six packages separately and prints six totals: `bun-test-utils` **168**, then `std` 2,
-  `fast-check` 2, `dom` 3, `browser` 2, `vcr` 2. They agree (168 + 11 = 179); quote whichever
-  you ran, and say which one it was. A report that says "168" without the qualifier reads as a
-  regression of eleven tests.
+  walking the whole tree — one total, **306 ran (303 pass, 3 skip)**. `bun run test` is
+  `turbo run test`, which runs only the per-package *unit* suites and prints one total each:
+  core 45, bun-test-utils 18, browser 10 (3 skipped), snapshot 9, pbt 8, vcr 7, config 7,
+  std 3, dom 2, bdd 1 — **110**. `bun run test:all` adds `test:e2e`, another **196** (core
+  101, bun-test-utils 67, and 4 apiece for the seven capability packs). They agree:
+  110 + 196 = 306. Quote whichever you ran and say which one it was; a bare "110" reads as a
+  catastrophic regression.
 - **Turbo caches, so a green run may not be a run at all.** `>>> FULL TURBO` and
   `6 cached, 6 total` mean nothing executed. That is fine for a baseline on an unchanged tree
   and misleading after you edit something — use `bun test` (uncached) or
@@ -96,6 +118,11 @@ Facts about this sandbox that shape every command:
   config is already committed at `.changeset/config.json`; never re-run `init`.
 - **`bunx backlog board` starts a server** and will block. Use `bunx backlog status` and
   `bunx backlog task list` for reading; they return plain text.
+- **`bunx backlog claim start` needs its directory to exist.** `.backlog/claims/` is
+  gitignored, so a fresh clone has none and the command dies with
+  `ENOENT: … .backlog/claims/active/claim_0NN.json`. `mkdir -p .backlog/claims/active` first.
+  There is no `claim update`: to widen a claim's paths, `claim finish` and start a new one —
+  and do it *before* committing, because `pre-commit` enforces the staged paths against it.
 - **`bunx skills add` scatters litter.** It creates ~50 agent directories (`.claude/`,
   `.qwen/`, `.windsurf/`, …) plus `agent/`, `data/` and `skills/` at the repo root. This
   repository keeps skills in `.agents/skills/` only — delete the rest before committing.

@@ -2,8 +2,8 @@
 
 - **Status:** implemented
 - **Milestone:** M4
-- **Implementation:** package-owned `features/*.feature` files, the shared step definitions in `packages/bun-test-utils/tests/steps/fixtures.steps.ts`, and their scratch-project harness in `packages/bun-test-utils/tests/support/project.ts`
-- **Entrypoint:** `packages/config/bdd/features.test.ts` — `bun run test:bdd`
+- **Implementation:** package-owned `e2e/bdd/features/*.feature` files, the shared step definitions in `packages/bun-test-utils/e2e/bdd/steps/fixtures.steps.ts`, and their scratch-project harness in `packages/bun-test-utils/e2e/bdd/support/project.ts`
+- **Entrypoint:** one `packages/<pkg>/e2e/bdd/features.test.ts` per package, each a single `runPackageFeatures` call ([ADR 0016](../adr/0016-package-test-layout-and-e2e-bdd.md), [ADR 0017](../adr/0017-shared-bdd-runner-helper.md)) — `bun run test:bdd`
 
 ## Problem
 
@@ -24,12 +24,14 @@ The dogfooding suite tests focused engine internals in process. That is fast and
 
 `@aboviq/bun-test-cucumber` compiles each `.feature` into `describe`/`it` via a
 Bun loader plugin. Bun's scanner ignores `.feature` files
-([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so the shared
-`packages/config/bdd/features.test.ts` entrypoint registers the plugin and loads each
-package's features with `loadFeatures`.
+([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so each package's
+`e2e/bdd/features.test.ts` entrypoint registers the plugin and loads that package's
+features with `loadFeatures`. Both steps live in the shared
+`runPackageFeatures(packageName, import.meta)` helper exported by
+`@bun-test-utils/config/bdd`, so the entrypoint is one line.
 
 Scenario state (`{ project, lastRun }`) flows through the typed `withState`
-helper. `packages/bun-test-utils/tests/support/project.ts` owns the harness: `createProject`,
+helper. `packages/bun-test-utils/e2e/bdd/support/project.ts` owns the harness: `createProject`,
 `writeProjectFile`, `runTests`, `runCli`, `removeProject`. The Bun binary used
 for subprocesses is `process.execPath`, so the suite tests the same runtime it
 runs on.

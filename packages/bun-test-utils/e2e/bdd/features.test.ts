@@ -1,15 +1,3 @@
-import { bunTestCucumber, loadFeatures } from "@aboviq/bun-test-cucumber";
-import { bddPreset } from "@bun-test-utils/config/bdd";
-import { plugin } from "bun";
+import { runPackageFeatures } from "@bun-test-utils/config/bdd";
 
-const repoRoot = new URL("../../../../", import.meta.url).pathname;
-const preset = bddPreset("bun-test-utils");
-
-await plugin(
-  bunTestCucumber({
-    ...preset,
-    cwd: repoRoot,
-  }),
-);
-
-await loadFeatures(preset.featurePattern, repoRoot);
+await runPackageFeatures("bun-test-utils", import.meta);

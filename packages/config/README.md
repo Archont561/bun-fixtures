@@ -4,7 +4,7 @@
 
 > Repository runtime packages use explicit fixture composition. `fixtures.ts` and `conftest.ts` are not automatically loaded by bun-test-utils; consumer tests import `describe`, `test`, and `expect` from `bun-test-utils`; capability fixtures are provided through the root `test` context.
 
-It centralizes the strict library/app compiler presets, the Bunup configuration factory used by capability packs, and shared BDD runner presets. BDD runners are owned by runtime packages under `e2e/bdd/`; consumer tests should import from `bun-test-utils`, not from this package.
+It centralizes the strict library/app compiler presets, the Bunup configuration factory used by capability packs, and the shared BDD runner helper. Runtime packages keep their own entrypoint at `e2e/bdd/features.test.ts`, reduced to a single `runPackageFeatures("<package-dir>", import.meta)` call ([ADR-0017](../../.backlog/docs/adr/0017-shared-bdd-runner-helper.md)); consumer tests should import from `bun-test-utils`, not from this package.
 
 ```bash
 bun install
@@ -14,4 +14,4 @@ bun run build
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
 
-BDD runners are owned by each runtime package under `e2e/bdd/`. This package exposes shared presets only; it does not own a test suite.
+BDD runners are owned by each runtime package under `e2e/bdd/`. This package exposes the shared presets and runner helper they call; it owns unit tests for those exports (`bun test tests`), never a repository-wide suite.

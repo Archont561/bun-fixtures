@@ -7,7 +7,7 @@
 | Backlog | `bunx backlog status`, `bunx backlog board` | tasks, claims, orchestration (`.backlog/`) |
 | Skills | `bunx skills list` | agent skills installed into `.agents/skills` |
 | Bun | `bun test`, `bun run typecheck` | the only build/test toolchain — no compile step |
-| Cucumber | `bun run test:bdd` | repo-wide behavioural suite: `packages/*/features/*.feature` + `packages/config/bdd/features.test.ts` |
+| Cucumber | `bun run test:bdd` | package-owned behavioural suites: `packages/*/e2e/bdd/features/*.feature`, each run by a one-line `packages/*/e2e/bdd/features.test.ts` ([ADR 0017](./adr/0017-shared-bdd-runner-helper.md)) |
 
 ## Installed skills
 
@@ -41,10 +41,11 @@ cross-cutting conformance and end-to-end tests. Backlog, skills, and docs are at
 
 1. **Pick** a task: `bunx backlog task list`, then `bunx backlog task show <id>`.
 2. **Claim** it: `bunx backlog claim` (claims are enforced on commit).
-3. **Red** — add a failing test. User-visible behaviour goes in the wrapper's
-   `features/*.feature` suite (`bun run test:bdd`). Focused internals go in the owning
-   workspace's `tests/<source>.test.ts`; cross-package composition and installed-consumer
-   behavior go in `packages/bun-test-utils/tests/{conformance,e2e}/`.
+3. **Red** — add a failing test. User-visible behaviour goes in the owning package's
+   `e2e/bdd/features/*.feature` suite (`bun run test:bdd`). Focused internals go in that
+   workspace's `tests/<source>.test.ts`; cross-package composition goes in
+   `packages/bun-test-utils/tests/conformance/`, and installed-consumer behaviour in
+   `packages/bun-test-utils/e2e/`.
 4. **Green** — minimum change in `src/`.
 5. **Refactor** — apply the `refactor` skill; tests must stay green.
 6. **Verify** — `bun test && bun run typecheck`. Both are the definition of done.

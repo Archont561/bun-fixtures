@@ -158,15 +158,17 @@ tasks:
     description: "Release bun-test-utils 0.1.0 as the repository's only public npm
       package. The public package is a thin assembly wrapper;
       @bun-test-utils/core and all capability workspaces are private and staged
-      into its tarball as raw TypeScript (ADR 0013). PROGRESS: CI, dual
-      licensing, release tooling, changelog, and the
-      pack/install/CLI/internal-capability smoke harness are complete. PUBLIC
-      API GATE: task_021 (Playwright-style test.extend and typed scenario
-      chains) must land before publication, followed by publication audit
-      task_016. REMAINING: complete task_021 and task_016, then create v0.1.0,
-      publish bun-test-utils, and rerun the installed-consumer harness against
-      the registry package. Tagging and publishing require maintainer sanction
-      because they create public artifacts."
+      into its tarball as raw TypeScript (ADR 0013, ADR 0014). PROGRESS: CI,
+      dual licensing, release tooling, changelog, and the
+      pack/install/CLI/internal-capability smoke harness are complete. The
+      public API gate is cleared — task_021 (Playwright-style test.extend and
+      typed scenario chains) and task_016 (publication audit) are both done.
+      REMAINING: task_041 should land first so the stability tiers and the
+      frozen vcr surface ship with 0.1.0 rather than after it; then create the
+      v0.1.0 tag, publish bun-test-utils, and rerun the installed-consumer
+      harness against the registry package. No tag exists yet (git tag -l is
+      empty). Tagging and publishing require maintainer sanction because they
+      create public artifacts."
     source_links: []
     status: in_progress
     priority: P1
@@ -206,7 +208,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-06T07:31:57.753Z
+    updated_at: 2026-10-06T18:21:47.910Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch
@@ -1809,7 +1811,7 @@ tasks:
       so a helper regression cannot take down all nine suites through a package
       that is itself under test."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - bdd
@@ -1850,7 +1852,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:44:06.840Z
-    updated_at: 2026-10-06T17:44:06.840Z
+    updated_at: 2026-10-06T18:21:19.911Z
   - id: task_037
     title: Dogfood test.extend in capability-pack unit suites
     description: "Convert the unit suites of std, dom, pbt, vcr, snapshot, and
@@ -2193,3 +2195,88 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T17:51:08.448Z
     updated_at: 2026-10-06T17:51:08.448Z
+  - id: task_043
+    title: Typecheck the e2e/ directories
+    description: "No package tsconfig includes e2e/, so every e2e test and BDD
+      runner is linted but never typechecked. That is how the PR #19 syntax
+      error reached main, and how the nine runners passed a non-existent
+      featurePattern option into bunTestCucumber for months (caught in task_036
+      only once packages/config gained a typecheck script). Add e2e to each
+      package's tsconfig include list, fix what surfaces, and keep the
+      scratch-project harness compiling. Measure first: the e2e suites import
+      across workspace boundaries and may need path mappings that src/tests do
+      not."
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - testing
+      - types
+      - ci
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Every runtime package's tsconfig includes e2e/ alongside src and tests.
+      - bun run typecheck is clean with e2e included, in every package.
+      - A deliberately broken e2e file fails bun run typecheck (the gate is
+        proven to bite).
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T18:21:08.863Z
+    updated_at: 2026-10-06T18:21:08.863Z
+  - id: task_044
+    title: Consolidate specs into one directory
+    description: "Specs live in two places: the numbered set in .backlog/docs/specs/
+      (indexed by its README) and docs/specs/package-test-layout.md at the
+      repository root, which no index lists. docs/audits/ has the same problem.
+      Pick one home — most likely .backlog/docs/ since that is what workflow.md
+      and the definition of done point at — move the strays, number them, add
+      them to the index table, and update every inbound link (ADR 0016, ADR
+      0017, packages/config/README.md, the docs site)."
+    source_links: []
+    status: ready
+    priority: P3
+    labels:
+      - docs
+      - housekeeping
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Exactly one directory holds specs, and its README table lists every one
+        of them.
+      - No inbound link to a moved spec is broken (grep for the old paths
+        returns nothing).
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T18:21:09.267Z
+    updated_at: 2026-10-06T18:21:09.267Z
