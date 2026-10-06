@@ -20,4 +20,6 @@ test("records and replays a callback", async ({ cassette }) => {
 
 Mocking and network fakes should live in fixtures so tests continue to request dependencies through the test context.
 
+The cassette fixture is exercised in [`tests/`](./tests/) through `test.extend(...)` composition. That suite is also worth reading for two techniques: binding the fixture-aware `test` to a scratch test file with `createTest(<path>)` so the `__cassettes__/` convention resolves into a temp directory, and overriding the `cassette` key with an added `deps` entry so an environment-setting fixture builds before it and tears down after it.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

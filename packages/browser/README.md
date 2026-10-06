@@ -32,4 +32,6 @@ test("mocks a response", async ({ webPage, httpMock }) => {
 For Playwright route interception, use `browserHttpMock` or call
 `await httpMock.install(browserPage)` inside a test.
 
+These fixtures are exercised in [`tests/`](./tests/) through `test.extend(...)` composition. The Playwright suite is the clearest illustration of scope: `browser` is session-scoped and therefore shared by consecutive tests, while `browserContext` and `browserPage` are test-scoped, so isolation is asserted *across* tests rather than by opening two contexts inside one.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

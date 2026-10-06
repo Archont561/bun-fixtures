@@ -167,5 +167,7 @@ export const test = baseTest.extend(domFixtures);
 
 export default domFixtures;
 
+/** Re-exported so a suite can compose from a single import. */
+export { describe, expect } from "@bun-test-utils/core";
 /** Internal error re-exports for workspace-local tests and adapters. */
 export { BunTestUtilsError, MissingOptionalDependencyError };

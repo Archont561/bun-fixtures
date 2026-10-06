@@ -537,7 +537,10 @@ export const test = baseTest.extend(browserFixtures);
 export default browserFixtures;
 
 /** Internal error re-exports for workspace-local tests and adapters. */
+/** Re-exported so a suite can compose from a single import. */
 export {
   BunTestUtilsError,
+  describe,
+  expect,
   MissingOptionalDependencyError,
 } from "@bun-test-utils/core";

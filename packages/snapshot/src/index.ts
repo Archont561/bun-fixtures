@@ -2,7 +2,8 @@ import { test as baseTest, type FixtureMap } from "@bun-test-utils/core";
 import { snapshotFixture } from "./snapshot.ts";
 
 /** Internal error re-exports for workspace-local tests and adapters. */
-export { BunTestUtilsError } from "@bun-test-utils/core";
+/** Re-exported so a suite can compose from a single import. */
+export { BunTestUtilsError, describe, expect } from "@bun-test-utils/core";
 export {
   type Serializer,
   type SnapshotHelper,

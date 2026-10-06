@@ -2,7 +2,13 @@ import { test as baseTest, type FixtureMap } from "@bun-test-utils/core";
 import { cassetteFixture } from "./cassette.ts";
 
 /** Internal error re-exports for workspace-local tests and adapters. */
-export { BunTestUtilsError, CassetteError } from "@bun-test-utils/core";
+/** Re-exported so a suite can compose from a single import. */
+export {
+  BunTestUtilsError,
+  CassetteError,
+  describe,
+  expect,
+} from "@bun-test-utils/core";
 export {
   type CassetteEntry,
   type CassetteHelper,

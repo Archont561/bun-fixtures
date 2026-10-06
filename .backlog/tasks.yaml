@@ -1855,19 +1855,71 @@ tasks:
     updated_at: 2026-10-06T18:21:19.911Z
   - id: task_037
     title: Dogfood test.extend in capability-pack unit suites
-    description: "Convert the unit suites of std, dom, pbt, vcr, snapshot, and
-      browser from hand-driving the fixture engine's internal protocol
-      (fixture.setup(fn, { testFile: import.meta.path })) to idiomatic consumer
-      composition via test.extend({ ... }) with context injection. This is the
-      primary dogfooding task: converted suites exercise scoping, dependency
-      resolution, and LIFO teardown through the same machinery consumers use,
-      double as living documentation, and surface core regressions in sibling
-      suites. Trust anchors are explicitly out of scope and must stay on plain
-      bun:test: packages/core/tests (the engine is the subject under test) and
-      the e2e/bdd scratch-project harness (black-box through a real bun test
-      subprocess)."
+    description: >-
+      DONE. Converted the std, dom, vcr, snapshot and browser unit suites from
+      fixture.setup(fn, { testFile: import.meta.path }) to idiomatic
+      test.extend({ ... }) composition with context injection. 29 of the 31
+      hand-driven .setup() call sites are gone.
+
+
+      Board-vs-tree finding: pbt was ALREADY converted before this task
+      (packages/pbt/tests/index.test.ts composes base.extend(fixtures) against
+      tests/fixtures.ts, zero .setup() calls). Verified, not re-done; only its
+      README gained the link line.
+
+
+      Counts (tests / expect() calls), before -> after: std 3/12 -> 7/21; dom
+      2/6 -> 4/8; vcr 7/27 -> 9/30; snapshot 9/22 -> 17/23; browser 10/21 ->
+      17/24; pbt 8/483 unchanged. Repo suite 303 pass/3 skip -> 321 pass/8 skip,
+      0 fail. Assertion coverage rose in every converted package; the 5 new
+      skips are all Playwright-gated.
+
+
+      Technique: teardown runs after the body returns, so teardown assertions
+      live in the following test via module-scope breadcrumbs (the pattern
+      already used by tests/conformance/std.test.ts). vcr and snapshot
+      additionally bind their suite to a scratch test file with
+      createTest(<path>) so the __cassettes__/ and __snapshots__/ conventions
+      resolve into a temp dir: idiomatic and hermetic. Letting the real testFile
+      drive those writes was measured and rejected — it is self-poisoning (run 1
+      passes, run 2 fails on an unchanged tree, because snapshot asserts
+      existsSync(path) === false) and it leaves untracked files in the repo. vcr
+      and browser also override a fixture key with an added deps entry so an
+      env-setting fixture builds before the fixture that reads it and tears down
+      after it.
+
+
+      TWO DELIBERATE EXCEPTIONS remain on direct .setup(), both commented in
+      place, neither for convenience:
+
+      1. packages/vcr/tests/cassette.test.ts — 'replay mode without a cassette'
+      asserts a failure raised during fixture SETUP. A test whose setup throws
+      is a failing test, so the throw cannot be observed from inside an
+      engine-driven body.
+
+      2. packages/browser/tests/playwright.test.ts — 'session-scoped browser
+      closes when its scope ends'. The browser is session-scoped, so it closes
+      when the session ends, not when a test ends; bringing that teardown
+      forward requires driving the fixture directly.
+
+
+      Trust anchors untouched as specified: packages/core/tests and every
+      e2e/bdd harness are unchanged.
+
+
+      PLAYWRIGHT SLICE: the 8 Playwright tests skip locally (playwright is an
+      optionalDependency and chromium is not installed here), so that file was
+      committed separately as lint/typecheck-only evidence. CI closed the gap:
+      .github/workflows/ci.yml installs chromium-headless-shell and then runs
+      bun run test:all, and the Test job passed on PR #22 (run 37516863606,
+      52s). The converted Playwright suite is therefore genuinely exercised on
+      real Chromium, not merely compiled.
+
+
+      Follow-up recorded as task_045 (base-dir override vs exporting createTest
+      from the public wrapper).
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - dogfooding
@@ -1910,7 +1962,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:44:24.669Z
-    updated_at: 2026-10-06T17:44:24.669Z
+    updated_at: 2026-10-06T19:08:44.194Z
   - id: task_038
     title: Property-based coverage for invariant-bearing packages
     description: "Add fast-check property coverage via @bun-test-utils/pbt where
@@ -2280,3 +2332,49 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T18:21:09.267Z
     updated_at: 2026-10-06T18:21:09.267Z
+  - id: task_045
+    title: Opt-in base directory for the cassette and snapshot conventions
+    description: "Weighed and rejected during task_037 as out of scope for a
+      refactor. Both fixtures derive their output from dirname(ctx.testFile):
+      __cassettes__/<slug>.json and __snapshots__/<slug>.snap.json. vcr has
+      save(path)/load(path) escape hatches; snapshot has none (path is
+      read-only). task_037 therefore composed its suites with
+      createTest(<scratch path>) so the convention resolves into a temp dir —
+      idiomatic and hermetic, but it demonstrates internal composition because
+      createTest is exported from @bun-test-utils/core and NOT from the
+      published bun-test-utils wrapper (which exports only test, describe,
+      expect). An opt-in base-dir override would let a consumer redirect the
+      convention without that indirection. Measured rationale for not doing it
+      then: it adds public API whose only caller would be the test suite, and it
+      needs specs 0012 + 0013 plus an ADR. Decide first whether the real gap is
+      the override or simply exporting createTest from the wrapper."
+    source_links: []
+    status: ready
+    priority: P3
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "A decision is recorded: export createTest from the public wrapper, add
+        a base-dir override, or neither (with reasoning)"
+      - "If implemented: specs 0012 and 0013 updated and a new ADR added"
+      - bun test and bun run typecheck green
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T19:08:07.768Z
+    updated_at: 2026-10-06T19:08:07.768Z
