@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir as osTmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import type { FixtureDef } from "@bun-test-utils/core";
+import { createFixture } from "@bun-test-utils/core";
 
 export interface TmpDirHelper {
   /** The absolute path of the temporary scratch directory. */
@@ -25,7 +25,7 @@ export interface TmpDirHelper {
   remove(filename: string): void;
 }
 
-export const tmpdirFixture: FixtureDef<TmpDirHelper> = {
+export const tmpdirFixture = createFixture<TmpDirHelper>({
   scope: "test",
   setup: async (use) => {
     const dir = mkdtempSync(join(osTmpdir(), "bun-test-utils-tmp-"));
@@ -57,4 +57,4 @@ export const tmpdirFixture: FixtureDef<TmpDirHelper> = {
       rmSync(dir, { recursive: true, force: true });
     }
   },
-};
+});

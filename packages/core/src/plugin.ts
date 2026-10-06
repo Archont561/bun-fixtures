@@ -66,6 +66,7 @@ export type {
   Scope,
   TestFn,
   TestOptions,
+  ThenChain,
   UseFn,
   WhenChain,
 } from "./types.ts";
@@ -771,6 +772,17 @@ async function enterFile(file: string): Promise<void> {
  * test("uses db", async ({ db }) => { ... });
  * ```
  */
+/**
+ * Declares a fixture with an inferred public type.
+ *
+ * Capability packages use this instead of depending on the `FixtureDef` type
+ * directly. It is intentionally a small identity function: the engine still
+ * owns validation, dependency ordering, scopes, and teardown.
+ */
+export function createFixture<T>(definition: FixtureDef<T>): FixtureDef<T> {
+  return definition;
+}
+
 export function createTest(testFile?: string): {
   test: TestFn;
   describe: typeof bunDescribe;

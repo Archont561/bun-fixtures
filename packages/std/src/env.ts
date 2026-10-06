@@ -1,4 +1,4 @@
-import type { FixtureDef } from "@bun-test-utils/core";
+import { createFixture } from "@bun-test-utils/core";
 
 export interface EnvHelper {
   /** Sets an environment variable. */
@@ -11,7 +11,7 @@ export interface EnvHelper {
   snapshot(): Record<string, string | undefined>;
 }
 
-export const envFixture: FixtureDef<EnvHelper> = {
+export const envFixture = createFixture<EnvHelper>({
   scope: "test",
   setup: async (use) => {
     const original = { ...process.env };
@@ -44,4 +44,4 @@ export const envFixture: FixtureDef<EnvHelper> = {
       }
     }
   },
-};
+});

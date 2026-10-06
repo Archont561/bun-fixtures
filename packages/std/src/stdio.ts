@@ -1,4 +1,4 @@
-import type { FixtureDef } from "@bun-test-utils/core";
+import { createFixture } from "@bun-test-utils/core";
 
 export interface StdioHelper {
   /** Captured stdout string. */
@@ -11,7 +11,7 @@ export interface StdioHelper {
   clear(): void;
 }
 
-export const stdioFixture: FixtureDef<StdioHelper> = {
+export const stdioFixture = createFixture<StdioHelper>({
   scope: "test",
   setup: async (use) => {
     let capturedOut = "";
@@ -53,4 +53,4 @@ export const stdioFixture: FixtureDef<StdioHelper> = {
       process.stderr.write = origStderrWrite;
     }
   },
-};
+});

@@ -1,7 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { FixtureDef } from "@bun-test-utils/core";
-import { BunTestUtilsError, CassetteError } from "@bun-test-utils/core";
+import {
+  BunTestUtilsError,
+  CassetteError,
+  createFixture,
+} from "@bun-test-utils/core";
 
 export type VcrMode = "record" | "replay" | "passthrough";
 
@@ -109,7 +112,7 @@ function deserializeOutput<T>(value: string): T {
   return JSON.parse(value) as T;
 }
 
-export const cassetteFixture: FixtureDef<CassetteHelper> = {
+export const cassetteFixture = createFixture<CassetteHelper>({
   scope: "test",
   setup: async (use, ctx) => {
     let mode: VcrMode = (process.env.VCR_MODE as VcrMode) || "record";
@@ -259,4 +262,4 @@ export const cassetteFixture: FixtureDef<CassetteHelper> = {
       }
     }
   },
-};
+});

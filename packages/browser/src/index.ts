@@ -1,6 +1,6 @@
 import {
   test as baseTest,
-  type FixtureDef,
+  createFixture,
   type FixtureMap,
   MissingOptionalDependencyError,
 } from "@bun-test-utils/core";
@@ -14,7 +14,7 @@ export interface TestServerHelper {
   handle(fn: (req: Request) => Response | Promise<Response>): void;
 }
 
-export const testServerFixture: FixtureDef<TestServerHelper> = {
+export const testServerFixture = createFixture<TestServerHelper>({
   scope: "test",
   setup: async (use) => {
     let handler: (req: Request) => Response | Promise<Response> = () =>
@@ -43,19 +43,19 @@ export const testServerFixture: FixtureDef<TestServerHelper> = {
       server.stop(true);
     }
   },
-};
+});
 
-export const serverUrlFixture: FixtureDef<string> = {
+export const serverUrlFixture = createFixture<string>({
   scope: "test",
   deps: ["testServer"],
   setup: async (use, { testServer }) => {
     await use((testServer as TestServerHelper).url);
   },
-};
+});
 
 const PLAYWRIGHT_MODULE = "playwright";
 
-export const browserFixture: FixtureDef<any> = {
+export const browserFixture = createFixture<any>({
   scope: "session",
   setup: async (use) => {
     let playwright: any;
@@ -85,9 +85,9 @@ export const browserFixture: FixtureDef<any> = {
       await browser.close();
     }
   },
-};
+});
 
-export const browserContextFixture: FixtureDef<any> = {
+export const browserContextFixture = createFixture<any>({
   scope: "test",
   deps: ["browser"],
   setup: async (use, { browser }) => {
@@ -98,9 +98,9 @@ export const browserContextFixture: FixtureDef<any> = {
       await context.close();
     }
   },
-};
+});
 
-export const browserPageFixture: FixtureDef<any> = {
+export const browserPageFixture = createFixture<any>({
   scope: "test",
   deps: ["browserContext"],
   setup: async (use, { browserContext }) => {
@@ -111,7 +111,7 @@ export const browserPageFixture: FixtureDef<any> = {
       await page.close();
     }
   },
-};
+});
 
 export const browserFixtures: FixtureMap = {
   testServer: testServerFixture,
