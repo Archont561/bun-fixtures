@@ -8,6 +8,7 @@ Working docs for the package and its internal capabilities. User-facing document
 | [`specs/`](./specs) | Numbered specifications — what each component must do and how it is verified |
 | [`milestones/`](./milestones) | M1–M5 delivery plan, status, and exit criteria |
 | [`adr/`](./adr) | Architecture decision records — why the design is the way it is |
+| [`audits/`](./audits) | Dated point-in-time reviews of the tree, with ranked findings |
 | [`workflow.md`](./workflow.md) | How backlog tasks, skills, and TDD fit together day to day |
 | [`caveats.md`](./caveats.md) | Limits, trade-offs, and non-goals of the package |
 

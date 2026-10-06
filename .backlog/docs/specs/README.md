@@ -20,6 +20,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 | [0012](./0012-http-cassette-vcr.md) | HTTP Cassette / VCR Testing Fixture | implemented | `packages/vcr/` |
 | [0013](./0013-snapshot-testing.md) | Snapshot Testing Fixture | implemented | `packages/snapshot/` |
 | [0014](./0014-bdd-fixture-bridge.md) | BDD-style scenarios on `test.*` | implemented | `packages/core/`, `packages/bdd/` |
+| [0015](./0015-package-test-layout.md) | Package test layout (`src`/`tests`/`e2e`, BDD entrypoint form) | implemented | `packages/*/tests/`, `packages/*/e2e/`, `packages/config/bdd/` |
 
 Start a new one from [`TEMPLATE.md`](./TEMPLATE.md).
 

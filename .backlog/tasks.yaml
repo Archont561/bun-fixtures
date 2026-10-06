@@ -2033,7 +2033,9 @@ tasks:
       pattern) demonstrating the integration works for consumers; randomized
       generation inside Gherkin is otherwise avoided because scenarios must stay
       deterministic and reviewable. BDD stays consumer-workflow-only per
-      docs/specs/package-test-layout.md — no unit-level edge cases as Gherkin.
+      .backlog/docs/specs/0015-package-test-layout.md (moved and numbered by
+      task_044; formerly docs/specs/package-test-layout.md) — no unit-level edge
+      cases as Gherkin.
     source_links: []
     status: ready
     priority: P2
@@ -2053,9 +2055,9 @@ tasks:
       - No BDD scenario added at this layer duplicates unit-level coverage;
         scenarios describe consumer workflows crossing the public package
         boundary.
-      - A short section in docs/specs/package-test-layout.md records which
-        styles apply to which layer (trust anchor, capability packs, wrapper
-        matrix).
+      - A short section in .backlog/docs/specs/0015-package-test-layout.md
+        records which styles apply to which layer (trust anchor, capability
+        packs, wrapper matrix).
       - bun run lint, typecheck, test:all, and coverage pass.
     dependencies:
       - task_037
@@ -2077,7 +2079,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:44:34.917Z
-    updated_at: 2026-10-06T17:44:34.917Z
+    updated_at: 2026-10-06T20:54:10.812Z
   - id: task_040
     title: "Pre-release std fixtures: clock, seed, and network guard"
     description: "Close the three cheap, high-demand fixture gaps before the first
@@ -2295,7 +2297,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T18:21:08.863Z
-    updated_at: 2026-10-06T20:33:34.515Z
+    updated_at: 2026-10-06T20:54:37.183Z
   - id: task_044
     title: Consolidate specs into one directory
     description: "Specs live in two places: the numbered set in .backlog/docs/specs/
@@ -2306,7 +2308,7 @@ tasks:
       them to the index table, and update every inbound link (ADR 0016, ADR
       0017, packages/config/README.md, the docs site)."
     source_links: []
-    status: ready
+    status: done
     priority: P3
     labels:
       - docs
@@ -2336,7 +2338,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T18:21:09.267Z
-    updated_at: 2026-10-06T18:21:09.267Z
+    updated_at: 2026-10-06T20:54:37.500Z
   - id: task_045
     title: Opt-in base directory for the cassette and snapshot conventions
     description: "Weighed and rejected during task_037 as out of scope for a
