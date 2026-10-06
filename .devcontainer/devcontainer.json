@@ -17,7 +17,7 @@
   // manifests disagree rather than quietly resolving something new. It also
   // runs `prepare` (lefthook install), which is what puts the git hooks into
   // a fresh clone.
-  "postCreateCommand": "npm i -g $(node -p \"require('./package.json').packageManager\") && bun install --frozen-lockfile",
+  "postCreateCommand": ".devcontainer/setup.sh",
   "waitFor": "postCreateCommand",
 
   "forwardPorts": [4321, 7878],
