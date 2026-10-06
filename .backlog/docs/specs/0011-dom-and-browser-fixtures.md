@@ -1,6 +1,6 @@
 # 0011 — DOM and Browser Testing Support
 
-- **Status:** ready
+- **Status:** implemented
 - **Implementation:** `packages/dom/`, `packages/browser/`
 - **Tests:** `packages/dom/tests/`, `packages/browser/tests/`
 

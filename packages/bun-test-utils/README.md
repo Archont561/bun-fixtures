@@ -21,7 +21,7 @@
 > [!IMPORTANT]
 > **Nothing is published to npm yet.** The engine itself is real and tested: scopes,
 > LIFO teardown, dependency injection, parameterization, directory-scoped discovery
-> and the `init` CLI all work, covered by 211 passing tests across focused internal
+> and the `init` CLI all work, covered by 215 passing tests across focused internal
 > suites, cross-package conformance checks, Gherkin scratch projects, and an installed-tarball
 > smoke test. What remains is the publication audit, a `v0.1.0` tag, the publish itself, and a
 > post-publish consumer rerun — milestone [M5](.backlog/docs/milestones/M5-publish.md).
@@ -470,7 +470,7 @@ enforced by commitlint through Lefthook.
 | `apps/docs` | Astro Starlight site on GitHub Pages | ✅ Done |
 | `bun-test-utils/std` | `tmpdir`, `env`, `stdio` | 🚧 Not yet dogfooded by the core suite |
 | `bun-test-utils/pbt` | `test.prop` property-based testing | 🚧 No per-iteration fixture lifecycle |
-| `bun-test-utils/dom` · `browser` | happy-dom and Playwright fixtures | 🚧 Playwright path untested |
+| `bun-test-utils/dom` · `browser` | happy-dom and Playwright fixtures | ✅ Done |
 | `bun-test-utils/vcr` | HTTP record and replay | 🚧 No `__cassettes__/` convention |
 | `bun-test-utils/snapshot` | Value and file snapshot testing | ✅ Done |
 
