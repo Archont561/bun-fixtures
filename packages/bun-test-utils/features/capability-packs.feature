@@ -139,3 +139,25 @@ Feature: Capability pack behaviour
       """
     When I run the test suite
     Then 1 test passes
+
+  @scenario
+  Scenario: Fluent scenarios allow multiple givens whens and thens
+    Given a project with bun-test-utils preloaded
+    And the file "scenario.test.ts":
+      """
+      import { expect, test } from "bun-test-utils";
+
+      test.scenario("chains every fluent phase")
+        .given("a base value", () => ({ value: 2 }))
+        .given("a label", () => ({ label: "answer" }))
+        .when("the value is incremented", ({ value }) => ({ result: value + 1 }))
+        .when("the result is formatted", ({ result, label }) => ({ formatted: `${label}:${result}` }))
+        .then("the number is correct", ({ result, expect: scenarioExpect }) => {
+          scenarioExpect(result).toBe(3);
+        })
+        .then("the formatted value is correct", ({ formatted, expect: scenarioExpect }) => {
+          scenarioExpect(formatted).toBe("answer:3");
+        });
+      """
+    When I run the test suite
+    Then 1 test passes
