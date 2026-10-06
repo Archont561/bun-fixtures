@@ -77,7 +77,21 @@ function run(cmd: string[], cwd?: string): string {
 /** Packs the package and reads back its tarball. */
 function pack(scratch: string): Packed {
   const tgz = join(scratch, `${PACKAGE_NAME}.tgz`);
-  run([BUN, "pm", "pack", "--quiet", "--filename", tgz], PACKAGE_DIR);
+  // The tarball carries the freshly synced README, but dist/ is packed as
+  // turbo built it: `bun pm pack` runs `prepack` (sync + a full bunup
+  // rebuild), and rebuilding dist/ here — inside the test phase, over the
+  // dist/ this very test process has loaded — intermittently crashes bunup
+  // with an internal ENOENT on its own output (CI flake, task_031). The
+  // pipeline instead orders `bun-test-utils#build` before `#test`
+  // (turbo.json), so dist/ is guaranteed current before any packing.
+  run(
+    [BUN, join(PACKAGE_DIR, "..", "..", "scripts", "sync-package-readme.ts")],
+    PACKAGE_DIR,
+  );
+  run(
+    [BUN, "pm", "pack", "--quiet", "--ignore-scripts", "--filename", tgz],
+    PACKAGE_DIR,
+  );
   expect(existsSync(tgz)).toBe(true);
 
   const listing = run(["tar", "-tzf", tgz]).trim().split("\n");
