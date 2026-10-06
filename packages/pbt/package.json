@@ -2,13 +2,14 @@
   "name": "@bun-test-utils/pbt",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal workspace package — Property Based Tests (PBT) integration for bun-test-utils using the fast-check library. Bundled into the published bun-test-utils package as the \"bun-test-utils/pbt\" subpath; never published on its own. (Renamed from \"fast-check\" — this is our package name, not the third-party fast-check library it wraps.)",
+  "description": "Internal workspace package \u2014 Property Based Tests (PBT) integration for bun-test-utils using the fast-check library. Bundled into the published bun-test-utils package as the \"bun-test-utils/pbt\" subpath; never published on its own. (Renamed from \"fast-check\" \u2014 this is our package name, not the third-party fast-check library it wraps.)",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "bunup",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

@@ -1,6 +1,6 @@
 # 0013 — Published wrapper over internal workspaces
 
-- **Status:** accepted
+- **Status:** partially superseded by [0014](./0014-bunup-built-publication.md)
 - **Supersedes:** [0011](./0011-brand-identity-and-modular-ecosystem.md)
 
 ## Context

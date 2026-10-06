@@ -11,4 +11,4 @@ Initial release.
 - Iteration protocol: `test(name, fn, { iterate: true })` defers test-scoped fixtures behind `ctx.iterate(fn)` — each call builds them fresh and unwinds them LIFO, giving property-based and other companion runners a per-sample fixture lifecycle (`@bun-test-utils/pbt` is built on it).
 - Tooling exports for companion runners: `detectFixtures` (fixture auto-detection through wrapper callbacks) and `callerFile` (per-call test-file detection through wrapper frames).
 - CLI: `bun-test-utils init` adds the `[test].preload` entry to `bunfig.toml` and scaffolds a root `fixtures.ts`.
-- Ships raw TypeScript with no build step, dual-licensed MIT OR Apache-2.0.
+- Ships Bunup-built ESM and TypeScript declarations, dual-licensed MIT OR Apache-2.0.

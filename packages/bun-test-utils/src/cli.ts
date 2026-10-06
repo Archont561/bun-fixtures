@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
+import { initCommand } from "@bun-test-utils/core/cli";
 /** Public CLI adapter for the internal core implementation. */
 import { defineCommand, runMain } from "citty";
-import { initCommand } from "../core/src/cli.ts";
 import pkg from "../package.json" with { type: "json" };
 
-export * from "../core/src/cli.ts";
+export * from "@bun-test-utils/core/cli";
 
 export const mainCommand = defineCommand({
   meta: {

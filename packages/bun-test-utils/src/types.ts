@@ -1,2 +1,2 @@
 /** Public type entrypoint for the internal fixture engine. */
-export * from "../core/src/types.ts";
+export * from "@bun-test-utils/core/types";

@@ -12,7 +12,7 @@ import { dirname, join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { parse, stringify } from "smol-toml";
 
-export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/src/plugin.ts";
+export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/dist/plugin.js";
 
 export const FIXTURES_TEMPLATE = `import type { FixtureMap } from "bun-test-utils";
 

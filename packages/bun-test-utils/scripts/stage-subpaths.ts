@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, symlinkSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SUBPATHS = [
@@ -14,7 +14,6 @@ const SUBPATHS = [
   "bdd",
 ] as const;
 
-const mode = process.argv.includes("--copy") ? "copy" : "link";
 const packageDir = resolve(import.meta.dir, "..");
 const packagesDir = resolve(packageDir, "..");
 
@@ -29,10 +28,5 @@ for (const subpath of SUBPATHS) {
 
   rmSync(stagedPackage, { recursive: true, force: true });
   mkdirSync(stagedPackage, { recursive: true });
-
-  if (mode === "copy") {
-    cpSync(source, destination, { recursive: true });
-  } else {
-    symlinkSync(`../../${subpath}/src`, destination, "dir");
-  }
+  symlinkSync(`../../${subpath}/src`, destination, "dir");
 }

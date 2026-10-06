@@ -8,6 +8,7 @@
   "module": "./src/plugin.ts",
   "types": "./src/types.ts",
   "scripts": {
+    "build": "bunup",
     "test": "bun test",
     "test:unit": "bun test tests",
     "typecheck": "tsc --noEmit"
@@ -18,5 +19,11 @@
   },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*"
+  },
+  "exports": {
+    ".": "./src/plugin.ts",
+    "./plugin": "./src/plugin.ts",
+    "./cli": "./src/cli.ts",
+    "./types": "./src/types.ts"
   }
 }

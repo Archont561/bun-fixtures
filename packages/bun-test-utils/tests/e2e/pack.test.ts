@@ -2,9 +2,9 @@
  * M5 pack smoke test (spec 0005 R7, milestone M5 exit criteria 1–2).
  *
  * Packs the single publishable package with `bun pm pack`, proves the tarball
- * contains only what the spec allows (the core `src/`, each internal
- * workspace package's `src/` bundled as a subpath, README + both licences +
- * manifest, no `workspace:` ranges left in the manifest), then installs the
+ * contains only what the spec allows (Bunup-built ESM and declarations,
+ * README + both licences + manifest, no source workspaces or `workspace:`
+ * ranges), then installs the
  * tarball into a scratch project — no workspace, no symlinks — and runs the
  * quickstart (`bun-test-utils init` → `bun test`) against it, including a
  * subpath import. What is verified here is what a consumer downloading from
@@ -13,8 +13,8 @@
  * Since the single-package consolidation (ADR superseding ADR 0011,
  * task_018/task_020), `core`, `std`, `pbt`, `dom`, `browser`, `vcr`, and
  * `snapshot` are sibling internal, unpublished (`private: true`) workspace
- * packages staged into this one before packing — they are never published on
- * their own.
+ * packages are linked into the wrapper during development and bundled by Bunup
+ * into its `dist/`; they are never published on their own.
  */
 
 import {
@@ -46,7 +46,7 @@ const BUNDLED_SUBPATHS = [
   "bdd",
 ] as const;
 
-/** Files the tarball may contain besides `src/` and each bundled subpath's `src/`. */
+/** Files the built tarball may contain besides `dist/`. */
 const ALLOWED_TOP_LEVEL = new Set([
   "package.json",
   "README.md",
@@ -100,7 +100,7 @@ describe("bun pm pack smoke test", () => {
     );
     expect(
       readFileSync(join(PACKAGE_DIR, "src", "plugin.ts"), "utf8"),
-    ).toContain("../core/src/plugin.ts");
+    ).toContain("@bun-test-utils/core");
     expect(
       existsSync(join(PACKAGE_DIR, "..", "core", "src", "plugin.ts")),
     ).toBe(true);
@@ -125,6 +125,9 @@ describe("bun pm pack smoke test", () => {
         expect(manifest.name).toBe(PACKAGE_NAME);
         expect(manifest.private).toBeUndefined();
         expect(manifest.license).toBe("MIT OR Apache-2.0");
+        expect(manifest.main).toBe("./dist/plugin.js");
+        expect(manifest.types).toBe("./dist/plugin.d.ts");
+        expect(entries.some((entry) => entry.startsWith("dist/"))).toBe(true);
         for (const peer of ["playwright", "happy-dom", "fast-check"]) {
           expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
         }
@@ -135,33 +138,32 @@ describe("bun pm pack smoke test", () => {
         for (const required of ALLOWED_TOP_LEVEL) {
           expect(entries).toContain(required);
         }
-        expect(entries.some((e) => e.startsWith("src/"))).toBe(true);
-        expect(entries.some((e) => e.startsWith("core/src/"))).toBe(true);
-        for (const sub of BUNDLED_SUBPATHS) {
-          expect(
-            entries.some((e) => e.startsWith(`${sub}/src/`)),
-            `tarball is missing bundled subpath "${sub}/src/"`,
-          ).toBe(true);
-          expect(manifest.exports?.[`./${sub}`]).toBe(`./${sub}/src/index.ts`);
-          // Only `src/` from each bundled package — not its own package.json,
-          // tests/, or tsconfig.json (those stayed out of "files" on purpose).
-          for (const entry of entries) {
-            if (entry.startsWith(`${sub}/`)) {
-              expect(
-                entry.startsWith(`${sub}/src/`),
-                `tarball contains unexpected ${entry} from the "${sub}" internal package`,
-              ).toBe(true);
-            }
-          }
+        for (const required of [
+          "dist/plugin.js",
+          "dist/plugin.d.ts",
+          "dist/cli.js",
+          "dist/types.d.ts",
+        ]) {
+          expect(entries).toContain(required);
         }
-        // Nothing else at the top level — no tests/, features/, .backlog/, docs/…
+        expect(entries.some((e) => e.startsWith("src/"))).toBe(false);
+        expect(entries.some((e) => e.startsWith("core/"))).toBe(false);
+
+        for (const sub of BUNDLED_SUBPATHS) {
+          const output = `./dist/subpaths/${sub}`;
+          expect(entries).toContain(`${output.slice(2)}.js`);
+          expect(entries).toContain(`${output.slice(2)}.d.ts`);
+          expect(manifest.exports?.[`./${sub}`]).toEqual({
+            types: `${output}.d.ts`,
+            import: `${output}.js`,
+            default: `${output}.js`,
+          });
+        }
+
+        // Nothing else at the top level — no tests/, features/, sources, or repo tooling.
         for (const entry of entries) {
           const topLevel = entry.split("/")[0];
-          const ok =
-            ALLOWED_TOP_LEVEL.has(entry) ||
-            topLevel === "src" ||
-            topLevel === "core" ||
-            (BUNDLED_SUBPATHS as readonly string[]).includes(topLevel);
+          const ok = ALLOWED_TOP_LEVEL.has(entry) || topLevel === "dist";
           expect(ok, `tarball contains unexpected ${entry}`).toBe(true);
         }
       } finally {
@@ -186,7 +188,7 @@ describe("bun pm pack smoke test", () => {
         run([BUN, "add", join(packDir, `${PACKAGE_NAME}.tgz`)], project);
         expect(
           existsSync(
-            join(project, "node_modules", PACKAGE_NAME, "src", "plugin.ts"),
+            join(project, "node_modules", PACKAGE_NAME, "dist", "plugin.js"),
           ),
         ).toBe(true);
         expect(
@@ -195,12 +197,15 @@ describe("bun pm pack smoke test", () => {
               project,
               "node_modules",
               PACKAGE_NAME,
-              "std",
-              "src",
-              "index.ts",
+              "dist",
+              "subpaths",
+              "std.js",
             ),
           ),
         ).toBe(true);
+        expect(
+          existsSync(join(project, "node_modules", PACKAGE_NAME, "src")),
+        ).toBe(false);
 
         // `bunx bun-test-utils init` — through the installed bin, like a consumer.
         run(
@@ -215,7 +220,7 @@ describe("bun pm pack smoke test", () => {
           project,
         );
         expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
-          "node_modules/bun-test-utils/src/plugin.ts",
+          "node_modules/bun-test-utils/dist/plugin.js",
         );
         expect(readFileSync(join(project, "fixtures.ts"), "utf8")).toContain(
           "export default",

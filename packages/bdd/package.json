@@ -7,11 +7,13 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "bunup",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*",
     "@bun-test-utils/core": "workspace:*"
-  }
+  },
+  "module": "./src/index.ts"
 }

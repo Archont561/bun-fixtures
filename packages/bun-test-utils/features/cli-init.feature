@@ -8,14 +8,14 @@ Feature: Project setup with the CLI
 
   Scenario: Initializing a fresh project
     When I run "init"
-    Then the file "bunfig.toml" contains "./node_modules/bun-test-utils/src/plugin.ts"
+    Then the file "bunfig.toml" contains "./node_modules/bun-test-utils/dist/plugin.js"
     And the file "fixtures.ts" exists
     And the command succeeds
 
   Scenario: Initializing twice does not duplicate the preload entry
     When I run "init"
     And I run "init"
-    Then "bunfig.toml" contains "plugin.ts" 1 time
+    Then "bunfig.toml" contains "dist/plugin.js" 1 time
     And the output contains "already preloads"
 
   Scenario: Existing configuration survives
@@ -30,7 +30,7 @@ Feature: Project setup with the CLI
     When I run "init"
     Then the file "bunfig.toml" contains "./other-preload.ts"
     And the file "bunfig.toml" contains "registry"
-    And the file "bunfig.toml" contains "./node_modules/bun-test-utils/src/plugin.ts"
+    And the file "bunfig.toml" contains "./node_modules/bun-test-utils/dist/plugin.js"
 
   Scenario: An existing fixtures.ts is never clobbered by accident
     Given the file "fixtures.ts":

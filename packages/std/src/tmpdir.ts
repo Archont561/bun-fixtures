@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir as osTmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import type { FixtureDef } from "../../core/src/plugin.ts";
+import type { FixtureDef } from "@bun-test-utils/core";
 
 export interface TmpDirHelper {
   /** The absolute path of the temporary scratch directory. */

@@ -22,8 +22,8 @@
     "changeset": "changeset",
     "release:version": "changeset version",
     "release:publish": "changeset publish",
-    "stage:subpaths": "bun packages/bun-test-utils/scripts/stage-subpaths.ts --link",
-    "prepare": "bun run stage:subpaths && lefthook install",
+    "stage:subpaths": "bun packages/bun-test-utils/scripts/stage-subpaths.ts",
+    "prepare": "bun run stage:subpaths && bun run build && lefthook install",
     "board": "backlog board",
     "status": "backlog status"
   },
@@ -38,6 +38,7 @@
     "@types/bun": "^1.4.2",
     "backlog": "^1.4.56",
     "bun-test-utils": "workspace:*",
+    "bunup": "0.16.32",
     "lefthook": "^2.1.17",
     "skills": "^1.7.0",
     "turbo": "^2.11.7",

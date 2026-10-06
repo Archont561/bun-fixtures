@@ -1,5 +1,5 @@
+import type { FixtureDef, FixtureMap } from "@bun-test-utils/core";
 import type { GlobalWindow } from "happy-dom";
-import type { FixtureDef, FixtureMap } from "../../core/src/plugin.ts";
 
 export interface DomPageHelper {
   /** Mounts an HTML string to document.body and returns the container or child. */

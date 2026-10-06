@@ -2,7 +2,7 @@ import {
   type FixtureContext,
   type FixtureMap,
   openFixtures,
-} from "../../core/src/plugin.ts";
+} from "@bun-test-utils/core";
 
 export interface BddWorld {
   [key: string]: any;

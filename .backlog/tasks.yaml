@@ -1338,3 +1338,49 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T05:56:06.705Z
     updated_at: 2026-10-06T06:05:08.706Z
+  - id: task_026
+    title: Build every code package with shared Bunup configuration
+    description: Add a shared createBunupConfig factory in @bun-test-utils/config
+      and consume it from bun-test-utils, core, bdd, browser, dom, pbt,
+      snapshot, std, and vcr. Switch the published bun-test-utils artifact from
+      raw TypeScript to Bunup-built ESM and declarations, preserving all
+      exports, CLI behavior, subpath composition, and installed-consumer tests.
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - build
+      - packaging
+      - typescript
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "@bun-test-utils/config exports a shared typed Bunup config factory"
+      - Every code package has a local bunup.config.ts using the shared factory
+        and a build script
+      - bun-test-utils publishes built ESM, declarations, and CLI output from
+        dist
+      - All public root and capability subpath exports resolve from the packed
+        tarball
+      - An ADR supersedes raw-TypeScript distribution and release docs match the
+        built artifact
+      - frozen install, build, lint, typecheck, tests, and docs build pass
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T06:14:21.990Z
+    updated_at: 2026-10-06T06:26:48.503Z

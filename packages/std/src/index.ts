@@ -1,4 +1,4 @@
-import type { FixtureMap } from "../../core/src/plugin.ts";
+import type { FixtureMap } from "@bun-test-utils/core";
 import { envFixture } from "./env.ts";
 import { stdioFixture } from "./stdio.ts";
 import { tmpdirFixture } from "./tmpdir.ts";

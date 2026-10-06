@@ -186,7 +186,7 @@ bun add -d bun-test-utils
 bunx bun-test-utils init
 ```
 
-`init` appends `./node_modules/bun-test-utils/src/plugin.ts` to `[test].preload` in
+`init` appends `./node_modules/bun-test-utils/dist/plugin.js` to `[test].preload` in
 `bunfig.toml` — idempotently, preserving the rest of the file — and scaffolds a root
 `fixtures.ts`. Every fixture pack ships inside this one package as a subpath import —
 no extra installs for the pack itself, import the one you want:
@@ -212,7 +212,9 @@ bun add -d fast-check   # only for bun-test-utils/pbt
 Importing a subpath without its optional dependency installed throws a clear error naming
 the missing package and the install command — it never fails silently.
 
-The package ships raw TypeScript with no build step; Bun executes `.ts` directly.
+The package ships Bun-targeted ESM and TypeScript declarations built with Bunup. Private
+workspace implementations are bundled into the public entries; optional integrations remain
+external so you install only the tools you use.
 
 ## ⚡ Quick start
 
