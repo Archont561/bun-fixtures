@@ -40,37 +40,6 @@ test("uses the database", async ({ database }) => {
 });
 ```
 
-## Migration from fixture files
-
-Move any automatically loaded fixture map into an explicit `test.ts` (or any
-module name you choose) and import that test runner from every test file that
-needs the fixtures.
-
-```ts
-// test.ts
-import { test as base } from "bun-test-utils";
-
-export const test = base.extend({
-  db: {
-    scope: "file",
-    setup: async (use) => {
-      const db = await createDatabase();
-      await use(db);
-      await db.close();
-    },
-  },
-});
-```
-
-```ts
-// users.test.ts
-import { expect } from "bun-test-utils";
-import { test } from "./test";
-
-test("uses the explicit fixture", async ({ db }) => {
-  expect(await db.health()).toBe("ok");
-});
-```
 
 ## Extension chains
 

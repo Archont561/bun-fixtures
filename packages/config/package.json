@@ -13,7 +13,8 @@
     "./base.json": "./base.json",
     "./lib.json": "./lib.json",
     "./app.json": "./app.json",
-    "./bunup": "./bunup.ts"
+    "./bunup": "./bunup.ts",
+    "./bdd": "./bdd/presets.ts"
   },
   "files": [
     "base.json",
@@ -22,7 +23,9 @@
     "bunup.ts"
   ],
   "private": true,
+  "type": "module",
   "devDependencies": {
+    "@aboviq/bun-test-cucumber": "^0.2.0",
     "bunup": "0.16.32"
   }
 }
