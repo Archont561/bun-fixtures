@@ -6,7 +6,7 @@
  * README + both licences + manifest, no source workspaces or `workspace:`
  * ranges), then installs the
  * tarball into a scratch project — no workspace, no symlinks — and runs the
- * quickstart (`bun-test-utils init` → `bun test`) against it, including a
+ * quickstart (`test-utils init` → `bun test`) against it, including a
  * subpath import. What is verified here is what a consumer downloading from
  * npm will get.
  *
@@ -284,11 +284,11 @@ describe("bun pm pack smoke test", () => {
           existsSync(join(project, "node_modules", PACKAGE_NAME, "src")),
         ).toBe(false);
 
-        // `bunx bun-test-utils init` — through the installed bin, like a consumer.
+        // `bunx test-utils init` — through the installed bin, like a consumer.
         run(
           [
             BUN,
-            join(project, "node_modules", ".bin", "bun-test-utils"),
+            join(project, "node_modules", ".bin", "test-utils"),
             "init",
             "--dir",
             project,
