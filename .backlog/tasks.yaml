@@ -2026,3 +2026,170 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T17:44:34.917Z
     updated_at: 2026-10-06T17:44:34.917Z
+  - id: task_040
+    title: "Pre-release std fixtures: clock, seed, and network guard"
+    description: "Close the three cheap, high-demand fixture gaps before the first
+      release. (1) clock fixture in @bun-test-utils/std wrapping bun:test
+      setSystemTime: freeze or set time for the fixture scope, restore on
+      teardown — shipping a VCR pack without time control is an odd shape, since
+      cassettes and time-dependent code go together. (2) seed fixture:
+      deterministic Math.random per test with the seed reported on failure,
+      giving one replay story for all randomness and synergizing with
+      @bun-test-utils/pbt. (3) network-guard fixture: fail on unexpected fetch
+      with an explicit passthrough allowlist, reusing the fetch-interception
+      machinery already present in httpMock — the enforcement half of the
+      httpMock/vcr triangle."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - fixtures
+      - std
+      - release
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - clock fixture freezes/sets time via bun:test setSystemTime, restores the
+        real clock on teardown, and composes through test.extend like every std
+        fixture.
+      - seed fixture makes Math.random deterministic per test, surfaces the seed
+        in failure output, and documents how to pin a seed for replay.
+      - network-guard fixture rejects unexpected fetch calls with a clear error
+        naming the offending URL, supports an allowlist/passthrough
+        configuration, and composes with httpMock and vcr without
+        double-patching fetch.
+      - All three ship through the bun-test-utils wrapper context with
+        conformance coverage and README/docs examples.
+      - Unit suites for the new fixtures follow the dogfooded test.extend style
+        (task_037 convention).
+      - bun run lint, typecheck, and test:all pass.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:07.685Z
+    updated_at: 2026-10-06T17:51:07.685Z
+  - id: task_041
+    title: Release stability tiers, context-key policy, and error-message contract
+    description: "Define and enforce the public stability story before the first npm
+      release. (1) Stability tiers: core, std, dom, snapshot, pbt, and a minimal
+      vcr surface are stable; browser (Playwright peer, heaviest CI path) and
+      bdd (rides third-party @aboviq/bun-test-cucumber 0.x) are labeled
+      experimental, with a one-sentence semver policy in the README stating
+      experimental capabilities may change in minor versions. (2) vcr surface
+      freeze: record/replay plus one simple matcher only; matching DSLs,
+      redaction, and cassette migration are explicitly deferred — growing vcr
+      later is safe, shrinking it is breaking. (3) Context-key collision policy:
+      the wrapper injects ~19 fixture names (page, env, snapshot, ...) into one
+      flat test.extend namespace; document and test precedence when a consumer
+      defines the same key. (4) Error-message contract: e2e steps already assert
+      exact strings (unknown fixture, circular fixture dependency, finished
+      without calling use(value)); enumerate which messages are contractual and
+      lock them with a snapshot/conformance test. (5) Declare platform support:
+      Linux/macOS now, Windows post-release (scratch harness and presets rely on
+      POSIX URL.pathname)."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - release
+      - docs
+      - semver
+      - conformance
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - README and docs state the stability tier of every capability; browser
+        and bdd are marked experimental with the semver caveat.
+      - vcr public surface is reduced/confirmed to record/replay plus a single
+        matcher; deferred features are listed in the backlog, not the API.
+      - Fixture context-key precedence (consumer key vs built-in) is documented
+        and covered by a conformance test.
+      - Contractual error messages are enumerated and locked by a test;
+        non-contractual messages are explicitly free to change.
+      - Platform support (Linux/macOS; Windows deferred) is stated in README and
+        engines/docs.
+      - bun run lint, typecheck, and test:all pass.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:08.062Z
+    updated_at: 2026-10-06T17:51:08.062Z
+  - id: task_042
+    title: "Post-release parking lot: fixtures and techniques deferred by design"
+    description: "Deliberately deferred work, parked so it is a decision rather than
+      an omission. Fixtures: database fixture (tmp bun:sqlite) once demand shows
+      up; public CLI/scratch-project runner fixture (productize
+      e2e/bdd/support/project.ts); filesystem sandbox beyond tmpdir;
+      worker/concurrency-scoped fixtures once Bun's test parallelism semantics
+      stabilize (session scope currently assumes single-process). Platform:
+      Windows support (replace POSIX URL.pathname usage in harness and presets,
+      add Windows CI lane). Techniques: mutation testing as an internal quality
+      gate for the engine suite; fuzzing beyond fast-check; benchmark fixtures.
+      vcr growth items deferred by the stability-tier task: matcher DSL,
+      redaction, cassette migration tooling. bdd graduation: promote from
+      experimental when @aboviq/bun-test-cucumber reaches 1.0 or the gherkin
+      integration is vendored."
+    source_links: []
+    status: ready
+    priority: P3
+    labels:
+      - post-release
+      - fixtures
+      - testing
+      - parking-lot
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Each parked item has a one-line trigger condition (user demand, upstream
+        1.0, Bun feature stabilization) recorded in this task.
+      - No parked item ships in the first release; anything promoted out of this
+        list gets its own task with full acceptance criteria.
+      - The list is referenced from the release notes or README roadmap section
+        so deferrals are visible to consumers.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:08.448Z
+    updated_at: 2026-10-06T17:51:08.448Z
