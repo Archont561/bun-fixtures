@@ -123,8 +123,15 @@ describe("bun pm pack smoke test", () => {
           "./package.json",
         ]);
 
-        for (const peer of ["playwright", "happy-dom", "fast-check"]) {
+        for (const peer of [
+          "playwright",
+          "happy-dom",
+          "fast-check",
+          "@aboviq/bun-test-cucumber",
+        ]) {
+          expect(manifest.peerDependencies?.[peer]).toBeString();
           expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
+          expect(manifest.optionalDependencies?.[peer]).toBeUndefined();
         }
 
         for (const required of ALLOWED_TOP_LEVEL) {
@@ -163,9 +170,15 @@ describe("bun pm pack smoke test", () => {
       "./package.json",
     ]);
 
-    for (const peer of ["playwright", "happy-dom", "fast-check"]) {
+    for (const peer of [
+      "playwright",
+      "happy-dom",
+      "fast-check",
+      "@aboviq/bun-test-cucumber",
+    ]) {
+      expect(manifest.peerDependencies?.[peer]).toBeString();
       expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
-      expect(manifest.optionalDependencies?.[peer]).toBeString();
+      expect(manifest.optionalDependencies?.[peer]).toBeUndefined();
     }
 
     for (const workspace of INTERNAL_WORKSPACES) {
@@ -253,11 +266,20 @@ describe("packed public API", () => {
     const specifier = "bun-test-utils/std";
     await expect(import(specifier)).rejects.toThrow();
   });
+
+  test("optional test styles explain their missing peers", () => {
+    expect(() =>
+      test.prop("needs fast-check", (fc) => ({ n: fc.integer() }), () => {}),
+    ).toThrow("fast-check");
+    expect(() => test.scenario("needs bdd integration")).toThrow(
+      "@aboviq/bun-test-cucumber",
+    );
+  });
 });
 `,
         );
         const output = run([BUN, "test"], project);
-        expect(output).toContain("2 pass");
+        expect(output).toContain("3 pass");
         expect(output).toContain("0 fail");
 
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);

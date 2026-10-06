@@ -15,6 +15,6 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded lazily when the property test executes. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests.
+The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

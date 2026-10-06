@@ -52,8 +52,8 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 
 ### Property and BDD-style tests
 
-- `test.prop(title, factory, fn, options)`: property tests with per-sample fixture teardown. The factory receives the `fast-check` API.
-- `test.scenario(title)`: fluent `given` / `when` / `then` scenarios using the same fixture context.
-- `test.scenario.prop(title, factory)`: generated values plus fluent scenarios.
+- `test.prop(title, factory, fn, options)`: property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
+- `test.scenario(title)`: fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer.
+- `test.scenario.prop(title, factory)`: generated values plus fluent scenarios. Requires both optional peers.
 
 Mocking should be expressed as fixtures and composed with `test.extend()` so mocks get dependency ordering and teardown just like built-in capabilities.

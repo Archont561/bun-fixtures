@@ -58,15 +58,11 @@
     "citty": "^0.2.2",
     "smol-toml": "^1.9.0"
   },
-  "optionalDependencies": {
-    "playwright": "^1.40.0",
-    "happy-dom": "^20.14.5",
-    "fast-check": "^4.10.2"
-  },
   "peerDependencies": {
     "playwright": ">=1.40.0",
     "happy-dom": ">=20.0.0",
-    "fast-check": ">=4.0.0"
+    "fast-check": ">=4.0.0",
+    "@aboviq/bun-test-cucumber": ">=0.2.0"
   },
   "peerDependenciesMeta": {
     "playwright": {
@@ -76,6 +72,9 @@
       "optional": true
     },
     "fast-check": {
+      "optional": true
+    },
+    "@aboviq/bun-test-cucumber": {
       "optional": true
     }
   },

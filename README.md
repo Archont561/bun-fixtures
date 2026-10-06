@@ -26,7 +26,8 @@ bunx test-utils init
 Optional capability dependencies are loaded by fixtures only when requested:
 
 ```bash
-bun add -d fast-check # for test.prop() / test.scenario.prop()
+bun add -d fast-check # unlocks test.prop() / test.scenario.prop()
+bun add -d @aboviq/bun-test-cucumber # unlocks test.scenario()
 bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
@@ -89,7 +90,7 @@ test("uses the explicit fixture", async ({ db }) => {
 });
 ```
 
-The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`. Mocking should be modeled as fixtures, not as separate public helper exports.
+The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while optional property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`; those methods throw actionable missing-peer errors until `fast-check` and/or `@aboviq/bun-test-cucumber` are installed. Mocking should be modeled as fixtures, not as separate public helper exports.
 
 For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Internal package notes live in the package READMEs:
 

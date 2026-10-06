@@ -13,13 +13,11 @@ minimal counterexample.
 
 ## Installation
 
-`test.prop` ships inside `bun-test-utils` — `fast-check` is an `optionalDependency`,
-installed automatically unless your platform or install flags skip optional deps:
+`test.prop` ships inside `bun-test-utils`, but `fast-check` is an optional peer.
+Install it only in projects that use property tests:
 
 ```bash
-bun add -d bun-test-utils
-# only if `bun install` skipped the optional dep:
-bun add -d fast-check
+bun add -d bun-test-utils fast-check
 ```
 
 ## Writing a property test

@@ -684,7 +684,7 @@ tasks:
     acceptance_criteria:
       - bun-test-utils's exports map (., std, vcr, dom, browser, pbt, snapshot,
         bdd) resolves correctly with proper types, ESM/CJS as applicable
-      - "optionalDependencies/peerDependenciesMeta.optional correctness
+      - "optional peerDependencies/peerDependenciesMeta.optional correctness without optionalDependencies auto-installs
         verified: core works with zero optional peers installed; each gated
         internal capability throws a clear actionable error when its peer is missing"
       - One LICENSE pair at the package root, one consolidated README with a
@@ -830,7 +830,7 @@ tasks:
       so there is zero backward-compat cost to changing either; one install
       target removes version-skew and cross-package setup overhead for
       consumers; heavy per-capability deps (playwright, happy-dom, fast-check)
-      become optionalDependencies/peerDependenciesMeta.optional on the single
+      become optional peerDependencies with peerDependenciesMeta.optional on the single
       package instead of being forced via separate package installs.
 
       - Rename the core package directory/package.json: packages/bun-fixture ->
@@ -1050,7 +1050,7 @@ tasks:
       - Heavy per-capability deps (playwright for browser, happy-dom for dom,
       the fast-check library for the root test.prop() API, bdd's
       @aboviq/bun-test-cucumber, vcr/snapshot's own deps if any) become
-      optionalDependencies + peerDependenciesMeta.optional entries on the single
+      optional peerDependencies + peerDependenciesMeta.optional entries on the single
       bun-test-utils package.json. Requesting a gated fixture without its peer
       dep installed MUST throw a clear, actionable error naming the missing
       package and the install command — never a silent crash or an unhelpful
@@ -1097,7 +1097,7 @@ tasks:
         with correct types
       - Heavy peer deps (playwright, happy-dom, fast-check,
         @aboviq/bun-test-cucumber) are
-        optionalDependencies/peerDependenciesMeta.optional, with a clear thrown
+        optional peerDependencies/peerDependenciesMeta.optional, with no optionalDependencies auto-install and with a clear thrown
         error (not a silent failure) when a gated fixture is requested without its peer
         dep present
       - README/docs/CLI instructions updated to single-package-install +

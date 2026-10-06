@@ -66,7 +66,8 @@ Fixture scopes are `"session"`, `"file"`, and `"test"` (default). Dependencies a
 
 ## `test.prop(title, arbitraryFactory, fn, options?)`
 
-Runs a property test. The arbitrary factory receives the `fast-check` API; the
+Runs a property test. This optional API requires `fast-check` to be installed by
+the project using it. The arbitrary factory receives the `fast-check` API; the
 test callback receives fixtures first and generated values second.
 
 ```ts
@@ -87,8 +88,11 @@ session and file fixtures are shared across the property run.
 ## `test.scenario(title)` and `test.scenario.prop(title, arbitraryFactory)`
 
 Builds one fixture-aware test from fluent `given`, `when`, and `then` steps.
-Object results from `given` and `when` are merged into the next context; fixture
-values are available alongside scenario state.
+This optional API requires `@aboviq/bun-test-cucumber` to be installed by the
+project using it. Object results from `given` and `when` are merged into the next
+context; fixture values are available alongside scenario state.
+
+`test.scenario.prop(...)` additionally requires `fast-check`.
 
 ```ts
 test.scenario("creates a user")

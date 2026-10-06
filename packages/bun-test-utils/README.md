@@ -8,6 +8,13 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
+Optional test-style peers are installed only if you use those styles:
+
+```bash
+bun add -d fast-check # test.prop() / test.scenario.prop()
+bun add -d @aboviq/bun-test-cucumber # test.scenario()
+```
+
 ## Public API shape
 
 There are no public capability subpaths. Built-in capabilities are fixtures on
@@ -15,8 +22,9 @@ the root `test` context, and advanced runners hang off `test.*`:
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
-- `test.prop(...)` for property tests.
-- `test.scenario(...)` and `test.scenario.prop(...)` for BDD-style fluent tests.
+- `test.prop(...)` for property tests when `fast-check` is installed.
+- `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
+- `test.scenario.prop(...)` when both optional peers are installed.
 
 Mocking should be expressed as fixtures so setup, dependency ordering, and
 teardown remain in the fixture lifecycle.
@@ -74,6 +82,8 @@ test("serves and snapshots a response", async ({
 ```
 
 ## Property and scenario tests
+
+These APIs are present on `test`, but using them checks their optional peers and throws an actionable install message if the peer is missing.
 
 ```ts
 import { expect, test } from "bun-test-utils";

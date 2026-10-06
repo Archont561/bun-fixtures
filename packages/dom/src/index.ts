@@ -46,7 +46,7 @@ const GLOBAL_PROPERTIES = [
 export const windowFixture = createFixture<GlobalWindow>({
   scope: "test",
   setup: async (use) => {
-    // `happy-dom` is an `optionalDependency` of the published `bun-test-utils`
+    // `happy-dom` is an optional peer of the published `bun-test-utils`
     // package (see its package.json) — it is not force-installed for
     // consumers who never request this fixture. A lazy import, rather than a
     // static one, turns a missing dependency into this clear, actionable

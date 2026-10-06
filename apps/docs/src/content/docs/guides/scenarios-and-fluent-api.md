@@ -8,6 +8,20 @@ description: Share state across given, when, and then steps with typed fluent sc
 
 Scenarios are a readable wrapper around one fixture-aware test. Each `given` and `when` step may return an object; its properties are merged into the next step's context.
 
+## Installation
+
+The fluent scenario API is optional. Install the BDD peer only in projects that use it:
+
+```bash
+bun add -d bun-test-utils @aboviq/bun-test-cucumber
+```
+
+Property scenarios also require `fast-check`:
+
+```bash
+bun add -d fast-check
+```
+
 ## A fluent scenario
 
 ```ts

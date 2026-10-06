@@ -1,6 +1,6 @@
 # BDD integration (internal)
 
-The historical Gherkin bridge is internal. End users should use the public root `test.scenario(...)` and `test.scenario.prop(...)` APIs from `bun-test-utils` for BDD-style tests; there is no public `bun-test-utils/bdd` subpath.
+The historical Gherkin bridge is internal. End users should use the public root `test.scenario(...)` and `test.scenario.prop(...)` APIs from `bun-test-utils` for BDD-style tests; there is no public `bun-test-utils/bdd` subpath. The root scenario API is optional and requires the project to install `@aboviq/bun-test-cucumber`.
 
 ```ts
 import { test } from "bun-test-utils";

@@ -20,7 +20,7 @@
 | R9 | Releases MUST be tagged `v<version>` and described by the consumed Changeset and GitHub release notes; per-package CHANGELOG files MUST NOT be generated. |
 | R10 | Publishing MUST happen from `packages/bun-test-utils`; every sibling workspace and the repository root are private and MUST never be published. |
 | R11 | The published package MUST declare `"license": "MIT OR Apache-2.0"` and ship both licence texts. |
-| R12 | Private workspace implementations MUST be bundled into the public entries; optional public peers (`playwright`, `happy-dom`, and `fast-check`) MUST remain external. |
+| R12 | Private workspace implementations MUST be bundled into the public entries; optional public peers (`playwright`, `happy-dom`, `fast-check`, and `@aboviq/bun-test-cucumber`) MUST remain external and MUST NOT be auto-installed through `optionalDependencies`. |
 
 ### Why the licence files are listed in `files`
 
