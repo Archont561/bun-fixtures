@@ -11,10 +11,7 @@ Import the base test and compose the fixtures your project needs:
 
 ```ts
 import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-
 export const test = base.extend({
-  ...stdFixtures,
   database: {
     scope: "file",
     setup: async (use) => {

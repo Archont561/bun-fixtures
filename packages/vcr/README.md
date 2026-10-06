@@ -1,15 +1,11 @@
-# HTTP cassette fixtures
+# HTTP cassette fixtures (internal)
 
-`bun-test-utils/vcr` records and replays `fetch` traffic. It has no extra runtime dependency.
-
-> VCR fixtures are included only by importing `bun-test-utils/vcr` or composing `vcrFixtures` with `test.extend()`. `fixtures.ts` and `conftest.ts` are not automatically loaded.
-
-## Record and replay callback work
+The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/vcr` subpath.
 
 ```ts
-import { expect, test } from "bun-test-utils/vcr";
+import { expect, test } from "bun-test-utils";
 
-test("replays a recorded result without repeating work", async ({ cassette }) => {
+test("records and replays a callback", async ({ cassette }) => {
   let calls = 0;
   const loadUser = () => {
     calls++;
@@ -22,23 +18,6 @@ test("replays a recorded result without repeating work", async ({ cassette }) =>
 });
 ```
 
-## Record HTTP traffic
-
-```ts
-import { expect, test } from "bun-test-utils";
-
-test("records a local request", async ({ cassette, testServer, serverUrl }) => {
-  testServer.handle(() => new Response("ok"));
-  cassette.setMode("record");
-
-  const response = await fetch(`${serverUrl}/health`);
-  expect(await response.text()).toBe("ok");
-  expect(cassette.entries).toHaveLength(1);
-});
-```
-
-Cassettes are stored as readable JSON in `__cassettes__/<test-name>.json`. Use `record`, `replay`, or `passthrough` mode; authorization, cookie, and API-key headers are redacted by default.
-
-See the [cassette guide](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) and [`tests/`](./tests/) for matching, redaction, persistence, and failure cases.
+Mocking and network fakes should live in fixtures so tests continue to request dependencies through the test context.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

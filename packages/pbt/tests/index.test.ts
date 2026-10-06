@@ -1,4 +1,5 @@
-import { test as base, describe, expect, fc } from "@/index.ts";
+import fc from "fast-check";
+import { test as base, describe, expect } from "@/index.ts";
 import fixtures from "./fixtures.ts";
 
 const test = base.extend(fixtures);

@@ -23,13 +23,12 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-Optional capability dependencies:
+Optional capability dependencies are loaded by fixtures only when requested:
 
 ```bash
-bun add -d fast-check       # bun-test-utils/pbt
-bun add -d happy-dom        # bun-test-utils/dom
-bun add -d playwright       # bun-test-utils/browser
-bun add -d @aboviq/bun-test-cucumber # bun-test-utils/bdd integrations
+bun add -d fast-check # for test.prop() / test.scenario.prop()
+bun add -d happy-dom  # for DOM fixtures in the test context
+bun add -d playwright # for browser fixtures in the test context
 ```
 
 ## Quick start
@@ -90,7 +89,9 @@ test("uses the explicit fixture", async ({ db }) => {
 });
 ```
 
-For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Runnable examples live in the package READMEs:
+The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`. Mocking should be modeled as fixtures, not as separate public helper exports.
+
+For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Internal package notes live in the package READMEs:
 
 - [Core fixture engine](packages/core/README.md)
 - [Standard fixtures](packages/std/README.md)
@@ -99,7 +100,7 @@ For the complete API, see the [documentation](https://archont561.github.io/bun-t
 - [Browser fixtures](packages/browser/README.md)
 - [HTTP cassettes](packages/vcr/README.md)
 - [Snapshots](packages/snapshot/README.md)
-- [BDD bridge](packages/bdd/README.md)
+- [Internal BDD integration notes](packages/bdd/README.md)
 - [Published wrapper and cross-cutting examples](packages/bun-test-utils/README.md)
 
 ## Status

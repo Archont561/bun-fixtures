@@ -4,6 +4,7 @@ import {
   BunTestUtilsError,
   callerFile,
   createTest,
+  createTestWithFixtures,
   describe,
   detectFixtures,
   expect,
@@ -15,55 +16,66 @@ import {
   type ScenarioFactory,
   type TestFn,
 } from "@bun-test-utils/core";
-import type { Arbitrary, Parameters as FcParameters } from "fast-check";
 
-// `fast-check` is an `optionalDependency` of the published `bun-test-utils`
-// package (see its package.json) — it is not force-installed for consumers
-// who never import this subpath. A top-level dynamic import, rather than a
-// static one, turns a missing dependency into this clear, actionable error
-// instead of Bun's generic module-resolution failure.
-let fc: typeof import("fast-check").default;
-try {
-  const mod = await import("fast-check");
-  fc = (mod as any).default ?? (mod as any);
-} catch {
-  throw new BunTestUtilsError(
-    "MISSING_OPTIONAL_DEPENDENCY",
-    "[bun-test-utils/pbt] 'fast-check' is required for property-based testing fixtures. Install via 'bun add -d fast-check'.",
-    {
-      details: {
-        packageName: "fast-check",
-        installCommand: "bun add -d fast-check",
-      },
-    },
-  );
+// `fast-check` is an optional dependency of the published `bun-test-utils`
+// package. Load it only when a property test executes so ordinary fixture tests
+// can import the root package without requiring the generator dependency.
+let fcPromise: Promise<any> | undefined;
+
+async function loadFastCheck(): Promise<any> {
+  fcPromise ??= import("fast-check")
+    .then((mod) => (mod as any).default ?? mod)
+    .catch(() => {
+      throw new BunTestUtilsError(
+        "MISSING_OPTIONAL_DEPENDENCY",
+        "[bun-test-utils] test.prop() requires 'fast-check'. Install via 'bun add -d fast-check'.",
+        {
+          details: {
+            packageName: "fast-check",
+            installCommand: "bun add -d fast-check",
+          },
+        },
+      );
+    });
+  return fcPromise;
 }
 
-export type { Arbitrary } from "fast-check";
-export { describe, expect, fc };
+export { describe, expect };
 
 const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
 
-export type PbtFixtureAwareTest = FixtureAwareTest & {
-  prop: PropFn;
-  extend: (fixtures: FixtureMap) => PbtFixtureAwareTest;
-  scenario: ScenarioFactory;
-};
+export type PbtFixtureAwareTest = TestFn &
+  Omit<FixtureAwareTest, "extend" | "scenario"> & {
+    prop: PropFn;
+    extend: (fixtures: FixtureMap) => PbtFixtureAwareTest;
+    scenario: ScenarioFactory;
+  };
 
 function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
   return ((test as any)[FIXTURE_MAP_SYMBOL] ?? {}) as FixtureMap;
 }
 
 function explicitTestFor(file: string, map: FixtureMap): FixtureAwareTest {
-  return createTest(file).test.extend(map);
+  return createTestWithFixtures(file, map);
 }
 
-export interface PropTestOptions extends FcParameters {
+export interface PropTestOptions {
   fixtures?: string[];
   timeout?: number;
+  [option: string]: unknown;
+}
+
+export interface Arbitrary<T = unknown> {
+  generate(mrng: any, biasFactor: number | undefined): { value: T };
+  canShrinkWithoutContext(value: unknown): value is T;
+  shrink(value: T, context?: unknown): unknown;
 }
 
 export type ArbitraryRecord = Record<string, Arbitrary<any>>;
+export type FastCheckApi = Record<string, any>;
+export type ArbitraryInput<T extends ArbitraryRecord> =
+  | T
+  | ((fc: FastCheckApi) => T);
 export type GeneratedValues<T extends ArbitraryRecord> = {
   [K in keyof T]: T[K] extends Arbitrary<infer U> ? U : never;
 };
@@ -75,7 +87,7 @@ export type PropTestFn<T extends ArbitraryRecord = ArbitraryRecord> = (
 
 export type PropFn = <T extends ArbitraryRecord>(
   title: string,
-  arbs: T,
+  arbs: ArbitraryInput<T>,
   testFn: PropTestFn<T>,
   opts?: PropTestOptions,
 ) => void;
@@ -93,24 +105,28 @@ export type PropFn = <T extends ArbitraryRecord>(
 function makeProp(runnerTest: TestFn): PropFn {
   return function prop<T extends ArbitraryRecord>(
     title: string,
-    arbs: T,
+    arbs: ArbitraryInput<T>,
     testFn: PropTestFn<T>,
     opts?: PropTestOptions,
   ) {
-    const recordArb = fc.record(arbs) as Arbitrary<GeneratedValues<T>>;
     const { fixtures, timeout, ...fcOpts } = opts ?? {};
     const requested = fixtures ?? detectFixtures(testFn, 0);
 
     runnerTest(
       title,
       async (ctx: FixtureContext) => {
+        const fc = await loadFastCheck();
+        const arbitraryRecord = typeof arbs === "function" ? arbs(fc) : arbs;
+        const recordArb = fc.record(arbitraryRecord) as Arbitrary<
+          GeneratedValues<T>
+        >;
         const property = fc.asyncProperty(
           recordArb,
           async (generated: GeneratedValues<T>) => {
             await ctx.iterate!((iterCtx) => testFn(iterCtx, generated));
           },
         );
-        await fc.assert(property as any, fcOpts);
+        await fc.assert(property as any, fcOpts as any);
       },
       { fixtures: requested, timeout, iterate: true },
     );
@@ -121,7 +137,7 @@ function makeScenarioProp(
   map: FixtureMap,
   propFn: PropFn,
 ): ScenarioFactory["prop"] {
-  return ((title: string, strategies: ArbitraryRecord) => {
+  return ((title: string, strategies: ArbitraryInput<ArbitraryRecord>) => {
     const steps: Array<{
       phase: "given" | "when" | "then";
       name: string;
@@ -141,7 +157,9 @@ function makeScenarioProp(
       // biome-ignore lint/suspicious/noThenProperty: `then` is the fluent scenario phase.
       then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
         steps.push({ phase: "then", name, fn });
-        const generatedNames = new Set(Object.keys(strategies));
+        const generatedNames = new Set(
+          typeof strategies === "function" ? [] : Object.keys(strategies),
+        );
         const fixtureNames = [
           ...new Set(
             steps
@@ -193,7 +211,6 @@ export function createPropTest(testFile?: string) {
     ...runner,
     test,
     prop: test.prop,
-    fc,
   };
 }
 
@@ -256,7 +273,7 @@ function makePbtTest(
   const runner = () => runnerFor(resolveFile());
   const prop = makeExplicitProp(map, fixedFile, runnerFor);
   const pbtTest = ((name: string, fn: any, opts?: any) =>
-    runner()(name, fn, opts)) as PbtFixtureAwareTest;
+    runner()(name, fn, opts)) as unknown as PbtFixtureAwareTest;
   pbtTest.extend = (more) => makePbtTest({ ...map, ...more }, fixedFile);
   pbtTest.prop = prop;
   pbtTest.scenario = Object.assign(
@@ -270,20 +287,27 @@ function makePbtTest(
   return pbtTest;
 }
 
+export function withPropertyTesting(
+  coreTest: FixtureAwareTest,
+  fixedFile?: string,
+): PbtFixtureAwareTest {
+  return makePbtTest(fixtureMapOf(coreTest), fixedFile);
+}
+
 export const prop: PropFn = makeExplicitProp({});
 
 export const test: PbtFixtureAwareTest = makePbtTest();
 
 export default {
-  fc,
   prop,
   test,
   describe,
   expect,
   createPropTest,
+  withPropertyTesting,
 };
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export {
   BunTestUtilsError,
   MissingOptionalDependencyError,

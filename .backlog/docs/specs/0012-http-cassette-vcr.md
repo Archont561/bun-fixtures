@@ -71,4 +71,4 @@ teardown, including when a callback throws.
 The callback registry is implemented on `CassetteHelper`: callback source identity is
 hashed without executing the callback, `record()` serializes and stores one result, and
 `replay()` returns that result without invoking the callback. Coverage lives in the VCR
-unit suite and the public `bun-test-utils/vcr` conformance suite.
+unit suite and the public root `cassette` fixture conformance suite.

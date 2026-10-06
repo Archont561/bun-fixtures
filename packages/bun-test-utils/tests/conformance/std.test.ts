@@ -1,5 +1,5 @@
 /**
- * Dogfooding @bun-test-utils/std in the core suite.
+ * Dogfooding built-in standard fixtures through the public root API.
  *
  * The standard fixtures (`tmpdir`, `env`, `stdio`) are not called directly
  * here — the public `bun-test-utils` test export composes them explicitly,
@@ -14,7 +14,14 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "bun-test-utils";
-import type { TmpDirHelper } from "bun-test-utils/std";
+
+type TmpDirHelper = {
+  dir: string;
+  path: (...parts: string[]) => string;
+  write: (relPath: string, contents: string) => void;
+  read: (relPath: string) => string;
+  exists: (relPath: string) => boolean;
+};
 
 /** Identity of the real stream writers, captured before any stdio fixture runs. */
 const realStdoutWrite = process.stdout.write;
@@ -24,7 +31,7 @@ const ENV_KEY = "BUN_TEST_UTILS_DOGFOOD_ENV";
 
 const breadcrumbs: { tmpdir?: string } = {};
 
-describe("@bun-test-utils/std", () => {
+describe("built-in standard fixtures", () => {
   describe("tmpdir", () => {
     test("injects a directory with helper methods", async ({ tmpdir }) => {
       const tmp: TmpDirHelper = tmpdir;

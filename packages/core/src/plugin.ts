@@ -133,7 +133,7 @@ const state: State = (g.__BUN_TEST_UTILS__ ??= {
 /**
  * Auto-detection of the fixtures a function requests from its destructured
  * parameter, metadata keys excluded. Exported for companion runners
- * (e.g. @bun-test-utils/pbt) whose own callback signatures wrap the
+ * whose own callback signatures wrap the
  * fixture context.
  */
 export function detectFixtures(
@@ -664,6 +664,14 @@ export function createTest(testFile?: string): {
   };
 }
 
+/** Internal companion hook: bind an existing fixture map to a specific file without changing its cache identity. */
+export function createTestWithFixtures(
+  testFile: string,
+  fixtures: FixtureMap,
+): FixtureAwareTest {
+  return makeAwareTest(fixtures, resolve(testFile), false);
+}
+
 function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
   const create = <S extends object = Record<string, unknown>>(
     title: string,
@@ -731,7 +739,7 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
   const factory = create as ScenarioFactory;
   factory.prop = (title, _strategies) => {
     throw new Error(
-      `[bun-test-utils] scenario.prop(${title}) requires the bun-test-utils/pbt integration; use test.prop() for property tests`,
+      `[bun-test-utils] scenario.prop(${title}) requires the property-test integration; use test.prop() for property tests`,
     );
   };
   return factory;
@@ -740,8 +748,9 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
 function makeAwareTest(
   fixtures: FixtureMap = {},
   fixedFile?: string,
+  cloneFixtures = true,
 ): FixtureAwareTest {
-  const map = { ...fixtures };
+  const map = cloneFixtures ? { ...fixtures } : fixtures;
   const resolveFile = () => resolve(fixedFile ?? callerFile());
   const aware = ((name: string, fn: any, opts?: TestOptions) => {
     return makeTest(resolveFile(), map)(name, fn, opts);
@@ -787,7 +796,7 @@ const SELF_PATHS = new Set(
  * Detects the nearest caller file outside this module (and outside
  * `extraSelf`, when given) from the stack trace.
  *
- * Exported for companion runners such as @bun-test-utils/pbt: their
+ * Exported for internal companion runners: their
  * wrappers (`test.prop`, `createPropTest`) sit between the test file and the
  * engine, so they detect their caller with `callerFile(ownIndexPath)` and
  * bind a per-file runner of their own — mirroring the top-level `test`.

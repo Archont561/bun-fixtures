@@ -1,5 +1,4 @@
 import { expect, test } from "bun-test-utils";
-import { fc, test as pbtTest } from "bun-test-utils/pbt";
 
 test
   .extend({})
@@ -20,10 +19,10 @@ test
     },
   );
 
-pbtTest.scenario
-  .prop("public property scenarios run generated examples", {
+test.scenario
+  .prop("public property scenarios run generated examples", (fc) => ({
     value: fc.integer({ min: 1, max: 2 }),
-  })
+  }))
   .given("a generated value", ({ value }) => ({ result: value + 1 }))
   .when("the result is checked", ({ result }) => ({ result }))
   .then("the result is larger", ({ result, value, expect: scenarioExpect }) => {
@@ -32,5 +31,6 @@ pbtTest.scenario
 
 test("public extend remains callable", () => {
   expect(typeof test.extend).toBe("function");
-  expect(typeof pbtTest.scenario.prop).toBe("function");
+  expect(typeof test.prop).toBe("function");
+  expect(typeof test.scenario.prop).toBe("function");
 });

@@ -3,7 +3,7 @@ title: Scenarios and fluent API
 description: Share state across given, when, and then steps with typed fluent scenarios.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
 
 Scenarios are a readable wrapper around one fixture-aware test. Each `given` and `when` step may return an object; its properties are merged into the next step's context.
@@ -44,15 +44,15 @@ test.scenario("uses a fixture")
 
 ## Property scenarios
 
-The PBT integration adds generated values as the initial context:
+`test.scenario.prop(...)` adds generated values as the initial context:
 
 ```ts
-import { fc, test } from "bun-test-utils/pbt";
+import { test } from "bun-test-utils";
 
 test.scenario
-  .prop("calculates a total", {
+  .prop("calculates a total", (fc) => ({
     price: fc.integer({ min: 0, max: 100 }),
-  })
+  }))
   .given("a quantity", () => ({ quantity: 2 }))
   .when("the total is calculated", ({ price, quantity }) => ({
     total: price * quantity,

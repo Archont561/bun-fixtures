@@ -155,7 +155,7 @@ tasks:
       package. The public package is a thin assembly wrapper;
       @bun-test-utils/core and all capability workspaces are private and staged
       into its tarball as raw TypeScript (ADR 0013). PROGRESS: CI, dual
-      licensing, release tooling, changelog, and the pack/install/CLI/subpath
+      licensing, release tooling, changelog, and the pack/install/CLI/internal-capability
       smoke harness are complete. PUBLIC API GATE: task_021 (Playwright-style
       test.extend and typed scenario chains) must land before publication,
       followed by publication audit task_016. REMAINING: complete task_021 and
@@ -686,9 +686,9 @@ tasks:
         bdd) resolves correctly with proper types, ESM/CJS as applicable
       - "optionalDependencies/peerDependenciesMeta.optional correctness
         verified: core works with zero optional peers installed; each gated
-        subpath throws a clear actionable error when its peer is missing"
+        internal capability throws a clear actionable error when its peer is missing"
       - One LICENSE pair at the package root, one consolidated README with a
-        section per subpath, full JSDoc on public exports
+        section per internal capability, full JSDoc on public exports
       - tsconfig consistency across all internal workspace packages; no
         hardcoded @ alias paths, no circular dependencies, documented error
         types
@@ -802,20 +802,17 @@ tasks:
       independently published companion packages' (std, fast-check, dom,
       browser, vcr, snapshot each as its own npm package) is replaced by:
       exactly ONE published npm package, bun-test-utils, containing the core
-      engine plus every capability bundled in as a flat subpath export
-      (bun-test-utils/std, bun-test-utils/vcr, bun-test-utils/dom,
-      bun-test-utils/browser, bun-test-utils/pbt, bun-test-utils/snapshot,
-      bun-test-utils/bdd). The six existing packages (plus the new bdd package,
+      engine plus every capability bundled in as a root fixture/API integration
+      (root fixtures and test.* APIs). The six existing packages (plus the new bdd package,
       see ADR 0012/spec 0014) become internal, unpublished (private: true) Bun
       workspace packages used only for source organization and dependency
       isolation; they are never published to npm on their own. The actual
       fold/bundle-pipeline work is task_020, not this task.
 
-      2a. Naming (2026-10-05, later decision): the `fast-check` package/subpath
+      2a. Naming (2026-10-05, later decision): the internal `fast-check` capability
       is additionally renamed to `pbt` (Property Based Tests) — directory
       packages/fast-check -> packages/pbt, package.json name
-      @bun-fixture/fast-check -> @bun-test-utils/pbt, eventual subpath
-      bun-test-utils/pbt. This only renames OUR package; the underlying
+      @bun-fixture/fast-check -> @bun-test-utils/pbt, eventual root test.prop() integration. This only renames OUR package; the underlying
       third-party `fast-check` library dependency and its own API are unchanged
       and still called `fast-check`. Update packages/pbt's package.json
       description/keywords, its README/CHANGELOG, test file names
@@ -855,7 +852,7 @@ tasks:
       - Root README.md and apps/docs Starlight site (title/description/site
       config, astro.config.mjs 'site'/'base') updated for the new name — note:
       once task_020 lands, the six per-package docs pages collapse into one
-      package's docs with per-subpath sections, so don't over-invest in
+      package's docs with per-capability sections, so don't over-invest in
       polishing six separate READMEs here; a short 'renamed, restructuring in
       task_020' stub is enough for now.
 
@@ -870,7 +867,7 @@ tasks:
 
       Sequencing: task_018 (this, naming settled) -> task_020 (fold into one
       published package) -> BDD bridge built directly as packages/bdd, folded in
-      by task_020 -> task_019 (conformance tests against final subpath exports)
+      by task_020 -> task_019 (conformance tests against final root exports)
       -> task_016 (publication-readiness audit of the single final artifact) ->
       M5 publish, no fixed cutoff.
     source_links: []
@@ -919,44 +916,41 @@ tasks:
     created_at: 2026-10-05T21:17:21.172Z
     updated_at: 2026-10-05T22:37:56.799Z
   - id: task_019
-    title: "Cross-package conformance testing: verify subpath exports compose (vcr +
+    title: "Cross-package conformance testing: verify internal capabilities compose through root API (vcr +
       std + bdd and beyond)"
     description: >-
       Depends on task_018 (rename) and task_020 (fold into one bun-test-utils
-      package with subpath exports) landing first.
+      package with root capability integration) landing first.
 
 
       Every capability in bun-test-utils (std, pbt, dom, browser, vcr, snapshot,
       bdd) is tested in isolation inside its own internal workspace package:
       each one's own tests/ directory calls its own fixtures.setup() directly
       against a scratch FixtureContext, never through a shared engine instance
-      alongside sibling subpaths. Nothing today proves that multiple subpaths
+      alongside sibling capabilities. Nothing today proves that multiple capabilities
       actually compose correctly when a real consumer imports several of them
-      (bun-test-utils/vcr, bun-test-utils/std, bun-test-utils/bdd, ...) into one
+      (VCR, std, BDD-style scenarios, ...) into one
       explicit fixture maps under the real engine (shared scope cache, correct
-      cross-subpath LIFO teardown order, no name collisions, no
-      double-instantiation of a dependency two subpaths both pull in).
+      cross-capability LIFO teardown order, no name collisions, no
+      double-instantiation of a dependency two capabilities both pull in).
 
 
       Add a dedicated conformance test suite
       (packages/bun-test-utils/tests/conformance/) that runs real test() cases
-      against explicit test.extend() chains combining multiple subpaths' FixtureMaps via the
+      against explicit test.extend() chains combining multiple capabilities' FixtureMaps via the
       real public path (not direct fixture.setup() calls) and via
-      real bun-test-utils/<name> subpath imports (not internal
-      workspace-relative imports), proving they interoperate as real
+      the real root bun-test-utils import (not internal workspace-relative imports), proving they interoperate as real
       published-package consumers would use them together.
 
 
       MINIMUM MATRIX:
 
       - vcr + std: a cassette fixture recording/replaying into a path derived
-      from std's tmpdir fixture (cross-subpath data dependency), proving
-      teardown order and that both subpaths' fixtures resolve from one merged
+      from std's tmpdir fixture (cross-capability data dependency), proving
+      teardown order and that both capabilities' fixtures resolve from one merged
       FixtureMap without name collisions.
 
-      - vcr + bdd: a Cucumber Given/When/Then step (via the bun-test-utils/bdd
-      subpath's withFixtures bridge) requesting the cassette fixture from
-      bun-test-utils/vcr, proving record/replay works identically whether
+      - vcr + bdd: a Cucumber Given/When/Then step (via the internal BDD-style scenario support) requesting the root cassette fixture, proving record/replay works identically whether
       requested from test() or from a BDD step.
 
       - std + bdd: env/stdio/tmpdir fixtures requested from a BDD step, proving
@@ -975,7 +969,7 @@ tasks:
       as follow-up if descoped): dom + browser (happy-dom globals vs real
       Playwright context coexisting, blocked on task_013), pbt + vcr
       (property-based test driving cassette replay per sample, using the
-      fast-check library via the pbt subpath).
+      fast-check library via the root test.prop() API).
 
 
       Wire the new suite into turbo.json / root package.json test script and CI
@@ -991,16 +985,16 @@ tasks:
       - bun-fixture
     acceptance_criteria:
       - "vcr + std interoperate: cassette path derived from tmpdir, correct
-        cross-subpath teardown order verified"
-      - "vcr + bdd interoperate: a Cucumber step using the bun-test-utils/bdd
-        bridge gets identical record/replay behaviour to a plain test()"
+        cross-capability teardown order verified"
+      - "vcr + bdd-style scenarios interoperate: a `test.scenario(...)` step gets
+        identical record/replay behaviour to a plain test()"
       - "std + bdd interoperate: env/stdio/tmpdir sandboxing and restoration
         work correctly when resolved outside test()"
       - A three-way vcr + std + bdd scenario passes through one explicit fixture module / feature
         file
       - A documented negative case proves explicit override behavior still
-        holds when colliding fixture names come from different subpaths
-      - Suite imports via real bun-test-utils/<name> subpaths and runs through
+        holds when colliding fixture names come from different internal capabilities
+      - Suite imports via the real root bun-test-utils entrypoint and runs through
         the real explicit-composition path, not direct fixture.setup() calls; wired
         into turbo.json/CI like pack.test.ts
     dependencies:
@@ -1026,7 +1020,7 @@ tasks:
     updated_at: 2026-10-05T23:19:12.476Z
   - id: task_020
     title: Fold all ecosystem packages into the single bun-test-utils package
-      (internal workspace packages + subpath exports)
+      (internal workspace packages + root exports)
     description: >-
       Executes the architecture reversal recorded in the ADR superseding ADR
       0011 (authored in task_018): there is exactly ONE published npm package,
@@ -1051,27 +1045,24 @@ tasks:
       - Build pipeline inside packages/bun-test-utils that compiles/bundles each
       internal package's source into packages/bun-test-utils/dist/<name>/, wired
       through an 'exports' map on the published package.json producing FLAT
-      subpath imports: bun-test-utils/std, bun-test-utils/vcr,
-      bun-test-utils/dom, bun-test-utils/browser, bun-test-utils/pbt,
-      bun-test-utils/snapshot, bun-test-utils/bdd (plus the bare bun-test-utils
-      entrypoint for the core engine). Types must resolve correctly per subpath.
+      root imports only: describe, test, and expect from bun-test-utils. Types must resolve correctly from the root entrypoint.
 
       - Heavy per-capability deps (playwright for browser, happy-dom for dom,
-      the fast-check library for the pbt subpath, bdd's
+      the fast-check library for the root test.prop() API, bdd's
       @aboviq/bun-test-cucumber, vcr/snapshot's own deps if any) become
       optionalDependencies + peerDependenciesMeta.optional entries on the single
-      bun-test-utils package.json. Importing a gated subpath without its peer
+      bun-test-utils package.json. Requesting a gated fixture without its peer
       dep installed MUST throw a clear, actionable error naming the missing
       package and the install command — never a silent crash or an unhelpful
       stack trace from deep inside the bundle.
 
       - CLI (bunx bun-test-utils init or equivalent) and every docs instruction
       updated from 'bun add @bun-fixture/vcr' style to single-package-install +
-      subpath-import style ('bun add bun-test-utils' once, then 'bun add
-      playwright' only if using the browser subpath, etc.).
+      root-import style ('bun add bun-test-utils' once, then 'bun add
+      playwright' only if using browser fixtures, etc.).
 
       - Consolidate the six-plus-one separate package READMEs into one README
-      with a clear section per subpath — merge useful content, don't just delete
+      with a clear section per internal capability — merge useful content, don't just delete
       it; historical per-package CHANGELOGs can stay as internal changelog notes
       but are no longer npm-facing.
 
@@ -1101,16 +1092,16 @@ tasks:
       - Exactly one package (bun-test-utils) is marked publishable;
         std/pbt/dom/browser/vcr/snapshot/bdd are all private:true internal
         workspace packages
-      - bun-test-utils's exports map exposes bun-test-utils/std, /vcr, /dom,
+      - bun-test-utils's exports map exposes only the root entrypoint; capabilities are available as fixtures,
         /browser, /pbt, /snapshot, /bdd each resolving to real bundled output
         with correct types
       - Heavy peer deps (playwright, happy-dom, fast-check,
         @aboviq/bun-test-cucumber) are
         optionalDependencies/peerDependenciesMeta.optional, with a clear thrown
-        error (not a silent failure) when a subpath is imported without its peer
+        error (not a silent failure) when a gated fixture is requested without its peer
         dep present
       - README/docs/CLI instructions updated to single-package-install +
-        subpath-import style throughout
+        root-import style throughout
       - pack.test.ts / CI publish step only ever publishes bun-test-utils
       - Full lint + typecheck + test + docs:build pass with the new shape
     dependencies:
@@ -1138,7 +1129,7 @@ tasks:
     description: "Playwright-style API implementation completed: immutable
       test.extend fixture composition; typed given/when/then chains that enforce
       phase order; direct fixture and state context; merged state from
-      given/when callbacks; test.scenario.prop via the bun-test-utils/pbt
+      given/when callbacks; test.scenario.prop via the root test API
       integration using explicit fast-check strategies and per-example fixture
       iteration. Added core, PBT, and public wrapper conformance tests.
       Validation: lint and typecheck pass; focused core/PBT/public scenario
@@ -1189,7 +1180,7 @@ tasks:
       hashed without execution, record runs and serializes one result, replay
       returns the stored result without invoking live work, missing entries fail
       with an actionable error, and direct API calls remain live. Added VCR unit
-      coverage, public bun-test-utils/vcr conformance coverage, README
+      coverage, public root VCR fixture conformance coverage, README
       documentation, and spec implementation notes. Focused tests, lint, and
       typecheck pass. REMAINING PROOF: repository-wide bun test still has the
       unrelated nested session-fixture failure in
@@ -1248,7 +1239,7 @@ tasks:
     acceptance_criteria:
       - Internal workspace packages live directly under packages/*
       - Each moved package extends @bun-test-utils/config and maps @/* to ./src/*
-      - bun-test-utils subpath exports and packed tarball remain
+      - bun-test-utils root exports and packed tarball remain
         consumer-installable
       - Documentation and workspace references reflect the flat layout
       - lint, typecheck, tests, and docs build pass
@@ -1324,7 +1315,7 @@ tasks:
       and consume it from bun-test-utils, core, bdd, browser, dom, pbt,
       snapshot, std, and vcr. Switch the published bun-test-utils artifact from
       raw TypeScript to Bunup-built ESM and declarations, preserving all
-      exports, CLI behavior, subpath composition, and installed-consumer tests.
+      exports, CLI behavior, root capability composition, and installed-consumer tests.
     source_links: []
     status: done
     priority: P1
@@ -1340,7 +1331,7 @@ tasks:
         and a build script
       - bun-test-utils publishes built ESM, declarations, and CLI output from
         dist
-      - All public root and capability subpath exports resolve from the packed
+      - Only public root exports resolve from the packed
         tarball
       - An ADR supersedes raw-TypeScript distribution and release docs match the
         built artifact
@@ -1421,7 +1412,7 @@ tasks:
       stable codes, structured details, and preserved causes; specialized core
       errors for unknown fixtures, scope mismatches, dependency cycles, and
       fixture lifecycle violations; MissingOptionalDependencyError for browser,
-      DOM, and PBT capability gates; and CassetteError for VCR missing
+      DOM, and PBT capability gates; and VCR error code/name coverage for missing
       cassettes, mismatches, and unrecorded callbacks. Exported the errors
       through the core/public entrypoint, migrated representative throw sites,
       added tests asserting instanceof and error codes, and documented the
@@ -1447,7 +1438,7 @@ tasks:
       - Capability errors cover missing optional dependencies and VCR
         cassette/callback failures
       - Original messages and cause information are preserved
-      - Public root and subpath declarations export the supported error types
+      - Public root declarations expose only describe, test, and expect
       - Tests assert error types and codes rather than relying only on message
         matching
       - README or API documentation lists the supported error categories
@@ -1513,7 +1504,7 @@ tasks:
   - id: task_030
     title: Verify error-class identity across published entrypoints
     description: "Verified against the packed consumer tarball. Root and
-      bun-test-utils/vcr expose compatible CassetteError name/code values, but
+      root VCR fixture throws compatible cassette error name/code values, but
       each bundled entrypoint intentionally owns a separate class identity:
       cross-entrypoint instanceof is false. Cross-entrypoint instanceof is not
       part of the public contract; consumers should use stable name/code (and

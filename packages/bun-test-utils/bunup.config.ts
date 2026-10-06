@@ -1,17 +1,6 @@
 import { createBunupConfig } from "@bun-test-utils/config/bunup";
 
-const entries = [
-  "src/plugin.ts",
-  "src/cli.ts",
-  "src/types.ts",
-  "src/subpaths/std.ts",
-  "src/subpaths/pbt.ts",
-  "src/subpaths/dom.ts",
-  "src/subpaths/browser.ts",
-  "src/subpaths/vcr.ts",
-  "src/subpaths/snapshot.ts",
-  "src/subpaths/bdd.ts",
-];
+const entries = ["src/plugin.ts", "src/cli.ts"];
 
 const bundledWorkspaces = [
   "@bun-test-utils/core",
@@ -23,7 +12,6 @@ const bundledWorkspaces = [
   "@bun-test-utils/browser",
   "@bun-test-utils/vcr",
   "@bun-test-utils/snapshot",
-  "@bun-test-utils/bdd",
 ];
 
 export default createBunupConfig(entries, {

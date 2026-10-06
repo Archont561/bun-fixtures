@@ -1,15 +1,14 @@
-Feature: Capability pack behaviour
+Feature: Built-in capability behaviour
   As a consumer of bun-test-utils
-  I want each bundled capability pack exercised through its public subpath
-  So that packaging and fixture composition regressions are caught
+  I want built-in fixtures and advanced runners exercised through the root API
+  So that packaging and fixture composition regressions are caught without public subpaths
 
   @std
   Scenario: Standard fixtures isolate files and environment variables
     Given a project with bun-test-utils preloaded
     And the file "std.test.ts":
       """
-      import { expect } from "bun:test";
-      import { test } from "bun-test-utils/std";
+      import { expect, test } from "bun-test-utils";
 
       test("uses the temporary directory and restores the environment", async ({ tmpdir, env }) => {
         env.set("PACK_MODE", "test");
@@ -23,14 +22,13 @@ Feature: Capability pack behaviour
     Then 1 test passes
 
   @pbt @property
-  Scenario: PBT generates examples through the public subpath
+  Scenario: PBT generates examples through test.prop
     Given a project with bun-test-utils preloaded
     And the file "pbt.test.ts":
       """
-      import { expect } from "bun:test";
-      import { fc, test } from "bun-test-utils/pbt";
+      import { expect, test } from "bun-test-utils";
 
-      test.prop("array concatenation preserves length", { left: fc.array(fc.integer(), { maxLength: 5 }), right: fc.array(fc.integer(), { maxLength: 5 }) }, async (_ctx, { left, right }) => {
+      test.prop("array concatenation preserves length", (fc) => ({ left: fc.array(fc.integer(), { maxLength: 5 }), right: fc.array(fc.integer(), { maxLength: 5 }) }), async (_ctx, { left, right }) => {
         expect([...left, ...right]).toHaveLength(left.length + right.length);
       }, { numRuns: 20, seed: 20261006 });
       """
@@ -42,8 +40,7 @@ Feature: Capability pack behaviour
     Given a project with bun-test-utils preloaded
     And the file "dom.test.ts":
       """
-      import { expect } from "bun:test";
-      import { test } from "bun-test-utils/dom";
+      import { expect, test } from "bun-test-utils";
 
       test("mounts markup and dispatches clicks", async ({ page }) => {
         page.mount(`<button id="add">add</button><span id="count">0</span>`);
@@ -62,8 +59,7 @@ Feature: Capability pack behaviour
     Given a project with bun-test-utils preloaded
     And the file "browser.test.ts":
       """
-      import { expect } from "bun:test";
-      import { test } from "bun-test-utils/browser";
+      import { expect, test } from "bun-test-utils";
 
       test("serves through the ephemeral test server", async ({ testServer, serverUrl }) => {
         testServer.handle(() => Response.json({ status: "ok" }));
@@ -79,8 +75,7 @@ Feature: Capability pack behaviour
     Given a project with bun-test-utils preloaded
     And the file "vcr.test.ts":
       """
-      import { expect } from "bun:test";
-      import { test } from "bun-test-utils/vcr";
+      import { expect, test } from "bun-test-utils";
 
       test("records and replays callback results", async ({ cassette }) => {
         let calls = 0;
@@ -101,8 +96,7 @@ Feature: Capability pack behaviour
     Given a project with bun-test-utils preloaded
     And the file "snapshot.test.ts":
       """
-      import { expect } from "bun:test";
-      import { test } from "bun-test-utils/snapshot";
+      import { expect, test } from "bun-test-utils";
 
       test("records a stable value", async ({ snapshot }) => {
         snapshot.setMode("match");
@@ -114,28 +108,21 @@ Feature: Capability pack behaviour
     Then 1 test passes
 
   @bdd
-  Scenario: BDD bridge attaches and tears down scenario fixtures
+  Scenario: BDD-style scenario chains receive fixtures from test context
     Given a project with bun-test-utils preloaded
     And the file "bdd.test.ts":
       """
-      import { expect, test } from "bun:test";
-      import { fixtureSteps } from "bun-test-utils/bdd";
+      import { test } from "bun-test-utils";
 
-      test("connects fixture hooks to a world", async () => {
-        let beforeHook;
-        let afterHook;
-        const hooks = {
-          Before(fn) { beforeHook = fn; },
-          After(fn) { afterHook = fn; },
-        };
-        const events = [];
-        fixtureSteps(hooks, { answer: { setup: async (use) => { events.push("setup"); await use(42); events.push("teardown"); } } }, ["answer"]);
-        const world = {};
-        await beforeHook(world);
-        expect(world.answer).toBe(42);
-        await afterHook(world);
-        expect(events).toEqual(["setup", "teardown"]);
-      });
+      test.scenario("fixtures flow through a fluent scenario")
+        .given("a file", async ({ tmpdir }) => {
+          tmpdir.write("answer.txt", "42");
+          return { file: "answer.txt" };
+        })
+        .when("the file is read", ({ tmpdir, file }) => ({ value: tmpdir.read(file) }))
+        .then("the value is asserted", ({ value, expect }) => {
+          expect(value).toBe("42");
+        });
       """
     When I run the test suite
     Then 1 test passes
@@ -145,7 +132,7 @@ Feature: Capability pack behaviour
     Given a project with bun-test-utils preloaded
     And the file "scenario.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { test } from "bun-test-utils";
 
       test.scenario("chains every fluent phase")
         .given("a base value", () => ({ value: 2 }))

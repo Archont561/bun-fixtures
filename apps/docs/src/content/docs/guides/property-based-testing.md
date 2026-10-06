@@ -3,17 +3,17 @@ title: Property-Based Testing
 description: Generative tests with fast-check arbitraries over injected fixtures, with a per-sample fixture lifecycle.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
 
-`bun-test-utils/pbt` combines `fast-check` arbitraries with fixture
-injection: instead of hand-written examples, you state a property and the
+`test.prop(...)` combines `fast-check` arbitraries with fixture
+injection from the root `bun-test-utils` entrypoint: instead of hand-written examples, you state a property and the
 runner generates hundreds of samples — and shrinks any failure down to a
 minimal counterexample.
 
 ## Installation
 
-`pbt` ships inside `bun-test-utils` — `fast-check` is its one `optionalDependency`,
+`test.prop` ships inside `bun-test-utils` — `fast-check` is an `optionalDependency`,
 installed automatically unless your platform or install flags skip optional deps:
 
 ```bash
@@ -25,11 +25,11 @@ bun add -d fast-check
 ## Writing a property test
 
 ```ts
-import { test, expect, fc } from "bun-test-utils/pbt";
+import { test, expect } from "bun-test-utils";
 
 test.prop(
   "encoding is reversible",
-  { text: fc.string(), key: fc.integer({ min: 1, max: 255 }) },
+  (fc) => ({ text: fc.string(), key: fc.integer({ min: 1, max: 255 }) }),
   async ({ codec }, { text, key }) => {
     expect(codec.decode(codec.encode(text, key), key)).toBe(text);
   },
@@ -63,11 +63,11 @@ connection or temporary directory opened for one sample can never leak into
 the next.
 
 ```ts
-import { test, expect, fc } from "bun-test-utils/pbt";
+import { test, expect } from "bun-test-utils";
 
 test.prop(
   "orders survive a round-trip through the store",
-  { orders: fc.array(fc.record({ id: fc.uuid(), total: fc.nat() })) },
+  (fc) => ({ orders: fc.array(fc.record({ id: fc.uuid(), total: fc.nat() })) }),
   async ({ store }, { orders }) => {
     // `store` is test-scoped: rebuilt for this sample, wiped afterwards.
     await store.saveAll(orders);
@@ -92,7 +92,7 @@ effect (a server that must be running) without destructuring it:
 ```ts
 test.prop(
   "api stays consistent",
-  { payload: fc.json() },
+  (fc) => ({ payload: fc.json() }),
   async (_fixtures, { payload }) => {
     /* … */
   },

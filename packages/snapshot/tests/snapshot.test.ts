@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { FixtureContext } from "bun-test-utils";
+import type { FixtureContext } from "@bun-test-utils/core";
 import { snapshotFixture } from "@/index.ts";
 
 /**

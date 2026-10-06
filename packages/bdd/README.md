@@ -1,54 +1,21 @@
-# BDD fixture bridge
+# BDD integration (internal)
 
-`bun-test-utils/bdd` connects a Gherkin runner's scenario lifecycle to fixture setup and teardown. It does not implement a Gherkin parser; it adapts any runner with `Before` and `After` hooks.
-
-> BDD integrations use explicit fixture maps. `fixtures.ts` and `conftest.ts` are not automatically loaded; pass the fixtures you want to `fixtureSteps()` or compose them with `test.extend()` in Bun tests.
-
-## Attach fixtures to a world
+The historical Gherkin bridge is internal. End users should use the public root `test.scenario(...)` and `test.scenario.prop(...)` APIs from `bun-test-utils` for BDD-style tests; there is no public `bun-test-utils/bdd` subpath.
 
 ```ts
-import { fixtureSteps } from "bun-test-utils/bdd";
+import { test } from "bun-test-utils";
 
-fixtureSteps(hooks, {
-  account: {
-    setup: async (use) => {
-      await use({ id: "account-1" });
-    },
-  },
-}, ["account"]);
+test.scenario("checks a file")
+  .given("a file", async ({ tmpdir }) => {
+    tmpdir.write("answer.txt", "42");
+    return { file: "answer.txt" };
+  })
+  .when("the file is read", ({ tmpdir, file }) => ({ value: tmpdir.read(file) }))
+  .then("the value is asserted", ({ value, expect }) => {
+    expect(value).toBe("42");
+  });
 ```
 
-Each scenario gets a fresh world with `account` attached. The fixture is closed by the matching `After` hook, including when the scenario fails.
-
-## A normal scenario test
-
-```ts
-import { expect, test } from "bun:test";
-import { fixtureSteps } from "bun-test-utils/bdd";
-
-test("connects hooks to a scenario world", async () => {
-  let before;
-  let after;
-  const hooks = {
-    Before(fn) { before = fn; },
-    After(fn) { after = fn; },
-  };
-
-  fixtureSteps(hooks, {
-    answer: {
-      setup: async (use) => {
-        await use(42);
-      },
-    },
-  }, ["answer"]);
-
-  const world = {};
-  await before(world);
-  expect(world.answer).toBe(42);
-  await after(world);
-});
-```
-
-`openFixtures` is also available for custom integrations. See the [BDD guide](https://archont561.github.io/bun-test-utils/reference/plugins/#bun-test-utilsbdd), the [Gherkin feature suite](../bun-test-utils/features/), and [`tests/`](./tests/).
+Mocking and BDD state should be modeled as fixtures and values in the scenario context.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

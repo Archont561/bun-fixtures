@@ -165,7 +165,9 @@ export type ScenarioFactory = {
   <S extends object = Record<string, unknown>>(name: string): GivenChain<S>;
   prop: <S extends object = Record<string, unknown>>(
     name: string,
-    strategies: Record<string, unknown>,
+    strategies:
+      | Record<string, unknown>
+      | ((tools: any) => Record<string, unknown>),
   ) => GivenChain<S>;
 };
 

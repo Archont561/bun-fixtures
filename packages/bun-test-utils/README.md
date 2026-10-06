@@ -1,12 +1,25 @@
 # bun-test-utils
 
-The published wrapper package. It bundles the core engine and capability packs behind one install with subpath imports.
+The single published package. It exposes only three named exports to end users:
+`describe`, `test`, and `expect`.
 
 ```bash
 bun add -d bun-test-utils
 bunx test-utils init
 ```
 
+## Public API shape
+
+There are no public capability subpaths. Built-in capabilities are fixtures on
+the root `test` context, and advanced runners hang off `test.*`:
+
+- `test(...)` for ordinary fixture-aware tests.
+- `test.extend(...)` for project fixtures and mocks.
+- `test.prop(...)` for property tests.
+- `test.scenario(...)` and `test.scenario.prop(...)` for BDD-style fluent tests.
+
+Mocking should be expressed as fixtures so setup, dependency ordering, and
+teardown remain in the fixture lifecycle.
 
 ## Explicit composition only
 
@@ -38,14 +51,19 @@ test("uses the explicit fixture", async ({ db }) => {
 });
 ```
 
-## Cross-cutting examples
+## Built-in fixtures
 
-The root API combines fixtures with ordinary tests:
+The root `test` includes standard, DOM, browser/server, VCR, and snapshot
+fixtures in its context:
 
 ```ts
 import { expect, test } from "bun-test-utils";
 
-test("serves and snapshots a response", async ({ testServer, serverUrl, snapshot }) => {
+test("serves and snapshots a response", async ({
+  testServer,
+  serverUrl,
+  snapshot,
+}) => {
   testServer.handle(() => Response.json({ status: "ok" }));
   const response = await fetch(serverUrl);
   const body = await response.json();
@@ -55,41 +73,27 @@ test("serves and snapshots a response", async ({ testServer, serverUrl, snapshot
 });
 ```
 
-Property scenarios combine generated values, fixture context, and fluent steps:
+## Property and scenario tests
 
 ```ts
-import { fc, test } from "bun-test-utils/pbt";
+import { expect, test } from "bun-test-utils";
 
-test.scenario
-  .prop("calculates a total", {
-    price: fc.integer({ min: 0, max: 100 }),
-  })
-  .given("a quantity", () => ({ quantity: 2 }))
-  .when("the total is calculated", ({ price, quantity }) => ({
-    total: price * quantity,
-  }))
-  .then("the total is non-negative", ({ total, expect }) => {
-    expect(total).toBeGreaterThanOrEqual(0);
-  })
-  .then("the total is even", ({ total, expect }) => {
-    expect(total % 2).toBe(0);
+test.prop(
+  "calculates a total",
+  (fc) => ({ price: fc.integer({ min: 0, max: 100 }) }),
+  async ({ tmpdir }, { price }) => {
+    tmpdir.write("price.txt", String(price));
+    expect(Number(tmpdir.read("price.txt"))).toBe(price);
+  },
+);
+
+test.scenario("chains every fluent phase")
+  .given("a base value", () => ({ value: 2 }))
+  .when("the value is incremented", ({ value }) => ({ result: value + 1 }))
+  .then("the number is correct", ({ result, expect }) => {
+    expect(result).toBe(3);
   });
 ```
-
-Values returned by `given` and `when` are merged into the next step's context. Session and file fixtures are shared across property samples; test fixtures are rebuilt per sample and shrink step.
-
-## Included subpaths
-
-| Import | Provides | Example |
-| --- | --- | --- |
-| `bun-test-utils` | Core test API and all built-in fixtures | [core README](../core/README.md) |
-| `bun-test-utils/std` | `tmpdir`, `env`, `stdio` | [std README](../std/README.md) |
-| `bun-test-utils/pbt` | `test.prop`, `scenario.prop`, `fc` | [pbt README](../pbt/README.md) |
-| `bun-test-utils/dom` | Isolated happy-dom fixtures | [DOM README](../dom/README.md) |
-| `bun-test-utils/browser` | HTTP server and Playwright fixtures | [browser README](../browser/README.md) |
-| `bun-test-utils/vcr` | Fetch cassettes and callback replay | [VCR README](../vcr/README.md) |
-| `bun-test-utils/snapshot` | Value and file snapshots | [snapshot README](../snapshot/README.md) |
-| `bun-test-utils/bdd` | Gherkin lifecycle hooks | [BDD README](../bdd/README.md) |
 
 All workspace packages are implementation boundaries; only `bun-test-utils` is published.
 

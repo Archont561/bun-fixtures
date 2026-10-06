@@ -3,7 +3,7 @@ import { envFixture } from "./env.ts";
 import { stdioFixture } from "./stdio.ts";
 import { tmpdirFixture } from "./tmpdir.ts";
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export { BunTestUtilsError } from "@bun-test-utils/core";
 export { type EnvHelper, envFixture } from "./env.ts";
 export { type StdioHelper, stdioFixture } from "./stdio.ts";

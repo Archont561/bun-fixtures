@@ -21,10 +21,7 @@ Edit `test.ts` and add project fixtures with `test.extend()`:
 ```ts
 // test.ts
 import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-
 export const test = base.extend({
-  ...stdFixtures,
   server: {
     scope: "session",
     setup: async (use) => {

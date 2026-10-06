@@ -9,8 +9,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import type { FixtureContext } from "bun-test-utils";
-import { CassetteError } from "bun-test-utils";
+import type { FixtureContext } from "@bun-test-utils/core";
+import { CassetteError } from "@bun-test-utils/core";
 import type { CassetteEntry } from "@/index.ts";
 import { cassetteFixture } from "@/index.ts";
 

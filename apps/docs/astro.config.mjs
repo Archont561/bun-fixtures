@@ -65,10 +65,10 @@ export default defineConfig({
           ],
         },
         {
-          label: "Plugins & Ecosystem",
+          label: "Built-in capabilities",
           items: [
             {
-              label: "Plugin Overview",
+              label: "Built-in fixtures",
               slug: "reference/plugins",
             },
           ],

@@ -1,164 +1,127 @@
 ---
 title: API Reference
-description: Core TypeScript API reference for bun-test-utils.
+description: Public TypeScript API reference for bun-test-utils.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
 
-## Exports
+## Public exports
 
-### `test(name, fn, options?)`
-
-Defines a fixture-aware test. Only fixtures from the imported `test.extend()`
-chain are available; `fixtures.ts` and `conftest.ts` files are not loaded
-automatically. Requested fixtures are detected from the first parameter's
-destructuring pattern:
+The published package exposes only:
 
 ```ts
-test("my test", async ({ db }) => {
-  // ...
-});
+import { describe, expect, test } from "bun-test-utils";
+```
 
-// …or listed explicitly, along with other options:
-test("my test", async (ctx) => { /* ... */ }, {
-  fixtures: ["db"],
-  timeout: 5000,
+Capability packs are internal. Do not import `bun-test-utils/std`,
+`bun-test-utils/pbt`, `bun-test-utils/vcr`, or other subpaths; their fixtures and
+runners are available through the root `test` object.
+
+## `test(name, fn, options?)`
+
+Defines a fixture-aware test. Requested fixtures are detected from the first
+parameter's destructuring pattern and must exist in the imported `test.extend()`
+chain or in the built-in root fixture set.
+
+```ts
+test("uses fixtures", async ({ tmpdir, env }) => {
+  env.set("APP_MODE", "test");
+  tmpdir.write("mode.txt", env.get("APP_MODE")!);
 });
 ```
 
-#### Test options
+### Test options
 
 | Option | Type | Default | Behaviour |
 | :-- | :-- | :-- | :-- |
 | `fixtures` | `string[]` | auto-detected | Explicit fixture list, overriding auto-detection from the destructured parameter |
 | `timeout` | `number` | Bun default | Per-test timeout in milliseconds, forwarded to `bun:test` |
-| `iterate` | `boolean` | `false` | Defer test-scoped fixtures behind `ctx.iterate` (see below) |
 
-### The iteration protocol: `iterate`
+## `test.extend(fixtures)`
 
-With `iterate: true`, the wrapper test never builds test-scoped fixtures
-itself. Its context holds only session- and file-scoped values, plus an
-`iterate` runner — designed for property-based tests and other companions
-that re-execute a body many times inside one `bun test` case:
+Composes project fixtures and mocks explicitly:
 
 ```ts
-const samples = await fetchSamples();
+import { test as base } from "bun-test-utils";
 
-test("roundtrip across samples", async (ctx) => {
-  for (const sample of samples) {
-    await ctx.iterate!(async ({ scratchDb }) => {
-      // fresh scratchDb for this sample…
-      await scratchDb.save(sample);
-      expect(await scratchDb.load(sample.id)).toEqual(sample);
-    });
-    // …torn down here, strictly LIFO — even when the body threw
-  }
-}, { fixtures: ["scratchDb"], iterate: true });
-```
-
-Guarantees:
-
-- Every `ctx.iterate(fn)` call builds the requested test-scoped fixtures
-  **fresh**, and unwinds them **strictly LIFO** — including when `fn` throws.
-- Session- and file-scoped instances are shared between the wrapper and
-  every iteration, through the normal scope caches.
-- `ctx.iterate` returns the result of the function it ran.
-- [`bun-test-utils/pbt`](/bun-test-utils/guides/property-based-testing/)
-  builds `test.prop` on this protocol: every generated sample — and every
-  shrink candidate — runs through `ctx.iterate`, so no state can leak
-  between iterations.
-
-### `createFixture(definition)`
-
-Creates a typed fixture declaration for a reusable fixture pack. It is an identity helper at runtime; the engine still owns dependency ordering, scopes, and teardown.
-
-```ts
-import { createFixture } from "bun-test-utils";
-
-const clock = createFixture({
-  scope: "test",
-  setup: async (use) => {
-    await use({ now: () => new Date(0) });
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+  clock: {
+    setup: async (use) => {
+      await use({ now: () => new Date(0) });
+    },
   },
 });
 ```
 
-### `test.scenario(title)`
+Fixture scopes are `"session"`, `"file"`, and `"test"` (default). Dependencies are resolved before the fixture that requests them, and teardown after `await use(value)` runs in strict LIFO order.
 
-Builds one fixture-aware test from fluent `given`, `when`, and `then` steps. Object results from `given` and `when` are merged into the next context; multiple steps in every phase are supported. `test.scenario.prop` adds generated fast-check values; see the [scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/).
+## `test.prop(title, arbitraryFactory, fn, options?)`
 
-### `createTest(testFile?)`
-
-Creates a test runner bound to an explicit file path (useful when stack
-trace inspection is not desired):
+Runs a property test. The arbitrary factory receives the `fast-check` API; the
+test callback receives fixtures first and generated values second.
 
 ```ts
-const { test, describe, expect } = createTest(import.meta.path);
-const dbTest = test.extend({ db: dbFixture });
+test.prop(
+  "encoding is reversible",
+  (fc) => ({ text: fc.string(), key: fc.integer({ min: 1, max: 255 }) }),
+  async ({ tmpdir }, { text, key }) => {
+    tmpdir.write("value.txt", text);
+    expect(decode(encode(tmpdir.read("value.txt"), key), key)).toBe(text);
+  },
+  { numRuns: 100 },
+);
 ```
 
-### `expect` and `describe`
+Every generated sample and shrink candidate gets fresh test-scoped fixtures;
+session and file fixtures are shared across the property run.
+
+## `test.scenario(title)` and `test.scenario.prop(title, arbitraryFactory)`
+
+Builds one fixture-aware test from fluent `given`, `when`, and `then` steps.
+Object results from `given` and `when` are merged into the next context; fixture
+values are available alongside scenario state.
+
+```ts
+test.scenario("creates a user")
+  .given("a name", () => ({ name: "Ada" }))
+  .when("the user is created", async ({ db, name }) => ({
+    user: await db.users.create({ name }),
+  }))
+  .then("the id is assigned", ({ user, expect }) => {
+    expect(user.id).toBeDefined();
+  });
+```
+
+## `describe` and `expect`
 
 Re-exported directly from `bun:test` for convenience.
 
-## Types
+## Built-in fixture names
 
-The full public type surface:
+The root `test` includes these built-in fixtures:
 
-| Type | Purpose |
-| :-- | :-- |
-| `Scope` | `"session" \| "file" \| "test"` — fixture lifetimes |
-| `FixtureDef<T>` | The type of one fixture definition: `setup`, optional `scope`, `params`, `deps` |
-| `FixtureMap` | The shape of a fixture map passed to `test.extend()` |
-| `ThenChain<S>` | Fluent scenario chain for multiple `then` assertions |
-| `FixtureContext` | Resolved fixture values plus metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) |
-| `TestOptions` | `{ fixtures?, timeout?, iterate? }` |
-| `UseFn<T>` | The `use(value)` publisher handed to `setup` |
-| `IterateFn` | The `ctx.iterate` runner signature |
-
-```ts
-import type { FixtureDef } from "bun-test-utils";
-
-const db: FixtureDef<Db> = {
-  scope: "file", // "session" | "file" | "test" (default)
-  params: ["fast", "slow"], // optional: expand one case per value
-  deps: ["events"], // optional: explicit deps (auto-detected otherwise)
-  setup: async (use, ctx) => {
-    const handle = await connect();
-    await use(handle); // everything after the await is teardown
-    await handle.close();
-  },
-};
-```
+- Standard: `tmpdir`, `env`, `stdio`
+- DOM: `window`, `document`, `page`
+- Browser/server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`
+- VCR: `cassette`
+- Snapshots: `snapshot`
 
 ## Environment variables
 
 | Variable | Behaviour |
 | :-- | :-- |
 | `BUN_TEST_UTILS_DEBUG` | Emits opt-in diagnostics to stderr when set to `1` |
+| `VCR_MODE` | Selects cassette mode: `record`, `replay`, or `passthrough` |
+| `SNAPSHOT_MODE` | Selects snapshot mode: `match`, `update`, or `ci` |
 
 There are no fixture discovery environment variables. The preload does not walk
 your project tree, and `fixtures.ts` / `conftest.ts` are not special filenames.
-
-## Engine & tooling exports
-
-Exported for tooling, companion runners, and tests of reusable fixture maps:
-
-| Export | Purpose |
-| :-- | :-- |
-| `resolveOrder(requested, map, where)` | Topological order over requested fixtures — throws on cycles, unknown names, scope violations |
-| `paramCombos(order, map)` | Cartesian product of every parameterized fixture |
-| `destructuredKeys(fn, index)` | Identifiers of a destructured parameter |
-| `detectFixtures(fn, index)` | Requested fixtures from a destructured parameter, metadata excluded |
-| `callerFile(extraSelf?)` | Nearest caller file outside the engine (and `extraSelf`) from the stack trace |
-| `openFixtures(map, names, context?)` / `withFixtures(...)` | Explicitly open a fixture map for integrations that manage their own lifecycle |
-| `teardownFile(file)` / `teardownSession()` | LIFO teardown of file / session scopes |
-| `configureDiagnostics(sink?)` / `reportDiagnostic(event)` | Opt-in structured diagnostics for integrations |
-
-`detectFixtures` and `callerFile` exist for companion runners whose own
-callbacks wrap the fixture context. `bun-test-utils/pbt` uses both:
-`detectFixtures` sees through the `(fixtures, values)` signature of
-`test.prop`, and `callerFile(ownIndexPath)` binds the calling test file
-through the wrapper's own stack frames — mirroring how the top-level `test`
-finds its file.

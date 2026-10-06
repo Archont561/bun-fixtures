@@ -2,7 +2,7 @@
   "name": "@bun-test-utils/bdd",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal BDD fixture bridge bundled as bun-test-utils/bdd.",
+  "description": "Internal workspace package \u2014 legacy BDD fixture bridge; public BDD-style tests use test.scenario() from bun-test-utils.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

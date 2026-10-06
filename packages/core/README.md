@@ -1,10 +1,10 @@
-# Core fixture engine
+# Core fixture engine (internal)
 
-`@bun-test-utils/core` is the private workspace that powers the published `bun-test-utils` package. Consumers install `bun-test-utils`; this README documents the engine's normal public test API.
+`@bun-test-utils/core` is the private workspace that powers the published `bun-test-utils` package. End users import only `describe`, `test`, and `expect` from `bun-test-utils`; core helpers and fixture-pack helpers are internal implementation details.
 
 ## Explicit composition only
 
-There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Compose fixtures with `test.extend()` and import that runner wherever the fixtures are needed.
+There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Compose project fixtures with `test.extend()` and import that runner wherever the fixtures are needed.
 
 ```ts
 // test.ts
@@ -51,23 +51,6 @@ test.scenario("creates a user")
     expect(user.name).toBe("Ada");
   });
 ```
-
-## Declaring fixtures
-
-Use the public helper when creating reusable fixture packs:
-
-```ts
-import { createFixture } from "bun-test-utils";
-
-export const clock = createFixture({
-  scope: "test",
-  setup: async (use) => {
-    await use({ now: () => new Date(0) });
-  },
-});
-```
-
-The full lifecycle, parameterization, error, and iteration API is documented in the [API reference](https://archont561.github.io/bun-test-utils/reference/api/).
 
 ## Tests
 

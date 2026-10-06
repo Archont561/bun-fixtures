@@ -3,7 +3,7 @@ title: Explicit fixture composition
 description: Compose fixtures explicitly with Playwright-style test.extend().
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose fixtures with `test.extend()` or import a capability subpath's pre-composed `test`.
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
 
 ## Explicit composition only
@@ -11,18 +11,14 @@ description: Compose fixtures explicitly with Playwright-style test.extend().
 There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not
 automatically loaded, and directories do not contribute fixtures to tests by
 being parents or siblings. A fixture is available only when the test imports a
-runner whose `test.extend()` chain includes that fixture (or when an integration
-explicitly opens a fixture map with a documented API such as `openFixtures`).
+runner whose `test.extend()` chain includes that fixture. Built-in capabilities are already composed into the root `test` context.
 
 Define fixtures in a module and export a test runner created with
 `test.extend()`:
 
 ```ts
 import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-
 export const test = base.extend({
-  ...stdFixtures,
   database: {
     scope: "file",
     setup: async (use) => {

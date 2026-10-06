@@ -2,7 +2,7 @@
   "name": "@bun-test-utils/vcr",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal workspace package \u2014 HTTP Cassette and VCR network record & replay fixtures for bun-test-utils. Bundled into the published bun-test-utils package as the \"bun-test-utils/vcr\" subpath; never published on its own.",
+  "description": "Internal workspace package \u2014 HTTP cassette and VCR network record/replay fixtures bundled into the public root test context.",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "main": "./src/index.ts",

@@ -126,7 +126,7 @@ export const test = baseTest.extend(browserFixtures);
 
 export default browserFixtures;
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export {
   BunTestUtilsError,
   MissingOptionalDependencyError,
