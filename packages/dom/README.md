@@ -1,61 +1,29 @@
-# @bun-test-utils/dom
+# DOM fixtures
 
-> **Internal workspace.** Bundled into the published
-> [`bun-test-utils`](https://github.com/Archont561/bun-test-utils) package as the
-> `bun-test-utils/dom` subpath; never published on its own.
-
-In-memory DOM testing with [happy-dom](https://github.com/capricorn86/happy-dom): isolated
-`window` and `document` globals plus a `page` helper for mounting markup and driving
-interactions. All DOM globals the fixtures install are **removed again on teardown**, so
-one test's `document` never leaks into the next (spec 0011 R1–R2).
-
-For real-browser automation see [`@bun-test-utils/browser`](../browser). For serving pages
-to either of them, `browser` also ships the ephemeral `testServer` fixture.
-
-## Peer dependency
-
-`happy-dom` is an optional dependency — install it yourself if your package manager
-skipped it:
+`bun-test-utils/dom` provides an isolated in-memory DOM through happy-dom.
 
 ```bash
-bun add -d happy-dom
+bun add -d bun-test-utils happy-dom
 ```
 
-Importing this subpath without it installed throws a clear error naming the missing
-package; it never fails silently.
-
-## Fixtures
-
-| Fixture | Helper | What it does |
-| --- | --- | --- |
-| `window` | happy-dom `Window` | Fresh isolated window per test; `globalThis.window` restored on teardown |
-| `document` | happy-dom `Document` | The window's document; `globalThis.document` restored on teardown |
-| `page` | `DomPageHelper` | High-level mount/query/interact wrapper over the document |
-
-### `DomPageHelper`
+## Mount and interact with markup
 
 ```ts
-import domFixtures, { pageFixture } from "bun-test-utils/dom";
+import { expect, test } from "bun-test-utils/dom";
 
-test("increments", async ({ page }) => {
-  page.mount(`<button id="inc">++</button><span id="count">0</span>`);
-  page.click("#inc");
-  page.type("#name", "ada");          // types into an input
-  page.querySelector("#count");       // single element, or null
-  page.querySelectorAll("button");    // all matches
-  expect(page.html()).toContain("1"); // document.body innerHTML
-  page.clear();                       // empties document.body
+test("updates a counter through a click", async ({ page }) => {
+  page.mount(`<button id="add">add</button><span id="count">0</span>`);
+  page.querySelector("#add")?.addEventListener("click", () => {
+    page.querySelector("#count")!.textContent = "1";
+  });
+
+  page.click("#add");
+  expect(page.html()).toContain(">1</span>");
 });
 ```
 
-The default `domFixtures` map registers `window`, `document`, and `page` together — merge
-it into your `test.extend()` map like any other `FixtureMap`.
+The `window`, `document`, and `page` fixtures share one isolated window for the test and restore global DOM objects during teardown. `page` also supports `mount`, `querySelector`, `querySelectorAll`, `type`, `click`, `html`, and `clear`.
 
-## Further reading
+See the [DOM guide](https://archont561.github.io/bun-test-utils/reference/plugins/#bun-test-utilsdom) and [`tests/`](./tests/) for query, typing, cleanup, and missing-element cases.
 
-- Spec: [0011 DOM and browser fixtures](../../.backlog/docs/specs/0011-dom-and-browser-fixtures.md)
-- Sources in `src/`, focused tests in `tests/`
-
-## License
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE), same as the repository.
+[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

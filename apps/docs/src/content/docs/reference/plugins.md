@@ -62,3 +62,16 @@ Value and file snapshot testing — see the [Snapshot Testing guide](/bun-test-u
 - `snapshot`: Serializes a value (or a file's contents via `matchFile`) and compares it against a stored snapshot, recording a new one on first run.
 - **Automatic snapshot files**: `__snapshots__/<test name>.snap.json` next to the test file, exposed as `snapshot.path`; multiple snapshots per test are auto-numbered or explicitly named.
 - `match` / `update` / `ci` modes via API or the `SNAPSHOT_MODE` environment variable (`ci` auto-selected in CI), plus pluggable custom serializers.
+
+## Runnable package examples
+
+Each workspace package README keeps a small, user-facing test example:
+
+- [Core fixture engine README](https://github.com/Archont561/bun-test-utils/blob/main/packages/core/README.md)
+- [Standard fixtures README](https://github.com/Archont561/bun-test-utils/blob/main/packages/std/README.md)
+- [PBT README](https://github.com/Archont561/bun-test-utils/blob/main/packages/pbt/README.md)
+- [DOM README](https://github.com/Archont561/bun-test-utils/blob/main/packages/dom/README.md)
+- [Browser README](https://github.com/Archont561/bun-test-utils/blob/main/packages/browser/README.md)
+- [VCR README](https://github.com/Archont561/bun-test-utils/blob/main/packages/vcr/README.md)
+- [Snapshot README](https://github.com/Archont561/bun-test-utils/blob/main/packages/snapshot/README.md)
+- [BDD README](https://github.com/Archont561/bun-test-utils/blob/main/packages/bdd/README.md)

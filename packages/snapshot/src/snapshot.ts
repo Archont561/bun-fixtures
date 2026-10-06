@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { FixtureDef } from "@bun-test-utils/core";
+import { createFixture } from "@bun-test-utils/core";
 
 /**
  * - `"match"` (default outside CI): compare against the stored value; a
@@ -93,7 +93,7 @@ function resolveMode(): SnapshotMode {
   return process.env.CI ? "ci" : "match";
 }
 
-export const snapshotFixture: FixtureDef<SnapshotHelper> = {
+export const snapshotFixture = createFixture<SnapshotHelper>({
   scope: "test",
   setup: async (use, ctx) => {
     let mode = resolveMode();
@@ -196,4 +196,4 @@ export const snapshotFixture: FixtureDef<SnapshotHelper> = {
       }
     }
   },
-};
+});

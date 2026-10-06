@@ -107,6 +107,7 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
       name: string;
       fn: (ctx: ScenarioContext<any>) => any;
     }> = [];
+    let registered = false;
 
     const chain = {
       given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
@@ -132,19 +133,27 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
               ),
           ),
         ];
-        prop(
-          title,
-          strategies,
-          async (fixtures, values) => {
-            const context = Object.assign(fixtures, values, { expect });
-            for (const step of steps) {
-              const result = await step.fn(context);
-              if (step.phase !== "then" && result && typeof result === "object")
-                Object.assign(context, result);
-            }
-          },
-          { fixtures: fixtureNames },
-        );
+        if (!registered) {
+          registered = true;
+          prop(
+            title,
+            strategies,
+            async (fixtures, values) => {
+              const context = Object.assign(fixtures, values, { expect });
+              for (const step of steps) {
+                const result = await step.fn(context);
+                if (
+                  step.phase !== "then" &&
+                  result &&
+                  typeof result === "object"
+                )
+                  Object.assign(context, result);
+              }
+            },
+            { fixtures: fixtureNames },
+          );
+        }
+        return chain;
       },
     } as unknown as GivenChain;
 

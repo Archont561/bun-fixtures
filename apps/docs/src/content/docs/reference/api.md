@@ -64,6 +64,25 @@ Guarantees:
   shrink candidate — runs through `ctx.iterate`, so no state can leak
   between iterations.
 
+### `createFixture(definition)`
+
+Creates a typed fixture declaration for a reusable fixture pack. It is an identity helper at runtime; the engine still owns dependency ordering, scopes, and teardown.
+
+```ts
+import { createFixture } from "bun-test-utils";
+
+const clock = createFixture({
+  scope: "test",
+  setup: async (use) => {
+    await use({ now: () => new Date(0) });
+  },
+});
+```
+
+### `test.scenario(title)`
+
+Builds one fixture-aware test from fluent `given`, `when`, and `then` steps. Object results from `given` and `when` are merged into the next context; multiple steps in every phase are supported. `test.scenario.prop` adds generated fast-check values; see the [scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/).
+
 ### `createTest(testFile?)`
 
 Creates a test runner bound to an explicit file path (useful when stack
@@ -84,8 +103,9 @@ The full public type surface:
 | Type | Purpose |
 | :-- | :-- |
 | `Scope` | `"session" \| "file" \| "test"` — fixture lifetimes |
-| `FixtureDef<T>` | One fixture definition: `setup`, optional `scope`, `params`, `deps` |
+| `FixtureDef<T>` | The type of one fixture definition: `setup`, optional `scope`, `params`, `deps` |
 | `FixtureMap` | The shape of a fixture map passed to `test.extend()` |
+| `ThenChain<S>` | Fluent scenario chain for multiple `then` assertions |
 | `FixtureContext` | Resolved fixture values plus metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) |
 | `TestOptions` | `{ fixtures?, timeout?, iterate? }` |
 | `UseFn<T>` | The `use(value)` publisher handed to `setup` |

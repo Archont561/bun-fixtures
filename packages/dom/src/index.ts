@@ -1,7 +1,7 @@
 import {
   BunTestUtilsError,
   test as baseTest,
-  type FixtureDef,
+  createFixture,
   type FixtureMap,
   MissingOptionalDependencyError,
 } from "@bun-test-utils/core";
@@ -43,7 +43,7 @@ const GLOBAL_PROPERTIES = [
   "navigator",
 ] as const;
 
-export const windowFixture: FixtureDef<GlobalWindow> = {
+export const windowFixture = createFixture<GlobalWindow>({
   scope: "test",
   setup: async (use) => {
     // `happy-dom` is an `optionalDependency` of the published `bun-test-utils`
@@ -89,17 +89,17 @@ export const windowFixture: FixtureDef<GlobalWindow> = {
       }
     }
   },
-};
+});
 
-export const documentFixture: FixtureDef<Document> = {
+export const documentFixture = createFixture<Document>({
   scope: "test",
   deps: ["window"],
   setup: async (use, { window }) => {
     await use((window as GlobalWindow).document as unknown as Document);
   },
-};
+});
 
-export const pageFixture: FixtureDef<DomPageHelper> = {
+export const pageFixture = createFixture<DomPageHelper>({
   scope: "test",
   deps: ["window", "document"],
   setup: async (use, { document }) => {
@@ -154,7 +154,7 @@ export const pageFixture: FixtureDef<DomPageHelper> = {
 
     await use(helper);
   },
-};
+});
 
 export const domFixtures: FixtureMap = {
   window: windowFixture,

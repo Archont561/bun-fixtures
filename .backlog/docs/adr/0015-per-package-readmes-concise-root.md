@@ -19,9 +19,8 @@ entry point: pitch, install, quick start, one table linking each capability to i
 README, repo map, status, and development gates. Package READMEs carry the substance —
 fixture/API tables, peer-dependency install steps, examples, and links to specs.
 
-The sync mechanism is unchanged: `bun run readme:sync` copies the (now concise) root
-README to `packages/bun-test-utils/README.md`, so the npm page gets the concise version.
-Package README structure is an internal concern and does not change the packaging contract
+The sync mechanism is removed. The wrapper owns its own README, which is packaged with the
+published artifact. Package README structure is an internal concern and does not change the packaging contract
 ([0005](../specs/0005-packaging-and-release.md) R3): the tarball still contains exactly one
 README — the wrapper's own — because the `files` allowlist is evaluated in the wrapper
 directory only.

@@ -134,6 +134,16 @@ export type GivenChain<S extends object = Record<string, unknown>> = {
   then: never;
 };
 
+export type ThenChain<S extends object = Record<string, unknown>> = {
+  given: never;
+  when: never;
+  // Multiple assertions are valid in one scenario: then(...).then(...).
+  then: (
+    name: string,
+    fn: (ctx: ScenarioContext<S>) => void | Promise<void>,
+  ) => ThenChain<S>;
+};
+
 export type WhenChain<S extends object = Record<string, unknown>> = {
   given: never;
   when: <N extends object>(
@@ -143,12 +153,13 @@ export type WhenChain<S extends object = Record<string, unknown>> = {
   then: (
     name: string,
     fn: (ctx: ScenarioContext<S>) => void | Promise<void>,
-  ) => void;
+  ) => ThenChain<S>;
 };
 
 export type ScenarioChain<S extends object = Record<string, unknown>> =
   | GivenChain<S>
-  | WhenChain<S>;
+  | WhenChain<S>
+  | ThenChain<S>;
 
 export type ScenarioFactory = {
   <S extends object = Record<string, unknown>>(name: string): GivenChain<S>;

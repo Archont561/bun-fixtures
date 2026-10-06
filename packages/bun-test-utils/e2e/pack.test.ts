@@ -77,17 +77,9 @@ function run(cmd: string[], cwd?: string): string {
 /** Packs the package and reads back its tarball. */
 function pack(scratch: string): Packed {
   const tgz = join(scratch, `${PACKAGE_NAME}.tgz`);
-  // The tarball carries the freshly synced README, but dist/ is packed as
-  // turbo built it: `bun pm pack` runs `prepack` (sync + a full bunup
-  // rebuild), and rebuilding dist/ here — inside the test phase, over the
-  // dist/ this very test process has loaded — intermittently crashes bunup
-  // with an internal ENOENT on its own output (CI flake, task_031). The
-  // pipeline instead orders `bun-test-utils#build` before `#test`
-  // (turbo.json), so dist/ is guaranteed current before any packing.
-  run(
-    [BUN, join(PACKAGE_DIR, "..", "..", "scripts", "sync-package-readme.ts")],
-    PACKAGE_DIR,
-  );
+  // dist/ is built by Turborepo before the test task. Use the wrapper's
+  // checked-in README directly; package documentation is no longer copied
+  // from the repository root during packing.
   run(
     [BUN, "pm", "pack", "--quiet", "--ignore-scripts", "--filename", tgz],
     PACKAGE_DIR,

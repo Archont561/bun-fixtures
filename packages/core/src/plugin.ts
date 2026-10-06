@@ -66,6 +66,7 @@ export type {
   Scope,
   TestFn,
   TestOptions,
+  ThenChain,
   UseFn,
   WhenChain,
 } from "./types.ts";
@@ -771,6 +772,17 @@ async function enterFile(file: string): Promise<void> {
  * test("uses db", async ({ db }) => { ... });
  * ```
  */
+/**
+ * Declares a fixture with an inferred public type.
+ *
+ * Capability packages use this instead of depending on the `FixtureDef` type
+ * directly. It is intentionally a small identity function: the engine still
+ * owns validation, dependency ordering, scopes, and teardown.
+ */
+export function createFixture<T>(definition: FixtureDef<T>): FixtureDef<T> {
+  return definition;
+}
+
 export function createTest(testFile?: string): {
   test: TestFn;
   describe: typeof bunDescribe;
@@ -800,6 +812,7 @@ function scenarioFactory(file: string): ScenarioFactory {
       name: string;
       fn: (ctx: ScenarioContext<any>) => any;
     }> = [];
+    let registered = false;
 
     const chain = {
       given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
@@ -821,26 +834,34 @@ function scenarioFactory(file: string): ScenarioFactory {
       // biome-ignore lint/suspicious/noThenProperty: `then` is the intentional fluent scenario phase.
       then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
         steps.push({ phase: "then", name, fn });
-        runnerFor(file)(
-          title,
-          async (fixtures) => {
-            const context = Object.assign(fixtures, { expect: bunExpect });
-            for (const step of steps) {
-              const result = await step.fn(context);
-              if (step.phase !== "then" && result && typeof result === "object")
-                Object.assign(context, result);
-            }
-          },
-          {
-            fixtures: [
-              ...new Set(
-                steps
-                  .flatMap((step) => detectFixtures(step.fn, 0))
-                  .filter((name) => name in fixturesFor(file)),
-              ),
-            ],
-          },
-        );
+        if (!registered) {
+          registered = true;
+          runnerFor(file)(
+            title,
+            async (fixtures) => {
+              const context = Object.assign(fixtures, { expect: bunExpect });
+              for (const step of steps) {
+                const result = await step.fn(context);
+                if (
+                  step.phase !== "then" &&
+                  result &&
+                  typeof result === "object"
+                )
+                  Object.assign(context, result);
+              }
+            },
+            {
+              fixtures: [
+                ...new Set(
+                  steps
+                    .flatMap((step) => detectFixtures(step.fn, 0))
+                    .filter((name) => name in fixturesFor(file)),
+                ),
+              ],
+            },
+          );
+        }
+        return chain;
       },
     } as ScenarioChain<S>;
     return chain;

@@ -1,5 +1,6 @@
 import {
   configureDiagnostics,
+  createFixture,
   createTest,
   describe,
   destructuredKeys,
@@ -13,6 +14,18 @@ import {
 } from "@/plugin.ts";
 
 const here = import.meta.path;
+
+test("createFixture exposes a typed fixture declaration", () => {
+  const definition = createFixture({
+    scope: "test" as const,
+    setup: async (use) => {
+      await use({ ready: true });
+    },
+  });
+
+  expect(definition.scope).toBe("test");
+  expect(typeof definition.setup).toBe("function");
+});
 
 describe("injection", () => {
   test("injects a session fixture", async ({ config }) => {
