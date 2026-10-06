@@ -179,7 +179,7 @@ jobs:
         working-directory: packages/browser
 
       - name: Run tests (Turborepo + Bun Test)
-        run: bun run test
+        run: bun run test:all
 
       - name: Generate LCOV coverage
         run: bun run coverage

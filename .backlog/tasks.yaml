@@ -38,7 +38,9 @@ tasks:
     updated_at: 2026-10-05T15:18:13.190Z
   - id: task_002
     title: M2 — Legacy preload discovery + path-based merge (superseded)
-    description: "Historical startup tree walk and directory merge; superseded by explicit test.extend() composition. Spec: docs/specs/0002-discovery-and-merge.md"
+    description: "Historical startup tree walk and directory merge; superseded by
+      explicit test.extend() composition. Spec:
+      docs/specs/0002-discovery-and-merge.md"
     source_links: []
     status: done
     priority: P0
@@ -48,10 +50,12 @@ tasks:
     repo_targets:
       - bun-fixture
     acceptance_criteria:
-      - legacy fixture-file discovery was removed; fixtures.ts/conftest.ts are ordinary modules
-      - explicit test.extend() chains replace nearest-directory/ancestor inheritance semantics
+      - legacy fixture-file discovery was removed; fixtures.ts/conftest.ts are
+        ordinary modules
+      - explicit test.extend() chains replace nearest-directory/ancestor
+        inheritance semantics
       - idempotent across preload and direct import
-      - superseded: no fixture-file scan root or opt-out flags exist
+      - "superseded: no fixture-file scan root or opt-out flags exist"
     dependencies:
       - task_001
     planning:
@@ -155,14 +159,14 @@ tasks:
       package. The public package is a thin assembly wrapper;
       @bun-test-utils/core and all capability workspaces are private and staged
       into its tarball as raw TypeScript (ADR 0013). PROGRESS: CI, dual
-      licensing, release tooling, changelog, and the pack/install/CLI/internal-capability
-      smoke harness are complete. PUBLIC API GATE: task_021 (Playwright-style
-      test.extend and typed scenario chains) must land before publication,
-      followed by publication audit task_016. REMAINING: complete task_021 and
-      task_016, then create v0.1.0, publish bun-test-utils, and rerun the
-      installed-consumer harness against the registry package. Tagging and
-      publishing require maintainer sanction because they create public
-      artifacts."
+      licensing, release tooling, changelog, and the
+      pack/install/CLI/internal-capability smoke harness are complete. PUBLIC
+      API GATE: task_021 (Playwright-style test.extend and typed scenario
+      chains) must land before publication, followed by publication audit
+      task_016. REMAINING: complete task_021 and task_016, then create v0.1.0,
+      publish bun-test-utils, and rerun the installed-consumer harness against
+      the registry package. Tagging and publishing require maintainer sanction
+      because they create public artifacts."
     source_links: []
     status: in_progress
     priority: P1
@@ -216,8 +220,8 @@ tasks:
     repo_targets:
       - bun-fixture
     acceptance_criteria:
-      - features/*.feature cover scopes, teardown, explicit composition, validation,
-        params, CLI init
+      - features/*.feature cover scopes, teardown, explicit composition,
+        validation, params, CLI init
       - steps drive only files, bun test output and exit codes — no engine
         imports
       - scratch projects removed after each scenario
@@ -417,13 +421,13 @@ tasks:
       stream capture (stdio) with automatic LIFO restoration. Spec:
       docs/specs/0009-standard-fixtures-std.md. STATUS (2026-10-05): complete.
       Unit coverage in packages/std/tests/std.test.ts; dogfooded in the core
-      suite via explicit test.extend() composition in conformance tests, which proves engine-driven
-      teardown: fresh tmpdir per test with the previous wiped, process.env
-      restored, real streams handed back. Note: the dogfood import resolves via
-      the workspace node_modules symlink and is deliberately not declared in
-      packages/bun-fixture devDependencies - std already dev-depends on
-      bun-fixture for FixtureDef types, and the reverse edge makes Turbo's task
-      graph cyclic."
+      suite via explicit test.extend() composition in conformance tests, which
+      proves engine-driven teardown: fresh tmpdir per test with the previous
+      wiped, process.env restored, real streams handed back. Note: the dogfood
+      import resolves via the workspace node_modules symlink and is deliberately
+      not declared in packages/bun-fixture devDependencies - std already
+      dev-depends on bun-fixture for FixtureDef types, and the reverse edge
+      makes Turbo's task graph cyclic."
     source_links: []
     status: done
     priority: P1
@@ -523,12 +527,12 @@ tasks:
       docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-test-utils/dom
       (window, document, page), the ephemeral Bun.serve testServer fixture, and
       the Playwright browser/context/page fixtures are implemented. Real browser
-      verification remains in progress: packages/browser/tests/playwright.test.ts
-      skips when browser binaries are unavailable, while CI currently installs
-      only the Chromium headless shell. Confirm regular Chromium/Chrome coverage
-      and the supported browser-binary installation path. The
-      tests/playwright-missing-peer.test.ts probe still pins the actionable
-      uninstalled-peer error."
+      verification remains in progress:
+      packages/browser/tests/playwright.test.ts skips when browser binaries are
+      unavailable, while CI currently installs only the Chromium headless shell.
+      Confirm regular Chromium/Chrome coverage and the supported browser-binary
+      installation path. The tests/playwright-missing-peer.test.ts probe still
+      pins the actionable uninstalled-peer error."
     source_links: []
     status: in_progress
     priority: P2
@@ -682,9 +686,10 @@ tasks:
     acceptance_criteria:
       - bun-test-utils's exports map (., std, vcr, dom, browser, pbt, snapshot,
         bdd) resolves correctly with proper types, ESM/CJS as applicable
-      - "optional peerDependencies/peerDependenciesMeta.optional correctness without optionalDependencies auto-installs
-        verified: core works with zero optional peers installed; each gated
-        internal capability throws a clear actionable error when its peer is missing"
+      - "optional peerDependencies/peerDependenciesMeta.optional correctness
+        without optionalDependencies auto-installs verified: core works with
+        zero optional peers installed; each gated internal capability throws a
+        clear actionable error when its peer is missing"
       - One LICENSE pair at the package root, one consolidated README with a
         section per internal capability, full JSDoc on public exports
       - tsconfig consistency across all internal workspace packages; no
@@ -801,18 +806,19 @@ tasks:
       browser, vcr, snapshot each as its own npm package) is replaced by:
       exactly ONE published npm package, bun-test-utils, containing the core
       engine plus every capability bundled in as a root fixture/API integration
-      (root fixtures and test.* APIs). The six existing packages (plus the new bdd package,
-      see ADR 0012/spec 0014) become internal, unpublished (private: true) Bun
-      workspace packages used only for source organization and dependency
-      isolation; they are never published to npm on their own. The actual
-      fold/bundle-pipeline work is task_020, not this task.
+      (root fixtures and test.* APIs). The six existing packages (plus the new
+      bdd package, see ADR 0012/spec 0014) become internal, unpublished
+      (private: true) Bun workspace packages used only for source organization
+      and dependency isolation; they are never published to npm on their own.
+      The actual fold/bundle-pipeline work is task_020, not this task.
 
-      2a. Naming (2026-10-05, later decision): the internal `fast-check` capability
-      is additionally renamed to `pbt` (Property Based Tests) — directory
-      packages/fast-check -> packages/pbt, package.json name
-      @bun-fixture/fast-check -> @bun-test-utils/pbt, eventual root test.prop() integration. This only renames OUR package; the underlying
-      third-party `fast-check` library dependency and its own API are unchanged
-      and still called `fast-check`. Update packages/pbt's package.json
+      2a. Naming (2026-10-05, later decision): the internal `fast-check`
+      capability is additionally renamed to `pbt` (Property Based Tests) —
+      directory packages/fast-check -> packages/pbt, package.json name
+      @bun-fixture/fast-check -> @bun-test-utils/pbt, eventual root test.prop()
+      integration. This only renames OUR package; the underlying third-party
+      `fast-check` library dependency and its own API are unchanged and still
+      called `fast-check`. Update packages/pbt's package.json
       description/keywords, its README/CHANGELOG, test file names
       (tests/fastcheck.test.ts -> tests/pbt.test.ts or similar), and every
       cross-reference in root README.md, apps/docs (guides/
@@ -828,8 +834,8 @@ tasks:
       so there is zero backward-compat cost to changing either; one install
       target removes version-skew and cross-package setup overhead for
       consumers; heavy per-capability deps (playwright, happy-dom, fast-check)
-      become optional peerDependencies with peerDependenciesMeta.optional on the single
-      package instead of being forced via separate package installs.
+      become optional peerDependencies with peerDependenciesMeta.optional on the
+      single package instead of being forced via separate package installs.
 
       - Rename the core package directory/package.json: packages/bun-fixture ->
       packages/bun-test-utils.
@@ -840,9 +846,9 @@ tasks:
       standalone; actual bundling into one artifact happens in task_020.
 
       - Update every hardcoded string literal referencing the old name (error
-      message prefixes like '[bun-fixture] ...' and the CLI's generated bunfig.toml
-      preload path). Legacy fixture-file scaffold comments and discovery env vars
-      have since been removed.
+      message prefixes like '[bun-fixture] ...' and the CLI's generated
+      bunfig.toml preload path). Legacy fixture-file scaffold comments and
+      discovery env vars have since been removed.
 
       - Root tsconfig.json path aliases, bunfig.toml preload entries,
       turbo.json/biome.json references to old package names.
@@ -865,9 +871,9 @@ tasks:
 
       Sequencing: task_018 (this, naming settled) -> task_020 (fold into one
       published package) -> BDD bridge built directly as packages/bdd, folded in
-      by task_020 -> task_019 (conformance tests against final root exports)
-      -> task_016 (publication-readiness audit of the single final artifact) ->
-      M5 publish, no fixed cutoff.
+      by task_020 -> task_019 (conformance tests against final root exports) ->
+      task_016 (publication-readiness audit of the single final artifact) -> M5
+      publish, no fixed cutoff.
     source_links: []
     status: done
     priority: P1
@@ -914,8 +920,8 @@ tasks:
     created_at: 2026-10-05T21:17:21.172Z
     updated_at: 2026-10-05T22:37:56.799Z
   - id: task_019
-    title: "Cross-package conformance testing: verify internal capabilities compose through root API (vcr +
-      std + bdd and beyond)"
+    title: "Cross-package conformance testing: verify internal capabilities compose
+      through root API (vcr + std + bdd and beyond)"
     description: >-
       Depends on task_018 (rename) and task_020 (fold into one bun-test-utils
       package with root capability integration) landing first.
@@ -925,19 +931,20 @@ tasks:
       bdd) is tested in isolation inside its own internal workspace package:
       each one's own tests/ directory calls its own fixtures.setup() directly
       against a scratch FixtureContext, never through a shared engine instance
-      alongside sibling capabilities. Nothing today proves that multiple capabilities
-      actually compose correctly when a real consumer imports several of them
-      (VCR, std, BDD-style scenarios, ...) into one
-      explicit fixture maps under the real engine (shared scope cache, correct
+      alongside sibling capabilities. Nothing today proves that multiple
+      capabilities actually compose correctly when a real consumer imports
+      several of them (VCR, std, BDD-style scenarios, ...) into one explicit
+      fixture maps under the real engine (shared scope cache, correct
       cross-capability LIFO teardown order, no name collisions, no
       double-instantiation of a dependency two capabilities both pull in).
 
 
       Add a dedicated conformance test suite
       (packages/bun-test-utils/tests/conformance/) that runs real test() cases
-      against explicit test.extend() chains combining multiple capabilities' FixtureMaps via the
-      real public path (not direct fixture.setup() calls) and via
-      the real root bun-test-utils import (not internal workspace-relative imports), proving they interoperate as real
+      against explicit test.extend() chains combining multiple capabilities'
+      FixtureMaps via the real public path (not direct fixture.setup() calls)
+      and via the real root bun-test-utils import (not internal
+      workspace-relative imports), proving they interoperate as real
       published-package consumers would use them together.
 
 
@@ -945,11 +952,13 @@ tasks:
 
       - vcr + std: a cassette fixture recording/replaying into a path derived
       from std's tmpdir fixture (cross-capability data dependency), proving
-      teardown order and that both capabilities' fixtures resolve from one merged
-      FixtureMap without name collisions.
+      teardown order and that both capabilities' fixtures resolve from one
+      merged FixtureMap without name collisions.
 
-      - vcr + bdd: a Cucumber Given/When/Then step (via the internal BDD-style scenario support) requesting the root cassette fixture, proving record/replay works identically whether
-      requested from test() or from a BDD step.
+      - vcr + bdd: a Cucumber Given/When/Then step (via the internal BDD-style
+      scenario support) requesting the root cassette fixture, proving
+      record/replay works identically whether requested from test() or from a
+      BDD step.
 
       - std + bdd: env/stdio/tmpdir fixtures requested from a BDD step, proving
       sandboxing and restoration still happen correctly outside a test()
@@ -958,9 +967,9 @@ tasks:
       - vcr + std + bdd together: one three-way scenario combining all three in
       a single explicit fixture module.
 
-      - At least one negative case: two explicit fixture maps declaring a fixture
-      with the same name, proving imported test.extend() order controls overrides
-      and sibling directories do not contribute fixtures implicitly.
+      - At least one negative case: two explicit fixture maps declaring a
+      fixture with the same name, proving imported test.extend() order controls
+      overrides and sibling directories do not contribute fixtures implicitly.
 
 
       Also worth covering while in there (not required for the minimum bar, note
@@ -984,17 +993,17 @@ tasks:
     acceptance_criteria:
       - "vcr + std interoperate: cassette path derived from tmpdir, correct
         cross-capability teardown order verified"
-      - "vcr + bdd-style scenarios interoperate: a `test.scenario(...)` step gets
-        identical record/replay behaviour to a plain test()"
+      - "vcr + bdd-style scenarios interoperate: a `test.scenario(...)` step
+        gets identical record/replay behaviour to a plain test()"
       - "std + bdd interoperate: env/stdio/tmpdir sandboxing and restoration
         work correctly when resolved outside test()"
-      - A three-way vcr + std + bdd scenario passes through one explicit fixture module / feature
-        file
-      - A documented negative case proves explicit override behavior still
-        holds when colliding fixture names come from different internal capabilities
-      - Suite imports via the real root bun-test-utils entrypoint and runs through
-        the real explicit-composition path, not direct fixture.setup() calls; wired
-        into turbo.json/CI like pack.test.ts
+      - A three-way vcr + std + bdd scenario passes through one explicit fixture
+        module / feature file
+      - A documented negative case proves explicit override behavior still holds
+        when colliding fixture names come from different internal capabilities
+      - Suite imports via the real root bun-test-utils entrypoint and runs
+        through the real explicit-composition path, not direct fixture.setup()
+        calls; wired into turbo.json/CI like pack.test.ts
     dependencies:
       - task_018
       - task_020
@@ -1042,13 +1051,14 @@ tasks:
 
       - Build pipeline inside packages/bun-test-utils that compiles/bundles each
       internal package's source into packages/bun-test-utils/dist/<name>/, wired
-      through an 'exports' map on the published package.json producing FLAT
-      root imports only: describe, test, and expect from bun-test-utils. Types must resolve correctly from the root entrypoint.
+      through an 'exports' map on the published package.json producing FLAT root
+      imports only: describe, test, and expect from bun-test-utils. Types must
+      resolve correctly from the root entrypoint.
 
       - Heavy per-capability deps (playwright for browser, happy-dom for dom,
       the fast-check library for the root test.prop() API, bdd's
-      @aboviq/bun-test-cucumber, vcr/snapshot's own deps if any) become
-      optional peerDependencies + peerDependenciesMeta.optional entries on the single
+      @aboviq/bun-test-cucumber, vcr/snapshot's own deps if any) become optional
+      peerDependencies + peerDependenciesMeta.optional entries on the single
       bun-test-utils package.json. Requesting a gated fixture without its peer
       dep installed MUST throw a clear, actionable error naming the missing
       package and the install command — never a silent crash or an unhelpful
@@ -1060,9 +1070,9 @@ tasks:
       playwright' only if using browser fixtures, etc.).
 
       - Consolidate the six-plus-one separate package READMEs into one README
-      with a clear section per internal capability — merge useful content, don't just delete
-      it; historical per-package CHANGELOGs can stay as internal changelog notes
-      but are no longer npm-facing.
+      with a clear section per internal capability — merge useful content, don't
+      just delete it; historical per-package CHANGELOGs can stay as internal
+      changelog notes but are no longer npm-facing.
 
       - apps/docs Starlight site: every per-package reference page's install
       instructions updated to the single-package + optional-peer-dep pattern.
@@ -1090,14 +1100,15 @@ tasks:
       - Exactly one package (bun-test-utils) is marked publishable;
         std/pbt/dom/browser/vcr/snapshot/bdd are all private:true internal
         workspace packages
-      - bun-test-utils's exports map exposes only the root entrypoint; capabilities are available as fixtures,
-        /browser, /pbt, /snapshot, /bdd each resolving to real bundled output
-        with correct types
+      - bun-test-utils's exports map exposes only the root entrypoint;
+        capabilities are available as fixtures, /browser, /pbt, /snapshot, /bdd
+        each resolving to real bundled output with correct types
       - Heavy peer deps (playwright, happy-dom, fast-check,
-        @aboviq/bun-test-cucumber) are
-        optional peerDependencies/peerDependenciesMeta.optional, with no optionalDependencies auto-install and with a clear thrown
-        error (not a silent failure) when a gated fixture is requested without its peer
-        dep present
+        @aboviq/bun-test-cucumber) are optional
+        peerDependencies/peerDependenciesMeta.optional, with no
+        optionalDependencies auto-install and with a clear thrown error (not a
+        silent failure) when a gated fixture is requested without its peer dep
+        present
       - README/docs/CLI instructions updated to single-package-install +
         root-import style throughout
       - pack.test.ts / CI publish step only ever publishes bun-test-utils
@@ -1127,15 +1138,15 @@ tasks:
     description: "Playwright-style API implementation completed: immutable
       test.extend fixture composition; typed given/when/then chains that enforce
       phase order; direct fixture and state context; merged state from
-      given/when callbacks; test.scenario.prop via the root test API
-      integration using explicit fast-check strategies and per-example fixture
-      iteration. Added core, PBT, and public wrapper conformance tests.
-      Validation: lint and typecheck pass; focused core/PBT/public scenario
-      tests pass (12 total). REMAINING PROOF: repository-wide bun test still has
-      the pre-existing packages/core/tests/nested/nested.test.ts failure
-      (session fixture setup observed twice; 213 pass, 3 skip, 1 fail before the
-      new scenario coverage). Keep in_progress until the full test gate is green
-      or the unrelated failure is explicitly accepted."
+      given/when callbacks; test.scenario.prop via the root test API integration
+      using explicit fast-check strategies and per-example fixture iteration.
+      Added core, PBT, and public wrapper conformance tests. Validation: lint
+      and typecheck pass; focused core/PBT/public scenario tests pass (12
+      total). REMAINING PROOF: repository-wide bun test still has the
+      pre-existing packages/core/tests/nested/nested.test.ts failure (session
+      fixture setup observed twice; 213 pass, 3 skip, 1 fail before the new
+      scenario coverage). Keep in_progress until the full test gate is green or
+      the unrelated failure is explicitly accepted."
     source_links: []
     status: done
     priority: P1
@@ -1313,7 +1324,8 @@ tasks:
       and consume it from bun-test-utils, core, bdd, browser, dom, pbt,
       snapshot, std, and vcr. Switch the published bun-test-utils artifact from
       raw TypeScript to Bunup-built ESM and declarations, preserving all
-      exports, CLI behavior, root capability composition, and installed-consumer tests.
+      exports, CLI behavior, root capability composition, and installed-consumer
+      tests.
     source_links: []
     status: done
     priority: P1
@@ -1329,8 +1341,7 @@ tasks:
         and a build script
       - bun-test-utils publishes built ESM, declarations, and CLI output from
         dist
-      - Only public root exports resolve from the packed
-        tarball
+      - Only public root exports resolve from the packed tarball
       - An ADR supersedes raw-TypeScript distribution and release docs match the
         built artifact
       - frozen install, build, lint, typecheck, tests, and docs build pass
@@ -1358,10 +1369,10 @@ tasks:
     description: "Implemented opt-in, dependency-free core diagnostics. Added
       DiagnosticEvent and DiagnosticsSink types, configureDiagnostics(sink) with
       restore semantics, reportDiagnostic(), structured
-      composition/session-teardown event codes, and BUN_TEST_UTILS_DEBUG=1 stderr
-      fallback. Core library no longer uses console.warn; CLI console output
-      remains unchanged. Documented the integration in the root and core READMEs
-      and added unit coverage for injected structured diagnostics. Lint,
+      composition/session-teardown event codes, and BUN_TEST_UTILS_DEBUG=1
+      stderr fallback. Core library no longer uses console.warn; CLI console
+      output remains unchanged. Documented the integration in the root and core
+      READMEs and added unit coverage for injected structured diagnostics. Lint,
       typecheck, and focused core tests pass. REMAINING PROOF: repository-wide
       bun test still has the unrelated nested session-fixture failure in
       packages/core/tests/nested/nested.test.ts; keep in_progress until the full
@@ -1410,13 +1421,13 @@ tasks:
       stable codes, structured details, and preserved causes; specialized core
       errors for unknown fixtures, scope mismatches, dependency cycles, and
       fixture lifecycle violations; MissingOptionalDependencyError for browser,
-      DOM, and PBT capability gates; and VCR error code/name coverage for missing
-      cassettes, mismatches, and unrecorded callbacks. Exported the errors
-      through the core/public entrypoint, migrated representative throw sites,
-      added tests asserting instanceof and error codes, and documented the
-      categories in the root/core READMEs. Lint, typecheck, and focused core/VCR
-      tests pass. REMAINING PROOF: repository-wide bun test still has the
-      unrelated nested session-fixture failure in
+      DOM, and PBT capability gates; and VCR error code/name coverage for
+      missing cassettes, mismatches, and unrecorded callbacks. Exported the
+      errors through the core/public entrypoint, migrated representative throw
+      sites, added tests asserting instanceof and error codes, and documented
+      the categories in the root/core READMEs. Lint, typecheck, and focused
+      core/VCR tests pass. REMAINING PROOF: repository-wide bun test still has
+      the unrelated nested session-fixture failure in
       packages/core/tests/nested/nested.test.ts; keep in_progress until the full
       gate is green or explicitly accepted."
     source_links: []
@@ -1501,9 +1512,9 @@ tasks:
     updated_at: 2026-10-06T08:59:35.590Z
   - id: task_030
     title: Verify error-class identity across published entrypoints
-    description: "Verified against the packed consumer tarball. Root and
-      root VCR fixture throws compatible cassette error name/code values, but
-      each bundled entrypoint intentionally owns a separate class identity:
+    description: "Verified against the packed consumer tarball. Root and root VCR
+      fixture throws compatible cassette error name/code values, but each
+      bundled entrypoint intentionally owns a separate class identity:
       cross-entrypoint instanceof is false. Cross-entrypoint instanceof is not
       part of the public contract; consumers should use stable name/code (and
       code-specific handling) instead. The installed-consumer harness now
@@ -1574,7 +1585,12 @@ tasks:
     updated_at: 2026-10-06T10:00:32.208Z
   - id: task_032
     title: Adopt Playwright-style fixture extension API
-    description: "Public migration complete: the published preload does not load fixture files automatically; test.extend() is the documented fixture-definition API; capability packages export preconfigured extendable tests; README/docs and quickstart use explicit composition. The legacy discovery scanner and compatibility hook have been removed. All gates are green."
+    description: "Public migration complete: the published preload does not load
+      fixture files automatically; test.extend() is the documented
+      fixture-definition API; capability packages export preconfigured
+      extendable tests; README/docs and quickstart use explicit composition. The
+      legacy discovery scanner and compatibility hook have been removed. All
+      gates are green."
     source_links: []
     status: done
     priority: P1
@@ -1610,18 +1626,18 @@ tasks:
     updated_at: 2026-10-06T10:56:17.734Z
   - id: task_033
     title: Repo-wide BDD feature runner and browser mock fixtures
-    description: >-
-      Add one repository-wide BDD testing entrypoint so every workspace package can own
-      features/*.feature coverage without package-local references to
-      packages/config/bdd/features.test.ts. The runner should discover package feature
-      files and package step definitions from the repository root, enforce that packages
-      expected to have behavioural coverage actually have a features/ directory, and keep
-      BDD config in the shared config workspace. Also refactor browser/DOM testing fixtures so
-      tests can choose a happy-dom-backed fast path or a real Playwright-backed browser
-      path through a coherent fixture API. Add an MSW-like response mocking fixture that
-      works with both environments: fetch interception for DOM/server tests and
-      Playwright route interception for browser tests, with the same handler DSL and
-      call assertions.
+    description: "Add one repository-wide BDD testing entrypoint so every workspace
+      package can own features/*.feature coverage without package-local
+      references to packages/config/bdd/features.test.ts. The runner should
+      discover package feature files and package step definitions from the
+      repository root, enforce that packages expected to have behavioural
+      coverage actually have a features/ directory, and keep BDD config in the
+      shared config workspace. Also refactor browser/DOM testing fixtures so
+      tests can choose a happy-dom-backed fast path or a real Playwright-backed
+      browser path through a coherent fixture API. Add an MSW-like response
+      mocking fixture that works with both environments: fetch interception for
+      DOM/server tests and Playwright route interception for browser tests, with
+      the same handler DSL and call assertions."
     source_links: []
     status: done
     priority: P1
@@ -1634,15 +1650,27 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - "A config-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package Bun config or plugin references."
-      - "Every runtime workspace either has meaningful features/*.feature coverage or is explicitly exempted with a documented reason checked by the BDD runner."
-      - "Root package scripts and turbo configuration expose a repo-wide BDD gate that can run locally and in CI."
-      - "Existing bun-test-utils and core feature suites are migrated to the repo-wide runner without changing public imports."
-      - "Browser/DOM fixtures expose a documented way to choose happy-dom vs real Playwright execution without silently changing browserPage semantics."
-      - "An MSW-like mock response fixture supports get/post/etc handlers, passthrough, reset, and call assertions for both fetch-based DOM/server tests and Playwright browser tests."
-      - "Mocking stays fixture-based and composes through test.extend() and the root test context; no public capability subpaths are introduced."
-      - "Docs and examples show repo-wide BDD usage, environment selection, and MSW-like response mocking."
-      - "Biome, typecheck, build, full test suite, docs build, and packed-consumer tests pass."
+      - A config-owned BDD entrypoint loads packages/*/features/*.feature and
+        package step definitions without per-package Bun config or plugin
+        references.
+      - Every runtime workspace either has meaningful features/*.feature
+        coverage or is explicitly exempted with a documented reason checked by
+        the BDD runner.
+      - Root package scripts and turbo configuration expose a repo-wide BDD gate
+        that can run locally and in CI.
+      - Existing bun-test-utils and core feature suites are migrated to the
+        repo-wide runner without changing public imports.
+      - Browser/DOM fixtures expose a documented way to choose happy-dom vs real
+        Playwright execution without silently changing browserPage semantics.
+      - An MSW-like mock response fixture supports get/post/etc handlers,
+        passthrough, reset, and call assertions for both fetch-based DOM/server
+        tests and Playwright browser tests.
+      - Mocking stays fixture-based and composes through test.extend() and the
+        root test context; no public capability subpaths are introduced.
+      - Docs and examples show repo-wide BDD usage, environment selection, and
+        MSW-like response mocking.
+      - Biome, typecheck, build, full test suite, docs build, and
+        packed-consumer tests pass.
     dependencies: []
     planning:
       split_status: pending
@@ -1664,13 +1692,13 @@ tasks:
     updated_at: 2026-10-06T13:38:30.000Z
   - id: task_034
     title: Repo-wide refactor and code-quality audit
-    description: >-
-      Perform a structured refactor audit across all apps and packages, then address the
-      highest-value findings without changing public behavior. Prioritize oversized core,
-      browser, PBT, VCR, snapshot, and DOM modules; identify duplicated adapter logic,
-      unsafe any/global casts, hidden side effects, inconsistent error handling, dead code,
-      weak module boundaries, and missing regression coverage. Produce a short audit report
-      with ranked findings and a follow-up plan, and split independent work into focused
+    description: Perform a structured refactor audit across all apps and packages,
+      then address the highest-value findings without changing public behavior.
+      Prioritize oversized core, browser, PBT, VCR, snapshot, and DOM modules;
+      identify duplicated adapter logic, unsafe any/global casts, hidden side
+      effects, inconsistent error handling, dead code, weak module boundaries,
+      and missing regression coverage. Produce a short audit report with ranked
+      findings and a follow-up plan, and split independent work into focused
       refactors that can be reviewed safely.
     source_links: []
     status: done
@@ -1683,14 +1711,25 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - "All apps/* and packages/* production code is included in the audit, with an inventory of files/modules reviewed."
-      - "The audit report ranks findings by impact and risk, cites exact files and symbols, and distinguishes actionable refactors from intentional any/dynamic-boundary usage."
-      - "The highest-priority safe refactors are implemented in focused, behavior-preserving changes; no public API or package import paths change without explicit justification."
-      - "Duplicated logic and module-boundary issues are either consolidated or documented with a reason to retain them."
-      - "Unsafe casts, global mutation, resource cleanup, and error propagation are reviewed and improved where practical, with regression tests for changed behavior."
-      - "Dead code and stale TODO/FIXME items are removed or converted into linked follow-up tasks with owners and scope."
-      - "Biome, typecheck, build, unit/BDD tests, and relevant package tests pass after the refactor."
-      - "The report records residual risks, deferred work, and recommended follow-up tasks."
+      - All apps/* and packages/* production code is included in the audit, with
+        an inventory of files/modules reviewed.
+      - The audit report ranks findings by impact and risk, cites exact files
+        and symbols, and distinguishes actionable refactors from intentional
+        any/dynamic-boundary usage.
+      - The highest-priority safe refactors are implemented in focused,
+        behavior-preserving changes; no public API or package import paths
+        change without explicit justification.
+      - Duplicated logic and module-boundary issues are either consolidated or
+        documented with a reason to retain them.
+      - Unsafe casts, global mutation, resource cleanup, and error propagation
+        are reviewed and improved where practical, with regression tests for
+        changed behavior.
+      - Dead code and stale TODO/FIXME items are removed or converted into
+        linked follow-up tasks with owners and scope.
+      - Biome, typecheck, build, unit/BDD tests, and relevant package tests pass
+        after the refactor.
+      - The report records residual risks, deferred work, and recommended
+        follow-up tasks.
     dependencies: []
     planning:
       split_status: pending
@@ -1712,14 +1751,15 @@ tasks:
     updated_at: 2026-10-06T14:00:00.000Z
   - id: task_035
     title: Refactor package BDD suites into E2E layout
-    description: >-
-      Apply ADR-0016 and the package test layout specification. Move package-owned
-      Gherkin features, steps, and runners under e2e/bdd, keep direct consumer tests
-      under e2e, and reduce @bun-test-utils/config to shared BDD presets without a
-      repository-wide runner or test script.
+    description: Apply ADR-0016 and the package test layout specification. Move
+      package-owned Gherkin features, steps, and runners under e2e/bdd, keep
+      direct consumer tests under e2e, and reduce @bun-test-utils/config to
+      shared BDD presets without a repository-wide runner or test script.
     source_links:
-      - docs/specs/package-test-layout.md
-      - .backlog/docs/adr/0016-package-test-layout-and-e2e-bdd.md
+      - kind: local
+        external_id: docs/specs/package-test-layout.md
+      - kind: local
+        external_id: .backlog/docs/adr/0016-package-test-layout-and-e2e-bdd.md
     status: done
     priority: P1
     labels:
@@ -1730,13 +1770,14 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - "Every package BDD runner is under e2e/bdd/features.test.ts."
-      - "Feature files and step definitions are colocated under e2e/bdd."
-      - "Each package selects only its own features and steps."
-      - "The config package exposes presets only and has no test script or repo-wide runner."
-      - "test:bdd runs package E2E BDD and test:e2e runs direct package E2E tests."
-      - "No top-level package features/ or tests/steps/ directories remain."
-      - "Backlog, ADR, and layout specification document the resulting convention."
+      - Every package BDD runner is under e2e/bdd/features.test.ts.
+      - Feature files and step definitions are colocated under e2e/bdd.
+      - Each package selects only its own features and steps.
+      - The config package exposes presets only and has no test script or
+        repo-wide runner.
+      - test:bdd runs package E2E BDD and test:e2e runs direct package E2E tests.
+      - No top-level package features/ or tests/steps/ directories remain.
+      - Backlog, ADR, and layout specification document the resulting convention.
     dependencies: []
     planning:
       split_status: pending
@@ -1756,3 +1797,399 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T00:00:00.000Z
     updated_at: 2026-10-06T20:00:00.000Z
+  - id: task_036
+    title: Collapse package BDD runners into a shared config helper
+    description: "Extract the repeated plugin(bunTestCucumber(...)) + loadFeatures
+      boilerplate from the nine packages/*/e2e/bdd/features.test.ts runners into
+      a single runPackageFeatures(packageName, import.meta) helper in
+      @bun-test-utils/config/bdd. Rationale: the PR #19 incident repeated one
+      syntax error nine times and broke bun install repo-wide; a one-line runner
+      makes that failure class impossible. The helper intentionally lives in the
+      private config workspace, not the published @bun-test-utils/bdd package,
+      so a helper regression cannot take down all nine suites through a package
+      that is itself under test."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - bdd
+      - testing
+      - refactor
+      - dx
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - config/bdd exposes runPackageFeatures(packageName, importMeta) that
+        registers the cucumber plugin once and loads the package's features from
+        the repository root.
+      - Every packages/*/e2e/bdd/features.test.ts is reduced to a single helper
+        call; no package re-states cwd, glob, or plugin wiring.
+      - Step discovery remains repo-wide
+        (packages/*/e2e/bdd/steps/**/*.steps.ts) so shared steps keep serving
+        all packages.
+      - The helper stays in the private config workspace; published package
+        surfaces are unchanged.
+      - docs/specs/package-test-layout.md shows the one-line runner as the
+        required entrypoint form.
+      - bun run lint, typecheck, and test:all pass.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:44:06.840Z
+    updated_at: 2026-10-06T17:44:06.840Z
+  - id: task_037
+    title: Dogfood test.extend in capability-pack unit suites
+    description: "Convert the unit suites of std, dom, pbt, vcr, snapshot, and
+      browser from hand-driving the fixture engine's internal protocol
+      (fixture.setup(fn, { testFile: import.meta.path })) to idiomatic consumer
+      composition via test.extend({ ... }) with context injection. This is the
+      primary dogfooding task: converted suites exercise scoping, dependency
+      resolution, and LIFO teardown through the same machinery consumers use,
+      double as living documentation, and surface core regressions in sibling
+      suites. Trust anchors are explicitly out of scope and must stay on plain
+      bun:test: packages/core/tests (the engine is the subject under test) and
+      the e2e/bdd scratch-project harness (black-box through a real bun test
+      subprocess)."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - dogfooding
+      - testing
+      - fixtures
+      - dx
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Capability-pack unit suites (std, dom, pbt, vcr, snapshot, browser)
+        compose fixtures via test.extend and context injection; no direct
+        fixture.setup / internal-protocol calls remain in them.
+      - packages/core/tests remains plain bun:test (trust anchor); the e2e/bdd
+        scratch-project harness remains plain bun:test plus subprocess
+        execution.
+      - "Assertion coverage does not shrink: every converted test keeps or
+        strengthens its expectations, including teardown/cleanup verification
+        (e.g. tmpdir removal after the test body)."
+      - Converted suites read as idiomatic consumer examples suitable for
+        linking from package READMEs.
+      - Coverage output (bun run coverage) does not regress for the converted
+        packages.
+      - bun run lint, typecheck, and test:all pass.
+    dependencies:
+      - task_036
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:44:24.669Z
+    updated_at: 2026-10-06T17:44:24.669Z
+  - id: task_038
+    title: Property-based coverage for invariant-bearing packages
+    description: "Add fast-check property coverage via @bun-test-utils/pbt where
+      real algebraic invariants exist: vcr (record -> replay round-trip
+      identity; request-matching rules over arbitrary methods/URLs/headers),
+      snapshot (normalization idempotence: normalize(normalize(x)) ===
+      normalize(x); stable serialization), std (env set/restore round-trip;
+      tmpdir path handling over arbitrary relative paths). Engine invariants
+      (LIFO teardown over arbitrary fixture graphs, cartesian-product case
+      counts for parameterized fixtures) are hosted in pbt's own suite or
+      bun-test-utils conformance — never as a core devDependency on pbt, which
+      would create a core<->pbt cycle in the turbo task graph. Explicitly
+      excluded: dom (thin glue over happy-dom, weak invariants) and browser
+      (subprocess + Playwright makes randomized runs slow and flaky)."
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - pbt
+      - testing
+      - dogfooding
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "vcr: properties assert record->replay identity and matching-rule
+        behavior over generated requests."
+      - "snapshot: properties assert normalization idempotence and serialization
+        stability over generated values."
+      - "std: properties cover env round-trips and tmpdir handling of arbitrary
+        relative paths."
+      - Engine invariants (LIFO teardown ordering, cartesian parameter
+        expansion) are property-tested from pbt's suite or bun-test-utils
+        conformance; core gains no devDependency on pbt and the turbo graph
+        stays acyclic.
+      - dom and browser gain no property suites; the exclusion and its rationale
+        are recorded in the layout spec or package READMEs.
+      - Failing properties surface the fast-check seed in test output so
+        failures are replayable; CI output preserves it.
+      - bun run lint, typecheck, and test:all pass within the existing CI time
+        budget.
+    dependencies:
+      - task_037
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:44:24.942Z
+    updated_at: 2026-10-06T17:44:24.942Z
+  - id: task_039
+    title: Style-matrix conformance coverage in the bun-test-utils wrapper
+    description: Accrue cross-cutting test-style coverage (example-based,
+      property-based, BDD) in packages/bun-test-utils conformance and e2e suites
+      — the only workspace that legitimately depends on every capability pack,
+      so the full matrix lives here without creating dependency cycles. Each
+      public capability (std, dom, pbt, vcr, snapshot, bdd, browser) is
+      exercised through the styles applicable to it. prop-inside-BDD remains
+      exactly one seeded scratch-project scenario (the existing property.feature
+      pattern) demonstrating the integration works for consumers; randomized
+      generation inside Gherkin is otherwise avoided because scenarios must stay
+      deterministic and reviewable. BDD stays consumer-workflow-only per
+      docs/specs/package-test-layout.md — no unit-level edge cases as Gherkin.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - testing
+      - conformance
+      - bdd
+      - pbt
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Conformance suites exercise each public capability through example-based
+        style, and through property style where task_038 defines invariants.
+      - Exactly one seeded prop-inside-BDD scenario exists (scratch-project,
+        consumer surface); no other Gherkin scenario embeds randomized
+        generation.
+      - No BDD scenario added at this layer duplicates unit-level coverage;
+        scenarios describe consumer workflows crossing the public package
+        boundary.
+      - A short section in docs/specs/package-test-layout.md records which
+        styles apply to which layer (trust anchor, capability packs, wrapper
+        matrix).
+      - bun run lint, typecheck, test:all, and coverage pass.
+    dependencies:
+      - task_037
+      - task_038
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:44:34.917Z
+    updated_at: 2026-10-06T17:44:34.917Z
+  - id: task_040
+    title: "Pre-release std fixtures: clock, seed, and network guard"
+    description: "Close the three cheap, high-demand fixture gaps before the first
+      release. (1) clock fixture in @bun-test-utils/std wrapping bun:test
+      setSystemTime: freeze or set time for the fixture scope, restore on
+      teardown — shipping a VCR pack without time control is an odd shape, since
+      cassettes and time-dependent code go together. (2) seed fixture:
+      deterministic Math.random per test with the seed reported on failure,
+      giving one replay story for all randomness and synergizing with
+      @bun-test-utils/pbt. (3) network-guard fixture: fail on unexpected fetch
+      with an explicit passthrough allowlist, reusing the fetch-interception
+      machinery already present in httpMock — the enforcement half of the
+      httpMock/vcr triangle."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - fixtures
+      - std
+      - release
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - clock fixture freezes/sets time via bun:test setSystemTime, restores the
+        real clock on teardown, and composes through test.extend like every std
+        fixture.
+      - seed fixture makes Math.random deterministic per test, surfaces the seed
+        in failure output, and documents how to pin a seed for replay.
+      - network-guard fixture rejects unexpected fetch calls with a clear error
+        naming the offending URL, supports an allowlist/passthrough
+        configuration, and composes with httpMock and vcr without
+        double-patching fetch.
+      - All three ship through the bun-test-utils wrapper context with
+        conformance coverage and README/docs examples.
+      - Unit suites for the new fixtures follow the dogfooded test.extend style
+        (task_037 convention).
+      - bun run lint, typecheck, and test:all pass.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:07.685Z
+    updated_at: 2026-10-06T17:51:07.685Z
+  - id: task_041
+    title: Release stability tiers, context-key policy, and error-message contract
+    description: "Define and enforce the public stability story before the first npm
+      release. (1) Stability tiers: core, std, dom, snapshot, pbt, and a minimal
+      vcr surface are stable; browser (Playwright peer, heaviest CI path) and
+      bdd (rides third-party @aboviq/bun-test-cucumber 0.x) are labeled
+      experimental, with a one-sentence semver policy in the README stating
+      experimental capabilities may change in minor versions. (2) vcr surface
+      freeze: record/replay plus one simple matcher only; matching DSLs,
+      redaction, and cassette migration are explicitly deferred — growing vcr
+      later is safe, shrinking it is breaking. (3) Context-key collision policy:
+      the wrapper injects ~19 fixture names (page, env, snapshot, ...) into one
+      flat test.extend namespace; document and test precedence when a consumer
+      defines the same key. (4) Error-message contract: e2e steps already assert
+      exact strings (unknown fixture, circular fixture dependency, finished
+      without calling use(value)); enumerate which messages are contractual and
+      lock them with a snapshot/conformance test. (5) Declare platform support:
+      Linux/macOS now, Windows post-release (scratch harness and presets rely on
+      POSIX URL.pathname)."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - release
+      - docs
+      - semver
+      - conformance
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - README and docs state the stability tier of every capability; browser
+        and bdd are marked experimental with the semver caveat.
+      - vcr public surface is reduced/confirmed to record/replay plus a single
+        matcher; deferred features are listed in the backlog, not the API.
+      - Fixture context-key precedence (consumer key vs built-in) is documented
+        and covered by a conformance test.
+      - Contractual error messages are enumerated and locked by a test;
+        non-contractual messages are explicitly free to change.
+      - Platform support (Linux/macOS; Windows deferred) is stated in README and
+        engines/docs.
+      - bun run lint, typecheck, and test:all pass.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:08.062Z
+    updated_at: 2026-10-06T17:51:08.062Z
+  - id: task_042
+    title: "Post-release parking lot: fixtures and techniques deferred by design"
+    description: "Deliberately deferred work, parked so it is a decision rather than
+      an omission. Fixtures: database fixture (tmp bun:sqlite) once demand shows
+      up; public CLI/scratch-project runner fixture (productize
+      e2e/bdd/support/project.ts); filesystem sandbox beyond tmpdir;
+      worker/concurrency-scoped fixtures once Bun's test parallelism semantics
+      stabilize (session scope currently assumes single-process). Platform:
+      Windows support (replace POSIX URL.pathname usage in harness and presets,
+      add Windows CI lane). Techniques: mutation testing as an internal quality
+      gate for the engine suite; fuzzing beyond fast-check; benchmark fixtures.
+      vcr growth items deferred by the stability-tier task: matcher DSL,
+      redaction, cassette migration tooling. bdd graduation: promote from
+      experimental when @aboviq/bun-test-cucumber reaches 1.0 or the gherkin
+      integration is vendored."
+    source_links: []
+    status: ready
+    priority: P3
+    labels:
+      - post-release
+      - fixtures
+      - testing
+      - parking-lot
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Each parked item has a one-line trigger condition (user demand, upstream
+        1.0, Bun feature stabilization) recorded in this task.
+      - No parked item ships in the first release; anything promoted out of this
+        list gets its own task with full acceptance criteria.
+      - The list is referenced from the release notes or README roadmap section
+        so deferrals are visible to consumers.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T17:51:08.448Z
+    updated_at: 2026-10-06T17:51:08.448Z

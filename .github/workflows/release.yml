@@ -61,7 +61,7 @@ jobs:
         run: |
           bun run lint
           bun run typecheck
-          bun test
+          bun run test:all
 
       - name: Build package
         run: bun run build

@@ -9,25 +9,23 @@
       "dependsOn": ["^typecheck"],
       "outputs": []
     },
-    "lint": {
+    "bun-test-utils#typecheck": {
+      "dependsOn": ["build", "^typecheck"],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^build"],
       "outputs": []
     },
     "bun-test-utils#test": {
-      "dependsOn": ["build", "^build"],
-      "outputs": []
-    },
-    "test:unit": {
+      "dependsOn": ["build"],
       "outputs": []
     },
     "test:bdd": {
+      "dependsOn": ["bun-test-utils#build"],
       "outputs": []
     },
     "test:e2e": {
-      "dependsOn": ["build", "^build"],
+      "dependsOn": ["bun-test-utils#build"],
       "outputs": []
     },
     "dev": {

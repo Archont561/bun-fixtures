@@ -64,7 +64,7 @@ jobs:
         run: |
           bun run lint
           bun run typecheck
-          bun test
+          bun run test:all
           bun run build
 
       - name: Show release plan

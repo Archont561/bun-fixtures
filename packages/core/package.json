@@ -9,9 +9,8 @@
   "types": "./src/types.ts",
   "scripts": {
     "build": "bunup",
-    "test": "bun test",
-    "test:unit": "bun test tests",
     "typecheck": "tsc --noEmit",
+    "test": "bun test tests",
     "test:bdd": "bun test e2e/bdd/features.test.ts",
     "test:e2e": "bun test e2e"
   },

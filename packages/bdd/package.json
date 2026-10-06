@@ -9,7 +9,7 @@
   "scripts": {
     "build": "bunup",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test tests",
     "test:bdd": "bun test e2e/bdd/features.test.ts",
     "test:e2e": "bun test e2e"
   },
