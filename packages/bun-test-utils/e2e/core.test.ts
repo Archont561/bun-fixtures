@@ -57,6 +57,30 @@ test("injects across directories", async ({ user }) => {
       expect(output).toContain("0 fail");
       // session fixture built once, torn down after the run
       expect(output.indexOf("up")).toBeLessThan(output.indexOf("down"));
+
+      // An extension only includes the fixtures it declares. A fixture whose
+      // setup depends on an omitted fixture must fail registration rather than
+      // silently running with an incomplete context.
+      writeFileSync(
+        join(dir, "missing-dependency.test.ts"),
+        `import { test as base } from "bun-test-utils";
+const test = base.extend({
+  dependent: {
+    setup: async (use, { database }) => { await use(database); },
+  },
+});
+test("rejects an omitted dependency", ({ dependent }) => {
+  void dependent;
+});
+`,
+      );
+      const failed = Bun.spawnSync({
+        cmd: ["bun", "test", "missing-dependency.test.ts"],
+        cwd: dir,
+      });
+      const failedOutput = `${failed.stdout.toString()}${failed.stderr.toString()}`;
+      expect(failed.exitCode).not.toBe(0);
+      expect(failedOutput).toContain('unknown fixture "database"');
     },
     { timeout: 30_000 },
   );
