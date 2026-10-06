@@ -118,3 +118,9 @@ export const browserFixtures: FixtureMap = {
 };
 
 export default browserFixtures;
+
+/** Public error surface, mirrored from core so subpath consumers can type catches. */
+export {
+  BunTestUtilsError,
+  MissingOptionalDependencyError,
+} from "@bun-test-utils/core";

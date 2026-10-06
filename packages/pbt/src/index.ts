@@ -215,3 +215,9 @@ export default {
   expect,
   createPropTest,
 };
+
+/** Public error surface, mirrored from core so subpath consumers can type catches. */
+export {
+  BunTestUtilsError,
+  MissingOptionalDependencyError,
+} from "@bun-test-utils/core";
