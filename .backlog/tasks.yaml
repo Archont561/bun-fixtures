@@ -1474,3 +1474,43 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T08:02:05.782Z
     updated_at: 2026-10-06T08:09:03.367Z
+  - id: task_027
+    title: Fix mid-run session teardown from bundled engine copies
+    description: "Engine bug: with a bundled dist present, test files importing
+      \"bun-test-utils\" resolve a second engine instance (dist/plugin.js),
+      which shares the global singleton. Every instance unconditionally
+      registered bunAfterAll(teardownSession); Bun fires afterAll hooks
+      registered by test-file-imported modules at that file's end, so the dist
+      copy tore the session down mid-run (observed as
+      packages/core/tests/nested/nested.test.ts seeing a session fixture set up
+      twice; full gate 223 pass / 1 fail). Fix: only the first-loaded engine
+      copy registers the afterAll hook (state.afterAllHooked guard in the shared
+      singleton); the preload copy loads first in every supported setup, so its
+      hook stays run-global. Acceptance: full 'bun test' green from repo root
+      (224 pass / 3 skip / 0 fail); lint and typecheck clean; dist rebuilt so
+      bundles carry the guard."
+    source_links: []
+    status: done
+    priority: P0
+    labels: []
+    repo_targets: []
+    acceptance_criteria: []
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T08:56:59.633Z
+    updated_at: 2026-10-06T08:59:35.590Z
