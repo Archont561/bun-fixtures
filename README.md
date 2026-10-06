@@ -55,7 +55,7 @@ bunx bun-test-utils init
 ```
 
 `init` appends `./node_modules/bun-test-utils/dist/plugin.js` to `[test].preload` in
-`bunfig.toml` — idempotently, preserving the rest of the file — and scaffolds an extendable `test.ts` module. Every capability pack ships inside this one package as a subpath import; a
+`bunfig.toml` — idempotently, preserving the rest of the file — and prints guidance for composing an extendable `test` module. Every capability pack ships inside this one package as a subpath import; a
 few subpaths wrap a heavy third-party library that installs as an `optionalDependency` —
 add it yourself if your package manager skipped it:
 

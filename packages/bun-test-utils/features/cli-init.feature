@@ -9,7 +9,7 @@ Feature: Project setup with the CLI
   Scenario: Initializing a fresh project
     When I run "init"
     Then the file "bunfig.toml" contains "./node_modules/bun-test-utils/dist/plugin.js"
-    And the file "test.ts" exists
+    And the file "bunfig.toml" exists
     And the command succeeds
 
   Scenario: Initializing twice does not duplicate the preload entry
@@ -39,15 +39,15 @@ Feature: Project setup with the CLI
       """
     When I run "init"
     Then the file "test.ts" contains "mine"
-    And the output contains "left untouched"
+    And the output contains "created bunfig.toml"
 
   Scenario: The scaffolded project runs its first test
     When I run "init"
     And the file "a.test.ts":
       """
-      import { expect } from "bun-test-utils";
-      import { test } from "./test";
-      test("the scaffolded fixture works", async ({ config }) => {
+      import { test as base, expect } from "bun-test-utils";
+      const test = base.extend({ config: { setup: async (use) => { await use({ env: "test" }); } } });
+      test("the explicit fixture works", async ({ config }) => {
         expect(config.env).toBe("test");
       });
       """

@@ -299,12 +299,17 @@ describe("bun pm pack smoke test", () => {
         expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
           "node_modules/bun-test-utils/dist/plugin.js",
         );
-        expect(readFileSync(join(project, "test.ts"), "utf8")).toContain(
-          "base.extend",
-        );
+        expect(existsSync(join(project, "test.ts"))).toBe(false);
 
-        // The README quickstart against the tarball: the generated explicit
-        // test extension and a bundled subpath resolve with no extra install.
+        // The README quickstart against the tarball: explicit fixture
+        // composition and a bundled subpath resolve with no extra install.
+        writeFileSync(
+          join(project, "test.ts"),
+          `import { test as base } from "bun-test-utils";
+import { stdFixtures } from "bun-test-utils/std";
+export const test = base.extend(stdFixtures);
+`,
+        );
         writeFileSync(
           join(project, "quickstart.test.ts"),
           `import { expect } from "bun-test-utils";

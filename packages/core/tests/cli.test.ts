@@ -15,7 +15,7 @@ describe("cli", () => {
     expect(readFileSync(join(dir, "bunfig.toml"), "utf8")).toContain(
       "./custom/plugin.ts",
     );
-    expect(readFileSync(join(dir, "test.ts"), "utf8")).toContain("base.extend");
+    expect(() => readFileSync(join(dir, "test.ts"), "utf8")).toThrow();
   });
 
   test("defaults to the entry Bun can actually resolve", () => {

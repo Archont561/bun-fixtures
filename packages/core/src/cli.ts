@@ -8,32 +8,11 @@
 
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { parse, stringify } from "smol-toml";
 
 export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/dist/plugin.js";
-
-export const TEST_TEMPLATE = `import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-
-/**
- * Playwright-style fixture composition. Add project fixtures to this map and
- * import the resulting test from this file in your test modules.
- */
-export const test = base.extend({
-  ...stdFixtures,
-  config: {
-    scope: "session",
-    setup: async (use) => {
-      await use({ env: "test" });
-    },
-  },
-});
-`;
-
-/** @deprecated Use TEST_TEMPLATE. Kept as an internal alias for tooling. */
-export const FIXTURES_TEMPLATE = TEST_TEMPLATE;
 
 /**
  * Adds `entry` to `[test].preload`, preserving whatever is already there.
@@ -66,7 +45,11 @@ export interface InitOptions {
 }
 
 /** The `init` command body, separated from citty so tests can call it directly. */
-export async function init({ dir, entry, force }: InitOptions): Promise<void> {
+export async function init({
+  dir,
+  entry,
+  force: _force,
+}: InitOptions): Promise<void> {
   const root = resolve(dir);
   await mkdir(root, { recursive: true });
 
@@ -91,22 +74,11 @@ export async function init({ dir, entry, force }: InitOptions): Promise<void> {
     console.log(`bunfig.toml already preloads "${entry}" — unchanged`);
   }
 
-  const testPath = join(root, "test.ts");
-  if (existsSync(testPath) && !force) {
-    console.log(
-      "test.ts already exists — left untouched (use --force to overwrite)",
-    );
-  } else {
-    await mkdir(dirname(testPath), { recursive: true });
-    await writeFile(testPath, TEST_TEMPLATE);
-    console.log(`${force ? "wrote" : "created"} test.ts`);
-  }
-
-  console.log("\nNext: import the composed test in a test file —\n");
-  console.log('  import { test } from "./test";\n');
-  console.log('  test("it works", async ({ tmpdir }) => {');
-  console.log("    console.log(tmpdir);");
-  console.log("  });\n");
+  console.log(
+    "\nNext: compose project fixtures explicitly with test.extend():\n",
+  );
+  console.log('  import { test as base } from "bun-test-utils";');
+  console.log("  export const test = base.extend({});\n");
 }
 
 export const initCommand = defineCommand({
