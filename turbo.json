@@ -16,6 +16,10 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "bun-test-utils#test": {
+      "dependsOn": ["build", "^build"],
+      "outputs": []
+    },
     "test:unit": {
       "outputs": []
     },

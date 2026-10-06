@@ -1518,8 +1518,8 @@ tasks:
     title: Verify error-class identity across published entrypoints
     description: "Follow-up from the task_029 verification pass: every dist
       entrypoint bundles its own copy of the typed error classes (bunup
-      noExternal), so an error thrown through the bundled vcr subpath is not
-      an instanceof of the root bundle's CassetteError — only of its own
+      noExternal), so an error thrown through the bundled vcr subpath is not an
+      instanceof of the root bundle's CassetteError — only of its own
       entrypoint's. The 2026-10-06 conformance test (subpath-errors.test.ts)
       deliberately asserts identity WITHIN each entrypoint. Before/after the
       v0.1.0 publish (task_005), decide whether cross-entrypoint instanceof
@@ -1552,3 +1552,41 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T09:29:54.517Z
     updated_at: 2026-10-06T09:29:54.517Z
+  - id: task_031
+    title: Deflake pack.test.ts bunup ENOENT on dist/plugin.js
+    description: "Observed in CI on 2026-10-06 (PR #12, run 37443897493, Test job):
+      the pack harness's prepack build intermittently dies inside bunup with
+      UNKNOWN ERROR ENOENT opening its own output
+      packages/bun-test-utils/dist/plugin.js. Identical code passed in the PR
+      #11 CI run, repeatedly locally, and on empty-commit retry —
+      nondeterministic. Same tree also produced a one-off pre-push turbo test
+      failure locally (1.26s, unreproduced). Suspect a race between bunup's dist
+      cleanup/write and dist readers (conformance subpath imports, dts
+      inferTypes). Investigate whether the e2e pack step should build into an
+      isolated directory instead of the live dist/ used by concurrently
+      discovered test files, or gate pack.test.ts behind an already-built dist."
+    source_links: []
+    status: in_progress
+    priority: P2
+    labels: []
+    repo_targets: []
+    acceptance_criteria: []
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T09:39:58.642Z
+    updated_at: 2026-10-06T09:55:38.843Z
