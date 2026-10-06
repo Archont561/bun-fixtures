@@ -187,6 +187,7 @@ function collectFixtureFiles(dir: string, acc: string[], depth = 0): string[] {
  *
  * Idempotent — safe to call from both the preload and a plain import.
  */
+/** @internal Test-only compatibility hook; consumers should use test.extend(). */
 export async function discoverFixtures(
   root: string = state.root,
 ): Promise<Map<string, FixtureMap>> {
@@ -962,10 +963,14 @@ function warn(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Preload entry: discover on load                                            */
+/* Preload entry                                                               */
 /* -------------------------------------------------------------------------- */
 
-if (!process.env.BUN_TEST_UTILS_NO_AUTODISCOVER) {
+// Fixture registration is explicit: consumers compose fixtures with
+// `test.extend()`. The test-only legacy bootstrap calls discoverFixtures()
+// directly for the engine's historical conformance fixtures; it is not part
+// of the published preload path.
+if (process.env.BUN_TEST_UTILS_LEGACY_DISCOVERY === "1") {
   await discoverFixtures();
 }
 
@@ -997,4 +1002,4 @@ try {
 }
 hookProcessExit();
 
-export default { discoverFixtures, fixturesFor, createTest, test, expect };
+export default { fixturesFor, createTest, test, expect };

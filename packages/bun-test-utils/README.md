@@ -20,7 +20,7 @@
 
 > [!IMPORTANT]
 > **Nothing is published to npm yet.** The engine itself is real and tested: scopes,
-> LIFO teardown, dependency injection, parameterization, directory-scoped discovery
+> LIFO teardown, dependency injection, parameterization, explicit fixture extension
 > and the `init` CLI all work, covered by 215 passing tests across focused internal
 > suites, cross-package conformance checks, Gherkin scratch projects, and an installed-tarball
 > smoke test. What remains is the publication audit, a `v0.1.0` tag, the publish itself, and a
@@ -29,8 +29,7 @@
 
 `bun test` has no fixture API ([oven-sh/bun#8257](https://github.com/oven-sh/bun/issues/8257)).
 `bun-test-utils` adds one without touching `bun:test`: a test names its dependencies in its
-parameter list, and a preload plugin resolves them from `fixtures.ts` files found by walking
-the directory tree — the same idea as `conftest.py`.
+parameter list, and a Playwright-style `test.extend()` API composes fixtures explicitly.
 
 ```ts
 import { test, expect } from "bun-test-utils";
@@ -41,7 +40,7 @@ test("creates a user", async ({ db }) => {
 ```
 
 `db` was never imported, constructed, or reset here. The full model — scopes, `use()`
-teardown, discovery and merge rules, parameterized fixtures, and fail-early registration
+teardown, dependency composition, parameterized fixtures, and fail-early registration
 errors — lives in [`@bun-test-utils/core`](./packages/core#readme).
 
 ## 📦 Installation
@@ -52,12 +51,11 @@ errors — lives in [`@bun-test-utils/core`](./packages/core#readme).
 
 ```bash
 bun add -d bun-test-utils
-bunx bun-test-utils init
+bunx test-utils init
 ```
 
 `init` appends `./node_modules/bun-test-utils/dist/plugin.js` to `[test].preload` in
-`bunfig.toml` — idempotently, preserving the rest of the file — and scaffolds a root
-`fixtures.ts`. Every capability pack ships inside this one package as a subpath import; a
+`bunfig.toml` — idempotently, preserving the rest of the file — and prints guidance for composing an extendable `test` module. Every capability pack ships inside this one package as a subpath import; a
 few subpaths wrap a heavy third-party library that installs as an `optionalDependency` —
 add it yourself if your package manager skipped it:
 
@@ -73,11 +71,13 @@ the missing package and the install command — it never fails silently.
 
 ## ⚡ Quick start
 
-Declare a fixture in any directory, then ask for it by name:
+Compose fixtures explicitly, then import the resulting test in each test file:
 
 ```ts
-// tests/fixtures.ts
-export default {
+// tests/test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
   tmpDir: {
     setup: async (use) => {
       const dir = `${process.env.TMPDIR ?? "/tmp"}/t-${crypto.randomUUID().slice(0, 8)}`;
@@ -86,12 +86,13 @@ export default {
       await Bun.$`rm -rf ${dir}`.quiet();
     },
   },
-};
+});
 ```
 
 ```ts
 // tests/writes.test.ts
-import { test, expect } from "bun-test-utils";
+import { expect } from "bun-test-utils";
+import { test } from "./test";
 
 test("writes into a scratch directory", async ({ tmpDir }) => {
   await Bun.write(`${tmpDir}/note.txt`, "hello");
@@ -160,14 +161,14 @@ it as Bun-targeted ESM with declarations ([ADR 0014](.backlog/docs/adr/0014-bunu
 
 `packages/bun-test-utils/tests/` holds in-process conformance suites; `e2e/` sits beside it
 because those tests exercise the assembled, packed product. There is deliberately no
-repository-root `fixtures.ts` ([ADR 0008](.backlog/docs/adr/0008-no-root-fixtures-file.md)).
+implicit fixture discovery ([ADR 0008](.backlog/docs/adr/0008-no-root-fixtures-file.md)).
 
 ## 🗺️ Status
 
 | Milestone | Outcome | Status |
 | ---: | --- | --- |
 | M1 | Fixture engine — scopes, teardown, DI, parameterization | ✅ Done |
-| M2 | Preload discovery and path-based merge | ✅ Done |
+| M2 | Explicit fixture extension and path-based lifecycle | ✅ Done |
 | M3 | CLI `init` — `bunfig.toml` edit and scaffold | ✅ Done |
 | M4 | Types, docs and dogfooding tests | ✅ Done |
 | M5 | Publish to npm | 🚧 In progress |

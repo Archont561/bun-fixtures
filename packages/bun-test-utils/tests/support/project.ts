@@ -81,11 +81,15 @@ export function projectFileExists(project: Project, relPath: string): boolean {
   return existsSync(join(project.dir, relPath));
 }
 
-function run(project: Project, cmd: string[]): RunResult {
+function run(
+  project: Project,
+  cmd: string[],
+  env: Record<string, string> = {},
+): RunResult {
   const proc = Bun.spawnSync({
     cmd,
     cwd: project.dir,
-    env: { ...process.env, FORCE_COLOR: "0" },
+    env: { ...process.env, FORCE_COLOR: "0", ...env },
   });
   const stdout = proc.stdout.toString();
   const stderr = proc.stderr.toString();
@@ -94,7 +98,11 @@ function run(project: Project, cmd: string[]): RunResult {
 
 /** Runs `bun test` inside the scratch project. */
 export function runTests(project: Project): RunResult {
-  return run(project, [BUN, "test"]);
+  // Legacy behavioural fixtures are retained only for the migration suite;
+  // consumer projects do not receive this opt-in environment flag.
+  return run(project, [BUN, "test"], {
+    BUN_TEST_UTILS_LEGACY_DISCOVERY: "1",
+  });
 }
 
 /** Runs the bun-test-utils CLI inside the scratch project. */

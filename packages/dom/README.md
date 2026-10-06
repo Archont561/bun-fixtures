@@ -49,7 +49,7 @@ test("increments", async ({ page }) => {
 ```
 
 The default `domFixtures` map registers `window`, `document`, and `page` together — merge
-it into your `fixtures.ts` like any other `FixtureMap`.
+it into your `test.extend()` map like any other `FixtureMap`.
 
 ## Further reading
 

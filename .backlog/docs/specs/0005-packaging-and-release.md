@@ -45,5 +45,5 @@ package. Runtime builds likewise bundle private workspaces while preserving thir
 
 `packages/bun-test-utils/e2e/pack.test.ts` runs `bun pm pack`, verifies the built allowlist
 and export map, rejects source/private-workspace leakage, installs the tarball into a scratch
-project, runs `bun-test-utils init`, and executes a quickstart using the core API and a capability
+project, runs `test-utils init`, and executes a quickstart using the core API and a capability
 subpath.

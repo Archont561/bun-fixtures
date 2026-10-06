@@ -1,0 +1,100 @@
+name: auto-release
+
+# Prepare and tag a release on demand. The tag is handed explicitly to
+# release.yml because pushes made with GITHUB_TOKEN do not start another
+# workflow. npm publication remains isolated in release.yml and uses Trusted
+# Publishing there.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the v prefix (for example 0.1.0)
+        required: true
+        type: string
+      dry-run:
+        description: Validate the version without committing or publishing
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  cut:
+    name: Cut release tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate and set requested version
+        env:
+          VERSION: ${{ inputs.version }}
+        working-directory: packages/bun-test-utils
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Version must be strict semver without a leading v: $VERSION"
+            exit 1
+          }
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Run release gates
+        run: |
+          bun run lint
+          bun run typecheck
+          bun test
+          bun run build
+
+      - name: Show release plan
+        env:
+          VERSION: ${{ inputs.version }}
+        working-directory: packages/bun-test-utils
+        run: |
+          echo "Will tag main as v${VERSION} and dispatch release.yml for npm Trusted Publishing."
+          bun pm pack --dry-run
+
+      - name: Commit and tag release
+        if: ${{ !inputs.dry-run }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add packages/bun-test-utils/package.json
+            git commit -m "chore(release): prepare v${VERSION}"
+            git push origin main
+          fi
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push origin "v${VERSION}"
+
+      # A GITHUB_TOKEN tag push is recursion-suppressed, so dispatch the publish
+      # workflow explicitly. It checks out the exact tag before publishing.
+      - name: Dispatch publish workflow
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: gh workflow run release.yml --ref main -f tag="v${VERSION}"

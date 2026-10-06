@@ -1,4 +1,4 @@
-import type { FixtureMap } from "@bun-test-utils/core";
+import { test as baseTest, type FixtureMap } from "@bun-test-utils/core";
 import { snapshotFixture } from "./snapshot.ts";
 
 /** Public error surface, mirrored from core so subpath consumers can type catches. */
@@ -13,5 +13,8 @@ export {
 export const snapshotFixtures: FixtureMap = {
   snapshot: snapshotFixture,
 };
+
+/** Playwright-style test preconfigured with snapshot fixtures. */
+export const test = baseTest.extend(snapshotFixtures);
 
 export default snapshotFixtures;

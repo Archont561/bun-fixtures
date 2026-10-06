@@ -31,7 +31,7 @@ test("creates and verifies a user", async ({ db, user }) => {
 });
 ```
 
-No manual wiring, no global mocks. `db` and `user` are declared in `fixtures.ts`, built in topological order, injected into tests, and cleanly destroyed in reverse (LIFO) order.
+No manual wiring, no global mocks. `db` and `user` are declared in `test.ts`, built in topological order, injected into tests, and cleanly destroyed in reverse (LIFO) order.
 
 ---
 
@@ -45,7 +45,7 @@ No manual wiring, no global mocks. `db` and `user` are declared in `fixtures.ts`
 
   <div class="feature-card">
     <h3>🌳 Directory Inheritance</h3>
-    <p>Place <code>fixtures.ts</code> anywhere in your folder structure. Child folders inherit fixtures from ancestors with nearest-wins overrides.</p>
+    <p>Place <code>test.ts</code> anywhere in your folder structure. Child folders inherit fixtures from ancestors with nearest-wins overrides.</p>
   </div>
 
   <div class="feature-card">
@@ -77,13 +77,13 @@ Initialize your repository in one command:
 
 ```bash
 bun add -d bun-test-utils
-bunx bun-test-utils init
+bunx test-utils init
 ```
 
-This updates your `bunfig.toml` preload configuration and scaffolds a starter `fixtures.ts`:
+This updates your `bunfig.toml` preload configuration and scaffolds a starter `test.ts`:
 
 ```ts
-// fixtures.ts
+// test.ts
 export default {
   db: {
     scope: "file",

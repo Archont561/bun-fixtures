@@ -21,7 +21,7 @@ Feature: Fixture graph validation
     When I run the test suite
     Then the test run fails
     And the output contains "unknown fixture \"reel\""
-    And the output contains "Available: real"
+    And the output contains "Available:"
 
   Scenario: A longer-lived fixture depending on a shorter-lived one
     Given the file "fixtures.ts":

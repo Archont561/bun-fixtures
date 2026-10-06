@@ -6,7 +6,7 @@
 
 ## Goal
 
-`bun add -d bun-test-utils && bunx bun-test-utils init` works for a stranger. Exactly one npm
+`bun add -d bun-test-utils && bunx test-utils init` works for a stranger. Exactly one npm
 package is published; private workspaces are assembled into Bunup-built ESM and declarations per
 [ADR 0014](../adr/0014-bunup-built-publication.md).
 
@@ -31,7 +31,7 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 |---|-----------|----------|
 | 1 | Tarball contains built `dist`, README, both licences and manifest, with no source/private workspace trees | pack smoke test / `bun pm pack --dry-run` |
 | 2 | Fresh install works from the tarball | pack smoke test |
-| 3 | `bunx bun-test-utils init` works from the installed package and writes the built preload path | pack smoke test and post-publish rerun |
+| 3 | `bunx test-utils init` works from the installed package and writes the built preload path | pack smoke test and post-publish rerun |
 | 4 | No `@bun-test-utils/*` internal workspace is published or referenced by public output | private manifests plus bundle/tarball audit |
 | 5 | The Playwright-style `test.extend` and typed scenario-chain API is available before publication | task_021 tests and public export audit |
 

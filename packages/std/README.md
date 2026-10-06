@@ -61,7 +61,7 @@ test("logs on failure", async ({ stdio }) => {
 ## Composing
 
 All three ship inside the default `stdFixtures` map — register or merge it into your
-`fixtures.ts` like any other `FixtureMap`:
+`test.extend()` map like any other `FixtureMap`:
 
 ```ts
 import stdFixtures from "bun-test-utils/std";

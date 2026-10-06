@@ -3,44 +3,16 @@
 /**
  * bun-test-utils CLI — built with citty.
  *
- *   bunx bun-test-utils init [--dir <path>] [--entry <preload path>] [--force]
+ *   bunx test-utils init [--dir <path>] [--entry <preload path>] [--force]
  */
 
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { parse, stringify } from "smol-toml";
 
 export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/dist/plugin.js";
-
-export const FIXTURES_TEMPLATE = `import type { FixtureMap } from "bun-test-utils";
-
-/**
- * Root fixtures. Any directory may add its own \`fixtures.ts\`;
- * deeper directories override shallower ones (root → leaf).
- *
- * Scopes: "session" (whole run) | "file" (per test file) | "test" (default).
- * Everything after \`await use(value)\` is teardown.
- */
-export default {
-  config: {
-    scope: "session",
-    setup: async (use) => {
-      await use({ env: "test" });
-    },
-  },
-
-  tmpDir: {
-    setup: async (use) => {
-      const dir = \`\${process.env.TMPDIR ?? "/tmp"}/test-\${crypto.randomUUID().slice(0, 8)}\`;
-      await Bun.$\`mkdir -p \${dir}\`.quiet();
-      await use(dir);
-      await Bun.$\`rm -rf \${dir}\`.quiet();
-    },
-  },
-} satisfies FixtureMap;
-`;
 
 /**
  * Adds `entry` to `[test].preload`, preserving whatever is already there.
@@ -73,7 +45,11 @@ export interface InitOptions {
 }
 
 /** The `init` command body, separated from citty so tests can call it directly. */
-export async function init({ dir, entry, force }: InitOptions): Promise<void> {
+export async function init({
+  dir,
+  entry,
+  force: _force,
+}: InitOptions): Promise<void> {
   const root = resolve(dir);
   await mkdir(root, { recursive: true });
 
@@ -98,28 +74,18 @@ export async function init({ dir, entry, force }: InitOptions): Promise<void> {
     console.log(`bunfig.toml already preloads "${entry}" — unchanged`);
   }
 
-  const fixturesPath = join(root, "fixtures.ts");
-  if (existsSync(fixturesPath) && !force) {
-    console.log(
-      "fixtures.ts already exists — left untouched (use --force to overwrite)",
-    );
-  } else {
-    await mkdir(dirname(fixturesPath), { recursive: true });
-    await writeFile(fixturesPath, FIXTURES_TEMPLATE);
-    console.log(`${force ? "wrote" : "created"} fixtures.ts`);
-  }
-
-  console.log("\nNext: in a test file —\n");
-  console.log('  import { test, expect } from "bun-test-utils";\n');
-  console.log('  test("it works", async ({ tmpDir }) => {');
-  console.log("    expect(tmpDir).toBeTruthy();");
-  console.log("  });\n");
+  console.log(
+    "\nNext: compose project fixtures explicitly with test.extend():\n",
+  );
+  console.log('  import { test as base } from "bun-test-utils";');
+  console.log("  export const test = base.extend({});\n");
 }
 
 export const initCommand = defineCommand({
   meta: {
     name: "init",
-    description: "Set up bunfig.toml preload and scaffold a root fixtures.ts",
+    description:
+      "Set up bunfig.toml preload and scaffold an extendable test.ts",
   },
   args: {
     dir: {
@@ -136,7 +102,8 @@ export const initCommand = defineCommand({
     },
     force: {
       type: "boolean",
-      description: "Overwrite an existing fixtures.ts",
+      description:
+        "Accepted for backward compatibility; init never overwrites project files",
       default: false,
     },
   },

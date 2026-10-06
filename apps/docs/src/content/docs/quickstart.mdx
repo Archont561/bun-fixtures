@@ -3,34 +3,28 @@ title: Quickstart
 description: Get up and running with bun-test-utils in 5 minutes.
 ---
 
-In this quickstart, you will install `bun-test-utils`, initialize your configuration, and write your first fixture-backed test.
+In this quickstart, you will install `bun-test-utils`, initialize its preload, and compose your first Playwright-style fixture test.
 
 ## 1. Install & Initialize
 
-Run the following commands in your Bun project:
-
 ```bash
 bun add -d bun-test-utils
-bunx bun-test-utils init
+bunx test-utils init
 ```
 
-The `init` command performs two actions:
-1. Adds the preload plugin to `bunfig.toml`:
-   ```toml
-   [test]
-   preload = ["./node_modules/bun-test-utils/dist/plugin.js"]
-   ```
-2. Scaffolds a starter `fixtures.ts` at the root of your project.
+The `init` command adds the preload plugin to `bunfig.toml` and scaffolds an extendable `test.ts` module.
 
-## 2. Declare a Fixture
+## 2. Compose Fixtures
 
-Open `fixtures.ts` and define your fixtures:
+Edit `test.ts` and add project fixtures with `test.extend()`:
 
 ```ts
-// fixtures.ts
-import type { FixtureMap } from "bun-test-utils";
+// test.ts
+import { test as base } from "bun-test-utils";
+import { stdFixtures } from "bun-test-utils/std";
 
-export default {
+export const test = base.extend({
+  ...stdFixtures,
   server: {
     scope: "session",
     setup: async (use) => {
@@ -39,45 +33,35 @@ export default {
       await server.stop();
     },
   },
-
-  db: {
-    scope: "file",
-    setup: async (use, { server }) => {
-      const db = await server.connect();
-      await use(db);
-      await db.close();
-    },
-  },
-
   user: {
-    setup: async (use, { db }) => {
-      const user = await db.insertUser({ name: "Ada" });
+    setup: async (use, { server }) => {
+      const user = await server.insertUser({ name: "Ada" });
       await use(user);
     },
   },
-} satisfies FixtureMap;
+});
 ```
 
 ## 3. Write a Test
 
-Create a test file `users.test.ts`:
+Import the composed test from your local module:
 
 ```ts
 // users.test.ts
-import { test, expect } from "bun-test-utils";
+import { expect } from "bun-test-utils";
+import { test } from "./test";
 
-test("finds created user", async ({ db, user }) => {
-  const found = await db.findUser(user.id);
-  expect(found.name).toBe("Ada");
+test("finds created user", async ({ user }) => {
+  expect(user.name).toBe("Ada");
 });
 ```
 
-## 4. Run Tests
+Fixtures can depend on one another, have session, file, or test scope, and run teardown in reverse order.
 
-Execute with `bun test`:
+## 4. Run Tests
 
 ```bash
 bun test
 ```
 
-`bun-test-utils` resolves `db` and `user`, verifies there are no dependency cycles, runs the test, and executes teardowns in reverse order (LIFO).
+There is no implicit fixture discovery. Every fixture available to a test comes from the explicit `test.extend()` chain imported by that test file.

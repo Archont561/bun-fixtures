@@ -15,7 +15,7 @@ fast, and immune to rate limits and flaky third parties.
 bun add -d bun-test-utils
 ```
 
-Register the bundle in your `fixtures.ts`:
+Register the bundle in your `test.ts`:
 
 ```ts
 import vcrFixtures from "bun-test-utils/vcr";

@@ -6,7 +6,7 @@
  * README + both licences + manifest, no source workspaces or `workspace:`
  * ranges), then installs the
  * tarball into a scratch project — no workspace, no symlinks — and runs the
- * quickstart (`bun-test-utils init` → `bun test`) against it, including a
+ * quickstart (`test-utils init` → `bun test`) against it, including a
  * subpath import. What is verified here is what a consumer downloading from
  * npm will get.
  *
@@ -284,11 +284,11 @@ describe("bun pm pack smoke test", () => {
           existsSync(join(project, "node_modules", PACKAGE_NAME, "src")),
         ).toBe(false);
 
-        // `bunx bun-test-utils init` — through the installed bin, like a consumer.
+        // `bunx test-utils init` — through the installed bin, like a consumer.
         run(
           [
             BUN,
-            join(project, "node_modules", ".bin", "bun-test-utils"),
+            join(project, "node_modules", ".bin", "test-utils"),
             "init",
             "--dir",
             project,
@@ -299,22 +299,25 @@ describe("bun pm pack smoke test", () => {
         expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
           "node_modules/bun-test-utils/dist/plugin.js",
         );
-        expect(readFileSync(join(project, "fixtures.ts"), "utf8")).toContain(
-          "export default",
-        );
+        expect(existsSync(join(project, "test.ts"))).toBe(false);
 
-        // The README quickstart against the tarball: init's scaffolded
-        // fixtures flow through discovery and injection, and a bundled
-        // subpath (`bun-test-utils/std`) resolves with no extra install.
+        // The README quickstart against the tarball: explicit fixture
+        // composition and a bundled subpath resolve with no extra install.
+        writeFileSync(
+          join(project, "test.ts"),
+          `import { test as base } from "bun-test-utils";
+import { stdFixtures } from "bun-test-utils/std";
+export const test = base.extend(stdFixtures);
+`,
+        );
         writeFileSync(
           join(project, "quickstart.test.ts"),
-          `import { test, expect } from "bun-test-utils";
+          `import { expect } from "bun-test-utils";
+import { test } from "./test";
 import { tmpdirFixture } from "bun-test-utils/std";
 
-test("quickstart: scaffolded fixtures inject", async ({ config, tmpDir }) => {
-  expect(config).toEqual({ env: "test" });
-  expect(typeof tmpDir).toBe("string");
-  expect(tmpDir.length).toBeGreaterThan(0);
+test("quickstart: explicit fixtures inject", async ({ tmpdir }) => {
+  expect(tmpdir).toBeTruthy();
 });
 
 test("quickstart: bundled subpath resolves with no extra install", () => {
@@ -325,6 +328,38 @@ test("quickstart: bundled subpath resolves with no extra install", () => {
         const output = run([BUN, "test"], project);
         expect(output).toContain("2 pass");
         expect(output).toContain("0 fail");
+
+        // Each published entrypoint currently bundles its own copy of the
+        // error classes. Verify the consumer-visible contract explicitly:
+        // errors retain their stable name/code across entrypoints, while
+        // cross-entrypoint instanceof is not promised. This prevents a
+        // future bundler change from silently changing the documented
+        // identity decision.
+        writeFileSync(
+          join(project, "error-identity.test.ts"),
+          `import { CassetteError as RootCassetteError } from "bun-test-utils";
+import { CassetteError as VcrCassetteError } from "bun-test-utils/vcr";
+import { expect, test } from "bun:test";
+
+test("published entrypoints expose compatible but independent error classes", () => {
+  const rootError = new RootCassetteError("CASSETTE_MISMATCH", "root");
+  const vcrError = new VcrCassetteError("CASSETTE_MISMATCH", "vcr");
+
+  expect(rootError).toBeInstanceOf(RootCassetteError);
+  expect(vcrError).toBeInstanceOf(VcrCassetteError);
+  expect(rootError).not.toBeInstanceOf(VcrCassetteError);
+  expect(vcrError).not.toBeInstanceOf(RootCassetteError);
+  expect(rootError.name).toBe(vcrError.name);
+  expect(rootError.code).toBe(vcrError.code);
+});
+`,
+        );
+        const identityOutput = run(
+          [BUN, "test", "error-identity.test.ts"],
+          project,
+        );
+        expect(identityOutput).toContain("1 pass");
+        expect(identityOutput).toContain("0 fail");
 
         // Sanity: the packed manifest is what a registry consumer sees.
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);

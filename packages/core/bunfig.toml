@@ -1,2 +1,2 @@
 [test]
-preload = ["./src/plugin.ts"]
+preload = ["./tests/legacy-discovery.ts"]
