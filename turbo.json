@@ -9,6 +9,10 @@
       "dependsOn": ["^typecheck"],
       "outputs": []
     },
+    "bun-test-utils#typecheck": {
+      "dependsOn": ["build", "^typecheck"],
+      "outputs": []
+    },
     "test": {
       "outputs": []
     },
