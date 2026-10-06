@@ -12,7 +12,7 @@
     "build": "bunup",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "test:bdd": "bun test tests/bdd/features.test.ts",
+    "test:bdd": "bun test e2e/bdd/features.test.ts",
     "test:e2e": "bun test e2e"
   },
   "engines": {

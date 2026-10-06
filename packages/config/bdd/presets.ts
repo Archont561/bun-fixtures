@@ -6,7 +6,7 @@ export interface BddPreset {
 
 export function bddPreset(packageName: string): BddPreset {
   return {
-    featurePattern: `packages/${packageName}/features/*.feature`,
-    stepDefinitionsPattern: `packages/${packageName}/tests/steps/**/*.steps.ts`,
+    featurePattern: `packages/${packageName}/e2e/bdd/features/*.feature`,
+    stepDefinitionsPattern: `packages/${packageName}/e2e/bdd/steps/**/*.steps.ts`,
   };
 }
