@@ -7,5 +7,5 @@
       "bun-test-utils": ["../bun-test-utils/src/plugin.ts"]
     }
   },
-  "include": ["src", "tests", "bunup.config.ts"]
+  "include": ["src", "tests", "e2e", "bunup.config.ts"]
 }

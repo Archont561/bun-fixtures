@@ -1,4 +1,19 @@
-# Package test layout specification
+# 0015 — Package test layout
+
+- **Status:** implemented
+- **Implementation:** `packages/*/src`, `packages/*/tests`, `packages/*/e2e`
+- **Tests:** `packages/config/tests/` (the `runPackageFeatures` helper), `packages/*/e2e/bdd/features.test.ts`
+
+## Problem
+
+Without one stated layout, packages drift: unit tests reach for Gherkin discovery,
+feature files collect in a top-level directory, and each runner restates the
+repository root and glob patterns differently. This spec fixes the layout and the
+required entrypoint form; the rationale is in
+[ADR 0016](../adr/0016-package-test-layout-and-e2e-bdd.md) and
+[ADR 0017](../adr/0017-shared-bdd-runner-helper.md).
+
+## Requirements
 
 Every runtime package follows this layout:
 
@@ -17,7 +32,7 @@ or crosses a public package boundary. Unit and integration tests must not depend
 Gherkin discovery.
 
 `e2e/bdd/features.test.ts` is the required entrypoint form, and it MUST be exactly one
-call into the shared helper ([ADR-0017](../../.backlog/docs/adr/0017-shared-bdd-runner-helper.md)):
+call into the shared helper ([ADR-0017](../adr/0017-shared-bdd-runner-helper.md)):
 
 ```ts
 import { runPackageFeatures } from "@bun-test-utils/config/bdd";
