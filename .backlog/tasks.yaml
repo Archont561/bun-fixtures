@@ -2249,15 +2249,38 @@ tasks:
     updated_at: 2026-10-06T17:51:08.448Z
   - id: task_043
     title: Typecheck the e2e/ directories
-    description: "No package tsconfig includes e2e/, so every e2e test and BDD
-      runner is linted but never typechecked. That is how the PR #19 syntax
-      error reached main, and how the nine runners passed a non-existent
-      featurePattern option into bunTestCucumber for months (caught in task_036
-      only once packages/config gained a typecheck script). Add e2e to each
-      package's tsconfig include list, fix what surfaces, and keep the
-      scratch-project harness compiling. Measure first: the e2e suites import
-      across workspace boundaries and may need path mappings that src/tests do
-      not."
+    description: >-
+      No package tsconfig includes e2e/, so every e2e test and BDD runner is
+      linted but never typechecked. That is how the PR #19 syntax error reached
+      main, and how the nine runners passed a non-existent featurePattern option
+      into bunTestCucumber for months (caught in task_036 only once
+      packages/config gained a typecheck script).
+
+
+      MEASURED in the task_037 session (2026-10-06), trial applied and reverted
+      — the task is now smaller than this description originally assumed:
+
+      - Adding "e2e" to the include list of 8 package tsconfigs is the whole
+      change. packages/bun-test-utils ALREADY includes e2e; the gap is only in
+      bdd, browser, core, dom, pbt, snapshot, std, vcr.
+
+      - NOTHING surfaces: bunx turbo run typecheck --force gives 19/19
+      successful, 0 cached, zero errors. No path mappings are needed — the
+      concern about cross-workspace imports did not materialise.
+
+      - The include was verified to actually bite (a silent no-match would look
+      identical): injecting 'const x: number = "s"' into
+      packages/std/e2e/bdd/features.test.ts produced
+      e2e/bdd/features.test.ts(5,7): error TS2322, and removing it went clean
+      again.
+
+      - Reason nothing surfaces: task_036 already removed the bogus
+      bunTestCucumber option. The remaining value is pure regression guard, not
+      cleanup.
+
+
+      Estimated effort: minutes. Keep the verification step — assert the include
+      bites — so the task cannot be closed on a vacuous green.
     source_links: []
     status: ready
     priority: P2
@@ -2290,7 +2313,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T18:21:08.863Z
-    updated_at: 2026-10-06T18:21:08.863Z
+    updated_at: 2026-10-06T19:47:10.867Z
   - id: task_044
     title: Consolidate specs into one directory
     description: "Specs live in two places: the numbered set in .backlog/docs/specs/
