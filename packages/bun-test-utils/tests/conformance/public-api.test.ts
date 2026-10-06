@@ -5,7 +5,7 @@ test("public root exports only describe, test, and expect", () => {
   expect(Object.keys(api).sort()).toEqual(["describe", "expect", "test"]);
 });
 
-test("legacy capability subpaths are not exported", async () => {
+test("capability subpaths are not exported", async () => {
   const subpaths = [
     "bun-test-utils/std",
     "bun-test-utils/pbt",

@@ -7,7 +7,7 @@
 | Backlog | `bunx backlog status`, `bunx backlog board` | tasks, claims, orchestration (`.backlog/`) |
 | Skills | `bunx skills list` | agent skills installed into `.agents/skills` |
 | Bun | `bun test`, `bun run typecheck` | the only build/test toolchain — no compile step |
-| Cucumber | `bun run test:bdd` | behavioural suite: `packages/bun-test-utils/features/*.feature` + `packages/bun-test-utils/tests/steps/` |
+| Cucumber | `bun run test:bdd` | repo-wide behavioural suite: `packages/*/features/*.feature` + `packages/config/bdd/features.test.ts` |
 
 ## Installed skills
 

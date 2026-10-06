@@ -127,7 +127,7 @@ All workspace packages are implementation boundaries; only `bun-test-utils` is p
 
 ## Development
 
-This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/features/*.feature` and are loaded by the root-owned `tests/bdd/features.test.ts` entrypoint.
+This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/features/*.feature` and are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint.
 
 ```bash
 bun run build

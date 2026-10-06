@@ -20,6 +20,7 @@
     "packages/*/src",
     "packages/*/tests",
     "apps/**/*",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "packages/config/bdd/**/*.ts"
   ]
 }

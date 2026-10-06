@@ -30,6 +30,4 @@ test.scenario("checks a file")
 
 Mocking and BDD state should be modeled as fixtures and values in the scenario context.
 
-The older `fixtureSteps(...)` helper remains internal test infrastructure for adapting explicit fixture maps to a third-party Gherkin hook lifecycle.
-
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

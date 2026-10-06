@@ -16,8 +16,8 @@ BDD-style tests are modeled as fluent scenarios on `test`:
 - `test.scenario.prop(title, arbitraryFactory)` for generated scenarios.
 - Fixtures and mocks are regular fixture values in each step context.
 
-The lower-level Gherkin hook bridge is retained only as an internal workspace
-implementation/testing detail and is not published as a user-facing subpath.
+The repository-wide Gherkin runner is test-only infrastructure and is not
+published as a user-facing subpath.
 
 ## Consequences
 
@@ -26,6 +26,5 @@ fixture context or returned scenario values.
 
 **Good** — users do not need to learn or import a BDD-specific package path.
 
-**Trade-off** — projects that need a third-party Gherkin runner must write their
-own small adapter around internal fixture maps; that adapter is outside the
-published API.
+**Trade-off** — projects that need a third-party Gherkin runner must keep that
+integration outside the published API.

@@ -221,7 +221,7 @@ tasks:
       - steps drive only files, bun test output and exit codes — no engine
         imports
       - scratch projects removed after each scenario
-      - runs under plain bun test via tests/features.test.ts
+      - runs under plain bun test via packages/config/bdd/features.test.ts
     dependencies:
       - task_001
       - task_002
@@ -515,24 +515,22 @@ tasks:
     created_at: 2026-10-05T16:25:26.586Z
     updated_at: 2026-10-05T19:43:17.484Z
   - id: task_013
-    title: Add DOM and Browser testing support (@bun-fixture/dom and Playwright
+    title: Add DOM and Browser testing support (@bun-test-utils/dom and Playwright
       fixtures)
     description: "Support browser-side JS testing through in-memory DOM fixtures
       (happy-dom) for UI components and session-scoped Playwright browser/page
       fixtures for real E2E testing. Spec:
-      docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-fixture/dom
+      docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-test-utils/dom
       (window, document, page), the ephemeral Bun.serve testServer fixture, and
-      the Playwright browser/context/page fixtures are implemented and tested.
-      RESOLVED (2026-10-06): packages/browser/tests/playwright.test.ts
-      E2E-covers the session browser lifecycle, test-scoped context isolation
-      (cookies and localStorage against the same session browser and origin),
-      and browserPage navigation/interaction against testServer; the tests skip
-      gracefully when browser binaries are not installed, and CI installs the
-      Chromium headless shell so the coverage is real on every push.
-      tests/playwright-missing-peer.test.ts pins the actionable uninstalled-peer
-      error via a --no-install subprocess probe."
+      the Playwright browser/context/page fixtures are implemented. Real browser
+      verification remains in progress: packages/browser/tests/playwright.test.ts
+      skips when browser binaries are unavailable, while CI currently installs
+      only the Chromium headless shell. Confirm regular Chromium/Chrome coverage
+      and the supported browser-binary installation path. The
+      tests/playwright-missing-peer.test.ts probe still pins the actionable
+      uninstalled-peer error."
     source_links: []
-    status: done
+    status: in_progress
     priority: P2
     labels:
       - browser
@@ -540,7 +538,7 @@ tasks:
       - e2e
     repo_targets: []
     acceptance_criteria:
-      - "@bun-fixture/dom provides window, document, and page fixtures using
+      - "@bun-test-utils/dom provides window, document, and page fixtures using
         happy-dom with automatic cleanup"
       - Playwright fixture bundle provides session-scoped browser and
         test-scoped isolated page/context
@@ -567,7 +565,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:46.794Z
-    updated_at: 2026-10-06T07:08:49.000Z
+    updated_at: 2026-10-06T16:07:32.000Z
   - id: task_014
     title: Implement HTTP Cassette / VCR network record & replay fixture
       (@bun-fixture/vcr)
@@ -1615,10 +1613,10 @@ tasks:
     description: >-
       Add one repository-wide BDD testing entrypoint so every workspace package can own
       features/*.feature coverage without package-local references to
-      packages/bun-test-utils/test-plugins.ts. The runner should discover package feature
+      packages/config/bdd/features.test.ts. The runner should discover package feature
       files and package step definitions from the repository root, enforce that packages
       expected to have behavioural coverage actually have a features/ directory, and keep
-      BDD config in one root-owned place. Also refactor browser/DOM testing fixtures so
+      BDD config in the shared config workspace. Also refactor browser/DOM testing fixtures so
       tests can choose a happy-dom-backed fast path or a real Playwright-backed browser
       path through a coherent fixture API. Add an MSW-like response mocking fixture that
       works with both environments: fetch interception for DOM/server tests and
@@ -1636,7 +1634,7 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - "A root-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package bunfig or test-plugin references."
+      - "A config-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package Bun config or plugin references."
       - "Every runtime workspace either has meaningful features/*.feature coverage or is explicitly exempted with a documented reason checked by the BDD runner."
       - "Root package scripts and turbo configuration expose a repo-wide BDD gate that can run locally and in CI."
       - "Existing bun-test-utils and core feature suites are migrated to the repo-wide runner without changing public imports."

@@ -17,8 +17,8 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
-/** Repository root — `tests/support/..` */
-export const REPO_ROOT = resolve(import.meta.dir, "..", "..");
+/** Published wrapper package root — used as the consumer install target. */
+export const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..");
 
 /** The Bun binary currently running this suite. */
 const BUN = process.execPath;
@@ -39,7 +39,7 @@ export interface Project {
 export function createProject(): Project {
   const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-bdd-"));
   mkdirSync(join(dir, "node_modules"), { recursive: true });
-  symlinkSync(REPO_ROOT, join(dir, "node_modules", "bun-test-utils"));
+  symlinkSync(PACKAGE_ROOT, join(dir, "node_modules", "bun-test-utils"));
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "scratch", type: "module" }, null, 2),
@@ -55,7 +55,7 @@ export function createProject(): Project {
 export function createBareProject(): Project {
   const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-bdd-"));
   mkdirSync(join(dir, "node_modules"), { recursive: true });
-  symlinkSync(REPO_ROOT, join(dir, "node_modules", "bun-test-utils"));
+  symlinkSync(PACKAGE_ROOT, join(dir, "node_modules", "bun-test-utils"));
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "scratch", type: "module" }, null, 2),
@@ -103,7 +103,7 @@ export function runTests(project: Project): RunResult {
 
 /** Runs the bun-test-utils CLI inside the scratch project. */
 export function runCli(project: Project, args: string[]): RunResult {
-  return run(project, [BUN, join(REPO_ROOT, "src", "cli.ts"), ...args]);
+  return run(project, [BUN, join(PACKAGE_ROOT, "src", "cli.ts"), ...args]);
 }
 
 export function removeProject(project: Project): void {

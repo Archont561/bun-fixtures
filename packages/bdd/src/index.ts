@@ -1,10 +1,8 @@
 import { createRequire } from "node:module";
 import {
   type FixtureAwareTest,
-  type FixtureContext,
   type FixtureMap,
   MissingOptionalDependencyError,
-  openFixtures,
   type ScenarioFactory,
   type TestFn,
 } from "@bun-test-utils/core";
@@ -14,15 +12,6 @@ const SCENARIO_GUARD_SYMBOL = Symbol.for("bun-test-utils.scenarioGuard");
 
 const requireFromHere = createRequire(import.meta.url);
 let bddIntegrationAvailable: boolean | undefined;
-
-export interface BddWorld {
-  [key: string]: any;
-}
-
-export interface BddHooks {
-  Before(fn: (world: BddWorld) => void | Promise<void>): void;
-  After(fn: (world: BddWorld) => void | Promise<void>): void;
-}
 
 export type BddFixtureAwareTest = TestFn &
   Omit<FixtureAwareTest, "extend" | "scenario"> & {
@@ -94,30 +83,8 @@ export function withBDDTesting(
   return bddTest;
 }
 
-export function fixtureSteps(
-  hooks: BddHooks,
-  fixtures: FixtureMap,
-  names: string[],
-): void {
-  const scopes = new WeakMap<object, { close: () => Promise<void> }>();
-  hooks.Before(async (world) => {
-    const scope = await openFixtures(fixtures, names);
-    Object.assign(world, scope.fixtures);
-    scopes.set(world, scope);
-  });
-  hooks.After(async (world) => {
-    const scope = scopes.get(world);
-    if (scope) {
-      await scope.close();
-      scopes.delete(world);
-    }
-  });
-}
-
 /** Internal error re-exports for workspace-local tests and adapters. */
 export {
   BunTestUtilsError,
   MissingOptionalDependencyError,
 } from "@bun-test-utils/core";
-export type { FixtureContext, FixtureMap };
-export { openFixtures };

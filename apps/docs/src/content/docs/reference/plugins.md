@@ -25,7 +25,7 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 ## Repo-wide BDD gate
 
 The repository's behavioural specs live under `packages/*/features/*.feature` and
-are loaded by the root-owned entrypoint `tests/bdd/features.test.ts`. Run the
+are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint. Run the
 same gate locally and in CI with:
 
 ```bash
@@ -33,8 +33,7 @@ bun run test:bdd
 ```
 
 The entrypoint also checks that every runtime workspace either has meaningful
-feature coverage or a documented exemption. Package-local `bunfig` and
-`test-plugins.ts` files are not required for Gherkin discovery.
+feature coverage or a documented exemption. Package-local `bunfig` files are not required for Gherkin discovery.
 
 ## Fixtures
 
