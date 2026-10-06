@@ -7,7 +7,31 @@ import { snapshotFixtures } from "@bun-test-utils/snapshot";
 import { stdFixtures } from "@bun-test-utils/std";
 import { vcrFixtures } from "@bun-test-utils/vcr";
 
+export {
+  browserContextFixture,
+  browserFixture,
+  browserFixtures,
+  browserPageFixture,
+  serverUrlFixture,
+  testServerFixture,
+} from "@bun-test-utils/browser";
 export * from "@bun-test-utils/core";
+export {
+  documentFixture,
+  domFixtures,
+  pageFixture,
+  windowFixture,
+} from "@bun-test-utils/dom";
+export { snapshotFixture, snapshotFixtures } from "@bun-test-utils/snapshot";
+// Re-export the built-in fixture definitions from the main entrypoint so a
+// consumer can compose or inspect them without importing every subpath.
+export {
+  envFixture,
+  stdFixtures,
+  stdioFixture,
+  tmpdirFixture,
+} from "@bun-test-utils/std";
+export { cassetteFixture, vcrFixtures } from "@bun-test-utils/vcr";
 
 /**
  * Base runner with every built-in fixture registered.
