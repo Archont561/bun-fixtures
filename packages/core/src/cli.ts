@@ -102,7 +102,8 @@ export const initCommand = defineCommand({
     },
     force: {
       type: "boolean",
-      description: "Overwrite an existing fixtures.ts",
+      description:
+        "Accepted for backward compatibility; init never overwrites project files",
       default: false,
     },
   },
