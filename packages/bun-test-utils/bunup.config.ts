@@ -12,6 +12,7 @@ const bundledWorkspaces = [
   "@bun-test-utils/browser",
   "@bun-test-utils/vcr",
   "@bun-test-utils/snapshot",
+  "@bun-test-utils/bdd",
 ];
 
 export default createBunupConfig(entries, {

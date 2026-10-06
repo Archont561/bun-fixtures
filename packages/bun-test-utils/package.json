@@ -80,6 +80,7 @@
   },
   "devDependencies": {
     "@aboviq/bun-test-cucumber": "^0.2.0",
+    "@bun-test-utils/bdd": "workspace:*",
     "@bun-test-utils/browser": "workspace:*",
     "@bun-test-utils/config": "workspace:*",
     "@bun-test-utils/core": "workspace:*",

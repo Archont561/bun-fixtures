@@ -59,6 +59,7 @@ async function loadFastCheck(): Promise<any> {
 export { describe, expect };
 
 const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
+const SCENARIO_GUARD_SYMBOL = Symbol.for("bun-test-utils.scenarioGuard");
 
 type ScenarioGuard = () => void;
 
@@ -75,6 +76,10 @@ export type PbtFixtureAwareTest = TestFn &
 
 function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
   return ((test as any)[FIXTURE_MAP_SYMBOL] ?? {}) as FixtureMap;
+}
+
+function scenarioGuardOf(test: FixtureAwareTest): ScenarioGuard | undefined {
+  return (test as any)[SCENARIO_GUARD_SYMBOL] as ScenarioGuard | undefined;
 }
 
 function explicitTestFor(file: string, map: FixtureMap): FixtureAwareTest {
@@ -315,6 +320,12 @@ function makePbtTest(
     value: map,
     enumerable: false,
   });
+  if (scenarioGuard) {
+    Object.defineProperty(pbtTest, SCENARIO_GUARD_SYMBOL, {
+      value: scenarioGuard,
+      enumerable: false,
+    });
+  }
   return pbtTest;
 }
 
@@ -323,7 +334,9 @@ export function withPropertyTesting(
   fixedFile?: string,
   options: PropertyTestingOptions = {},
 ): PbtFixtureAwareTest {
-  return makePbtTest(fixtureMapOf(coreTest), fixedFile, options);
+  return makePbtTest(fixtureMapOf(coreTest), fixedFile, {
+    scenarioGuard: options.scenarioGuard ?? scenarioGuardOf(coreTest),
+  });
 }
 
 export const prop: PropFn = makeExplicitProp({});
