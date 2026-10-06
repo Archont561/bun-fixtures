@@ -158,15 +158,17 @@ tasks:
     description: "Release bun-test-utils 0.1.0 as the repository's only public npm
       package. The public package is a thin assembly wrapper;
       @bun-test-utils/core and all capability workspaces are private and staged
-      into its tarball as raw TypeScript (ADR 0013). PROGRESS: CI, dual
-      licensing, release tooling, changelog, and the
-      pack/install/CLI/internal-capability smoke harness are complete. PUBLIC
-      API GATE: task_021 (Playwright-style test.extend and typed scenario
-      chains) must land before publication, followed by publication audit
-      task_016. REMAINING: complete task_021 and task_016, then create v0.1.0,
-      publish bun-test-utils, and rerun the installed-consumer harness against
-      the registry package. Tagging and publishing require maintainer sanction
-      because they create public artifacts."
+      into its tarball as raw TypeScript (ADR 0013, ADR 0014). PROGRESS: CI,
+      dual licensing, release tooling, changelog, and the
+      pack/install/CLI/internal-capability smoke harness are complete. The
+      public API gate is cleared — task_021 (Playwright-style test.extend and
+      typed scenario chains) and task_016 (publication audit) are both done.
+      REMAINING: task_041 should land first so the stability tiers and the
+      frozen vcr surface ship with 0.1.0 rather than after it; then create the
+      v0.1.0 tag, publish bun-test-utils, and rerun the installed-consumer
+      harness against the registry package. No tag exists yet (git tag -l is
+      empty). Tagging and publishing require maintainer sanction because they
+      create public artifacts."
     source_links: []
     status: in_progress
     priority: P1
@@ -206,7 +208,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-06T07:31:57.753Z
+    updated_at: 2026-10-06T18:21:47.910Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch
