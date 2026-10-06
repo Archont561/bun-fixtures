@@ -85,7 +85,7 @@ The full public type surface:
 | :-- | :-- |
 | `Scope` | `"session" \| "file" \| "test"` — fixture lifetimes |
 | `FixtureDef<T>` | One fixture definition: `setup`, optional `scope`, `params`, `deps` |
-| `FixtureMap` | The shape of a `fixtures.ts` default export |
+| `FixtureMap` | The shape of a fixture map passed to `test.extend()` |
 | `FixtureContext` | Resolved fixture values plus metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) |
 | `TestOptions` | `{ fixtures?, timeout?, iterate? }` |
 | `UseFn<T>` | The `use(value)` publisher handed to `setup` |
@@ -121,7 +121,7 @@ themselves:
 | Export | Purpose |
 | :-- | :-- |
 | `registerFixtures(dir, map)` | Register a fixture map programmatically |
-| `fixturesFor(testFile)` | Merge every `fixtures.ts` from root down to `testFile` |
+| `fixturesFor(testFile)` | Internal fixture lookup helper; prefer explicit `test.extend()` composition |
 | `resolveOrder(requested, map, where)` | Topological order over requested fixtures — throws on cycles, unknown names, scope violations |
 | `paramCombos(order, map)` | Cartesian product of every parameterized fixture |
 | `destructuredKeys(fn, index)` | Identifiers of a destructured parameter |

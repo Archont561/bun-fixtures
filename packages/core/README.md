@@ -10,8 +10,7 @@ autodiscovered per directory, resolved by dependency, and torn down strictly in 
 
 `bun test` has no fixture API ([oven-sh/bun#8257](https://github.com/oven-sh/bun/issues/8257)).
 This engine adds one without touching `bun:test`: a test names its dependencies in its
-parameter list, and a preload resolves them from `fixtures.ts` files found by walking the
-directory tree — the same idea as `conftest.py`.
+parameter list, and a Playwright-style `test.extend()` API composes fixtures explicitly.
 
 ```ts
 import { test, expect } from "bun-test-utils";
@@ -100,7 +99,7 @@ interface FixtureDef<T = any> {
 }
 ```
 
-A representative `fixtures.ts` looks like this:
+A representative `test.ts` composition module looks like this:
 
 ```ts
 export default {
@@ -140,8 +139,7 @@ Teardown is **LIFO** — dependents before their dependencies.
 
 ### Discovery and merge
 
-The preload walks the directory tree once at startup, collecting `fixtures.ts` /
-`conftest.ts` files and merging them root → leaf: a nearer declaration wins, and a
+The preload only installs the engine. Fixture maps are composed explicitly with `test.extend()`; a
 directory cannot see its siblings' fixtures. Tests then resolve fixtures from the merged
 map of the directories above them.
 
@@ -180,7 +178,7 @@ Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tre
 | Test | `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
 | Test | `expect`, `describe` | Re-exported from `bun:test`, unchanged |
 | Iteration | `opts.iterate` → `ctx.iterate(fn)` | Defer test-scoped fixtures: each `ctx.iterate` call builds them fresh and unwinds them LIFO — the per-sample lifecycle property runners use (see [`@bun-test-utils/pbt`](../pbt)) |
-| CLI | `bunx bun-test-utils init [--dir] [--entry] [--force]` | Append the preload to `bunfig.toml` and scaffold a root `fixtures.ts` |
+| CLI | `bunx bun-test-utils init [--dir] [--entry] [--force]` | Append the preload to `bunfig.toml` and scaffold an extendable `test.ts` |
 | Types | `FixtureDef`, `FixtureMap`, `FixtureContext`, `Scope`, `TestOptions`, `IterateFn` | The public type surface |
 | Engine | `discoverFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession` | Internals exported for tooling and for testing fixture trees |
 
@@ -191,7 +189,7 @@ Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tre
                                    │
                                    ▼
                  discovery — walk the directory tree once
-                 fixtures.ts / conftest.ts, merged root → leaf
+                 test.extend() composition chain
                                    │
                                    ▼
                  resolution — dependencies, scopes, params
