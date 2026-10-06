@@ -93,6 +93,7 @@ Parked as decisions rather than omissions, each with the condition that would st
 | Mutation testing as an internal quality gate | the engine suite needs a stronger signal than line coverage |
 | Fuzzing beyond fast-check | an invariant appears that property testing cannot express |
 | Benchmark fixtures | a performance claim needs defending |
+| Base-directory override for the `__cassettes__` / `__snapshots__` conventions | a consumer needs to redirect the convention and cannot via `cassette.save()`/`load()` or by choosing where the test file lives ([ADR 0019](./.backlog/docs/adr/0019-no-base-directory-override-in-0-1-x.md)) |
 
 **Present in `0.1.0` but outside the stable contract** — usable, and free to change in a minor release:
 

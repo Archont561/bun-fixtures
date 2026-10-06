@@ -2231,7 +2231,11 @@ tasks:
       migration tooling are absent. VISIBILITY: the list is published as the
       'Roadmap - deliberately deferred' section of the root README, with a
       pointer from the published package README (absolute URL, since .backlog/
-      is not in the npm tarball)."
+      is not in the npm tarball). ADDED BY task_045 (ADR 0019): base-directory
+      override for the __cassettes__/__snapshots__ conventions - trigger: a
+      consumer outside this repository needs to redirect the convention and
+      cannot do so via cassette.save()/load() or by choosing where the test file
+      lives; if it fires, baseDir is the path, not exporting createTest."
     source_links: []
     status: done
     priority: P3
@@ -2267,7 +2271,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:51:08.448Z
-    updated_at: 2026-10-06T20:57:11.949Z
+    updated_at: 2026-10-06T21:02:54.919Z
   - id: task_043
     title: Typecheck the e2e/ directories
     description: "Add e2e to each package tsconfig include list so e2e tests and BDD
@@ -2362,22 +2366,29 @@ tasks:
     updated_at: 2026-10-06T20:54:37.500Z
   - id: task_045
     title: Opt-in base directory for the cassette and snapshot conventions
-    description: "Weighed and rejected during task_037 as out of scope for a
-      refactor. Both fixtures derive their output from dirname(ctx.testFile):
-      __cassettes__/<slug>.json and __snapshots__/<slug>.snap.json. vcr has
-      save(path)/load(path) escape hatches; snapshot has none (path is
-      read-only). task_037 therefore composed its suites with
-      createTest(<scratch path>) so the convention resolves into a temp dir —
-      idiomatic and hermetic, but it demonstrates internal composition because
-      createTest is exported from @bun-test-utils/core and NOT from the
-      published bun-test-utils wrapper (which exports only test, describe,
-      expect). An opt-in base-dir override would let a consumer redirect the
-      convention without that indirection. Measured rationale for not doing it
-      then: it adds public API whose only caller would be the test suite, and it
-      needs specs 0012 + 0013 plus an ADR. Decide first whether the real gap is
-      the override or simply exporting createTest from the wrapper."
+    description: "DECIDED AND PARKED - see ADR 0019
+      (.backlog/docs/adr/0019-no-base-directory-override-in-0-1-x.md). The task
+      asked to decide first whether the real gap is an opt-in base-directory
+      override or simply exporting createTest from the wrapper. Measured against
+      the contracts already frozen for 0.1.0, the answer is neither, and 0.1.0
+      ships without both. Exporting createTest is blocked outright by spec 0004
+      R7 ('engine helpers MUST NOT be re-exported from the public root
+      package'), also violates R2, breaks the public-api.test.ts conformance
+      gate pinning root exports to exactly describe/expect/test, and would
+      reverse ADR 0012. The baseDir override is not blocked but is badly timed:
+      ADR 0018 declared snapshot and minimal VCR stable for 0.1.x, so shipping
+      baseDir makes its removal a breaking change, and spec 0013 R4
+      (snapshot.path read-only, snapshots next to the test file) would need
+      amending in the same breath it was frozen. task_037 already measured the
+      demand as 'the test suite only'. TRIGGER THAT UNPARKS IT: a consumer
+      outside this repository needs to redirect the convention and cannot do so
+      via cassette.save()/load() or by choosing where the test file lives. If
+      that fires, baseDir is the path - additive - not exporting createTest,
+      which would widen the root surface permanently. Recorded in the root
+      README roadmap and in ADR 0019's alternatives, including the smaller
+      intermediate step (give snapshot a save/load pair mirroring vcr)."
     source_links: []
-    status: ready
+    status: done
     priority: P3
     labels: []
     repo_targets:
@@ -2405,4 +2416,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T19:08:07.768Z
-    updated_at: 2026-10-06T19:08:07.768Z
+    updated_at: 2026-10-06T21:03:39.037Z
