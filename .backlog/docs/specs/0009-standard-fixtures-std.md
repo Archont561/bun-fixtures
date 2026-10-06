@@ -2,7 +2,7 @@
 
 - **Status:** implemented
 - **Implementation:** `packages/std/`
-- **Tests:** `packages/std/tests/std.test.ts` (unit) and `packages/bun-fixture/tests/std.test.ts` (dogfooded through the engine via `packages/bun-fixture/tests/fixtures.ts`)
+- **Tests:** `packages/std/tests/{tmpdir,env,stdio}.test.ts` (focused unit tests) and `packages/bun-test-utils/tests/conformance/std.test.ts` (dogfooded through the assembled package)
 
 ## Problem
 

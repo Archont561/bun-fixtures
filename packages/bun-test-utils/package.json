@@ -1,7 +1,7 @@
 {
   "name": "bun-test-utils",
   "version": "0.1.0",
-  "description": "pytest-style scoped, injectable fixtures for `bun test` — autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
+  "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "author": "Archont561 (https://github.com/Archont561)",
@@ -24,39 +24,74 @@
   "bugs": {
     "url": "https://github.com/Archont561/bun-test-utils/issues"
   },
-  "main": "./src/plugin.ts",
-  "module": "./src/plugin.ts",
-  "types": "./src/types.ts",
+  "main": "./dist/plugin.js",
+  "module": "./dist/plugin.js",
+  "types": "./dist/plugin.d.ts",
   "exports": {
-    ".": "./src/plugin.ts",
-    "./plugin": "./src/plugin.ts",
-    "./types": "./src/types.ts",
-    "./std": "./std/src/index.ts",
-    "./pbt": "./pbt/src/index.ts",
-    "./dom": "./dom/src/index.ts",
-    "./browser": "./browser/src/index.ts",
-    "./vcr": "./vcr/src/index.ts",
-    "./snapshot": "./snapshot/src/index.ts",
-    "./bdd": "./bdd/src/index.ts",
+    ".": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js",
+      "default": "./dist/plugin.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js",
+      "default": "./dist/plugin.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./std": {
+      "types": "./dist/subpaths/std.d.ts",
+      "import": "./dist/subpaths/std.js",
+      "default": "./dist/subpaths/std.js"
+    },
+    "./pbt": {
+      "types": "./dist/subpaths/pbt.d.ts",
+      "import": "./dist/subpaths/pbt.js",
+      "default": "./dist/subpaths/pbt.js"
+    },
+    "./dom": {
+      "types": "./dist/subpaths/dom.d.ts",
+      "import": "./dist/subpaths/dom.js",
+      "default": "./dist/subpaths/dom.js"
+    },
+    "./browser": {
+      "types": "./dist/subpaths/browser.d.ts",
+      "import": "./dist/subpaths/browser.js",
+      "default": "./dist/subpaths/browser.js"
+    },
+    "./vcr": {
+      "types": "./dist/subpaths/vcr.d.ts",
+      "import": "./dist/subpaths/vcr.js",
+      "default": "./dist/subpaths/vcr.js"
+    },
+    "./snapshot": {
+      "types": "./dist/subpaths/snapshot.d.ts",
+      "import": "./dist/subpaths/snapshot.js",
+      "default": "./dist/subpaths/snapshot.js"
+    },
+    "./bdd": {
+      "types": "./dist/subpaths/bdd.d.ts",
+      "import": "./dist/subpaths/bdd.js",
+      "default": "./dist/subpaths/bdd.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "src",
-    "std/src",
-    "pbt/src",
-    "dom/src",
-    "browser/src",
-    "vcr/src",
-    "snapshot/src",
-    "bdd/src",
+    "dist",
     "README.md",
     "LICENSE-MIT",
     "LICENSE-APACHE"
   ],
   "scripts": {
+    "build": "bunup",
+    "prepack": "bun ../../scripts/sync-package-readme.ts && bun run build",
     "test": "bun test",
-    "test:unit": "bun test tests/fixtures.test.ts tests/nested",
-    "test:bdd": "bun test tests/features.test.ts",
+    "test:unit": "bun test tests/conformance",
+    "test:bdd": "bun test e2e/features.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
@@ -92,9 +127,17 @@
   },
   "devDependencies": {
     "@aboviq/bun-test-cucumber": "^0.2.0",
-    "@bun-test-utils/config": "workspace:*"
+    "@bun-test-utils/bdd": "workspace:*",
+    "@bun-test-utils/browser": "workspace:*",
+    "@bun-test-utils/config": "workspace:*",
+    "@bun-test-utils/core": "workspace:*",
+    "@bun-test-utils/dom": "workspace:*",
+    "@bun-test-utils/pbt": "workspace:*",
+    "@bun-test-utils/snapshot": "workspace:*",
+    "@bun-test-utils/std": "workspace:*",
+    "@bun-test-utils/vcr": "workspace:*"
   },
   "bin": {
-    "bun-test-utils": "./src/cli.ts"
+    "bun-test-utils": "./dist/cli.js"
   }
 }

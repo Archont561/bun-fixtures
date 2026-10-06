@@ -1,7 +1,7 @@
 # bun-test-utils — documentation
 
 Working docs for the package and its ecosystem. User-facing documentation lives in the
-[root README](../../README.md) and individual package READMEs; everything here is for people building `bun-test-utils`.
+[root README](../../README.md), which is synchronized into the one publishable package; everything here is for people building `bun-test-utils`.
 
 | Area | What lives there |
 |------|------------------|
@@ -21,7 +21,7 @@ Working docs for the package and its ecosystem. User-facing documentation lives 
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
 | [M5](./milestones/M5-publish.md) | Publish to npm | 🟡 in progress |
 
-Beyond the original M1–M5 plan, the ecosystem packages ([ADR 0011](./adr/0011-brand-identity-and-modular-ecosystem.md)) are
+Beyond the original M1–M5 plan, the ecosystem packages ([ADR 0013](./adr/0013-published-wrapper-internal-workspaces.md)) are
 delivered but not all of them fully meet their acceptance criteria:
 
 | Package | Spec | Task | Status |
@@ -39,16 +39,19 @@ Each 🟡 task carries the precise remaining gap in its description —
 
 ## Repository map
 
-This is a Bun workspace ([ADR 0010](./adr/0010-monorepo-layout.md), [ADR 0011](./adr/0011-brand-identity-and-modular-ecosystem.md)):
+This is a Bun workspace ([ADR 0010](./adr/0010-monorepo-layout.md), [ADR 0013](./adr/0013-published-wrapper-internal-workspaces.md)):
 
 ```
 packages/
-  bun-test-utils/       core engine, CLI (init), and public API
-  std/               @bun-test-utils/std (tmpdir, env, stdio)
-  pbt/        @bun-test-utils/pbt (property-based testing)
+  bun-test-utils/     published wrapper and cross-cutting/E2E tests
+  core/               @bun-test-utils/core (fixture engine, types, CLI internals)
+  std/                @bun-test-utils/std (tmpdir, env, stdio)
+  pbt/                @bun-test-utils/pbt (property-based testing)
   dom/               @bun-test-utils/dom (happy-dom in-memory component testing)
   browser/           @bun-test-utils/browser (Playwright & Bun.serve fixtures)
   vcr/               @bun-test-utils/vcr (HTTP record & replay cassette fixtures)
+  snapshot/          @bun-test-utils/snapshot (value and file snapshots)
+  bdd/               @bun-test-utils/bdd (Cucumber fixture bridge)
   config/            @bun-test-utils/config (shared TypeScript configurations)
 .backlog/            Backlog project state (tasks, claims, runs)
 .backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)

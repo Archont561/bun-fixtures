@@ -12,12 +12,17 @@
   "exports": {
     "./base.json": "./base.json",
     "./lib.json": "./lib.json",
-    "./app.json": "./app.json"
+    "./app.json": "./app.json",
+    "./bunup": "./bunup.ts"
   },
   "files": [
     "base.json",
     "lib.json",
-    "app.json"
+    "app.json",
+    "bunup.ts"
   ],
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "bunup": "0.16.32"
+  }
 }

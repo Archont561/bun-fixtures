@@ -12,7 +12,7 @@ API.
 | A `request` object | `request.param` is `ctx.param`; `request.node` has no Bun equivalent |
 | Parsing or running Gherkin `.feature` files | separate concern — see [`@aboviq/bun-test-cucumber`](https://www.npmjs.com/package/@aboviq/bun-test-cucumber), which this repo uses for its own behavioural suite. **Narrowed by [ADR 0012](./adr/0012-bdd-fixture-bridge.md):** this only means `bun-fixture` won't be a Gherkin runner — making fixtures reachable from BDD step definitions is in scope, proposed in [spec 0014](./specs/0014-bdd-fixture-bridge.md) |
 | `test.each`, `test.skip/only/todo` with fixtures | use `params` for the first; the rest are unimplemented, not refused |
-| Non-Bun runtimes | the package ships raw TypeScript and imports `bun:test` ([ADR 0003](./adr/0003-raw-ts-distribution.md)) |
+| Non-Bun runtimes | the package ships Bun-targeted ESM and imports `bun:test` ([ADR 0014](./adr/0014-bunup-built-publication.md)) |
 
 ## Known limits
 
@@ -51,8 +51,8 @@ through `smol-toml` ([ADR 0004](./adr/0004-smol-toml-for-cli.md)); it warns when
 the original had comments. Hand-edit a comment-heavy config instead.
 
 **The preload entry needs `./`.** Bun rejects a bare
-`node_modules/bun-fixture/src/plugin.ts` with `preload not found`; `init`
-writes `./node_modules/bun-fixture/src/plugin.ts`.
+`node_modules/bun-test-utils/dist/plugin.js` with `preload not found`; `init`
+writes `./node_modules/bun-test-utils/dist/plugin.js`.
 
 ## If Bun ships fixtures natively
 

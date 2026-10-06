@@ -3,7 +3,7 @@
 - **Status:** implemented
 - **Milestone:** M1
 - **Implementation:** `packages/bun-fixture/src/plugin.ts`
-- **Tests:** `packages/bun-fixture/tests/fixtures.test.ts` (`injection`, `scopes`, `parameterization`, `engine internals`)
+- **Tests:** `packages/core/tests/plugin.test.ts` (`injection`, `scopes`, `parameterization`, `engine internals`)
 
 ## Problem
 

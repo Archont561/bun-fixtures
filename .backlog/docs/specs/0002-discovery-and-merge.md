@@ -3,7 +3,7 @@
 - **Status:** implemented
 - **Milestone:** M2
 - **Implementation:** `packages/bun-fixture/src/plugin.ts` (`discoverFixtures`, `fixturesFor`)
-- **Tests:** `packages/bun-fixture/tests/nested/nested.test.ts`, `tests/fixtures.test.ts` ("merges every fixtures.ts…")
+- **Tests:** `packages/core/tests/nested/nested.test.ts`, `tests/plugin.test.ts` ("merges every fixtures.ts…")
 
 ## Problem
 

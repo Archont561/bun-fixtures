@@ -20,7 +20,7 @@ import {
   runCli,
   runTests,
   writeProjectFile,
-} from "@/tests/support/project.ts";
+} from "../support/project.ts";
 
 interface World {
   project?: Project;

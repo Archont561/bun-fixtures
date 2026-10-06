@@ -2,12 +2,12 @@
 
 - **Status:** implemented in the `bun-test-utils/bdd` subpath; scenario-chain API revision documented below
 - **ADR:** [0012](../adr/0012-bdd-fixture-bridge.md)
-- **Implementation:** `packages/bun-test-utils/src/plugin.ts` (`openFixtures`/`withFixtures`),
-  `packages/bun-test-utils/bdd/` (internal workspace package,
+- **Implementation:** `packages/core/src/plugin.ts` (`openFixtures`/`withFixtures`),
+  `packages/bdd/` (internal workspace package,
   bundled into the published `bun-test-utils` package as the
   `bun-test-utils/bdd` subpath export)
-- **Tests:** `packages/bun-test-utils/tests/conformance/conformance.test.ts`,
-  `packages/bun-test-utils/tests/fixtures.test.ts`
+- **Tests:** `packages/bun-test-utils/tests/conformance/subpaths.test.ts`,
+  `packages/core/tests/plugin.test.ts`
 
 ## 2026-10-05 update (second revision, grill-me sessions)
 
@@ -38,7 +38,7 @@ fold) landing first.
 `@aboviq/bun-test-cucumber` step definitions have no access to `bun-fixture`'s
 dependency injection. Shared state across `Given`/`When`/`Then` steps is
 hand-rolled per suite via Cucumber's own `withState<World>()`
-(`packages/bun-fixture/tests/steps/fixtures.steps.ts` is the existing example),
+(`packages/bun-test-utils/tests/steps/fixtures.steps.ts` is the existing example),
 duplicating scope caching and teardown ordering that every other test file
 already gets for free by importing `bun-fixture`'s `test`.
 

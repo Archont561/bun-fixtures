@@ -1,6 +1,6 @@
 # 0003 — Ship raw TypeScript
 
-- **Status:** accepted
+- **Status:** superseded by [0014](./0014-bunup-built-publication.md)
 
 ## Context
 

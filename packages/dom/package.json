@@ -1,0 +1,26 @@
+{
+  "name": "@bun-test-utils/dom",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal workspace package \u2014 in-memory DOM and UI component testing fixtures for bun-test-utils using happy-dom. Bundled into the published bun-test-utils package as the \"bun-test-utils/dom\" subpath; never published on its own.",
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "bunup",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "dependencies": {
+    "happy-dom": "^20.14.5"
+  },
+  "devDependencies": {
+    "@bun-test-utils/config": "workspace:*",
+    "@bun-test-utils/core": "workspace:*"
+  }
+}

@@ -1,5 +1,5 @@
 import { stdFixtures } from "bun-test-utils/std";
-import type { FixtureMap } from "@/src/types.ts";
+import type { FixtureMap } from "@/types.ts";
 
 let dbCount = 0;
 

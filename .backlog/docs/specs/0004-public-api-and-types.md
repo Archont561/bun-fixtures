@@ -3,7 +3,7 @@
 - **Status:** implemented
 - **Milestone:** M4
 - **Implementation:** `packages/bun-fixture/src/plugin.ts`, `src/types.ts`
-- **Tests:** `packages/bun-fixture/tests/fixtures.test.ts`, `bunx tsc --noEmit`
+- **Tests:** `packages/core/tests/plugin.test.ts`, `bunx tsc --noEmit`
 
 ## Requirements
 
@@ -36,7 +36,7 @@ than in `import.meta`.
 
 | Requirement | Test |
 |-------------|------|
-| R2 | every test in `tests/fixtures.test.ts` (top-level `test`), "exposes test metadata on the context" |
+| R2 | every test in `tests/plugin.test.ts` (top-level `test`), "exposes test metadata on the context" |
 | R3 | "createTest binds to an explicit file", all of `tests/nested/nested.test.ts` |
 | R4 | "supports an explicit fixture list", "a fresh project…" (`{ timeout: 30_000 }`), all of "iteration protocol (opts.iterate)" |
 | R5 | "exposes test metadata on the context" |

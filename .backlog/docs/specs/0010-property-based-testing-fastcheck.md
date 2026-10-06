@@ -1,8 +1,8 @@
 # 0010 — Property-Based Testing Integration with fast-check
 
 - **Status:** implemented
-- **Implementation:** `packages/fast-check/` (`test.prop` built on the engine's `opts.iterate` protocol in `packages/bun-fixture/src/plugin.ts`)
-- **Tests:** `packages/fast-check/tests/fastcheck.test.ts`, engine protocol in `packages/bun-fixture/tests/fixtures.test.ts` ("iteration protocol (opts.iterate)")
+- **Implementation:** `packages/pbt/` (`test.prop` built on the engine's `opts.iterate` protocol in `packages/core/src/plugin.ts`)
+- **Tests:** `packages/pbt/tests/index.test.ts`, engine protocol in `packages/core/tests/plugin.test.ts` ("iteration protocol (opts.iterate)")
 
 ## Problem
 

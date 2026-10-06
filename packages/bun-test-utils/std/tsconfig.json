@@ -1,9 +1,0 @@
-{
-  "extends": "../../config/lib.json",
-  "compilerOptions": {
-    "paths": {
-      "bun-test-utils": ["../src/plugin.ts"]
-    }
-  },
-  "include": ["src", "tests"]
-}

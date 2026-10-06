@@ -1,0 +1,11 @@
+{
+  "extends": "@bun-test-utils/config/lib.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "bun-test-utils": ["../bun-test-utils/src/plugin.ts"]
+    }
+  },
+  "include": ["src"]
+}

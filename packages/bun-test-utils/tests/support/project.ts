@@ -46,7 +46,7 @@ export function createProject(): Project {
   );
   writeFileSync(
     join(dir, "bunfig.toml"),
-    '[test]\npreload = ["./node_modules/bun-test-utils/src/plugin.ts"]\n',
+    '[test]\npreload = ["./node_modules/bun-test-utils/dist/plugin.js"]\n',
   );
   return { dir };
 }
