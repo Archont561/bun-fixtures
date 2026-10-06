@@ -51,7 +51,7 @@ errors — lives in [`@bun-test-utils/core`](./packages/core#readme).
 
 ```bash
 bun add -d bun-test-utils
-bunx bun-test-utils init
+bunx test-utils init
 ```
 
 `init` appends `./node_modules/bun-test-utils/dist/plugin.js` to `[test].preload` in

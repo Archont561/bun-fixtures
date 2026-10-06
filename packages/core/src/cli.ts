@@ -3,7 +3,7 @@
 /**
  * bun-test-utils CLI — built with citty.
  *
- *   bunx bun-test-utils init [--dir <path>] [--entry <preload path>] [--force]
+ *   bunx test-utils init [--dir <path>] [--entry <preload path>] [--force]
  */
 
 import { existsSync } from "node:fs";

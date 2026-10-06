@@ -143,6 +143,6 @@
     "@bun-test-utils/vcr": "workspace:*"
   },
   "bin": {
-    "bun-test-utils": "./dist/cli.js"
+    "test-utils": "./dist/cli.js"
   }
 }

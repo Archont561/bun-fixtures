@@ -1,16 +1,16 @@
 ---
 title: CLI Reference
-description: Command-line interface reference for bun-test-utils init.
+description: Command-line interface reference for test-utils init.
 ---
 
 ## Commands
 
-### `bun-test-utils init`
+### `test-utils init`
 
 Initializes `bun-test-utils` in the current project or workspace.
 
 ```bash
-bunx bun-test-utils init [options]
+bunx test-utils init [options]
 ```
 
 #### Options
