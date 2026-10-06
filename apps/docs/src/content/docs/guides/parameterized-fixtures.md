@@ -8,7 +8,7 @@ description: Generate Cartesian product test combinations with parameterized fix
 Fixtures can declare `params` to run every dependent test against each value:
 
 ```ts
-// fixtures.ts
+// test.ts
 export default {
   browser: {
     params: ["chromium", "firefox", "webkit"],

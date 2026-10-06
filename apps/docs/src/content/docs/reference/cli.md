@@ -17,4 +17,4 @@ bunx bun-test-utils init [options]
 
 - `--dir <path>`: Working directory (defaults to current directory).
 - `--entry <path>`: Path to preload script entrypoint.
-- `--force`: Overwrite existing `fixtures.ts` if present.
+- `--force`: Overwrite existing `test.ts` if present.

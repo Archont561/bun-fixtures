@@ -1,22 +1,55 @@
 ---
-title: Discovery & Merging
-description: How bun-test-utils walks your directory tree and merges fixture definitions.
+title: Fixture composition
+description: Compose fixtures explicitly with Playwright-style test.extend().
 ---
 
-## Directory Hierarchy
+## Explicit composition
 
-Fixtures declared in parent folders are inherited by all child folders.
+Fixtures are not discovered from `fixtures.ts` or `conftest.ts`. Define them in a module and
+export a test runner created with `test.extend()`:
 
+```ts
+import { test as base } from "bun-test-utils";
+import { stdFixtures } from "bun-test-utils/std";
+
+export const test = base.extend({
+  ...stdFixtures,
+  database: {
+    scope: "file",
+    setup: async (use) => {
+      const database = await createDatabase();
+      await use(database);
+      await database.close();
+    },
+  },
+});
 ```
-fixtures.ts                 # Declares: server, db, user
-tests/
-  fixtures.ts               # Overrides: db, Adds: apiClient
-  api/
-    checkout.test.ts        # Sees: server, user (root), db, apiClient (tests/)
+
+A test imports that runner directly:
+
+```ts
+import { test } from "./test";
+
+test("uses the database", async ({ database }) => {
+  // database is typed and scoped by the extension chain
+});
 ```
 
-### Merging Strategy
+## Extension chains
 
-1. **Root-to-Leaf**: Fixture maps are merged from the root directory down to the test file's directory.
-2. **Nearest Wins**: A definition closer to the test file overrides an identically named definition from an ancestor.
-3. **Sibling Isolation**: Sibling directories cannot see each other's fixtures.
+Calling `extend()` returns a new runner. Child modules can add or override fixtures without
+scanning directories or relying on global state:
+
+```ts
+export const testWithUser = test.extend({
+  user: {
+    setup: async (use, { database }) => {
+      await use(await database.createUser("Ada"));
+    },
+  },
+});
+```
+
+The engine still resolves dependencies in topological order and applies session, file, and
+test lifetimes with reverse-order teardown. Only the imported extension chain contributes
+fixtures to a test.

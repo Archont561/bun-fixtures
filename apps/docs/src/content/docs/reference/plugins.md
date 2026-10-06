@@ -12,7 +12,7 @@ install for the pack itself. A few wrap a heavy third-party library declared as 
 
 ### `bun-test-utils/std`
 
-Zero-dependency standard fixtures — spread the bundle into your `fixtures.ts`:
+Zero-dependency standard fixtures — spread the bundle into your `test.ts`:
 
 ```ts
 import { stdFixtures } from "bun-test-utils/std";

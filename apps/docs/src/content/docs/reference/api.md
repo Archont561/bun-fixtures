@@ -120,7 +120,6 @@ themselves:
 
 | Export | Purpose |
 | :-- | :-- |
-| `discoverFixtures(root?)` | Walk the tree and rebuild the directory → fixtures map |
 | `registerFixtures(dir, map)` | Register a fixture map programmatically |
 | `fixturesFor(testFile)` | Merge every `fixtures.ts` from root down to `testFile` |
 | `resolveOrder(requested, map, where)` | Topological order over requested fixtures — throws on cycles, unknown names, scope violations |

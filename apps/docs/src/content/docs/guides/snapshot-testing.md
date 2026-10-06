@@ -15,7 +15,7 @@ time a test runs.
 bun add -d bun-test-utils
 ```
 
-Register the bundle in your `fixtures.ts`:
+Register the bundle in your `test.ts`:
 
 ```ts
 import snapshotFixtures from "bun-test-utils/snapshot";
