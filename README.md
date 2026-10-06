@@ -74,8 +74,10 @@ bun install
 bun run lint
 bun run typecheck
 bun run build
-bun test
-bun run test:bdd
+bun run test      # fast unit suites
+bun run test:bdd  # behavioural (Gherkin) suites
+bun run test:e2e  # full consumer-facing e2e (superset of bdd)
+bun run test:all  # everything CI runs
 bun run docs:dev
 ```
 
@@ -83,7 +85,7 @@ The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight.
 
 ## Contributing
 
-Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun test && bun run test:bdd` before opening a PR. Commit messages use Conventional Commits.
+Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun run test:all` before opening a PR. Commit messages use Conventional Commits.
 
 ## License
 

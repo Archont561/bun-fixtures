@@ -10,8 +10,8 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "bunup",
-    "test": "bun test",
     "typecheck": "tsc --noEmit",
+    "test": "bun test tests",
     "test:bdd": "bun test e2e/bdd/features.test.ts",
     "test:e2e": "bun test e2e"
   },
