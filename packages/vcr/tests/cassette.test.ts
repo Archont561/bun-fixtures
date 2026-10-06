@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { FixtureContext } from "bun-test-utils";
+import { CassetteError } from "bun-test-utils";
 import type { CassetteEntry } from "@/index.ts";
 import { cassetteFixture } from "@/index.ts";
 
@@ -24,6 +25,57 @@ function scratch(testName?: string): { dir: string; ctx: FixtureContext } {
 }
 
 describe("@bun-test-utils/vcr", () => {
+  test("records and replays callback output without rerunning live work", async () => {
+    const { dir, ctx } = scratch("callback registry");
+    let calls = 0;
+    const loadUser = async () => {
+      calls++;
+      return { id: "user-1", name: "Ada" };
+    };
+
+    try {
+      await cassetteFixture.setup(async (vcr) => {
+        expect(await vcr.record(loadUser)).toEqual({
+          id: "user-1",
+          name: "Ada",
+        });
+        expect(await vcr.replay(loadUser)).toEqual({
+          id: "user-1",
+          name: "Ada",
+        });
+        expect(calls).toBe(1);
+      }, ctx);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("replay reports an unrecorded callback without invoking it", async () => {
+    const { dir, ctx } = scratch("missing callback");
+    let calls = 0;
+    const loadUser = () => {
+      calls++;
+      return { id: "missing" };
+    };
+
+    try {
+      await cassetteFixture.setup(async (vcr) => {
+        let error: unknown;
+        try {
+          await vcr.replay(loadUser);
+        } catch (caught) {
+          error = caught;
+        }
+        expect(error).toBeInstanceOf(CassetteError);
+        expect((error as CassetteError).code).toBe("CALLBACK_NOT_RECORDED");
+        expect((error as CassetteError).message).toContain("record(callback)");
+        expect(calls).toBe(0);
+      }, ctx);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("records live requests and replays cached responses", async () => {
     // Start local mock server
     const server = Bun.serve({

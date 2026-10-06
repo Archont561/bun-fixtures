@@ -180,3 +180,14 @@ jobs:
 
       - name: Run tests (Turborepo + Bun Test)
         run: bun run test
+
+      - name: Generate LCOV coverage
+        run: bun run coverage
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

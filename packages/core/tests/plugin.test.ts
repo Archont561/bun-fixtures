@@ -1,12 +1,15 @@
 import {
+  configureDiagnostics,
   createTest,
   describe,
   destructuredKeys,
   expect,
   fixturesFor,
   paramCombos,
+  reportDiagnostic,
   resolveOrder,
   test,
+  UnknownFixtureError,
 } from "@/plugin.ts";
 
 const here = import.meta.path;
@@ -209,6 +212,18 @@ describe("engine internals", () => {
     );
   });
 
+  test("unknown fixture errors expose a stable code and details", () => {
+    let error: unknown;
+    try {
+      resolveOrder(["nope"], map, here);
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(UnknownFixtureError);
+    expect((error as UnknownFixtureError).code).toBe("UNKNOWN_FIXTURE");
+    expect((error as UnknownFixtureError).details?.name).toBe("nope");
+  });
+
   test("throws on a scope violation", () => {
     const bad = {
       short: { scope: "test" as const, setup: async (use: any) => use(1) },
@@ -255,5 +270,26 @@ describe("engine internals", () => {
     const bound = createTest(here);
     expect(typeof bound.test).toBe("function");
     expect(bound.expect).toBe(expect);
+  });
+
+  test("diagnostics are opt-in and structured", () => {
+    const events: any[] = [];
+    const restore = configureDiagnostics((event) => events.push(event));
+    try {
+      reportDiagnostic({
+        code: "FIXTURE_DISCOVERY",
+        message: "ignored malformed fixture",
+        details: { file: "fixtures.ts" },
+      });
+    } finally {
+      restore();
+    }
+    expect(events).toEqual([
+      {
+        code: "FIXTURE_DISCOVERY",
+        message: "ignored malformed fixture",
+        details: { file: "fixtures.ts" },
+      },
+    ]);
   });
 });

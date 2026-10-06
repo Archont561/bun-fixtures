@@ -11,6 +11,7 @@
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
     "test:bdd": "turbo run test:bdd",
+    "coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "typecheck": "turbo run typecheck",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",

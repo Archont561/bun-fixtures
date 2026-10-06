@@ -173,6 +173,69 @@ describe("bun pm pack smoke test", () => {
     { timeout: 120_000 },
   );
 
+  test("publication audit: exports, peers, and private workspaces are clean", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(PACKAGE_DIR, "package.json"), "utf8"),
+    );
+    const expectedExports = [
+      ".",
+      "./plugin",
+      "./types",
+      ...BUNDLED_SUBPATHS.map((subpath) => `./${subpath}`),
+      "./package.json",
+    ];
+    expect(Object.keys(manifest.exports).sort()).toEqual(
+      expectedExports.sort(),
+    );
+
+    for (const peer of [
+      "playwright",
+      "happy-dom",
+      "fast-check",
+      "@aboviq/bun-test-cucumber",
+    ]) {
+      expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
+      expect(manifest.optionalDependencies?.[peer]).toBeString();
+    }
+
+    for (const workspace of ["core", ...BUNDLED_SUBPATHS]) {
+      const workspaceManifest = JSON.parse(
+        readFileSync(
+          join(PACKAGE_DIR, "..", workspace, "package.json"),
+          "utf8",
+        ),
+      );
+      expect(
+        workspaceManifest.private,
+        `${workspace} must remain private`,
+      ).toBe(true);
+    }
+
+    const licenseFiles = ["LICENSE-MIT", "LICENSE-APACHE"];
+    expect(
+      licenseFiles.every((file) => existsSync(join(PACKAGE_DIR, file))),
+    ).toBe(true);
+    expect(
+      licenseFiles.some((file) =>
+        existsSync(join(PACKAGE_DIR, "..", "core", file)),
+      ),
+    ).toBe(false);
+
+    for (const file of [
+      join(PACKAGE_DIR, "dist", "plugin.js"),
+      ...BUNDLED_SUBPATHS.map((subpath) =>
+        join(PACKAGE_DIR, "dist", "subpaths", `${subpath}.js`),
+      ),
+      join(PACKAGE_DIR, "dist", "plugin.d.ts"),
+      ...BUNDLED_SUBPATHS.map((subpath) =>
+        join(PACKAGE_DIR, "dist", "subpaths", `${subpath}.d.ts`),
+      ),
+    ]) {
+      const output = readFileSync(file, "utf8");
+      expect(output).not.toMatch(/(?:from|import)\s*["']@bun-test-utils\//);
+    }
+  });
+
   test(
     "the tarball installs and runs the quickstart, including a bundled subpath",
     () => {

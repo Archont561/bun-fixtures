@@ -157,10 +157,13 @@ tasks:
       @bun-test-utils/core and all capability workspaces are private and staged
       into its tarball as raw TypeScript (ADR 0013). PROGRESS: CI, dual
       licensing, release tooling, changelog, and the pack/install/CLI/subpath
-      smoke harness are complete. REMAINING: finish publication audit task_016,
-      create v0.1.0, publish bun-test-utils, and rerun the installed-consumer
-      harness against the registry package. Tagging and publishing require
-      maintainer sanction because they create public artifacts."
+      smoke harness are complete. PUBLIC API GATE: task_021 (Playwright-style
+      test.extend and typed scenario chains) must land before publication,
+      followed by publication audit task_016. REMAINING: complete task_021 and
+      task_016, then create v0.1.0, publish bun-test-utils, and rerun the
+      installed-consumer harness against the registry package. Tagging and
+      publishing require maintainer sanction because they create public
+      artifacts."
     source_links: []
     status: in_progress
     priority: P1
@@ -181,6 +184,8 @@ tasks:
       - task_003
       - task_004
       - task_008
+      - task_016
+      - task_021
     planning:
       split_status: pending
       risk: medium
@@ -198,7 +203,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-06T06:04:07.585Z
+    updated_at: 2026-10-06T07:31:57.753Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch
@@ -518,16 +523,16 @@ tasks:
       (happy-dom) for UI components and session-scoped Playwright browser/page
       fixtures for real E2E testing. Spec:
       docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-fixture/dom
-      (window, document, page), the ephemeral Bun.serve testServer fixture,
-      and the Playwright browser/context/page fixtures are implemented and
-      tested. RESOLVED (2026-10-06): packages/browser/tests/playwright.test.ts
+      (window, document, page), the ephemeral Bun.serve testServer fixture, and
+      the Playwright browser/context/page fixtures are implemented and tested.
+      RESOLVED (2026-10-06): packages/browser/tests/playwright.test.ts
       E2E-covers the session browser lifecycle, test-scoped context isolation
       (cookies and localStorage against the same session browser and origin),
       and browserPage navigation/interaction against testServer; the tests skip
       gracefully when browser binaries are not installed, and CI installs the
       Chromium headless shell so the coverage is real on every push.
-      tests/playwright-missing-peer.test.ts pins the actionable
-      uninstalled-peer error via a --no-install subprocess probe."
+      tests/playwright-missing-peer.test.ts pins the actionable uninstalled-peer
+      error via a --no-install subprocess probe."
     source_links: []
     status: done
     priority: P2
@@ -655,60 +660,22 @@ tasks:
   - id: task_016
     title: Audit bun-test-utils for publication readiness (single-package exports,
       optional peer deps, docs)
-    description: >-
-      RESOLVED across two grill-me sessions (2026-10-05). The project's
-      architecture is now settled by task_020 and task_025 (single published
-      wrapper, private core/capability workspaces, flat subpath exports) — this
-      task narrows to a pure audit/QA pass over that final shape, not a
-      packaging decision of its own. The earlier 'optional/* convention applies
-      only to new additions' framing from session 1 is superseded: there is no
-      longer a distinction between existing and new capabilities, every one of
-      them (core, std, pbt, dom, browser, vcr, snapshot, bdd) is an internal
-      package folded into the single artifact the same way. Note: the capability
-      formerly named "fast-check" is renamed to "pbt" (Property Based Tests) per
-      a later user decision (2026-10-05) — it still wraps the third-party
-      `fast-check` library, only our package/subpath name changes.
-
-
-      CHECKLIST (applies to the single published bun-test-utils package and its
-      internal workspace packages):
-
-      1. package.json exports map correctness for every subpath (., ./std,
-      ./vcr, ./dom, ./browser, ./pbt, ./snapshot, ./bdd) — types resolve,
-      ESM/CJS as applicable, no broken paths.
-
-      2. optionalDependencies / peerDependenciesMeta.optional correctness for
-      every heavy dep (playwright, happy-dom, fast-check,
-      @aboviq/bun-test-cucumber, vcr's/snapshot's own deps if any) — installing
-      none of them still lets 'bun add bun-test-utils' plus the core API work;
-      importing a gated subpath without its peer throws a clear, actionable
-      error naming the missing package.
-
-      3. LICENSE-MIT/LICENSE-APACHE present once, at the published package root
-      (no longer duplicated per internal package).
-
-      4. One consolidated README with a clear section per subpath, replacing the
-      old six-plus-one-README split; JSDoc completeness on every public export
-      across every subpath.
-
-      5. tsconfig consistency (strict mode, aligned targets) across every
-      internal workspace package feeding the build.
-
-      6. Code quality: no hardcoded @ alias paths in published output, no
-      console logging outside CLI/init, no circular dependencies between
-      internal packages, documented error types/messages (including the new
-      'missing optional peer dependency' error), clean per-subpath index.ts
-      re-exports.
-
-      7. Internal workspace packages (core, std, pbt, dom, browser, vcr,
-      snapshot, bdd) are all private: true and never appear in any npm publish
-      step — verified by pack.test.ts / CI.
-
-
-      defineFixtures()/createFixture()/useFixture() DX helpers remain out of
-      scope here; re-file separately if still wanted.
+    description: "Publication-readiness audit completed against the single
+      bun-test-utils wrapper. Verified exports for ., ./plugin, ./types, ./std,
+      ./pbt, ./dom, ./browser, ./vcr, ./snapshot, ./bdd, and ./package.json;
+      optional peer metadata for playwright, happy-dom, fast-check, and
+      @aboviq/bun-test-cucumber; root license files; private internal
+      workspaces; bundled output without runtime/private workspace imports;
+      README coverage; shared strict tsconfig; and CLI/runtime logging
+      boundaries. Added an executable publication audit to
+      packages/bun-test-utils/e2e/pack.test.ts and documented the optional BDD
+      integration dependency. REMAINING PROOF: the repository-wide bun test gate
+      is not green because packages/core/tests/nested/nested.test.ts reports two
+      session fixture setups instead of one (213 pass, 3 skip, 1 fail). Keep
+      this task in_progress until that baseline failure is resolved or
+      explicitly accepted as unrelated."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P2
     labels:
       - audit
@@ -749,7 +716,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T20:52:23.509Z
-    updated_at: 2026-10-05T21:44:24.116Z
+    updated_at: 2026-10-06T07:34:49.205Z
   - id: task_017
     title: Add value/file snapshot testing fixture (@bun-fixture/snapshot)
     description: >-
@@ -1172,14 +1139,20 @@ tasks:
     updated_at: 2026-10-05T22:37:57.089Z
   - id: task_021
     title: Implement Playwright-style test.extend and typed scenario chains
-    description: "Implement the documented API in spec 0014: immutable test.extend
-      fixture composition; test.scenario(name).given/when/then phase-typed
-      chains; callbacks receive direct fixture and state context; each
-      given/when returns an object merged into later context;
-      test.scenario.prop(name, strategies) uses explicit fast-check strategies
-      and fresh test-scoped fixtures per generated and shrink case."
+    description: "Playwright-style API implementation completed: immutable
+      test.extend fixture composition; typed given/when/then chains that enforce
+      phase order; direct fixture and state context; merged state from
+      given/when callbacks; test.scenario.prop via the bun-test-utils/pbt
+      integration using explicit fast-check strategies and per-example fixture
+      iteration. Added core, PBT, and public wrapper conformance tests.
+      Validation: lint and typecheck pass; focused core/PBT/public scenario
+      tests pass (12 total). REMAINING PROOF: repository-wide bun test still has
+      the pre-existing packages/core/tests/nested/nested.test.ts failure
+      (session fixture setup observed twice; 213 pass, 3 skip, 1 fail before the
+      new scenario coverage). Keep in_progress until the full test gate is green
+      or the unrelated failure is explicitly accepted."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P1
     labels:
       - api
@@ -1212,17 +1185,22 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T01:23:26.696Z
-    updated_at: 2026-10-06T01:23:26.696Z
+    updated_at: 2026-10-06T07:55:37.509Z
   - id: task_023
     title: Implement callback-based cassette record and replay API
-    description: Replace name/options-centric cassette calls with a test-scoped
-      cassette helper exposing record(callback) and replay(callback). Record
-      executes and stores callback output keyed by stable callback identity;
-      replay returns the stored output without invoking the live callback.
-      Direct API calls remain live. Preserve teardown, redaction, matching, and
-      deterministic replay behavior.
+    description: "Callback-based cassette API implemented. CassetteHelper now
+      exposes record(callback) and replay(callback): callback source identity is
+      hashed without execution, record runs and serializes one result, replay
+      returns the stored result without invoking live work, missing entries fail
+      with an actionable error, and direct API calls remain live. Added VCR unit
+      coverage, public bun-test-utils/vcr conformance coverage, README
+      documentation, and spec implementation notes. Focused tests, lint, and
+      typecheck pass. REMAINING PROOF: repository-wide bun test still has the
+      unrelated nested session-fixture failure in
+      packages/core/tests/nested/nested.test.ts; keep in_progress until the full
+      gate is green or explicitly accepted."
     source_links: []
-    status: ready
+    status: in_progress
     priority: P1
     labels:
       - vcr
@@ -1255,7 +1233,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T01:23:26.926Z
-    updated_at: 2026-10-06T01:23:26.926Z
+    updated_at: 2026-10-06T07:59:56.565Z
   - id: task_024
     title: Flatten internal workspace package layout
     description: Move bdd, browser, dom, pbt, snapshot, std, and vcr from
@@ -1390,3 +1368,109 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T06:14:21.990Z
     updated_at: 2026-10-06T06:26:48.503Z
+  - id: task_028
+    title: Core diagnostics and logging hooks
+    description: "Implemented opt-in, dependency-free core diagnostics. Added
+      DiagnosticEvent and DiagnosticsSink types, configureDiagnostics(sink) with
+      restore semantics, reportDiagnostic(), structured
+      discovery/session-teardown event codes, and BUN_TEST_UTILS_DEBUG=1 stderr
+      fallback. Core library no longer uses console.warn; CLI console output
+      remains unchanged. Documented the integration in the root and core READMEs
+      and added unit coverage for injected structured diagnostics. Lint,
+      typecheck, and focused core tests pass. REMAINING PROOF: repository-wide
+      bun test still has the unrelated nested session-fixture failure in
+      packages/core/tests/nested/nested.test.ts; keep in_progress until the full
+      gate is green or explicitly accepted."
+    source_links: []
+    status: in_progress
+    priority: P2
+    labels:
+      - core
+      - logging
+      - diagnostics
+      - observability
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Core emits no console logging during normal library operation
+      - Consumers can inject an optional structured diagnostics sink/logger
+      - Diagnostics include a stable event name/message and relevant metadata
+        without exposing secrets
+      - Existing CLI output remains unchanged
+      - Unit or conformance tests cover default silence and injected diagnostics
+      - No Pino or other logging runtime dependency is added to the published
+        package
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T08:01:50.450Z
+    updated_at: 2026-10-06T08:05:13.403Z
+  - id: task_029
+    title: Typed core and capability errors
+    description: "Implemented the typed error model. Added BunTestUtilsError with
+      stable codes, structured details, and preserved causes; specialized core
+      errors for unknown fixtures, scope mismatches, dependency cycles, and
+      fixture lifecycle violations; MissingOptionalDependencyError for browser,
+      DOM, and PBT capability gates; and CassetteError for VCR missing
+      cassettes, mismatches, and unrecorded callbacks. Exported the errors
+      through the core/public entrypoint, migrated representative throw sites,
+      added tests asserting instanceof and error codes, and documented the
+      categories in the root/core READMEs. Lint, typecheck, and focused core/VCR
+      tests pass. REMAINING PROOF: repository-wide bun test still has the
+      unrelated nested session-fixture failure in
+      packages/core/tests/nested/nested.test.ts; keep in_progress until the full
+      gate is green or explicitly accepted."
+    source_links: []
+    status: in_progress
+    priority: P1
+    labels:
+      - core
+      - errors
+      - types
+      - api
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - A public base error type exposes a stable code and structured details
+      - Core errors cover unknown fixtures, scope violations, dependency cycles,
+        setup/use protocol failures, and invalid API usage
+      - Capability errors cover missing optional dependencies and VCR
+        cassette/callback failures
+      - Original messages and cause information are preserved
+      - Public root and subpath declarations export the supported error types
+      - Tests assert error types and codes rather than relying only on message
+        matching
+      - README or API documentation lists the supported error categories
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T08:02:05.782Z
+    updated_at: 2026-10-06T08:09:03.367Z

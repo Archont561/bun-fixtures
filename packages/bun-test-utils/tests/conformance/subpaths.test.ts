@@ -45,6 +45,20 @@ test("std and vcr subpaths compose through the public exports", async () => {
   ]);
 });
 
+test("vcr callback API records once and replays without invoking the callback", async () => {
+  let calls = 0;
+  const getUser = () => {
+    calls++;
+    return { id: "user-1" };
+  };
+
+  await withFixtures(combined, ["cassette"], {}, async ({ cassette }) => {
+    expect(await cassette.record(getUser)).toEqual({ id: "user-1" });
+    expect(await cassette.replay(getUser)).toEqual({ id: "user-1" });
+    expect(calls).toBe(1);
+  });
+});
+
 test("bdd subpath attaches fixtures and tears them down through hooks", async () => {
   const calls: string[] = [];
   const worlds: Array<Record<string, unknown>> = [];

@@ -5,6 +5,33 @@
 /** Lifetime of a fixture instance. */
 export type Scope = "session" | "file" | "test";
 
+/** Stable machine-readable categories for public bun-test-utils errors. */
+export type BunTestUtilsErrorCode =
+  | "UNKNOWN_FIXTURE"
+  | "SCOPE_MISMATCH"
+  | "CIRCULAR_DEPENDENCY"
+  | "FIXTURE_SETUP_FAILED"
+  | "FIXTURE_USE_NOT_CALLED"
+  | "FIXTURE_USE_CALLED_TWICE"
+  | "MISSING_OPTIONAL_DEPENDENCY"
+  | "CASSETTE_NOT_FOUND"
+  | "CASSETTE_MISMATCH"
+  | "CALLBACK_NOT_RECORDED"
+  | "INVALID_API_USAGE";
+
+/** Structured, opt-in diagnostics emitted by the fixture engine. */
+export interface DiagnosticEvent {
+  /** Stable event category for filtering and aggregation. */
+  code: "FIXTURE_DISCOVERY" | "SESSION_TEARDOWN";
+  /** Human-readable diagnostic message. */
+  message: string;
+  /** Additional context, when available. */
+  details?: Record<string, unknown>;
+}
+
+/** Consumer-provided sink for optional engine diagnostics. */
+export type DiagnosticsSink = (event: DiagnosticEvent) => void;
+
 /**
  * Runs `fn` with a fresh set of test-scoped fixtures: session- and
  * file-scoped instances are shared with the test (and across calls), while
@@ -91,6 +118,50 @@ export interface TestOptions {
    */
   iterate?: boolean;
 }
+
+export type ScenarioContext<S extends object = Record<string, unknown>> =
+  FixtureContext & S & { expect: typeof import("bun:test").expect };
+
+export type GivenChain<S extends object = Record<string, unknown>> = {
+  given: <N extends object>(
+    name: string,
+    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+  ) => GivenChain<S & N>;
+  when: <N extends object>(
+    name: string,
+    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+  ) => WhenChain<S & N>;
+  then: never;
+};
+
+export type WhenChain<S extends object = Record<string, unknown>> = {
+  given: never;
+  when: <N extends object>(
+    name: string,
+    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+  ) => WhenChain<S & N>;
+  then: (
+    name: string,
+    fn: (ctx: ScenarioContext<S>) => void | Promise<void>,
+  ) => void;
+};
+
+export type ScenarioChain<S extends object = Record<string, unknown>> =
+  | GivenChain<S>
+  | WhenChain<S>;
+
+export type ScenarioFactory = {
+  <S extends object = Record<string, unknown>>(name: string): GivenChain<S>;
+  prop: <S extends object = Record<string, unknown>>(
+    name: string,
+    strategies: Record<string, unknown>,
+  ) => GivenChain<S>;
+};
+
+export type FixtureAwareTest = TestFn & {
+  extend: (fixtures: FixtureMap) => FixtureAwareTest;
+  scenario: ScenarioFactory;
+};
 
 export type TestFn = (
   name: string,

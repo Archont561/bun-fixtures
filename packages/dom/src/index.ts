@@ -1,4 +1,8 @@
 import type { FixtureDef, FixtureMap } from "@bun-test-utils/core";
+import {
+  BunTestUtilsError,
+  MissingOptionalDependencyError,
+} from "@bun-test-utils/core";
 import type { GlobalWindow } from "happy-dom";
 
 export interface DomPageHelper {
@@ -49,7 +53,9 @@ export const windowFixture: FixtureDef<GlobalWindow> = {
     try {
       ({ GlobalWindow: GlobalWindowCtor } = await import("happy-dom"));
     } catch {
-      throw new Error(
+      throw new MissingOptionalDependencyError(
+        "happy-dom",
+        "bun add -d happy-dom",
         "[bun-test-utils/dom] 'happy-dom' is required for DOM fixtures. Install via 'bun add -d happy-dom'.",
       );
     }
@@ -111,8 +117,10 @@ export const pageFixture: FixtureDef<DomPageHelper> = {
       click(selector: string) {
         const el = doc.querySelector<HTMLElement>(selector);
         if (!el)
-          throw new Error(
+          throw new BunTestUtilsError(
+            "INVALID_API_USAGE",
             `[bun-test-utils/dom] element "${selector}" not found`,
+            { details: { selector } },
           );
         el.dispatchEvent(
           new (globalThis as any).MouseEvent("click", { bubbles: true }),
@@ -121,7 +129,11 @@ export const pageFixture: FixtureDef<DomPageHelper> = {
       type(selector: string, text: string) {
         const el = doc.querySelector<HTMLInputElement>(selector);
         if (!el)
-          throw new Error(`[bun-test-utils/dom] input "${selector}" not found`);
+          throw new BunTestUtilsError(
+            "INVALID_API_USAGE",
+            `[bun-test-utils/dom] input "${selector}" not found`,
+            { details: { selector } },
+          );
         el.value = text;
         el.dispatchEvent(
           new (globalThis as any).Event("input", { bubbles: true }),

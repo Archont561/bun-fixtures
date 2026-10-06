@@ -17,26 +17,57 @@ import {
 } from "bun:test";
 import { type Dirent, readdirSync, realpathSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import {
+  FixtureDependencyError,
+  FixtureLifecycleError,
+  FixtureScopeError,
+  UnknownFixtureError,
+} from "./errors.ts";
 
 import type {
+  DiagnosticEvent,
+  DiagnosticsSink,
+  FixtureAwareTest,
   FixtureContext,
   FixtureDef,
   FixtureMap,
   IterateFn,
+  ScenarioChain,
+  ScenarioContext,
+  ScenarioFactory,
   Scope,
   TestFn,
   TestOptions,
 } from "./types.ts";
 
+export {
+  BunTestUtilsError,
+  CassetteError,
+  FixtureDependencyError,
+  FixtureLifecycleError,
+  FixtureScopeError,
+  MissingOptionalDependencyError,
+  UnknownFixtureError,
+} from "./errors.ts";
+
 export type {
+  BunTestUtilsErrorCode,
+  DiagnosticEvent,
+  DiagnosticsSink,
+  FixtureAwareTest,
   FixtureContext,
   FixtureDef,
   FixtureMap,
+  GivenChain,
   IterateFn,
+  ScenarioChain,
+  ScenarioContext,
+  ScenarioFactory,
   Scope,
   TestFn,
   TestOptions,
   UseFn,
+  WhenChain,
 } from "./types.ts";
 
 /* -------------------------------------------------------------------------- */
@@ -67,6 +98,7 @@ interface State {
   exitHooked: boolean;
   defIds: WeakMap<object, number>;
   nextDefId: number;
+  diagnostics?: DiagnosticsSink;
 }
 
 /** Context keys that are metadata, not fixtures — ignored during auto-detection. */
@@ -176,13 +208,21 @@ export async function discoverFixtures(
       const mod = await import(file);
       const map: FixtureMap | undefined = mod.default ?? mod.fixtures;
       if (!map || typeof map !== "object") {
-        warn(`${rel(file)} has no default export of fixtures — skipped.`);
+        warn(
+          `${rel(file)} has no default export of fixtures — skipped.`,
+          "FIXTURE_DISCOVERY",
+          { file },
+        );
         continue;
       }
       const dir = dirname(file);
       state.dirMap.set(dir, { ...(state.dirMap.get(dir) ?? {}), ...map });
     } catch (err) {
-      warn(`failed to load ${rel(file)}: ${(err as Error).message}`);
+      warn(
+        `failed to load ${rel(file)}: ${(err as Error).message}`,
+        "FIXTURE_DISCOVERY",
+        { file, cause: (err as Error).message },
+      );
     }
   }
   state.mergedCache.clear();
@@ -328,14 +368,18 @@ export function resolveOrder(
   const visit = (name: string, trail: string[]) => {
     if (seen.has(name)) return;
     if (visiting.has(name)) {
-      throw new Error(
+      throw new FixtureDependencyError(
         `[bun-test-utils] circular fixture dependency: ${[...trail, name].join(" → ")} (${rel(where)})`,
+        { trail: [...trail, name], file: where },
       );
     }
     const def = map[name];
     if (!def) {
       const known = Object.keys(map).sort().join(", ") || "<none>";
-      throw new Error(
+      throw new UnknownFixtureError(
+        name,
+        Object.keys(map).sort(),
+        where,
         `[bun-test-utils] unknown fixture "${name}" requested in ${rel(where)}. Available: ${known}`,
       );
     }
@@ -344,9 +388,15 @@ export function resolveOrder(
       visit(dep, [...trail, name]);
       const depDef = map[dep]!;
       if (SCOPE_RANK[scopeOf(depDef)] > SCOPE_RANK[scopeOf(def)]) {
-        throw new Error(
+        throw new FixtureScopeError(
           `[bun-test-utils] scope mismatch: "${name}" (${scopeOf(def)}) cannot depend on ` +
             `"${dep}" (${scopeOf(depDef)}) — a fixture may only use equally or longer-lived fixtures.`,
+          {
+            fixture: name,
+            dependency: dep,
+            fixtureScope: scopeOf(def),
+            dependencyScope: scopeOf(depDef),
+          },
         );
       }
     }
@@ -418,7 +468,8 @@ async function build(
 
   const use = (v: any): Promise<void> => {
     if (delivered)
-      throw new Error(
+      throw new FixtureLifecycleError(
+        "FIXTURE_USE_CALLED_TWICE",
         `[bun-test-utils] fixture "${name}" called use() more than once`,
       );
     delivered = true;
@@ -452,7 +503,8 @@ async function build(
   await Promise.race([gotValue, run]);
   if (!delivered) {
     await run; // surfaces the setup error, if any
-    throw new Error(
+    throw new FixtureLifecycleError(
+      "FIXTURE_USE_NOT_CALLED",
       `[bun-test-utils] fixture "${name}" finished without calling use(value)`,
     );
   }
@@ -585,7 +637,11 @@ function hookProcessExit() {
     try {
       await teardownSession();
     } catch (err) {
-      warn(`session teardown failed: ${(err as Error).message}`);
+      warn(
+        `session teardown failed: ${(err as Error).message}`,
+        "SESSION_TEARDOWN",
+        { cause: (err as Error).message },
+      );
     } finally {
       running = false;
     }
@@ -722,16 +778,96 @@ export function createTest(testFile?: string): {
 
 const testCache = new Map<string, TestFn>();
 
-/** Top-level `test()` — detects the calling file from the stack trace. */
-export const test: TestFn = (name, fn, opts) => {
-  const file = callerFile();
-  let t = testCache.get(file);
-  if (!t) {
-    t = makeTest(file);
-    testCache.set(file, t);
+function runnerFor(file: string): TestFn {
+  let runner = testCache.get(file);
+  if (!runner) {
+    runner = makeTest(file);
+    testCache.set(file, runner);
   }
-  return t(name, fn, opts);
-};
+  return runner;
+}
+
+function scenarioFactory(file: string): ScenarioFactory {
+  const create = <S extends object = Record<string, unknown>>(
+    title: string,
+  ): ScenarioChain<S> => {
+    const steps: Array<{
+      phase: "given" | "when" | "then";
+      name: string;
+      fn: (ctx: ScenarioContext<any>) => any;
+    }> = [];
+
+    const chain = {
+      given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        if (steps.some((step) => step.phase !== "given"))
+          throw new Error(
+            "[bun-test-utils] scenario given() must precede when() and then()",
+          );
+        steps.push({ phase: "given", name, fn });
+        return chain;
+      },
+      when(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        if (steps.some((step) => step.phase === "then"))
+          throw new Error(
+            "[bun-test-utils] scenario when() must precede then()",
+          );
+        steps.push({ phase: "when", name, fn });
+        return chain;
+      },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the intentional fluent scenario phase.
+      then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        steps.push({ phase: "then", name, fn });
+        runnerFor(file)(
+          title,
+          async (fixtures) => {
+            const context = Object.assign(fixtures, { expect: bunExpect });
+            for (const step of steps) {
+              const result = await step.fn(context);
+              if (step.phase !== "then" && result && typeof result === "object")
+                Object.assign(context, result);
+            }
+          },
+          {
+            fixtures: [
+              ...new Set(
+                steps
+                  .flatMap((step) => detectFixtures(step.fn, 0))
+                  .filter((name) => name in fixturesFor(file)),
+              ),
+            ],
+          },
+        );
+      },
+    } as ScenarioChain<S>;
+    return chain;
+  };
+
+  const factory = create as ScenarioFactory;
+  factory.prop = (title, _strategies) => {
+    throw new Error(
+      `[bun-test-utils] scenario.prop(${title}) requires the bun-test-utils/pbt integration; use test.prop() for property tests`,
+    );
+  };
+  return factory;
+}
+
+function makeAwareTest(fixtures?: FixtureMap): FixtureAwareTest {
+  if (fixtures) registerFixtures(dirname(callerFile()), fixtures);
+  const aware = ((name: string, fn: any, opts?: TestOptions) => {
+    const file = callerFile();
+    if (fixtures) registerFixtures(dirname(file), fixtures);
+    return runnerFor(file)(name, fn, opts);
+  }) as FixtureAwareTest;
+  aware.extend = (more) => makeAwareTest({ ...(fixtures ?? {}), ...more });
+  aware.scenario = ((title: string) =>
+    scenarioFactory(callerFile())(title)) as ScenarioFactory;
+  aware.scenario.prop = (title, strategies) =>
+    scenarioFactory(callerFile()).prop(title, strategies);
+  return aware;
+}
+
+/** Top-level `test()` — detects the calling file from the stack trace. */
+export const test: FixtureAwareTest = makeAwareTest();
 
 export const describe = bunDescribe;
 export const expect = bunExpect;
@@ -789,8 +925,37 @@ function rel(p: string): string {
   return r.startsWith("..") ? p : r || p;
 }
 
-function warn(msg: string) {
-  console.warn(`[bun-test-utils] ${msg}`);
+/**
+ * Installs an optional diagnostics sink and returns a restore function.
+ * The engine is silent unless a sink is installed or debug mode is enabled.
+ */
+export function configureDiagnostics(sink?: DiagnosticsSink): () => void {
+  const previous = state.diagnostics;
+  state.diagnostics = sink;
+  return () => {
+    state.diagnostics = previous;
+  };
+}
+
+/** Emits a structured diagnostic for integrations that wrap the engine. */
+export function reportDiagnostic(event: DiagnosticEvent): void {
+  if (state.diagnostics) {
+    state.diagnostics(event);
+    return;
+  }
+  if (process.env.BUN_TEST_UTILS_DEBUG === "1") {
+    process.stderr.write(
+      `[bun-test-utils] ${event.code}: ${event.message}${event.details ? ` ${JSON.stringify(event.details)}` : ""}\n`,
+    );
+  }
+}
+
+function warn(
+  message: string,
+  code: DiagnosticEvent["code"] = "FIXTURE_DISCOVERY",
+  details?: Record<string, unknown>,
+): void {
+  reportDiagnostic({ code, message, details });
 }
 
 /* -------------------------------------------------------------------------- */

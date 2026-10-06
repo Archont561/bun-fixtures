@@ -65,3 +65,10 @@ The same fixture is available in normal tests, `test.prop`,
 
 The implementation MUST restore any interception and close the cassette at test
 teardown, including when a callback throws.
+
+## Implementation status
+
+The callback registry is implemented on `CassetteHelper`: callback source identity is
+hashed without executing the callback, `record()` serializes and stores one result, and
+`replay()` returns that result without invoking the callback. Coverage lives in the VCR
+unit suite and the public `bun-test-utils/vcr` conformance suite.
