@@ -5,10 +5,20 @@ test
   .extend({})
   .scenario("public scenario chains merge state")
   .given("a value", () => ({ value: 2 }))
+  .given("a label", () => ({ label: "computed" }))
   .when("the value changes", ({ value }) => ({ result: value + 1 }))
+  .when("the result is decorated", ({ result, label }) => ({
+    decorated: `${label}:${result}`,
+  }))
   .then("the result is observable", ({ result, expect: scenarioExpect }) => {
     scenarioExpect(result).toBe(3);
-  });
+  })
+  .then(
+    "the decorated result is observable",
+    ({ decorated, expect: scenarioExpect }) => {
+      scenarioExpect(decorated).toBe("computed:3");
+    },
+  );
 
 pbtTest.scenario
   .prop("public property scenarios run generated examples", {

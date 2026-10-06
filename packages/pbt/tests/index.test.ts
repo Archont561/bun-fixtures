@@ -37,8 +37,12 @@ describe("@bun-test-utils/pbt", () => {
     })
     .given("a generated number", ({ n }) => ({ doubled: n * 2 }))
     .when("the number is tripled", ({ doubled }) => ({ total: doubled + 1 }))
+    .when("the result is named", ({ total }) => ({ label: `total=${total}` }))
     .then("the result is greater than the input", ({ total, n, expect }) => {
       expect(total).toBeGreaterThan(n);
+    })
+    .then("the result label is available", ({ label, total, expect }) => {
+      expect(label).toBe(`total=${total}`);
     });
 
   test.prop(
@@ -49,9 +53,9 @@ describe("@bun-test-utils/pbt", () => {
     async (_ctx, { values }) => {
       const doubled = values.map((value) => value * 2);
       expect(doubled).toHaveLength(values.length);
-      expect(doubled.every((value, index) => value === values[index]! * 2)).toBe(
-        true,
-      );
+      expect(
+        doubled.every((value, index) => value === values[index]! * 2),
+      ).toBe(true);
     },
     { numRuns: 75, seed: 20261006 },
   );
