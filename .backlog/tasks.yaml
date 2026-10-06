@@ -1610,3 +1610,57 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T10:40:28.985Z
     updated_at: 2026-10-06T10:56:17.734Z
+  - id: task_033
+    title: Repo-wide BDD feature runner and browser mock fixtures
+    description: >-
+      Add one repository-wide BDD testing entrypoint so every workspace package can own
+      features/*.feature coverage without package-local references to
+      packages/bun-test-utils/test-plugins.ts. The runner should discover package feature
+      files and package step definitions from the repository root, enforce that packages
+      expected to have behavioural coverage actually have a features/ directory, and keep
+      BDD config in one root-owned place. Also refactor browser/DOM testing fixtures so
+      tests can choose a happy-dom-backed fast path or a real Playwright-backed browser
+      path through a coherent fixture API. Add an MSW-like response mocking fixture that
+      works with both environments: fetch interception for DOM/server tests and
+      Playwright route interception for browser tests, with the same handler DSL and
+      call assertions.
+    source_links: []
+    status: todo
+    priority: P1
+    labels:
+      - bdd
+      - testing
+      - browser
+      - fixtures
+      - mocking
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "A root-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package bunfig or test-plugin references."
+      - "Every runtime workspace either has meaningful features/*.feature coverage or is explicitly exempted with a documented reason checked by the BDD runner."
+      - "Root package scripts and turbo configuration expose a repo-wide BDD gate that can run locally and in CI."
+      - "Existing bun-test-utils and core feature suites are migrated to the repo-wide runner without changing public imports."
+      - "Browser/DOM fixtures expose a documented way to choose happy-dom vs real Playwright execution without silently changing browserPage semantics."
+      - "An MSW-like mock response fixture supports get/post/etc handlers, passthrough, reset, and call assertions for both fetch-based DOM/server tests and Playwright browser tests."
+      - "Mocking stays fixture-based and composes through test.extend() and the root test context; no public capability subpaths are introduced."
+      - "Docs and examples show repo-wide BDD usage, environment selection, and MSW-like response mocking."
+      - "Biome, typecheck, build, full test suite, docs build, and packed-consumer tests pass."
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T13:25:53.542Z
+    updated_at: 2026-10-06T13:25:53.542Z
