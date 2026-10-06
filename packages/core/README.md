@@ -23,6 +23,45 @@ test("creates a user", async ({ db }) => {
 
 `db` was never imported, constructed, or reset here.
 
+## Typed errors
+
+Public failures extend `BunTestUtilsError` and expose a stable `code` and optional `details`.
+Use the code instead of parsing human-readable messages:
+
+```ts
+import { BunTestUtilsError } from "bun-test-utils";
+
+try {
+  // fixture work
+} catch (error) {
+  if (error instanceof BunTestUtilsError && error.code === "UNKNOWN_FIXTURE") {
+    // handle a fixture configuration error
+  }
+}
+```
+
+Capability packages use the same base type for missing optional dependencies and cassette
+lookup/replay failures.
+
+## Diagnostics
+
+The engine is silent by default. Applications and test harnesses that need discovery or
+teardown diagnostics can install a structured sink without adding a logging dependency:
+
+```ts
+import { configureDiagnostics } from "bun-test-utils";
+
+const restore = configureDiagnostics((event) => {
+  logger.debug(event, event.message);
+});
+
+// Restore the previous sink when the integration is unloaded.
+restore();
+```
+
+Set `BUN_TEST_UTILS_DEBUG=1` for an opt-in stderr fallback when no sink is installed.
+The CLI's normal output is independent of this diagnostics channel.
+
 ## Philosophy and model
 
 ### Setup is a dependency, not a prologue

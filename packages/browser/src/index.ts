@@ -1,4 +1,5 @@
 import type { FixtureDef, FixtureMap } from "@bun-test-utils/core";
+import { MissingOptionalDependencyError } from "@bun-test-utils/core";
 import type { Server } from "bun";
 
 export interface TestServerHelper {
@@ -57,13 +58,17 @@ export const browserFixture: FixtureDef<any> = {
     try {
       playwright = await import(PLAYWRIGHT_MODULE);
     } catch {
-      throw new Error(
+      throw new MissingOptionalDependencyError(
+        "playwright",
+        "bun add -d playwright",
         "[@bun-test-utils/browser] 'playwright' is required for browser fixtures. Install via 'bun add -d playwright'.",
       );
     }
     const chromium = playwright.chromium || playwright.default?.chromium;
     if (!chromium) {
-      throw new Error(
+      throw new MissingOptionalDependencyError(
+        "chromium",
+        "bunx playwright install chromium",
         "[@bun-test-utils/browser] Failed to locate chromium in playwright.",
       );
     }

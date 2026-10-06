@@ -1,7 +1,7 @@
 {
   "name": "bun-test-utils",
   "version": "0.1.0",
-  "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
+  "description": "pytest-style scoped, injectable fixtures for `bun test` — autodiscovered per directory, with optional bundled subpaths for property-based testing, DOM/browser, HTTP cassettes, and snapshots",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "author": "Archont561 (https://github.com/Archont561)",
@@ -107,12 +107,14 @@
   "optionalDependencies": {
     "playwright": "^1.40.0",
     "happy-dom": "^20.14.5",
-    "fast-check": "^4.10.2"
+    "fast-check": "^4.10.2",
+    "@aboviq/bun-test-cucumber": "^0.2.0"
   },
   "peerDependencies": {
     "playwright": ">=1.40.0",
     "happy-dom": ">=20.0.0",
-    "fast-check": ">=4.0.0"
+    "fast-check": ">=4.0.0",
+    "@aboviq/bun-test-cucumber": ">=0.2.0"
   },
   "peerDependenciesMeta": {
     "playwright": {
@@ -122,6 +124,9 @@
       "optional": true
     },
     "fast-check": {
+      "optional": true
+    },
+    "@aboviq/bun-test-cucumber": {
       "optional": true
     }
   },

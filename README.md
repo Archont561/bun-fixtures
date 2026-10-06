@@ -62,9 +62,10 @@ few subpaths wrap a heavy third-party library that installs as an `optionalDepen
 add it yourself if your package manager skipped it:
 
 ```bash
-bun add -d playwright   # only for bun-test-utils/browser
-bun add -d happy-dom    # only for bun-test-utils/dom
-bun add -d fast-check   # only for bun-test-utils/pbt
+bun add -d playwright             # only for bun-test-utils/browser
+bun add -d happy-dom              # only for bun-test-utils/dom
+bun add -d fast-check             # only for bun-test-utils/pbt
+bun add -d @aboviq/bun-test-cucumber # only for bun-test-utils/bdd integrations
 ```
 
 Importing a subpath without its optional dependency installed throws a clear error naming
@@ -97,6 +98,24 @@ test("writes into a scratch directory", async ({ tmpDir }) => {
   expect(await Bun.file(`${tmpDir}/note.txt`).text()).toBe("hello");
 });
 ```
+
+Errors from the engine and capability subpaths extend `BunTestUtilsError` and expose a
+stable `code` plus optional structured `details`. Branch on the code rather than parsing
+messages. Categories include `UNKNOWN_FIXTURE`, `SCOPE_MISMATCH`,
+`CIRCULAR_DEPENDENCY`, `MISSING_OPTIONAL_DEPENDENCY`, and cassette failures.
+
+The engine is silent by default. For integrations that need discovery or teardown
+telemetry, install an optional structured diagnostics sink; no logging dependency is added
+to the package:
+
+```ts
+import { configureDiagnostics } from "bun-test-utils";
+
+const restore = configureDiagnostics((event) => logger.debug(event, event.message));
+// Call restore() when the integration is unloaded.
+```
+
+`BUN_TEST_UTILS_DEBUG=1` enables an opt-in stderr fallback. CLI output is unaffected.
 
 Parameterized fixtures expand into one `bun test` case per combination — the cartesian
 product, including any parameterized fixture reached transitively — and mistakes surface

@@ -24,6 +24,16 @@ describe("@bun-test-utils/pbt", () => {
     },
     { numRuns: 50 },
   );
+
+  test.scenario
+    .prop("property scenarios merge generated state", {
+      n: fc.integer({ min: 1, max: 3 }),
+    })
+    .given("a generated number", ({ n }) => ({ doubled: n * 2 }))
+    .when("the number is tripled", ({ doubled }) => ({ total: doubled + 1 }))
+    .then("the result is greater than the input", ({ total, n, expect }) => {
+      expect(total).toBeGreaterThan(n);
+    });
 });
 
 // Lifecycle breadcrumbs: prop samples run inside one wrapper test, so the

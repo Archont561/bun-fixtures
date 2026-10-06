@@ -1,5 +1,6 @@
 import { realpathSync } from "node:fs";
 import {
+  BunTestUtilsError,
   test as baseTest,
   callerFile,
   createTest,
@@ -7,6 +8,10 @@ import {
   detectFixtures,
   expect,
   type FixtureContext,
+  fixturesFor,
+  type GivenChain,
+  type ScenarioContext,
+  type ScenarioFactory,
   type TestFn,
 } from "@bun-test-utils/core";
 import type { Arbitrary, Parameters as FcParameters } from "fast-check";
@@ -21,8 +26,15 @@ try {
   const mod = await import("fast-check");
   fc = (mod as any).default ?? (mod as any);
 } catch {
-  throw new Error(
+  throw new BunTestUtilsError(
+    "MISSING_OPTIONAL_DEPENDENCY",
     "[bun-test-utils/pbt] 'fast-check' is required for property-based testing fixtures. Install via 'bun add -d fast-check'.",
+    {
+      details: {
+        packageName: "fast-check",
+        installCommand: "bun add -d fast-check",
+      },
+    },
   );
 }
 
@@ -88,6 +100,58 @@ function makeProp(runnerTest: TestFn): PropFn {
   };
 }
 
+function makeScenarioProp(): ScenarioFactory["prop"] {
+  return ((title: string, strategies: ArbitraryRecord) => {
+    const steps: Array<{
+      phase: "given" | "when" | "then";
+      name: string;
+      fn: (ctx: ScenarioContext<any>) => any;
+    }> = [];
+
+    const chain = {
+      given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        steps.push({ phase: "given", name, fn });
+        return chain;
+      },
+      when(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        steps.push({ phase: "when", name, fn });
+        return chain;
+      },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the fluent scenario phase.
+      then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+        steps.push({ phase: "then", name, fn });
+        const generatedNames = new Set(Object.keys(strategies));
+        const fixtureNames = [
+          ...new Set(
+            steps
+              .flatMap((step) => detectFixtures(step.fn, 0))
+              .filter(
+                (name) =>
+                  !generatedNames.has(name) &&
+                  name in fixturesFor(callerFile()),
+              ),
+          ),
+        ];
+        prop(
+          title,
+          strategies,
+          async (fixtures, values) => {
+            const context = Object.assign(fixtures, values, { expect });
+            for (const step of steps) {
+              const result = await step.fn(context);
+              if (step.phase !== "then" && result && typeof result === "object")
+                Object.assign(context, result);
+            }
+          },
+          { fixtures: fixtureNames },
+        );
+      },
+    } as unknown as GivenChain;
+
+    return chain;
+  }) as ScenarioFactory["prop"];
+}
+
 /**
  * Creates a property test runner bound to a specific file.
  *
@@ -136,7 +200,12 @@ const topLevelProp: PropFn = (title, arbs, testFn, opts) => {
 };
 export const prop: PropFn = topLevelProp;
 
-export const test = Object.assign(baseTest, { prop });
+const scenario = Object.assign(
+  ((title: string) => baseTest.scenario(title)) as ScenarioFactory,
+  { prop: makeScenarioProp() },
+);
+
+export const test = Object.assign(baseTest, { prop, scenario });
 
 export default {
   fc,

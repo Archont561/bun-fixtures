@@ -24,7 +24,15 @@ import { join } from "node:path";
  * Skipped when dist/index.js is absent (run `bun run build` first; Turborepo's
  * `test` task already depends on `^build`).
  */
-const distEntry = join(import.meta.dir, "..", "dist", "index.js");
+const distEntry = join(
+  import.meta.dir,
+  "..",
+  "..",
+  "bun-test-utils",
+  "dist",
+  "subpaths",
+  "browser.js",
+);
 const distBuilt = existsSync(distEntry);
 
 describe.skipIf(!distBuilt)(

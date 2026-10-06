@@ -20,6 +20,21 @@ test("hits the API", async ({ cassette }) => {
 
 No third-party dependencies — nothing extra to install.
 
+## Callback record and replay
+
+For deterministic application-level results, use `record` and `replay` with the same
+callback identity. `record` runs the callback once; `replay` returns its serialized result
+without invoking live work:
+
+```ts
+const loadUser = () => api.users.get("user-1");
+const recorded = await cassette.record(loadUser);
+const replayed = await cassette.replay(loadUser);
+```
+
+A missing callback entry fails with an actionable error. Direct API calls remain live, and
+HTTP interception continues to use the existing record/replay modes.
+
 ## The `CassetteHelper`
 
 | Member | Role |

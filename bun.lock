@@ -56,7 +56,7 @@
       "name": "bun-test-utils",
       "version": "0.1.0",
       "bin": {
-        "bun-test-utils": "./src/cli.ts",
+        "bun-test-utils": "./dist/cli.js",
       },
       "dependencies": {
         "citty": "^0.2.2",
@@ -64,20 +64,30 @@
       },
       "devDependencies": {
         "@aboviq/bun-test-cucumber": "^0.2.0",
+        "@bun-test-utils/bdd": "workspace:*",
+        "@bun-test-utils/browser": "workspace:*",
         "@bun-test-utils/config": "workspace:*",
         "@bun-test-utils/core": "workspace:*",
+        "@bun-test-utils/dom": "workspace:*",
+        "@bun-test-utils/pbt": "workspace:*",
+        "@bun-test-utils/snapshot": "workspace:*",
+        "@bun-test-utils/std": "workspace:*",
+        "@bun-test-utils/vcr": "workspace:*",
       },
       "optionalDependencies": {
+        "@aboviq/bun-test-cucumber": "^0.2.0",
         "fast-check": "^4.10.2",
         "happy-dom": "^20.14.5",
         "playwright": "^1.40.0",
       },
       "peerDependencies": {
+        "@aboviq/bun-test-cucumber": ">=0.2.0",
         "fast-check": ">=4.0.0",
         "happy-dom": ">=20.0.0",
         "playwright": ">=1.40.0",
       },
       "optionalPeers": [
+        "@aboviq/bun-test-cucumber",
         "fast-check",
         "happy-dom",
         "playwright",
@@ -86,6 +96,9 @@
     "packages/config": {
       "name": "@bun-test-utils/config",
       "version": "0.1.0",
+      "devDependencies": {
+        "bunup": "0.16.32",
+      },
     },
     "packages/core": {
       "name": "@bun-test-utils/core",
