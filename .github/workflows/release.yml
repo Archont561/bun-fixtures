@@ -1,0 +1,118 @@
+name: release
+
+# Publish the single public package through npm Trusted Publishing.
+# Configure npmjs.org's trusted publisher for:
+#   repository: Archont561/bun-test-utils
+#   workflow: .github/workflows/release.yml
+#   environment: (none)
+# The workflow intentionally has no npm token: npm exchanges GitHub's short-lived
+# OIDC identity for a publish authorization at release time.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish (for example v0.1.0)
+        required: true
+        type: string
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  BUN_VERSION: "1.4.2"
+  NODE_VERSION: "24.x"
+
+jobs:
+  verify:
+    name: Verify release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify version matches tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          test "${RELEASE_TAG#v}" = "$(bun -e 'console.log(require("./packages/bun-test-utils/package.json").version)')"
+
+      - name: Run release gates
+        run: |
+          bun run lint
+          bun run typecheck
+          bun test
+
+      - name: Build package
+        run: bun run build
+
+      - name: Create and inspect package tarball
+        working-directory: packages/bun-test-utils
+        run: bun pm pack --dry-run
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: npm
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node for npm Trusted Publishing
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v6.2.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies and rebuild package
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Create release tarball
+        working-directory: packages/bun-test-utils
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+
+      # npm 11.5.1+ obtains an ephemeral publish credential from GitHub's OIDC
+      # token when this job has id-token: write and the matching npm trusted
+      # publisher is configured. Do not add NODE_AUTH_TOKEN here.
+      - name: Publish with npm Trusted Publishing
+        working-directory: packages/bun-test-utils
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: ${{ runner.temp }}/bun-test-utils-*.tgz
