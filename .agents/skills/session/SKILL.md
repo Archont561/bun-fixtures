@@ -37,6 +37,11 @@ run them again, without ceremony, whenever a command that worked ten minutes ago
 `bun: command not found` or an import resolves to nothing. Each `bash` call is also a fresh
 shell, so the `export` has to be repeated every time.
 
+**The same reset can roll local `HEAD` back to the branch point.** The files stay, the
+commits vanish. Before concluding you lost work, `git fetch origin` and compare against
+`origin/<branch>`: anything pushed is still there, and the fix is `git reset --hard` onto it
+rather than re-committing the whole tree as one blob. Push early for exactly this reason.
+
 **Pin the version to `packageManager` in the root `package.json`** (`bun@1.4.2` today). Do not
 `npm i -g bun` unpinned — a newer Bun than CI uses turns a green local run into a red CI run,
 and the point of this step is that the two agree.
