@@ -61,7 +61,7 @@ test("uses the explicit fixture", async ({ db }) => {
 
 ## Built-in fixtures
 
-The root `test` includes standard, DOM, browser/server, VCR, and snapshot
+The root `test` includes standard, DOM, browser/server, web mocking, VCR, and snapshot
 fixtures in its context:
 
 ```ts
@@ -78,6 +78,24 @@ test("serves and snapshots a response", async ({
 
   snapshot.match(body, "health");
   expect(body.status).toBe("ok");
+});
+```
+
+## Web environment and HTTP mocks
+
+`page` is always happy-dom and `browserPage` is always Playwright. Use `webPage`
+when one test should be selectable by `BUN_TEST_UTILS_WEB_ENV=dom` (default) or
+`BUN_TEST_UTILS_WEB_ENV=browser`. Use `httpMock` for MSW-like fetch handlers and
+`browserHttpMock` for the same handlers installed on the Playwright context.
+
+```ts
+test("loads mocked data", async ({ webPage, httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+  const user = await fetch("https://app.test/api/user").then((r) => r.json());
+
+  await webPage.setContent(`<span id="name"></span>`);
+  webPage.raw.document.querySelector("#name")!.textContent = user.name;
+  expect(await webPage.textContent("#name")).toBe("Ada");
 });
 ```
 
@@ -109,11 +127,12 @@ All workspace packages are implementation boundaries; only `bun-test-utils` is p
 
 ## Development
 
-This package's conformance tests exercise the assembled public exports. The Gherkin scratch-project suite is in [`e2e/`](./e2e/) and features are in [`features/`](./features/).
+This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/features/*.feature` and are loaded by the root-owned `tests/bdd/features.test.ts` entrypoint.
 
 ```bash
 bun run build
 bun test packages/bun-test-utils
+bun run test:bdd
 ```
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

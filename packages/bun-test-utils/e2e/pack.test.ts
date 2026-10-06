@@ -267,6 +267,15 @@ describe("packed public API", () => {
     await expect(import(specifier)).rejects.toThrow();
   });
 
+  test("fixture-based httpMock is bundled into the root context", async ({ httpMock }) => {
+    httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+    const user = await fetch("https://example.test/api/user").then((r) =>
+      r.json(),
+    );
+    expect(user).toEqual({ name: "Ada" });
+    expect(httpMock.calls()[0]).toMatchObject({ handled: true });
+  });
+
   test("optional test styles explain their missing peers", () => {
     expect(() =>
       test.prop("needs fast-check", (fc) => ({ n: fc.integer() }), () => {}),
@@ -279,7 +288,7 @@ describe("packed public API", () => {
 `,
         );
         const output = run([BUN, "test"], project);
-        expect(output).toContain("3 pass");
+        expect(output).toContain("4 pass");
         expect(output).toContain("0 fail");
 
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);

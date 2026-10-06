@@ -90,7 +90,7 @@ test("uses the explicit fixture", async ({ db }) => {
 });
 ```
 
-The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while optional property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`; those methods throw actionable missing-peer errors until `fast-check` and/or `@aboviq/bun-test-cucumber` are installed. Mocking should be modeled as fixtures, not as separate public helper exports.
+The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `webPage`, `httpMock`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while optional property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`; those methods throw actionable missing-peer errors until `fast-check` and/or `@aboviq/bun-test-cucumber` are installed. Mocking should be modeled as fixtures, not as separate public helper exports.
 
 For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Internal package notes live in the package READMEs:
 
@@ -116,6 +116,7 @@ bun run lint
 bun run typecheck
 bun run build
 bun test
+bun run test:bdd
 bun run docs:dev
 ```
 
@@ -123,7 +124,7 @@ The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight.
 
 ## Contributing
 
-Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun test` before opening a PR. Commit messages use Conventional Commits.
+Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun test && bun run test:bdd` before opening a PR. Commit messages use Conventional Commits.
 
 ## License
 

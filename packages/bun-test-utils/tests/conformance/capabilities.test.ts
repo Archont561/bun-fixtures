@@ -47,6 +47,24 @@ test("DOM, server, and snapshot fixtures are available from the root test contex
   expect(snapshot.path).toContain("__snapshots__");
 });
 
+test("webPage and httpMock fixtures are available from the root test context", async ({
+  httpMock,
+  webPage,
+}) => {
+  expect(webPage.mode).toBe("dom");
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+
+  const user = await fetch("https://example.test/api/user").then((response) =>
+    response.json(),
+  );
+  expect(user).toEqual({ name: "Ada" });
+  expect(httpMock.calls()[0]).toMatchObject({ handled: true });
+
+  await webPage.setContent('<span id="name"></span>');
+  webPage.raw.document.querySelector("#name")!.textContent = user.name;
+  expect(await webPage.textContent("#name")).toBe("Ada");
+});
+
 overrideTest(
   "extend order controls explicit fixture overrides",
   async ({ shared }) => {

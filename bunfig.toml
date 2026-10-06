@@ -1,7 +1,4 @@
 # Monorepo-wide test config: `bun test` from the repository root.
 # The engine preload installs run-global teardown hooks only; fixtures are composed explicitly.
 [test]
-preload = [
-  "./packages/core/src/plugin.ts",
-  "./packages/bun-test-utils/test-plugins.ts",
-]
+preload = ["./packages/core/src/plugin.ts"]

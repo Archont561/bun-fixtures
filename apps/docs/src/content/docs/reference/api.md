@@ -105,6 +105,55 @@ test.scenario("creates a user")
   });
 ```
 
+
+## `webPage`: selectable DOM or Playwright execution
+
+Use `page` when you want happy-dom semantics and `browserPage` when you want a
+real Playwright `Page`. Those fixture names never silently switch meaning. When a
+test should be able to run in either environment, request `webPage` and select
+the backend with `BUN_TEST_UTILS_WEB_ENV=dom` (default) or
+`BUN_TEST_UTILS_WEB_ENV=browser` / `playwright`.
+
+```ts
+test("renders in the selected web environment", async ({ webPage }) => {
+  await webPage.setContent(`<button id="save">Save</button>`);
+  await webPage.click("#save");
+  const requested = process.env.BUN_TEST_UTILS_WEB_ENV?.toLowerCase();
+  expect(webPage.mode).toBe(
+    requested === "browser" || requested === "playwright" ? "browser" : "dom",
+  );
+});
+```
+
+`webPage.raw` is the underlying happy-dom window or Playwright page for
+environment-specific assertions.
+
+## `httpMock`: fixture-based response mocking
+
+`httpMock` patches fetch for the current test and exposes an MSW-like handler API (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, or `use`).
+Unhandled requests pass through to the original `fetch`; use `reset()` between
+phases and `calls()` for assertions.
+
+```ts
+test("loads mocked data", async ({ httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+  httpMock.post(/\/api\/events$/, async (request) =>
+    Response.json({ received: await request.json() }),
+  );
+
+  expect(await fetch("https://app.test/api/user").then((r) => r.json())).toEqual({
+    name: "Ada",
+  });
+  expect(httpMock.calls()[0]).toMatchObject({ method: "GET", handled: true });
+
+  httpMock.reset();
+});
+```
+
+For Playwright tests, request `browserHttpMock` to install the same handlers on
+the `browserContext`, or call `await httpMock.install(browserPage)` manually when
+you need page-scoped routing.
+
 ## `describe` and `expect`
 
 Re-exported directly from `bun:test` for convenience.
@@ -115,7 +164,7 @@ The root `test` includes these built-in fixtures:
 
 - Standard: `tmpdir`, `env`, `stdio`
 - DOM: `window`, `document`, `page`
-- Browser/server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`
+- Browser/server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
 - VCR: `cassette`
 - Snapshots: `snapshot`
 
@@ -124,6 +173,7 @@ The root `test` includes these built-in fixtures:
 | Variable | Behaviour |
 | :-- | :-- |
 | `BUN_TEST_UTILS_DEBUG` | Emits opt-in diagnostics to stderr when set to `1` |
+| `BUN_TEST_UTILS_WEB_ENV` | Selects `webPage` backend: `dom` (default) or `browser` / `playwright` |
 | `VCR_MODE` | Selects cassette mode: `record`, `replay`, or `passthrough` |
 | `SNAPSHOT_MODE` | Selects snapshot mode: `match`, `update`, or `ci` |
 

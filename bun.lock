@@ -47,6 +47,7 @@
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
         "@bun-test-utils/core": "workspace:*",
+        "happy-dom": "^20.14.5",
       },
       "optionalDependencies": {
         "playwright": "^1.40.0",

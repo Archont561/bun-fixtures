@@ -17,4 +17,9 @@ test("mounts markup and dispatches clicks", async ({ page }) => {
 
 `happy-dom` is loaded by the fixture only when a DOM fixture is requested.
 
+`page` remains the happy-dom helper. If you want one test to run against either
+happy-dom or a real Playwright page, request the root `webPage` fixture and
+select `BUN_TEST_UTILS_WEB_ENV=dom` (default) or `browser`; do not overload
+`page` or `browserPage`.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

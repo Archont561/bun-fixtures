@@ -21,6 +21,21 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 });
 ```
 
+
+## Repo-wide BDD gate
+
+The repository's behavioural specs live under `packages/*/features/*.feature` and
+are loaded by the root-owned entrypoint `tests/bdd/features.test.ts`. Run the
+same gate locally and in CI with:
+
+```bash
+bun run test:bdd
+```
+
+The entrypoint also checks that every runtime workspace either has meaningful
+feature coverage or a documented exemption. Package-local `bunfig` and
+`test-plugins.ts` files are not required for Gherkin discovery.
+
 ## Fixtures
 
 ### Standard
@@ -32,11 +47,14 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 ### DOM
 
 - `window`, `document`, and `page`: In-memory DOM fixtures powered by `happy-dom`, with automatic global cleanup.
+- `webPage`: A portable page helper that uses happy-dom by default and switches to real Playwright only when `BUN_TEST_UTILS_WEB_ENV=browser` (or `playwright`) is set. `page` and `browserPage` keep their original semantics.
 
 ### Browser and server
 
 - `testServer` and `serverUrl`: Ephemeral `Bun.serve` server on random port 0 with automatic shutdown.
 - `browser`, `browserPage`, `browserContext`: Playwright browser automation, loaded only when requested.
+- `httpMock`: MSW-like `get` / `post` / `put` / `patch` / `delete` / `head` / `options` handlers for fetch-based tests, plus `passthrough`, `reset`, and `calls()` assertions.
+- `browserHttpMock`: The same mock helper installed on the Playwright `browserContext`; use `httpMock.install(browserPage)` for page-scoped routes.
 
 ### VCR
 
@@ -55,5 +73,18 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
 - `test.prop(title, factory, fn, options)`: property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
 - `test.scenario(title)`: fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer.
 - `test.scenario.prop(title, factory)`: generated values plus fluent scenarios. Requires both optional peers.
+
+
+```ts
+import { expect, test } from "bun-test-utils";
+
+test("mocks fetch through a fixture", async ({ httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+
+  const data = await fetch("https://app.test/api/user").then((r) => r.json());
+  expect(data).toEqual({ name: "Ada" });
+  expect(httpMock.calls()).toHaveLength(1);
+});
+```
 
 Mocking should be expressed as fixtures and composed with `test.extend()` so mocks get dependency ordering and teardown just like built-in capabilities.

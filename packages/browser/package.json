@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*",
-    "@bun-test-utils/core": "workspace:*"
+    "@bun-test-utils/core": "workspace:*",
+    "happy-dom": "^20.14.5"
   }
 }
