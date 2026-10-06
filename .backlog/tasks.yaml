@@ -2235,7 +2235,16 @@ tasks:
       override for the __cassettes__/__snapshots__ conventions - trigger: a
       consumer outside this repository needs to redirect the convention and
       cannot do so via cassette.save()/load() or by choosing where the test file
-      lives; if it fires, baseDir is the path, not exporting createTest."
+      lives; if it fires, baseDir is the path, not exporting createTest. ADDED
+      2026-10-06 (task_046): runtime settings surface - a user-facing config
+      file or a [test.bunTestUtils] section in bunfig.toml carrying project-wide
+      defaults (vcr mode/redaction/baseDir, snapshot mode/baseDir, webEnv,
+      debug, networkGuard allowlist, pbt numRuns/seed) - trigger: a monorepo
+      consumer needs two workspaces to run with different settings in a single
+      bun test invocation, which process-global env vars cannot express. Today
+      the ambient knobs are VCR_MODE, SNAPSHOT_MODE, BUN_TEST_UTILS_WEB_ENV and
+      BUN_TEST_UTILS_DEBUG; see task_046 for the measured inventory and the
+      design ranking."
     source_links: []
     status: done
     priority: P3
@@ -2271,7 +2280,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:51:08.448Z
-    updated_at: 2026-10-06T21:02:54.919Z
+    updated_at: 2026-10-06T21:32:32.150Z
   - id: task_043
     title: Typecheck the e2e/ directories
     description: "Add e2e to each package tsconfig include list so e2e tests and BDD
@@ -2417,3 +2426,98 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T19:08:07.768Z
     updated_at: 2026-10-06T21:03:39.037Z
+  - id: task_046
+    title: Runtime settings configuration surface (bunfig section vs config file)
+    description: "PARKED pending the trigger below; do not build for 0.1.x. Question
+      raised in session 2026-10-06: should bun-test-utils expose a user-facing
+      runtime config file (e.g. bun-utils.config.ts)? MEASURED INVENTORY of what
+      is ambient today: VCR_MODE (packages/vcr/src/cassette.ts:118),
+      SNAPSHOT_MODE with auto-ci when CI is set
+      (packages/snapshot/src/snapshot.ts:91), BUN_TEST_UTILS_WEB_ENV
+      (packages/browser/src/index.ts:146), BUN_TEST_UTILS_DEBUG
+      (packages/core/src/plugin.ts:846), and bunfig.toml [test].preload written
+      by bunx test-utils init. Everything else is a per-test fixture method
+      (networkGuard.allow, seed.set, cassette.setMode, cassette.redactHeader,
+      cassette.save/load) and should stay that way. THE CASE FOR: (1) structured
+      values cannot be env vars - a default networkGuard allowlist or a
+      project-wide redaction header list are arrays, and comma-split env strings
+      age badly; (2) per-package settings in a monorepo are physically
+      impossible with env vars because env is process-global, so one bun test
+      from the root cannot give packages/api vcrMode=replay and packages/ui a
+      happy-dom web env; (3) pbt has no global numRuns or seed configuration at
+      all. THE CASE AGAINST FOR 0.1.x: a config schema is a public contract and
+      schemas are the hardest thing to evolve under the semver promise ADR 0018
+      just froze; a discovered config file reintroduces the file-resolution
+      machinery deliberately removed in ADR 0002 and ADR 0008 (those removals
+      were about fixture composition rather than settings, so they do not forbid
+      this, but the machinery is the same class of complexity); and it is
+      strictly larger than the baseDir override that ADR 0019 just declined for
+      want of one real consumer. NAMING HAZARD: @bun-test-utils/config already
+      exists and means TypeScript configs - a second thing called config would
+      make three. DESIGN RANKING IF THE TRIGGER FIRES: (1) preferred - a
+      [test.bunTestUtils] section inside bunfig.toml: MEASURED on bun 1.4.2 that
+      Bun tolerates unknown keys there (a [test.bunTestUtils] section with
+      vcrMode/snapshotMode/baseDir ran tests clean with no warning), but Bun
+      does NOT expose the parsed bunfig at runtime (Bun.config is null), so the
+      preload must read and parse the file itself with smol-toml, already a core
+      dependency and already used by the CLI to write that same file; caveat -
+      'Bun ignores unknown keys' is one probe on one version, not a documented
+      guarantee, so pin it before relying on it. (2) an explicit
+      configure({...}) call from the user's own preload file: zero discovery and
+      maximally consistent with explicit-composition culture, but needs a fourth
+      root export, which breaks
+      packages/bun-test-utils/tests/conformance/public-api.test.ts, spec 0004
+      R2, and ADR 0012. (3) a discovered bun-utils.config.ts: most conventional
+      for users, most at odds with repository history, and the only option
+      needing new resolution rules. CANDIDATE CONTENTS: vcr { mode,
+      redactHeaders[], baseDir }, snapshot { mode, baseDir }, webEnv, debug,
+      networkGuard { allow[] }, pbt { numRuns, seed }. Note that several of
+      these are themselves parked items (baseDir per ADR 0019, configurable
+      redaction per task_042), so this is less one feature than the delivery
+      mechanism for several - an argument for deciding it once, later, instead
+      of letting each parked option grow its own ad-hoc knob. TRIGGER THAT
+      UNPARKS IT: a monorepo consumer needs two workspaces to run with different
+      settings in a single bun test invocation - the one thing env vars cannot
+      do."
+    source_links: []
+    status: backlog
+    priority: P3
+    labels:
+      - testing
+      - design
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "The trigger is met and recorded: a named consumer needs per-workspace
+        settings in one bun test invocation, which env vars cannot express."
+      - A new ADR decides the delivery mechanism before any code, ranking the
+        bunfig [test.bunTestUtils] section against an explicit configure() call
+        and a discovered config file, and supersedes or amends nothing silently.
+      - If the bunfig section is chosen, Bun's tolerance of unknown bunfig keys
+        is pinned by a test rather than assumed from a single manual probe on
+        1.4.2.
+      - The schema is versioned and documented in a numbered spec under
+        .backlog/docs/specs/, and the config surface is assigned a stability
+        tier under ADR 0018 before release.
+      - Per-test fixture methods (networkGuard.allow, seed.set,
+        cassette.setMode/redactHeader/save/load) remain the supported per-test
+        path; the config surface only sets project-wide defaults.
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T21:32:11.486Z
+    updated_at: 2026-10-06T21:32:19.547Z
