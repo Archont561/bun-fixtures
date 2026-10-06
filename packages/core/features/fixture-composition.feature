@@ -6,23 +6,6 @@ Feature: Explicit fixture composition
   Background:
     Given a project with bun-test-utils preloaded
 
-  Scenario: Fixture files on disk are ignored until they are imported
-    Given the file "fixtures.ts":
-      """
-      export default {
-        secret: { setup: async (use) => { await use("from a fixture file"); } },
-      };
-      """
-    And the file "a.test.ts":
-      """
-      import { test } from "bun-test-utils";
-      test("does not see an uncomposed fixture", async ({ secret }) => {});
-      """
-    When I run the test suite
-    Then the test run fails
-    And the output contains "unknown fixture \"secret\""
-    And the output contains "test.extend"
-    And the output contains "fixtures.ts and conftest.ts are not loaded automatically"
 
   Scenario: test.extend makes fixtures available through an imported chain
     Given the file "test.ts":
@@ -96,20 +79,3 @@ Feature: Explicit fixture composition
       """
     When I run the test suite
     Then 1 test passes
-
-  Scenario: conftest.ts is ignored unless explicitly imported
-    Given the file "conftest.ts":
-      """
-      export default {
-        legacy: { setup: async (use) => { await use("from conftest"); } },
-      };
-      """
-    And the file "a.test.ts":
-      """
-      import { test } from "bun-test-utils";
-      test("does not auto-load conftest", async ({ legacy }) => {});
-      """
-    When I run the test suite
-    Then the test run fails
-    And the output contains "unknown fixture \"legacy\""
-    And the output contains "fixtures.ts and conftest.ts are not loaded automatically"

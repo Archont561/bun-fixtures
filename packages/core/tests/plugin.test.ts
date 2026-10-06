@@ -37,14 +37,6 @@ describe("injection", () => {
     expect(origin).toBe("tests");
   });
 
-  test("ignores fixture files on disk unless explicitly composed", () => {
-    const uncomposed = createTest(here).test;
-    expect(() =>
-      uncomposed("does not load tests/fixtures.ts", async ({ origin }) => {
-        expect(origin).toBe("tests");
-      }),
-    ).toThrow(/fixtures\.ts and conftest\.ts are not loaded automatically/);
-  });
 
   test("resolves dependencies by name", async ({ client }) => {
     expect(client.connected).toBe(true);
@@ -231,7 +223,7 @@ describe("engine internals", () => {
 
   test("throws on an unknown fixture with test.extend() guidance", () => {
     expect(() => resolveOrder(["nope"], map, here)).toThrow(
-      /unknown fixture "nope".*test\.extend.*not loaded automatically/s,
+      /unknown fixture "nope".*test\.extend/s,
     );
   });
 

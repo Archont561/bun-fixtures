@@ -243,8 +243,7 @@ export function resolveOrder(
         where,
         `[bun-test-utils] unknown fixture "${name}" requested in ${rel(where)}. ` +
           `Available in this explicit test.extend(...) chain: ${known}. ` +
-          `Compose the fixture with test.extend({ ${name}: ... }) and import that extended test into this file; ` +
-          `fixtures.ts and conftest.ts are not loaded automatically.`,
+          `Compose the fixture with test.extend({ ${name}: ... }) and import that extended test into this file.`,
       );
     }
     visiting.add(name);
