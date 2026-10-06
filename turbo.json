@@ -26,6 +26,10 @@
     "test:bdd": {
       "outputs": []
     },
+    "test:e2e": {
+      "dependsOn": ["build", "^build"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

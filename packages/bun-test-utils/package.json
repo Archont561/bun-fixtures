@@ -43,9 +43,9 @@
   "scripts": {
     "build": "bunup",
     "prepack": "bun run build",
-    "test": "bun test",
+    "test": "bun test tests",
     "test:unit": "bun test tests/conformance",
-    "test:bdd": "bun test ../config/bdd/features.test.ts",
+    "test:e2e": "bun test e2e",
     "typecheck": "tsc --noEmit"
   },
   "engines": {

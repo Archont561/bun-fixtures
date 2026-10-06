@@ -22,7 +22,13 @@
     "bunup.ts"
   ],
   "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun run test:bdd",
+    "test:bdd": "bun test bdd/features.test.ts"
+  },
   "devDependencies": {
+    "@aboviq/bun-test-cucumber": "^0.2.0",
     "bunup": "0.16.32"
   }
 }
