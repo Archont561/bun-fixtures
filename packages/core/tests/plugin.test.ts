@@ -37,7 +37,6 @@ describe("injection", () => {
     expect(origin).toBe("tests");
   });
 
-
   test("resolves dependencies by name", async ({ client }) => {
     expect(client.connected).toBe(true);
     expect(client.tmp).toHaveProperty("n");

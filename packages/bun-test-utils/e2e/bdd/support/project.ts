@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 /** Published wrapper package root — used as the consumer install target. */
-export const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..");
+export const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..", "..");
 
 /** The Bun binary currently running this suite. */
 const BUN = process.execPath;

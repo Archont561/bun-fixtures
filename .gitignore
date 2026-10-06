@@ -17,3 +17,6 @@ build/
 /packages/bun-test-utils/snapshot/
 /packages/bun-test-utils/std/
 /packages/bun-test-utils/vcr/
+
+# Test coverage output
+coverage/
