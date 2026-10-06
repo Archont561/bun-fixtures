@@ -11,7 +11,7 @@
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
     "test:bdd": "turbo run test:bdd",
-    "coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage packages/bdd/tests packages/browser/tests packages/core/tests/*.test.ts packages/dom/tests packages/pbt/tests packages/snapshot/tests packages/std/tests packages/vcr/tests packages/bun-test-utils/tests packages/bun-test-utils/e2e",
     "typecheck": "turbo run typecheck",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
