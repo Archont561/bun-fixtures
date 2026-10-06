@@ -14,7 +14,7 @@
     "./lib.json": "./lib.json",
     "./app.json": "./app.json",
     "./bunup": "./bunup.ts",
-    "./bdd": "./bdd/setup.ts"
+    "./bdd": "./bdd/presets.ts"
   },
   "files": [
     "base.json",
