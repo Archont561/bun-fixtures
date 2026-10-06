@@ -1,19 +1,3 @@
-/**
- * Dogfooding: the fixture engine is tested with itself.
- *
- * `bunfig.toml` preloads `./src/plugin.ts`, which discovers `fixtures.ts`
- * (root) and `tests/fixtures.ts` (this directory) before anything runs.
- */
-
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import {
   createTest,
   describe,
@@ -23,9 +7,7 @@ import {
   paramCombos,
   resolveOrder,
   test,
-} from "bun-test-utils";
-import { runCommand } from "citty";
-import { addPreload, DEFAULT_ENTRY, initCommand } from "@/src/cli.ts";
+} from "@/plugin.ts";
 
 const here = import.meta.path;
 
@@ -205,14 +187,11 @@ describe("engine internals", () => {
       "client",
       "config",
       "db",
-      "env",
       "events",
       "mode",
       "origin",
       "region",
-      "stdio",
       "tmp",
-      "tmpdir",
     ]);
   });
 
@@ -277,133 +256,4 @@ describe("engine internals", () => {
     expect(typeof bound.test).toBe("function");
     expect(bound.expect).toBe(expect);
   });
-});
-
-describe("cli", () => {
-  test("parses arguments with citty", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-args-"));
-    const { result } = await runCommand(initCommand, {
-      rawArgs: ["--dir", dir, "--entry", "./custom/plugin.ts", "--force"],
-    });
-    await result;
-    expect(readFileSync(join(dir, "bunfig.toml"), "utf8")).toContain(
-      "./custom/plugin.ts",
-    );
-    expect(readFileSync(join(dir, "fixtures.ts"), "utf8")).toContain(
-      "satisfies FixtureMap",
-    );
-  });
-
-  test("defaults to the entry Bun can actually resolve", () => {
-    expect(DEFAULT_ENTRY).toBe("./node_modules/bun-test-utils/src/plugin.ts");
-  });
-
-  test("adds the preload entry to an empty bunfig", () => {
-    const { text, changed } = addPreload(
-      "",
-      "node_modules/bun-test-utils/src/plugin.ts",
-    );
-    expect(changed).toBe(true);
-    expect(text).toContain("preload");
-    expect(text).toContain("node_modules/bun-test-utils/src/plugin.ts");
-  });
-
-  test("preserves existing config and is idempotent", () => {
-    const start =
-      '[install]\nregistry = "https://registry.npmjs.org"\n\n[test]\npreload = ["./other.ts"]\n';
-    const once = addPreload(start, "node_modules/bun-test-utils/src/plugin.ts");
-    expect(once.changed).toBe(true);
-    expect(once.text).toContain("./other.ts");
-    expect(once.text).toContain("registry");
-    const twice = addPreload(
-      once.text,
-      "node_modules/bun-test-utils/src/plugin.ts",
-    );
-    expect(twice.changed).toBe(false);
-  });
-
-  test("normalizes a string preload into a list", () => {
-    const { text } = addPreload('[test]\npreload = "./a.ts"\n', "./b.ts");
-    expect(text).toMatch(/preload = \[.*"\.\/a\.ts".*"\.\/b\.ts".*\]/s);
-  });
-
-  test("`init` scaffolds a project end to end", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-cli-"));
-    const proc = Bun.spawnSync({
-      cmd: [
-        "bun",
-        join(import.meta.dir, "..", "src", "cli.ts"),
-        "init",
-        "--dir",
-        dir,
-      ],
-    });
-    expect(proc.exitCode).toBe(0);
-    expect(readFileSync(join(dir, "bunfig.toml"), "utf8")).toContain(
-      "node_modules/bun-test-utils/src/plugin.ts",
-    );
-    expect(readFileSync(join(dir, "fixtures.ts"), "utf8")).toContain(
-      "export default",
-    );
-  });
-});
-
-describe("end to end", () => {
-  test(
-    "a fresh project: init → preload → run → teardown",
-    async () => {
-      const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-e2e-"));
-      const repo = join(import.meta.dir, "..");
-      mkdirSync(join(dir, "node_modules"), { recursive: true });
-      symlinkSync(repo, join(dir, "node_modules", "bun-test-utils"));
-      mkdirSync(join(dir, "sub"), { recursive: true });
-      writeFileSync(
-        join(dir, "package.json"),
-        '{"name":"e2e","type":"module"}',
-      );
-
-      const init = Bun.spawnSync({
-        cmd: [
-          "bun",
-          join(repo, "src", "cli.ts"),
-          "init",
-          "--dir",
-          dir,
-          "--force",
-        ],
-      });
-      expect(init.exitCode).toBe(0);
-
-      writeFileSync(
-        join(dir, "fixtures.ts"),
-        `export default {
-         server: {
-           scope: "session",
-           setup: async (use) => { console.log("up"); await use({ port: 1234 }); console.log("down"); },
-         },
-       };\n`,
-      );
-      writeFileSync(
-        join(dir, "sub", "fixtures.ts"),
-        `export default {
-         user: { setup: async (use, { server }) => { await use({ name: "ada", port: server.port }); } },
-       };\n`,
-      );
-      writeFileSync(
-        join(dir, "sub", "e2e.test.ts"),
-        `import { test, expect } from "bun-test-utils";
-       test("injects across directories", async ({ user }) => {
-         expect(user).toEqual({ name: "ada", port: 1234 });
-       });\n`,
-      );
-
-      const run = Bun.spawnSync({ cmd: ["bun", "test"], cwd: dir });
-      const output = `${run.stdout.toString()}${run.stderr.toString()}`;
-      expect(output).toContain("1 pass");
-      expect(output).toContain("0 fail");
-      // session fixture built once, torn down after the run
-      expect(output.indexOf("up")).toBeLessThan(output.indexOf("down"));
-    },
-    { timeout: 30_000 },
-  );
 });

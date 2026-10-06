@@ -21,12 +21,11 @@
 > [!IMPORTANT]
 > **Nothing is published to npm yet.** The engine itself is real and tested: scopes,
 > LIFO teardown, dependency injection, parameterization, directory-scoped discovery
-> and the `init` CLI all work, covered by 168 passing tests across a unit suite, a
-> Gherkin behavioural suite that drives real scratch projects, and per-plugin suites.
-> What is missing is the release: `CHANGELOG`, a `v0.1.0` tag, a pack smoke test and
-> the publish itself — milestone [M5](.backlog/docs/milestones/M5-publish.md).
-> Four of the five plugin packages also have a known gap, listed in the Roadmap
-> below. Until then, use it from a checkout.
+> and the `init` CLI all work, covered by 211 passing tests across focused internal
+> suites, cross-package conformance checks, Gherkin scratch projects, and an installed-tarball
+> smoke test. What remains is the publication audit, a `v0.1.0` tag, the publish itself, and a
+> post-publish consumer rerun — milestone [M5](.backlog/docs/milestones/M5-publish.md).
+> Until then, use it from a checkout.
 
 `bun test` has no fixture API ([oven-sh/bun#8257](https://github.com/oven-sh/bun/issues/8257)).
 `bun-test-utils` adds one without touching `bun:test`: a test names its dependencies in its
@@ -160,7 +159,8 @@ Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tre
 
 | Layer | Package | Role |
 | --- | --- | --- |
-| Engine | [`bun-test-utils`](./packages/bun-test-utils) | Discovery, scope cache, DI, parameterization, `init` CLI |
+| Assembly | [`bun-test-utils`](./packages/bun-test-utils) | Published wrapper, public entrypoints, packaging, and cross-cutting conformance tests |
+| Engine | [`@bun-test-utils/core`](./packages/core) | Discovery, scope cache, DI, parameterization, types, and CLI internals |
 | Fixtures | [`@bun-test-utils/std`](./packages/std) | Zero-dependency `tmpdir`, `env`, `stdio` with automatic restoration |
 | Fixtures | [`@bun-test-utils/pbt`](./packages/pbt) | `test.prop` — property-based testing over injected fixtures |
 | Fixtures | [`@bun-test-utils/dom`](./packages/dom) | `window`, `document`, `page` via happy-dom, globals restored on teardown |
@@ -169,7 +169,7 @@ Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tre
 | Fixtures | [`@bun-test-utils/snapshot`](./packages/snapshot) | Value and file snapshot fixture with pluggable serializers and CI-strict mode |
 | Internal | [`@bun-test-utils/config`](./packages/config) | Shared `base`/`lib`/`app` TypeScript configurations (private) |
 
-Every "Fixtures" row above is an internal, unpublished (`private: true`) workspace package —
+Every row except "Assembly" is an internal, unpublished (`private: true`) workspace package —
 none of them ship to npm on their own. They're bundled into the single published
 `bun-test-utils` package and reached as subpath imports (`bun-test-utils/std`,
 `bun-test-utils/vcr`, ...), each contributing a plain `FixtureMap` object — there is no
@@ -309,9 +309,10 @@ bun run lint       # Biome
 
 | Suite | Where | What it proves |
 | --- | --- | --- |
-| unit / dogfooding | `packages/bun-test-utils/tests/` | Engine internals, in-process, using its own fixtures |
-| behavioural (Gherkin) | `packages/bun-test-utils/features/` + `tests/steps/` | User-visible behaviour in real scratch projects, driven only through files, `bun test` output and exit codes |
-| plugin | `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/tests/` | Each internal fixture pack's own capabilities |
+| core unit / dogfooding | `packages/core/tests/` | Engine and CLI internals, in-process, using the engine's own fixtures |
+| capability unit | `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/tests/` | Each internal package, with test filenames mirroring its `src/` modules |
+| cross-cutting conformance | `packages/bun-test-utils/tests/conformance/` | Public subpaths compose through the assembled package without collisions |
+| behavioural and packaging E2E | `packages/bun-test-utils/tests/e2e/` | Scratch projects, published CLI behavior, tarball contents, and consumer quickstarts |
 
 Lefthook runs Biome and `typecheck` on commit, commitlint on the message, and the full test
 suite on push — so CI and a local commit can only disagree if the lockfile did.
@@ -320,8 +321,9 @@ suite on push — so CI and a local commit can only disagree if the lockfile did
 
 | Path | Purpose |
 | --- | --- |
-| `packages/bun-test-utils/` | Core engine, `init` CLI, public API, and the single publishable npm package |
-| `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/` | Internal, unpublished (`private: true`) workspace packages — bundled into `bun-test-utils` as flat subpath exports (`bun-test-utils/std`, `bun-test-utils/pbt`, ...), never published on their own |
+| `packages/bun-test-utils/` | Thin public wrapper, cross-cutting tests, and the single publishable npm package |
+| `packages/core/` | Internal fixture engine, types, and CLI implementation (`@bun-test-utils/core`) |
+| `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/` | Internal capability packages — bundled into `bun-test-utils` as flat subpath exports (`bun-test-utils/std`, `bun-test-utils/pbt`, ...), never published on their own |
 | `packages/config/` | Shared `base`/`lib`/`app` tsconfigs (private) |
 | `apps/docs/` | Astro + Starlight documentation site |
 | `.backlog/` | Backlog project state — tasks, claims, runs |
@@ -333,10 +335,9 @@ suite on push — so CI and a local commit can only disagree if the lockfile did
 | `turbo.json` · `biome.json` · `lefthook.yml` | Pipeline, lint/format and Git hooks |
 
 The root `package.json` is `private: true`; `packages/bun-test-utils/` is the only package that
-ever publishes to npm — everything under `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/`
-is an internal workspace package bundled into it. In the core project, `@` maps to
-`src/plugin.ts` and `@/*` to its package root; each internal workspace maps its own `@/*`
-alias to its local `src/*`.
+ever publishes to npm — everything under `packages/{core,std,pbt,dom,browser,vcr,snapshot,bdd}/`
+is an internal workspace package bundled into it. Every internal workspace maps its local
+`@/*` alias to `src/*`.
 
 > [!TIP]
 > There is deliberately **no package-root `fixtures.ts`** ([ADR 0008](.backlog/docs/adr/0008-no-root-fixtures-file.md)).

@@ -158,9 +158,11 @@ The full loop is [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.m
 - **Claim the task.** `bunx backlog claim` — claims are enforced on commit
   (`enforce_on_commit = true` in `.backlog/config.toml`).
 - **Red before green.** User-visible behaviour goes in `packages/bun-test-utils/features/*.feature`
-  (`bun run test:bdd`); engine internals go in `packages/bun-test-utils/tests/fixtures.test.ts`
-  (`bun run test:unit`), which dogfoods the engine through its own fixtures. Write the failing
-  test first — the `tdd` skill is installed for exactly this.
+  (`bun run test:bdd`); engine internals go in the matching `packages/core/tests/<source>.test.ts`
+  file (`bun run test:unit`), and every other internal package mirrors `src/` under `tests/`.
+  Cross-package composition and installed-consumer behavior belong in the public wrapper's
+  `tests/{conformance,e2e}/`. Write the failing test first — the `tdd` skill is installed for
+  exactly this.
 - **One focused conventional commit per task.** commitlint enforces the format. Match your
   rhythm to the hooks: they are split by cost, so `bun run lint && bun run typecheck` yourself
   when you want the answer before `pre-commit` gives it to you, and `bun test` before

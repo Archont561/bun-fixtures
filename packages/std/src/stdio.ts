@@ -1,4 +1,4 @@
-import type { FixtureDef } from "bun-test-utils";
+import type { FixtureDef } from "../../core/src/plugin.ts";
 
 export interface StdioHelper {
   /** Captured stdout string. */

@@ -1,4 +1,5 @@
 import { realpathSync } from "node:fs";
+import type { Arbitrary, Parameters as FcParameters } from "fast-check";
 import {
   test as baseTest,
   callerFile,
@@ -8,8 +9,7 @@ import {
   expect,
   type FixtureContext,
   type TestFn,
-} from "bun-test-utils";
-import type { Arbitrary, Parameters as FcParameters } from "fast-check";
+} from "../../core/src/plugin.ts";
 
 // `fast-check` is an `optionalDependency` of the published `bun-test-utils`
 // package (see its package.json) — it is not force-installed for consumers

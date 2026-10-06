@@ -11,9 +11,10 @@
  * npm will get.
  *
  * Since the single-package consolidation (ADR superseding ADR 0011,
- * task_018/task_020), `std`, `pbt`, `dom`, `browser`, `vcr`, and `snapshot`
- * are sibling internal, unpublished (`private: true`) workspace packages staged
- * into this one before packing — they must never be packed or published on their own.
+ * task_018/task_020), `core`, `std`, `pbt`, `dom`, `browser`, `vcr`, and
+ * `snapshot` are sibling internal, unpublished (`private: true`) workspace
+ * packages staged into this one before packing — they are never published on
+ * their own.
  */
 
 import {
@@ -29,7 +30,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "bun-test-utils";
 
 const BUN = process.execPath;
-const PACKAGE_DIR = join(import.meta.dir, "..");
+const PACKAGE_DIR = join(import.meta.dir, "..", "..");
 
 /** The one publishable package — everything else it bundles is `private: true`. */
 const PACKAGE_NAME = "bun-test-utils";
@@ -93,6 +94,18 @@ function pack(scratch: string): Packed {
 }
 
 describe("bun pm pack smoke test", () => {
+  test("the publishable package wraps a sibling internal core", () => {
+    expect(existsSync(join(PACKAGE_DIR, "..", "core", "package.json"))).toBe(
+      true,
+    );
+    expect(
+      readFileSync(join(PACKAGE_DIR, "src", "plugin.ts"), "utf8"),
+    ).toContain("../core/src/plugin.ts");
+    expect(
+      existsSync(join(PACKAGE_DIR, "..", "core", "src", "plugin.ts")),
+    ).toBe(true);
+  });
+
   test("internal workspace sources live beside the publishable package", () => {
     for (const sub of BUNDLED_SUBPATHS) {
       expect(existsSync(join(PACKAGE_DIR, "..", sub, "package.json"))).toBe(
@@ -123,6 +136,7 @@ describe("bun pm pack smoke test", () => {
           expect(entries).toContain(required);
         }
         expect(entries.some((e) => e.startsWith("src/"))).toBe(true);
+        expect(entries.some((e) => e.startsWith("core/src/"))).toBe(true);
         for (const sub of BUNDLED_SUBPATHS) {
           expect(
             entries.some((e) => e.startsWith(`${sub}/src/`)),
@@ -146,6 +160,7 @@ describe("bun pm pack smoke test", () => {
           const ok =
             ALLOWED_TOP_LEVEL.has(entry) ||
             topLevel === "src" ||
+            topLevel === "core" ||
             (BUNDLED_SUBPATHS as readonly string[]).includes(topLevel);
           expect(ok, `tarball contains unexpected ${entry}`).toBe(true);
         }

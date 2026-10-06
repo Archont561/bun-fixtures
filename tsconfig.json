@@ -6,6 +6,7 @@
       "@": ["./packages/bun-test-utils/src/plugin.ts"],
       "@/*": ["./packages/bun-test-utils/*"],
       "@bun-test-utils/config/*": ["./packages/config/*"],
+      "@bun-test-utils/core": ["./packages/core/src/plugin.ts"],
       "@bun-test-utils/bdd": ["./packages/bdd/src/index.ts"],
       "@bun-test-utils/browser": ["./packages/browser/src/index.ts"],
       "@bun-test-utils/dom": ["./packages/dom/src/index.ts"],

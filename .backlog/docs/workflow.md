@@ -32,18 +32,19 @@ sandbox quirks, adapted from the same skill in
 
 ## Where things live
 
-The repository is a Bun workspace. Package code and its tests are in
-`packages/bun-test-utils`; Backlog, skills, and docs are at the root (docs in
-`.backlog/docs`). `bun test` and `bun run typecheck` work from either place.
+The repository is a Bun workspace. Focused implementation and mirrored tests live in the
+private `packages/*` workspaces; `packages/bun-test-utils` is the published wrapper and owns
+cross-cutting conformance and end-to-end tests. Backlog, skills, and docs are at the root
+(docs in `.backlog/docs`). `bun test` and `bun run typecheck` work from the root or a package.
 
 ## Loop
 
 1. **Pick** a task: `bunx backlog task list`, then `bunx backlog task show <id>`.
 2. **Claim** it: `bunx backlog claim` (claims are enforced on commit).
-3. **Red** — add a failing test. User-visible behaviour goes in
-   `features/*.feature` (`bun run test:bdd`); internals go in
-   `tests/fixtures.test.ts` (`bun run test:unit`), which dogfoods the engine
-   through its own fixtures.
+3. **Red** — add a failing test. User-visible behaviour goes in the wrapper's
+   `features/*.feature` suite (`bun run test:bdd`). Focused internals go in the owning
+   workspace's `tests/<source>.test.ts`; cross-package composition and installed-consumer
+   behavior go in `packages/bun-test-utils/tests/{conformance,e2e}/`.
 4. **Green** — minimum change in `src/`.
 5. **Refactor** — apply the `refactor` skill; tests must stay green.
 6. **Verify** — `bun test && bun run typecheck`. Both are the definition of done.

@@ -14,7 +14,8 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0008](./0008-no-root-fixtures-file.md) | No repository-root `fixtures.ts` | accepted |
 | [0009](./0009-citty-for-the-cli.md) | citty for the CLI | accepted |
 | [0010](./0010-monorepo-layout.md) | Monorepo layout | accepted |
-| [0011](./0011-brand-identity-and-modular-ecosystem.md) | Brand identity and modular ecosystem architecture | accepted |
+| [0011](./0011-brand-identity-and-modular-ecosystem.md) | Brand identity and modular ecosystem architecture | superseded by 0013 |
 | [0012](./0012-bdd-fixture-bridge.md) | BDD fixture bridge: narrow the Gherkin non-goal | accepted |
+| [0013](./0013-published-wrapper-internal-workspaces.md) | Published wrapper over internal workspaces | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

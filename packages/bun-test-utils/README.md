@@ -201,7 +201,9 @@ import type { FixtureDef, FixtureMap, FixtureContext, Scope, TestOptions } from 
 | `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
 | `expect`, `describe` | re-exported from `bun:test`, unchanged |
 
-Engine internals are exported for tooling and for testing fixture trees:
+The published entrypoint is a thin wrapper over the private `@bun-test-utils/core` workspace;
+that distinction is repository-internal and does not change consumer imports. Engine internals
+remain exported for tooling and for testing fixture trees:
 `discoverFixtures`, `registerFixtures`, `fixturesFor`, `resolveOrder`,
 `paramCombos`, `destructuredKeys`, `teardownFile`, `teardownSession`.
 

@@ -1,0 +1,64 @@
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, test } from "bun-test-utils";
+
+describe("end to end", () => {
+  test(
+    "a fresh project: init → preload → run → teardown",
+    async () => {
+      const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-e2e-"));
+      const repo = join(import.meta.dir, "..", "..");
+      mkdirSync(join(dir, "node_modules"), { recursive: true });
+      symlinkSync(repo, join(dir, "node_modules", "bun-test-utils"));
+      mkdirSync(join(dir, "sub"), { recursive: true });
+      writeFileSync(
+        join(dir, "package.json"),
+        '{"name":"e2e","type":"module"}',
+      );
+
+      const init = Bun.spawnSync({
+        cmd: [
+          "bun",
+          join(repo, "src", "cli.ts"),
+          "init",
+          "--dir",
+          dir,
+          "--force",
+        ],
+      });
+      expect(init.exitCode).toBe(0);
+
+      writeFileSync(
+        join(dir, "fixtures.ts"),
+        `export default {
+         server: {
+           scope: "session",
+           setup: async (use) => { console.log("up"); await use({ port: 1234 }); console.log("down"); },
+         },
+       };\n`,
+      );
+      writeFileSync(
+        join(dir, "sub", "fixtures.ts"),
+        `export default {
+         user: { setup: async (use, { server }) => { await use({ name: "ada", port: server.port }); } },
+       };\n`,
+      );
+      writeFileSync(
+        join(dir, "sub", "e2e.test.ts"),
+        `import { test, expect } from "bun-test-utils";
+       test("injects across directories", async ({ user }) => {
+         expect(user).toEqual({ name: "ada", port: 1234 });
+       });\n`,
+      );
+
+      const run = Bun.spawnSync({ cmd: ["bun", "test"], cwd: dir });
+      const output = `${run.stdout.toString()}${run.stderr.toString()}`;
+      expect(output).toContain("1 pass");
+      expect(output).toContain("0 fail");
+      // session fixture built once, torn down after the run
+      expect(output.indexOf("up")).toBeLessThan(output.indexOf("down"));
+    },
+    { timeout: 30_000 },
+  );
+});

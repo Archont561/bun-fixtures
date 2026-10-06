@@ -12,6 +12,6 @@
   },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*",
-    "bun-test-utils": "workspace:*"
+    "@bun-test-utils/core": "workspace:*"
   }
 }

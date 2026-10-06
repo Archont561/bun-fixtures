@@ -1,10 +1,10 @@
 {
   "version": 1,
   "counters": {
-    "task": 24,
+    "task": 25,
     "subtask": 0,
     "run": 0,
-    "claim": 2,
+    "claim": 4,
     "sync": 0
   }
 }

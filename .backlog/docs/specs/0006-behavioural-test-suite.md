@@ -2,8 +2,8 @@
 
 - **Status:** implemented
 - **Milestone:** M4
-- **Implementation:** `packages/bun-fixture/{features,tests}/` — `features/*.feature`, `tests/steps/*.steps.ts`, `tests/support/project.ts`, `test-plugins.ts`
-- **Entrypoint:** `packages/bun-fixture/tests/features.test.ts` — `bun run test:bdd`
+- **Implementation:** `packages/bun-test-utils/{features,tests}/` — `features/*.feature`, `tests/steps/*.steps.ts`, `tests/support/project.ts`, `test-plugins.ts`
+- **Entrypoint:** `packages/bun-test-utils/tests/e2e/features.test.ts` — `bun run test:bdd`
 
 ## Problem
 
@@ -31,7 +31,7 @@ to internal names.
 Bun loader plugin, registered in `test-plugins.ts` and preloaded next to
 `src/plugin.ts`. Bun's scanner ignores `.feature` files
 ([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so
-`tests/features.test.ts` loads them with `loadFeatures`.
+`tests/e2e/features.test.ts` loads them with `loadFeatures`.
 
 Scenario state (`{ project, lastRun }`) flows through the typed `withState`
 helper. `tests/support/project.ts` owns the harness: `createProject`,

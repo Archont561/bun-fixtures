@@ -6,47 +6,37 @@
 
 ## Goal
 
-`bun add -d bun-fixture && bunx bun-fixture init` works for a stranger.
-
-> **Scope has grown.** This milestone was written when `bun-fixture` was the only
-> publishable package. There are now **seven** (`bun-fixture`, `std`, `fast-check`,
-> `dom`, `browser`, `vcr`, `snapshot`), each with its own version line. Every item
-> below applies to all seven.
+`bun add -d bun-test-utils && bunx bun-test-utils init` works for a stranger. Exactly one npm
+package is published; private workspaces are staged into it as raw-TypeScript subpaths per
+[ADR 0013](../adr/0013-published-wrapper-internal-workspaces.md).
 
 ## Scope
 
-- [x] CI: `bun run lint` + `bun run typecheck` + `bun run test` on push and PR
-      (`.github/workflows/ci.yml`)
-- [x] `bun pm pack` smoke test — install the tarball into a scratch project and run the quickstart
-      (`packages/bun-fixture/tests/pack.test.ts`: all seven tarballs verified against spec 0005 —
-      contents, licences, workspace-range rewrite — and the core tarball installed and quickstarted)
-- [x] LICENSE files — dual MIT / Apache-2.0 (`LICENSE`, `LICENSE-MIT`, `LICENSE-APACHE`
-      at the root and in all seven publishable packages; manifests declare
-      `MIT OR Apache-2.0` and list both texts in `files`)
-- [x] Release tooling: `@changesets/cli` configured for independent per-package
-      versions, `access: public`, private packages excluded (`.changeset/config.json`)
-- [x] Package metadata: `repository` (with `directory`), `homepage`, `bugs`,
-      `author`, `keywords` and `publishConfig.access` on all seven manifests
-- [x] CHANGELOG — `0.1.0` entries in all seven packages (cut `0.1.0` *before* landing
-      any changeset, or the first release becomes `0.1.1` — see `.changeset/README.md`)
-- [ ] `v0.1.0` git tag
-- [ ] `bun run release:publish` for all seven packages (or trusted publishing from CI)
-- [ ] Post-publish: re-run the e2e harness against the published package
+- [x] CI runs lint, typecheck and tests on pushes and pull requests.
+- [x] The pack smoke test verifies the one tarball's allowlisted wrapper/core/subpath sources,
+      licences and exports, installs it in a scratch project, runs the CLI, and executes the
+      quickstart (`packages/bun-test-utils/tests/e2e/pack.test.ts`).
+- [x] The published package declares dual MIT OR Apache-2.0 licensing and includes both texts.
+- [x] Release tooling is configured; private internal workspaces are excluded from publishing.
+- [x] Package metadata and the `0.1.0` changelog are present.
+- [ ] `v0.1.0` git tag.
+- [ ] Publish `bun-test-utils@0.1.0` (or configure trusted publishing).
+- [ ] Re-run the installed-consumer harness against the registry package.
 
 ## Exit criteria
 
 | # | Criterion | Evidence |
 |---|-----------|----------|
-| 1 | Tarball contains only `src/` + README + both licences + manifest | `bun pm pack --dry-run` |
-| 2 | Fresh install works offline from the tarball | pack smoke test |
-| 3 | `bunx bun-fixture init` works from the published package | manual run in a scratch dir |
+| 1 | Tarball contains only wrapper source, staged internal source, README, both licences and manifest | pack smoke test / `bun pm pack --dry-run` |
+| 2 | Fresh install works from the tarball | pack smoke test |
+| 3 | `bunx bun-test-utils init` works from the installed package | pack smoke test and post-publish rerun |
+| 4 | No `@bun-test-utils/*` internal workspace is published | private manifests plus tarball/publish audit |
 
 ## Risks
 
 | Risk | Mitigation |
 |------|------------|
-| Name `bun-fixture` already taken on npm | Check before tagging; fallback scope `@<owner>/bun-fixture` |
-| Global/`bunx` install makes the default preload path wrong | Detect installation layout in `init`, or document `--entry` |
-| Bun ships fixtures natively | Re-export `test.extend` and deprecate — the engine is a thin wrapper |
-| `workspace:` ranges in published `peerDependencies` | **Resolved.** `bun pm pack` does rewrite them — but `workspace:*` becomes an *exact* pin (`0.1.0`), which would break every plugin on the first `bun-fixture` patch release. The five plugins now use `workspace:^`, which packs as `^0.1.0`. Verified by extracting the tarball |
-| Six packages publish out of order | A consumer installing `@bun-fixture/std` before `bun-fixture` exists on the registry gets an unresolvable peer. Publish `bun-fixture` first |
+| Name `bun-test-utils` is unavailable on npm | Check before tagging; fallback to an owner scope |
+| Prepack source staging drifts from workspace source | Generate on every install and prepack; inspect and install the resulting tarball in tests |
+| Global/`bunx` installation makes the default preload path wrong | Verify through the installed CLI harness; retain `--entry` as an escape hatch |
+| Bun ships fixtures natively | Re-export the native capability and deprecate the internal engine |

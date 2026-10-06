@@ -1,6 +1,6 @@
 # 0011 — Brand Identity and Modular Ecosystem Architecture
 
-- **Status:** accepted
+- **Status:** superseded by [ADR 0013](./0013-published-wrapper-internal-workspaces.md)
 
 ## Context
 

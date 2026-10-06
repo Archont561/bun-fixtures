@@ -37,7 +37,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
     "packages/browser": {
@@ -45,7 +45,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
       "optionalDependencies": {
         "playwright": "^1.40.0",
@@ -64,6 +64,7 @@
       "devDependencies": {
         "@aboviq/bun-test-cucumber": "^0.2.0",
         "@bun-test-utils/config": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
       "optionalDependencies": {
         "fast-check": "^4.10.2",
@@ -85,6 +86,17 @@
       "name": "@bun-test-utils/config",
       "version": "0.1.0",
     },
+    "packages/core": {
+      "name": "@bun-test-utils/core",
+      "version": "0.1.0",
+      "dependencies": {
+        "citty": "^0.2.2",
+        "smol-toml": "^1.9.0",
+      },
+      "devDependencies": {
+        "@bun-test-utils/config": "workspace:*",
+      },
+    },
     "packages/dom": {
       "name": "@bun-test-utils/dom",
       "version": "0.1.0",
@@ -93,7 +105,7 @@
       },
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
     "packages/pbt": {
@@ -104,7 +116,7 @@
       },
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
     "packages/snapshot": {
@@ -112,7 +124,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
     "packages/std": {
@@ -120,7 +132,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
     "packages/vcr": {
@@ -128,7 +140,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
-        "bun-test-utils": "workspace:*",
+        "@bun-test-utils/core": "workspace:*",
       },
     },
   },
@@ -190,6 +202,8 @@
     "@bun-test-utils/browser": ["@bun-test-utils/browser@workspace:packages/browser"],
 
     "@bun-test-utils/config": ["@bun-test-utils/config@workspace:packages/config"],
+
+    "@bun-test-utils/core": ["@bun-test-utils/core@workspace:packages/core"],
 
     "@bun-test-utils/dom": ["@bun-test-utils/dom@workspace:packages/dom"],
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 
-import { cpSync, existsSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync } from "node:fs";
 import { resolve } from "node:path";
 
 const SUBPATHS = [
+  "core",
   "std",
   "pbt",
   "dom",
@@ -13,17 +14,25 @@ const SUBPATHS = [
   "bdd",
 ] as const;
 
+const mode = process.argv.includes("--copy") ? "copy" : "link";
 const packageDir = resolve(import.meta.dir, "..");
 const packagesDir = resolve(packageDir, "..");
 
 for (const subpath of SUBPATHS) {
   const source = resolve(packagesDir, subpath, "src");
-  const destination = resolve(packageDir, subpath, "src");
+  const stagedPackage = resolve(packageDir, subpath);
+  const destination = resolve(stagedPackage, "src");
 
   if (!existsSync(source)) {
     throw new Error(`Cannot stage missing workspace source: ${source}`);
   }
 
-  rmSync(resolve(packageDir, subpath), { recursive: true, force: true });
-  cpSync(source, destination, { recursive: true });
+  rmSync(stagedPackage, { recursive: true, force: true });
+  mkdirSync(stagedPackage, { recursive: true });
+
+  if (mode === "copy") {
+    cpSync(source, destination, { recursive: true });
+  } else {
+    symlinkSync(`../../${subpath}/src`, destination, "dir");
+  }
 }

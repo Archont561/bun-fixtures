@@ -7,4 +7,4 @@
  */
 import { loadFeatures } from "@aboviq/bun-test-cucumber";
 
-await loadFeatures("features/*.feature", `${import.meta.dir}/..`);
+await loadFeatures("features/*.feature", `${import.meta.dir}/../..`);

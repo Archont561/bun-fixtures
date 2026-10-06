@@ -1,4 +1,3 @@
-import { stdFixtures } from "bun-test-utils/std";
 import type { FixtureMap } from "@/types.ts";
 
 let dbCount = 0;
@@ -7,16 +6,6 @@ let dbCount = 0;
 const events: string[] = [];
 
 export default {
-  /**
-   * Dogfooding task_011: the core suite consumes @bun-test-utils/std through the
-   * engine's directory discovery, like any user project would. The import
-   * resolves via the workspace root `node_modules` symlink and is
-   * deliberately *not* declared in this package's devDependencies — std
-   * already dev-depends on bun-test-utils for the `FixtureDef` types, and the
-   * reverse edge would make Turbo's task graph cyclic.
-   */
-  ...stdFixtures,
-
   /** session scope: built once for the whole `bun test` run. */
   events: {
     scope: "session",

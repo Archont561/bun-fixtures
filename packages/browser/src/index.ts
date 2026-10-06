@@ -1,5 +1,5 @@
 import type { Server } from "bun";
-import type { FixtureDef, FixtureMap } from "bun-test-utils";
+import type { FixtureDef, FixtureMap } from "../../core/src/plugin.ts";
 
 export interface TestServerHelper {
   url: string;

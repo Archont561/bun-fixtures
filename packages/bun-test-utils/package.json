@@ -42,6 +42,7 @@
   },
   "files": [
     "src",
+    "core/src",
     "std/src",
     "pbt/src",
     "dom/src",
@@ -54,10 +55,11 @@
     "LICENSE-APACHE"
   ],
   "scripts": {
-    "prepack": "bun scripts/stage-subpaths.ts",
+    "prepack": "bun scripts/stage-subpaths.ts --copy",
+    "postpack": "bun scripts/stage-subpaths.ts --link",
     "test": "bun test",
-    "test:unit": "bun test tests/fixtures.test.ts tests/nested",
-    "test:bdd": "bun test tests/features.test.ts",
+    "test:unit": "bun test tests/conformance",
+    "test:bdd": "bun test tests/e2e/features.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
@@ -93,7 +95,8 @@
   },
   "devDependencies": {
     "@aboviq/bun-test-cucumber": "^0.2.0",
-    "@bun-test-utils/config": "workspace:*"
+    "@bun-test-utils/config": "workspace:*",
+    "@bun-test-utils/core": "workspace:*"
   },
   "bin": {
     "bun-test-utils": "./src/cli.ts"

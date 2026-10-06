@@ -1,4 +1,4 @@
-import type { FixtureMap } from "bun-test-utils";
+import type { FixtureMap } from "../../core/src/plugin.ts";
 import { cassetteFixture } from "./cassette.ts";
 
 export {

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { FixtureDef } from "bun-test-utils";
+import type { FixtureDef } from "../../core/src/plugin.ts";
 
 export type VcrMode = "record" | "replay" | "passthrough";
 

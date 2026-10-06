@@ -22,7 +22,7 @@
     "changeset": "changeset",
     "release:version": "changeset version",
     "release:publish": "changeset publish",
-    "stage:subpaths": "bun packages/bun-test-utils/scripts/stage-subpaths.ts",
+    "stage:subpaths": "bun packages/bun-test-utils/scripts/stage-subpaths.ts --link",
     "prepare": "bun run stage:subpaths && lefthook install",
     "board": "backlog board",
     "status": "backlog status"

@@ -1,4 +1,4 @@
-import type { FixtureMap } from "@/src/types.ts";
+import type { FixtureMap } from "@/types.ts";
 
 export default {
   /** Third override of the same name: root → tests → tests/nested. */
