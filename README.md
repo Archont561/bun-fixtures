@@ -62,6 +62,15 @@ test("returns the fixture value", async ({ user }) => {
 
 There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and parent or sibling directories never contribute fixtures by location. Compose fixtures explicitly with `test.extend()` and import that extended test wherever the fixtures are needed.
 
+The root runner contributes nineteen names to one flat fixture namespace: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`, `cassette`, and `snapshot`. Composition is last-definition-wins: a consumer fixture intentionally overrides a built-in with the same key, and a later `extend()` overrides an earlier one.
+
+## Stability and platform support
+
+The fixture engine plus the standard, DOM, snapshot, property-testing, and minimal VCR capabilities are stable and follow semantic versioning. Browser and BDD are experimental: **experimental capabilities may change in minor versions**.
+
+The stable VCR surface is `cassette.record(callback)`, `cassette.replay(callback)`, and exact HTTP replay matching by method plus full URL. Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
+
+Linux and macOS are supported. Windows support is planned after the first release; the current scratch-project harness and BDD presets still rely on POSIX paths.
 
 ## Status
 

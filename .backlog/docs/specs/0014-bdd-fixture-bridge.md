@@ -1,6 +1,7 @@
 # 0014 — BDD-style scenarios on `test.*` (supersedes public BDD subpath)
 
 - **Status:** revised
+- **Stability:** experimental; may change in minor releases while it depends on pre-1.0 `@aboviq/bun-test-cucumber` ([ADR 0018](../adr/0018-release-compatibility-contract.md))
 - **Implementation:** `packages/bdd/src/index.ts`, `packages/core/src/plugin.ts`, `packages/pbt/src/index.ts`, public root `test.scenario(...)`
 - **Tests:** `packages/bdd/tests/index.test.ts`, `packages/bun-test-utils/tests/conformance/scenario.test.ts`, `packages/bun-test-utils/features/capability-packs.feature`
 

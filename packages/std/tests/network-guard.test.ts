@@ -4,10 +4,17 @@ const realFetch = globalThis.fetch;
 const allowedUrl = "data:text/plain,allowed";
 
 describe("@bun-test-utils/std networkGuard", () => {
-  test("rejects unexpected fetch and explicitly allows passthrough", async ({
+  test("uses the contractual blocked-fetch message and allows passthrough", async ({
     networkGuard,
   }) => {
-    await expect(fetch("https://unexpected.example/orders")).rejects.toThrow(
+    let blocked: unknown;
+    try {
+      await fetch("https://unexpected.example/orders");
+    } catch (error) {
+      blocked = error;
+    }
+    expect(blocked).toBeInstanceOf(Error);
+    expect((blocked as Error).message).toBe(
       "[bun-test-utils] networkGuard blocked unexpected fetch: GET https://unexpected.example/orders. Allow it explicitly with networkGuard.allow(...).",
     );
 

@@ -44,7 +44,16 @@ test("uses the database", async ({ database }) => {
 ## Extension chains
 
 Calling `extend()` returns a new runner. Child modules can add or override
-fixtures without scanning directories or relying on global state:
+fixtures without scanning directories or relying on global state. All fixtures
+share one flat namespace, and composition is last-definition-wins: a consumer
+fixture intentionally replaces a built-in with the same key, and a later
+extension replaces an earlier definition. Dependencies resolve by key and see
+the replacement too.
+
+The nineteen built-in keys are `clock`, `seed`, `networkGuard`, `tmpdir`, `env`,
+`stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`,
+`browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`,
+`cassette`, and `snapshot`.
 
 ```ts
 export const testWithUser = test.extend({

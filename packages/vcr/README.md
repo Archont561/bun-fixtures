@@ -2,6 +2,12 @@
 
 The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/vcr` subpath.
 
+The stable release surface is intentionally small: `record(callback)`,
+`replay(callback)`, and HTTP replay matching by uppercase method plus exact full
+URL. Matcher DSLs, configurable redaction, and cassette migration tooling are
+deferred. Other helpers currently used inside the workspace are provisional,
+not part of the stable release contract.
+
 ```ts
 import { expect, test } from "bun-test-utils";
 

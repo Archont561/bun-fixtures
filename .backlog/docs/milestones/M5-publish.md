@@ -21,6 +21,8 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 - [x] Package metadata and the `0.1.0` changelog are present.
 - [x] Playwright-style testing API (`test.extend` and typed scenario chains) is landed and covered by tests (`task_021`).
 - [x] Publication-readiness audit is complete (`task_016`).
+- [x] Release stability tiers, flat fixture-key precedence, contractual error messages,
+      and Linux/macOS support are defined (`task_041`, ADR 0018).
 - [ ] `v0.1.0` git tag.
 - [ ] Publish `bun-test-utils@0.1.0` (or configure trusted publishing).
 - [ ] Re-run the installed-consumer harness against the registry package.

@@ -1,92 +1,87 @@
 ---
 title: Recording HTTP Cassettes
-description: Record live fetch traffic to __cassettes__/ and replay it offline with the root cassette fixture.
+description: Record callback results and replay exact HTTP requests with the root cassette fixture.
 ---
 
 > Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
+The built-in `cassette` fixture provides a deliberately small stable contract:
 
-The built-in `cassette` fixture intercepts `globalThis.fetch` during a test: live HTTP
-traffic is recorded to disk once, then replayed deterministically — offline,
-fast, and immune to rate limits and flaky third parties.
+- `cassette.record(callback)` executes a callback once and stores its serializable result;
+- `cassette.replay(callback)` returns the stored result without executing the callback; and
+- HTTP replay matches one way only: the uppercase method and full URL must both match exactly.
+
+Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
 
 ## Installation
 
-`cassette` is available on the root `test` context — zero extra dependencies:
+`cassette` is available on the root `test` context with no extra dependency:
 
 ```bash
 bun add -d bun-test-utils
 ```
 
-## Using the cassette fixture
+## Record and replay a callback
 
 ```ts
-import { test, expect } from "bun-test-utils";
+import { expect, test } from "bun-test-utils";
+
+test("replays a user lookup", async ({ cassette }) => {
+  let calls = 0;
+  const loadUser = async () => {
+    calls++;
+    return { id: "user-1", name: "Ada" };
+  };
+
+  expect(await cassette.record(loadUser)).toEqual({
+    id: "user-1",
+    name: "Ada",
+  });
+  expect(await cassette.replay(loadUser)).toEqual({
+    id: "user-1",
+    name: "Ada",
+  });
+  expect(calls).toBe(1);
+});
+```
+
+Callback identity is derived without executing the callback during replay. A
+callback result must be serializable.
+
+## Record and replay HTTP traffic
+
+Set `VCR_MODE=record` for the live run, then `VCR_MODE=replay` for offline runs:
+
+```bash
+VCR_MODE=record bun test tests/user.test.ts
+VCR_MODE=replay bun test tests/user.test.ts
+```
+
+```ts
+import { expect, test } from "bun-test-utils";
 
 test("fetches user details", async ({ cassette }) => {
-  const res = await fetch("https://api.github.com/users/octocat");
-  const user = await res.json();
-
-  expect(user.login).toBe("octocat");
+  // Requesting the fixture activates interception for this test.
+  expect(cassette).toBeDefined();
+  const response = await fetch("https://api.example.test/users/user-1");
+  expect(await response.json()).toEqual({ id: "user-1" });
 });
 ```
 
-Run it once with recording enabled, commit the cassette, and every later
-run — locally or in CI — replays from disk with no network traffic.
+Replay compares the uppercase request method and full URL exactly. It does not
+perform partial URL, regular-expression, body, or custom predicate matching.
+An unmatched replay request fails instead of reaching the network.
 
-## The `__cassettes__/` convention
+## Files and secrets
 
-No file bookkeeping is required:
+The current implementation writes deterministic JSON under `__cassettes__/`
+next to the test. The exact file schema is not yet a stable public format, and
+migration tooling is deferred; treat cassette files as generated test artifacts
+owned by the version that recorded them.
 
-- The cassette for a test lives at **`__cassettes__/<test name>.json`** in
-  the same directory as the test file. The helper exposes it as
-  `cassette.path`.
-- **Record mode** writes the recorded entries there automatically on
-  teardown — only when something was actually recorded.
-- **Replay mode** loads that file automatically at setup. If it doesn't
-  exist, the fixture fails immediately with a hint to record it once with
-  `VCR_MODE=record`.
-- **Passthrough mode** never touches the file.
+Do not record secrets. Configurable redaction is outside the stable release
+contract, so remove or replace credentials before a request reaches the
+recorder.
 
-Commit `__cassettes__/` to version control alongside the tests — the files
-are deterministic, human-readable JSON, and redacted for secrets (below).
-
-## Modes
-
-| Mode | Behaviour | Enable with |
-| :-- | :-- | :-- |
-| `record` (default) | Execute requests live and append them to the cassette | `VCR_MODE=record` or `cassette.setMode("record")` |
-| `replay` | Serve responses from the cassette only; unmatched requests throw a descriptive error | `VCR_MODE=replay` or `cassette.setMode("replay")` |
-| `passthrough` | Do not intercept — real `fetch` for every request | `VCR_MODE=passthrough` or `cassette.setMode("passthrough")` |
-
-The typical workflow is `VCR_MODE=record bun test` once, then
-`VCR_MODE=replay` everywhere else (CI above all).
-
-## Header redaction
-
-Sensitive headers never reach disk: `Authorization`, `Cookie`, `Set-Cookie`
-and `x-api-key` are stored as `[REDACTED]`. Extend the list per test:
-
-```ts
-test("uses a private API", async ({ cassette }) => {
-  cassette.redactHeader("x-internal-token");
-  // … requests using that header
-});
-```
-
-## Custom cassette paths
-
-The convention covers the common case. When a test needs a specific file —
-a shared cassette between several tests, a golden fixture — use the
-explicit API:
-
-```ts
-test("uses a shared cassette", async ({ cassette }) => {
-  cassette.load(`${import.meta.dir}/golden/github-user.json`);
-  cassette.setMode("replay");
-  // …
-});
-```
-
-`cassette.entries` exposes the recorded request/response pairs for direct
-inspection, and the real `globalThis.fetch` is always restored on teardown.
+The real `globalThis.fetch` is restored when the fixture tears down, including
+when the test fails.

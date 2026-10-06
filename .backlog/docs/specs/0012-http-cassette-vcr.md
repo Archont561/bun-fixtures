@@ -1,8 +1,9 @@
 # 0012 — HTTP Cassette / VCR Testing Fixture
 
 - **Status:** implemented
-- **Implementation:** `packages/vcr/` or `@bun-fixture/vcr`
-- **Tests:** `packages/vcr/tests/`
+- **Implementation:** `packages/vcr/`
+- **Tests:** `packages/vcr/tests/`, `packages/bun-test-utils/tests/conformance/capabilities.test.ts`
+- **Compatibility:** [ADR 0018](../adr/0018-release-compatibility-contract.md)
 
 ## Problem
 
@@ -13,10 +14,11 @@ Integration tests hitting 3rd-party HTTP APIs (Stripe, GitHub, OpenAI) are slow,
 | # | Requirement |
 |---|-------------|
 | R1 | `cassette` fixture MUST intercept global `fetch` during test execution. |
-| R2 | In **record mode** (`VCR_MODE=record`), HTTP requests and responses MUST be serialized to JSON/HAR files under `__cassettes__/`. |
-| R3 | In **replay mode** (`VCR_MODE=replay`), requests matching method, URL, and headers MUST be fulfilled from disk without network traffic. |
-| R4 | Header redaction (e.g. `Authorization`, `Cookie`) MUST be supported to prevent leaking secrets into committed cassette files. |
+| R2 | In **record mode** (`VCR_MODE=record`), HTTP requests and responses MUST be serialized under the `__cassettes__/` convention. The on-disk schema is not yet a stable public format. |
+| R3 | In **replay mode** (`VCR_MODE=replay`), the stable matcher MUST compare the uppercase method and full URL exactly and MUST fulfill a match without network traffic. |
+| R4 | The stable callback surface MUST consist of `record(callback)` and `replay(callback)`; replay MUST return the recorded serializable result without executing the callback. |
 | R5 | Original `globalThis.fetch` MUST be restored upon fixture teardown. |
+| R6 | Matcher DSLs, configurable redaction, and cassette migration tooling MUST remain explicitly deferred from the stable `0.1.x` contract. |
 
 ## Verification
 
@@ -46,6 +48,11 @@ interface Cassette {
 }
 ```
 
+For intercepted HTTP traffic, replay uses one stable matching rule only: both
+the uppercase method and full URL must be equal. Header/body matching,
+regular-expression or predicate DSLs, configurable redaction, and on-disk
+migration tooling are not part of the stable surface.
+
 A direct API call is live and does not need a `live()` wrapper:
 
 ```ts
@@ -70,5 +77,10 @@ teardown, including when a callback throws.
 
 The callback registry is implemented on `CassetteHelper`: callback source identity is
 hashed without executing the callback, `record()` serializes and stores one result, and
-`replay()` returns that result without invoking the callback. Coverage lives in the VCR
-unit suite and the public root `cassette` fixture conformance suite.
+`replay()` returns that result without invoking the callback. HTTP replay compares the
+uppercase method and full URL exactly. Coverage lives in the VCR unit suite and the
+public root `cassette` fixture conformance suite.
+
+The implementation still contains provisional storage and redaction helpers used by
+workspace tests. They are deliberately outside the stable release contract and MUST NOT
+be presented as compatibility guarantees.

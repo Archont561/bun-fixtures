@@ -18,6 +18,20 @@ Capability packs are internal. Do not import `bun-test-utils/std`,
 `bun-test-utils/pbt`, `bun-test-utils/vcr`, or other subpaths; their fixtures and
 runners are available through the root `test` object.
 
+## Stability and platforms
+
+The engine plus the standard, DOM, snapshot, property-testing, and minimal VCR
+capabilities are stable and follow semantic versioning. Browser and BDD are
+experimental: experimental capabilities may change in minor versions.
+
+The stable VCR contract is `cassette.record(callback)`,
+`cassette.replay(callback)`, and exact HTTP matching by uppercase method plus
+full URL. Matcher DSLs, configurable redaction, and cassette migration tooling
+are deferred.
+
+Linux and macOS are supported. Windows support is planned after the first
+release.
+
 ## `test(name, fn, options?)`
 
 Defines a fixture-aware test. Requested fixtures are detected from the first
@@ -63,6 +77,11 @@ export const test = base.extend({
 ```
 
 Fixture scopes are `"session"`, `"file"`, and `"test"` (default). Dependencies are resolved before the fixture that requests them, and teardown after `await use(value)` runs in strict LIFO order.
+
+All fixtures share one flat namespace. Composition is last-definition-wins: a
+consumer fixture intentionally overrides a built-in with the same key, and a
+later `extend()` overrides an earlier definition. Dependencies resolve by key,
+so they receive the override as well.
 
 ## `test.prop(title, arbitraryFactory, fn, options?)`
 
@@ -162,11 +181,30 @@ Re-exported directly from `bun:test` for convenience.
 
 The root `test` includes these built-in fixtures:
 
-- Standard: `tmpdir`, `env`, `stdio`
+- Standard: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`
 - DOM: `window`, `document`, `page`
 - Browser/server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
 - VCR: `cassette`
 - Snapshots: `snapshot`
+
+## Error-message compatibility
+
+Use machine-readable `code` and `details` for integrations when they are
+available. These four human-readable message templates are also contractual:
+
+```text
+[bun-test-utils] unknown fixture "<NAME>" requested in <FILE>. Available in this explicit test.extend(...) chain: <AVAILABLE>. Compose the fixture with test.extend({ <NAME>: ... }) and import that extended test into this file.
+
+[bun-test-utils] circular fixture dependency: <TRAIL> (<FILE>)
+
+[bun-test-utils] fixture "<NAME>" finished without calling use(value)
+
+[bun-test-utils] networkGuard blocked unexpected fetch: <METHOD> <URL>. Allow it explicitly with networkGuard.allow(...).
+```
+
+Placeholder values vary, but the surrounding wording and punctuation are
+stable. Other diagnostic wording may change without changing its code or
+meaning.
 
 ## Environment variables
 

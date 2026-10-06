@@ -3,7 +3,7 @@
 - **Status:** in progress
 - **Milestone:** M5
 - **Implementation:** `packages/bun-test-utils/package.json`
-- **Architecture:** [ADR 0014](../adr/0014-bunup-built-publication.md)
+- **Architecture:** [ADR 0014](../adr/0014-bunup-built-publication.md), [ADR 0018](../adr/0018-release-compatibility-contract.md)
 
 ## Requirements
 
@@ -21,6 +21,9 @@
 | R10 | Publishing MUST happen from `packages/bun-test-utils`; every sibling workspace and the repository root are private and MUST never be published. |
 | R11 | The published package MUST declare `"license": "MIT OR Apache-2.0"` and ship both licence texts. |
 | R12 | Private workspace implementations MUST be bundled into the public entries; optional public peers (`playwright`, `happy-dom`, `fast-check`, and `@aboviq/bun-test-cucumber`) MUST remain external and MUST NOT be auto-installed through `optionalDependencies`. |
+| R13 | The engine plus standard, DOM, snapshot, property-testing, and minimal VCR capabilities MUST be labeled stable and follow semantic versioning. |
+| R14 | Browser and BDD MUST be labeled experimental, with the public policy that experimental capabilities MAY change in minor versions. |
+| R15 | The `0.1.x` support declaration MUST name Linux and macOS; Windows MUST remain post-release until POSIX path assumptions are removed and a Windows CI lane exists. |
 
 ### Why the licence files are listed in `files`
 
