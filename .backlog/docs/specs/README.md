@@ -14,7 +14,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 | [0006](./0006-behavioural-test-suite.md) | Behavioural (Gherkin) test suite | implemented | `packages/*/e2e/bdd/`, `packages/config/bdd/presets.ts` |
 | [0007](./0007-apps-docs-starlight.md) | Documentation site with Astro Starlight & GitHub Pages | implemented | `apps/docs/`, `.github/workflows/docs.yml` |
 | [0008](./0008-typescript-config-package.md) | Monorepo-wide TypeScript Configuration Package | implemented | `packages/config/`, `tsconfig.json` |
-| [0009](./0009-standard-fixtures-std.md) | Standard Built-in Fixtures (tmpdir, env, stdio) | implemented | `packages/std/` |
+| [0009](./0009-standard-fixtures-std.md) | Standard Built-in Fixtures (tmpdir, env, stdio, clock, seed, network guard) | implemented | `packages/std/` |
 | [0010](./0010-property-based-testing-fastcheck.md) | Property-Based Testing Integration with fast-check | implemented | `packages/pbt/` |
 | [0011](./0011-dom-and-browser-fixtures.md) | DOM and Browser Testing Support (happy-dom & Playwright) | in progress | `packages/dom/`, `packages/browser/` |
 | [0012](./0012-http-cassette-vcr.md) | HTTP Cassette / VCR Testing Fixture | implemented | `packages/vcr/` |

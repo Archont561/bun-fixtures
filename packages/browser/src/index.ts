@@ -4,7 +4,9 @@ import {
   test as baseTest,
   createFixture,
   type FixtureMap,
+  installFetchInterceptor,
   MissingOptionalDependencyError,
+  matchesFetch,
 } from "@bun-test-utils/core";
 import type { Server } from "bun";
 
@@ -422,12 +424,7 @@ function methodMatches(expected: HttpMethod, actual: string): boolean {
 }
 
 function matcherMatches(matcher: HttpMockMatcher, request: Request): boolean {
-  if (typeof matcher === "function") return matcher(request.clone());
-  if (matcher instanceof RegExp) return matcher.test(request.url);
-
-  const url = new URL(request.url);
-  if (/^https?:\/\//.test(matcher)) return request.url === matcher;
-  return url.pathname === matcher || request.url.endsWith(matcher);
+  return matchesFetch(matcher, request);
 }
 
 async function installPlaywrightRoutes(
@@ -484,23 +481,16 @@ function headersObject(headers: Headers): Record<string, string> {
 export const httpMockFixture = createFixture<HttpMockHelper>({
   scope: "test",
   setup: async (use) => {
-    const originalFetch = globalThis.fetch;
     const httpMock = createHttpMock();
     const state = (httpMock as any).__state as HttpMockState;
-    (globalThis as any).fetch = async (
-      input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      const request = new Request(input, init);
-      const response = await resolveMock(request, state);
-      if (response) return response;
-      return originalFetch(input, init);
-    };
+    const uninstall = installFetchInterceptor((request) =>
+      resolveMock(request, state),
+    );
 
     try {
       await use(httpMock);
     } finally {
-      (globalThis as any).fetch = originalFetch;
+      uninstall();
     }
   },
 });
