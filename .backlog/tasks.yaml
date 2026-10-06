@@ -1554,19 +1554,20 @@ tasks:
     updated_at: 2026-10-06T09:29:54.517Z
   - id: task_031
     title: Deflake pack.test.ts bunup ENOENT on dist/plugin.js
-    description: "Observed in CI on 2026-10-06 (PR #12, run 37443897493, Test job):
-      the pack harness's prepack build intermittently dies inside bunup with
-      UNKNOWN ERROR ENOENT opening its own output
-      packages/bun-test-utils/dist/plugin.js. Identical code passed in the PR
-      #11 CI run, repeatedly locally, and on empty-commit retry —
-      nondeterministic. Same tree also produced a one-off pre-push turbo test
-      failure locally (1.26s, unreproduced). Suspect a race between bunup's dist
-      cleanup/write and dist readers (conformance subpath imports, dts
-      inferTypes). Investigate whether the e2e pack step should build into an
-      isolated directory instead of the live dist/ used by concurrently
-      discovered test files, or gate pack.test.ts behind an already-built dist."
+    description: "RESOLVED 2026-10-06 via squash commit 7ff9426. Two failures shared
+      one symptom: (1) turbo's test pipeline never built the public wrapper,
+      whose suite self-references the bunup dist — deterministic failure on any
+      fresh/cold machine (5/5 reproduced locally, previously masked because
+      prepare builds dist at install); fixed by making bun-test-utils#test
+      depend on its own build in turbo.json. (2) The pack harness's bun pm pack
+      re-ran a full bunup rebuild inside the test phase over the live dist and
+      intermittently crashed bunup with an internal ENOENT (~50% on PRs #12/#13;
+      never reproduced sequentially, 12/12 clean); fixed by packing with
+      --ignore-scripts after a deterministic README sync. Proof: PR #13 Test
+      pass; post-merge main CI green; six consecutive local cold-state turbo run
+      test runs green."
     source_links: []
-    status: in_progress
+    status: done
     priority: P2
     labels: []
     repo_targets: []
@@ -1589,4 +1590,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T09:39:58.642Z
-    updated_at: 2026-10-06T09:55:38.843Z
+    updated_at: 2026-10-06T10:00:32.208Z
