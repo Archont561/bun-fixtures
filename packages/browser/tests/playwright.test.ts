@@ -1,22 +1,33 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
-import { chromium } from "playwright";
-import {
-  browserContextFixture,
-  browserFixture,
-  browserPageFixture,
-  testServerFixture,
-} from "@/index.ts";
-
 /**
- * Real-browser coverage for the Playwright fixtures (spec 0011 R3–R5).
+ * Real-browser coverage for the Playwright fixtures (spec 0011 R3–R5),
+ * composed the way a consumer composes them.
  *
  * These tests need `playwright install chromium` to have run. Without the
  * downloaded binaries they skip instead of failing: installing none of the
  * optional peers must still leave the suite green for library contributors.
  * Error-path behaviour for a missing `playwright` package is pinned by
  * tests/playwright-missing-peer.test.ts, which runs unconditionally.
+ *
+ * Scope is the subject here, and the engine is what makes it visible:
+ * `browser` is session-scoped, so consecutive tests receive the *same*
+ * instance, while `browserContext` and `browserPage` are test-scoped and are
+ * rebuilt and torn down around every test. Isolation is therefore asserted
+ * *across* tests rather than by opening two contexts inside one — which is
+ * exactly how a consumer experiences it.
  */
+
+import { test as bunTest } from "bun:test";
+import { existsSync } from "node:fs";
+import { chromium } from "playwright";
+import {
+  browserContextFixture,
+  browserFixture,
+  browserPageFixture,
+  describe,
+  expect,
+  test,
+} from "@/index.ts";
+
 const chromiumAvailable = (() => {
   try {
     return existsSync(chromium.executablePath());
@@ -25,138 +36,151 @@ const chromiumAvailable = (() => {
   }
 })();
 
+const PAGE_HTML = `<!doctype html><html><body>
+  <h1>counter</h1>
+  <button id="inc" onclick="count.textContent = Number(count.textContent) + 1">++</button>
+  <span id="count">0</span>
+  </body></html>`;
+
+/** Breadcrumbs let a later test observe the previous test's teardown. */
+const breadcrumbs: {
+  browser?: any;
+  context?: any;
+  page?: any;
+} = {};
+
 describe.skipIf(!chromiumAvailable)(
   "@bun-test-utils/browser — playwright fixtures",
   () => {
-    test("session-scoped browser launches headless and closes on teardown", async () => {
+    test("declares the scopes the fixtures are documented with", async () => {
       expect(browserFixture.scope).toBe("session");
+      expect(browserContextFixture.scope).toBe("test");
+      expect(browserPageFixture.scope).toBe("test");
+    });
 
+    test("injects a connected, headless browser", async ({ browser }) => {
+      breadcrumbs.browser = browser;
+      expect(browser.isConnected()).toBe(true);
+      expect(typeof browser.newContext).toBe("function");
+    });
+
+    test("reuses the same session-scoped browser in the next test", async ({
+      browser,
+    }) => {
+      // Session scope: not rebuilt between tests, and still connected.
+      expect(browser).toBe(breadcrumbs.browser);
+      expect(browser.isConnected()).toBe(true);
+    });
+
+    test("a test-scoped context owns its cookies and storage", async ({
+      browser,
+      browserContext,
+      testServer,
+    }) => {
+      expect(browserContext).not.toBe(breadcrumbs.context);
+      breadcrumbs.context = browserContext;
+      // The context was created on the session browser.
+      expect(browser.isConnected()).toBe(true);
+
+      testServer.handle(
+        () =>
+          new Response(PAGE_HTML, {
+            headers: { "content-type": "text/html" },
+          }),
+      );
+
+      const page = await browserContext.newPage();
+      await page.goto(testServer.url);
+      await browserContext.addCookies([
+        { name: "session", value: "abc", url: testServer.url },
+      ]);
+      await page.evaluate(() =>
+        localStorage.setItem("probe", "from-context-a"),
+      );
+      await page.reload();
+      expect(await page.evaluate(() => localStorage.getItem("probe"))).toBe(
+        "from-context-a",
+      );
+      await page.close();
+    });
+
+    test("the next test gets a fresh context with none of that state", async ({
+      browserContext,
+      testServer,
+    }) => {
+      // A different context object…
+      expect(browserContext).not.toBe(breadcrumbs.context);
+      // …and the previous one was closed by its teardown.
+      await expect(breadcrumbs.context.newPage()).rejects.toThrow();
+
+      expect((await browserContext.cookies()).length).toBe(0);
+
+      testServer.handle(
+        () =>
+          new Response(PAGE_HTML, {
+            headers: { "content-type": "text/html" },
+          }),
+      );
+      const page = await browserContext.newPage();
+      await page.goto(testServer.url);
+      expect(await page.evaluate(() => localStorage.getItem("probe"))).toBe(
+        null,
+      );
+      await page.close();
+    });
+
+    test("browserPage navigates and interacts with a page served by testServer", async ({
+      browserContext,
+      browserPage,
+      testServer,
+    }) => {
+      breadcrumbs.context = browserContext;
+      breadcrumbs.page = browserPage;
+
+      testServer.handle(
+        () =>
+          new Response(PAGE_HTML, {
+            headers: { "content-type": "text/html" },
+          }),
+      );
+
+      await browserPage.goto(testServer.url);
+      expect(await browserPage.textContent("h1")).toBe("counter");
+
+      await browserPage.click("#inc");
+      await browserPage.click("#inc");
+      expect(await browserPage.textContent("#count")).toBe("2");
+    });
+
+    test("engine teardown closed the previous test's page and context", async () => {
+      expect(breadcrumbs.page.isClosed()).toBe(true);
+      expect(breadcrumbs.context.pages().includes(breadcrumbs.page)).toBe(
+        false,
+      );
+    });
+  },
+);
+
+/**
+ * The session-scoped browser is closed when the *session* ends, not when a
+ * test ends, so "closes on teardown" cannot be observed from inside a test
+ * that the same session is still running. This one case therefore drives the
+ * fixture directly — the only way to bring its teardown forward — while
+ * every behaviour above goes through the engine.
+ */
+describe.skipIf(!chromiumAvailable)(
+  "@bun-test-utils/browser — session teardown",
+  () => {
+    bunTest("session-scoped browser closes when its scope ends", async () => {
       let captured: any;
       await browserFixture.setup(
         async (browser) => {
           captured = browser;
           expect(browser.isConnected()).toBe(true);
-          expect(typeof browser.newContext).toBe("function");
         },
         { testFile: import.meta.path },
       );
-
       expect(captured.isConnected()).toBe(false);
-    });
-
-    test("test-scoped contexts on one browser isolate cookies and storage", async () => {
-      expect(browserContextFixture.scope).toBe("test");
-      expect(browserPageFixture.scope).toBe("test");
-
-      const ISOLATION_HTML = `<!doctype html><html><body><h1>isolated</h1></body></html>`;
-
-      let capturedContext: any;
-      await testServerFixture.setup(
-        async (testServer) => {
-          testServer.handle(
-            () =>
-              new Response(ISOLATION_HTML, {
-                headers: { "content-type": "text/html" },
-              }),
-          );
-
-          await browserFixture.setup(
-            async (browser) => {
-              // First "test": its context owns a cookie and a storage entry
-              // that survives a reload inside the same context.
-              await browserContextFixture.setup(
-                async (firstContext) => {
-                  capturedContext = firstContext;
-                  const page = await firstContext.newPage();
-                  await page.goto(testServer.url);
-                  await firstContext.addCookies([
-                    { name: "session", value: "abc", url: testServer.url },
-                  ]);
-                  await page.evaluate(() =>
-                    localStorage.setItem("probe", "from-context-a"),
-                  );
-                  await page.reload();
-                  expect(
-                    await page.evaluate(() => localStorage.getItem("probe")),
-                  ).toBe("from-context-a");
-                  await page.close();
-                },
-                { browser, testFile: import.meta.path },
-              );
-
-              // Second "test": same origin, same session browser, fresh state.
-              await browserContextFixture.setup(
-                async (secondContext) => {
-                  expect((await secondContext.cookies()).length).toBe(0);
-
-                  const page = await secondContext.newPage();
-                  await page.goto(testServer.url);
-                  expect(
-                    await page.evaluate(() => localStorage.getItem("probe")),
-                  ).toBe(null);
-                  await page.close();
-                },
-                { browser, testFile: import.meta.path },
-              );
-            },
-            { testFile: import.meta.path },
-          );
-        },
-        { testFile: import.meta.path },
-      );
-
-      // The first context was closed by its teardown even while the browser lived on.
-      await expect(capturedContext.newPage()).rejects.toThrow();
-    });
-
-    test("browserPage navigates and interacts with a page served by testServer", async () => {
-      const COUNTER_HTML = `<!doctype html><html><body>
-      <h1>counter</h1>
-      <button id="inc" onclick="count.textContent = Number(count.textContent) + 1">++</button>
-      <span id="count">0</span>
-      </body></html>`;
-
-      await testServerFixture.setup(
-        async (testServer) => {
-          testServer.handle(
-            () =>
-              new Response(COUNTER_HTML, {
-                headers: { "content-type": "text/html" },
-              }),
-          );
-
-          await browserFixture.setup(
-            async (browser) => {
-              await browserContextFixture.setup(
-                async (browserContext) => {
-                  let capturedPage: any;
-                  await browserPageFixture.setup(
-                    async (page) => {
-                      capturedPage = page;
-                      await page.goto(testServer.url);
-                      expect(await page.textContent("h1")).toBe("counter");
-
-                      await page.click("#inc");
-                      await page.click("#inc");
-                      expect(await page.textContent("#count")).toBe("2");
-                    },
-                    { browserContext, testFile: import.meta.path },
-                  );
-
-                  // The page fixture closed its page when the test finished.
-                  expect(capturedPage.isClosed()).toBe(true);
-                  expect(browserContext.pages().includes(capturedPage)).toBe(
-                    false,
-                  );
-                },
-                { browser, testFile: import.meta.path },
-              );
-            },
-            { testFile: import.meta.path },
-          );
-        },
-        { testFile: import.meta.path },
-      );
     });
   },
 );
