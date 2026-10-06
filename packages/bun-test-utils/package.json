@@ -37,6 +37,7 @@
     "./browser": "./browser/src/index.ts",
     "./vcr": "./vcr/src/index.ts",
     "./snapshot": "./snapshot/src/index.ts",
+    "./bdd": "./bdd/src/index.ts",
     "./package.json": "./package.json"
   },
   "files": [
@@ -47,6 +48,7 @@
     "browser/src",
     "vcr/src",
     "snapshot/src",
+    "bdd/src",
     "README.md",
     "LICENSE-MIT",
     "LICENSE-APACHE"
@@ -71,6 +73,22 @@
     "playwright": "^1.40.0",
     "happy-dom": "^20.14.5",
     "fast-check": "^4.10.2"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40.0",
+    "happy-dom": ">=20.0.0",
+    "fast-check": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    },
+    "happy-dom": {
+      "optional": true
+    },
+    "fast-check": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@aboviq/bun-test-cucumber": "^0.2.0",

@@ -36,3 +36,50 @@ built-in equivalent.
 - Tests verifying auto-numbered keys for multiple anonymous `match()` calls in one test.
 - Tests verifying a registered custom serializer is used ahead of the built-ins.
 - Tests verifying `matchFile()` against a file on disk, including the not-found error path.
+
+## Proposed API design — assertion first, fixture for control
+
+Snapshot testing should be primarily an assertion concern and should compose with
+all test styles:
+
+```ts
+expect(render()).toMatchSnapshot();
+expect(render()).toMatchSnapshot("empty-cart");
+```
+
+The snapshot fixture remains available for explicit control:
+
+```ts
+test("renders an empty cart", async ({ snapshot }) => {
+  snapshot.match(renderEmptyCart(), "empty-cart");
+  snapshot.addSerializer(domSerializer);
+});
+```
+
+The fixture MUST continue to support `match`, `matchFile`, serializers, mode,
+and the resolved path. The preferred user-facing split is:
+
+- `expect(value).toMatchSnapshot(name?)` for ordinary assertions;
+- `snapshot.match(value, name?)` for custom serialization and fixture-driven
+  workflows;
+- `snapshot.matchFile(path, name?)` for generated files;
+- `snapshot.setMode("update")` for explicit update control.
+
+Snapshot identity should be stable and independent of a test-name slug whenever
+possible. An explicit snapshot name is preferred for scenario and property
+regressions:
+
+```ts
+.then("the rendered cart matches", ({ output, expect }) => {
+  expect(output).toMatchSnapshot("cart-empty");
+});
+```
+
+Property-based tests MUST NOT create an unbounded snapshot per generated case.
+They should assert invariants directly, or snapshot a deliberately selected
+counterexample/replay. Snapshot failures SHOULD include a structured diff,
+the snapshot path, the logical snapshot name, and the update command.
+
+Snapshots are regression artifacts, not substitutes for ordinary assertions:
+use them for stable serialized output, CLI output, rendered markup, and files;
+prefer focused assertions for volatile fields and business rules.

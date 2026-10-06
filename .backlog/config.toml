@@ -1,6 +1,6 @@
 version = 1
 project_id = "WS-df06f48c"
-project_name = "bun-fixture"
+project_name = "bun-test-utils"
 project_mode = "embedded"
 project_location = "in_repo"
 default_branch = "main"
@@ -26,8 +26,8 @@ show_backlog_column = true
 show_review_column = false
 
 [[repos]]
-id = "bun-fixture"
-path = "/home/user/bun-fixtures"
+id = "bun-test-utils"
+path = "/home/user/bun-test-utils"
 default_branch = "main"
 enabled = true
 location = "local"

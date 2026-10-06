@@ -1,4 +1,4 @@
-# Working on bun-fixture
+# Working on bun-test-utils
 
 ## Tooling
 
@@ -7,7 +7,7 @@
 | Backlog | `bunx backlog status`, `bunx backlog board` | tasks, claims, orchestration (`.backlog/`) |
 | Skills | `bunx skills list` | agent skills installed into `.agents/skills` |
 | Bun | `bun test`, `bun run typecheck` | the only build/test toolchain — no compile step |
-| Cucumber | `bun run test:bdd` | behavioural suite: `packages/bun-fixture/features/*.feature` + `packages/bun-fixture/tests/steps/` |
+| Cucumber | `bun run test:bdd` | behavioural suite: `packages/bun-test-utils/features/*.feature` + `packages/bun-test-utils/tests/steps/` |
 
 ## Installed skills
 
@@ -33,7 +33,7 @@ sandbox quirks, adapted from the same skill in
 ## Where things live
 
 The repository is a Bun workspace. Package code and its tests are in
-`packages/bun-fixture`; Backlog, skills, and docs are at the root (docs in
+`packages/bun-test-utils`; Backlog, skills, and docs are at the root (docs in
 `.backlog/docs`). `bun test` and `bun run typecheck` work from either place.
 
 ## Loop
