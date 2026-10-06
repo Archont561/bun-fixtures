@@ -675,7 +675,7 @@ tasks:
       this task in_progress until that baseline failure is resolved or
       explicitly accepted as unrelated."
     source_links: []
-    status: in_progress
+    status: done
     priority: P2
     labels:
       - audit
@@ -716,7 +716,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T20:52:23.509Z
-    updated_at: 2026-10-06T07:34:49.205Z
+    updated_at: 2026-10-06T09:20:49.936Z
   - id: task_017
     title: Add value/file snapshot testing fixture (@bun-fixture/snapshot)
     description: >-
@@ -1152,7 +1152,7 @@ tasks:
       new scenario coverage). Keep in_progress until the full test gate is green
       or the unrelated failure is explicitly accepted."
     source_links: []
-    status: in_progress
+    status: done
     priority: P1
     labels:
       - api
@@ -1185,7 +1185,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T01:23:26.696Z
-    updated_at: 2026-10-06T07:55:37.509Z
+    updated_at: 2026-10-06T09:20:50.219Z
   - id: task_023
     title: Implement callback-based cassette record and replay API
     description: "Callback-based cassette API implemented. CassetteHelper now
@@ -1200,7 +1200,7 @@ tasks:
       packages/core/tests/nested/nested.test.ts; keep in_progress until the full
       gate is green or explicitly accepted."
     source_links: []
-    status: in_progress
+    status: done
     priority: P1
     labels:
       - vcr
@@ -1233,7 +1233,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T01:23:26.926Z
-    updated_at: 2026-10-06T07:59:56.565Z
+    updated_at: 2026-10-06T09:20:50.511Z
   - id: task_024
     title: Flatten internal workspace package layout
     description: Move bdd, browser, dom, pbt, snapshot, std, and vcr from
@@ -1382,7 +1382,7 @@ tasks:
       packages/core/tests/nested/nested.test.ts; keep in_progress until the full
       gate is green or explicitly accepted."
     source_links: []
-    status: in_progress
+    status: done
     priority: P2
     labels:
       - core
@@ -1418,7 +1418,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T08:01:50.450Z
-    updated_at: 2026-10-06T08:05:13.403Z
+    updated_at: 2026-10-06T09:20:50.797Z
   - id: task_029
     title: Typed core and capability errors
     description: "Implemented the typed error model. Added BunTestUtilsError with
@@ -1435,7 +1435,7 @@ tasks:
       packages/core/tests/nested/nested.test.ts; keep in_progress until the full
       gate is green or explicitly accepted."
     source_links: []
-    status: in_progress
+    status: done
     priority: P1
     labels:
       - core
@@ -1473,4 +1473,44 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T08:02:05.782Z
-    updated_at: 2026-10-06T08:09:03.367Z
+    updated_at: 2026-10-06T09:20:51.075Z
+  - id: task_027
+    title: Fix mid-run session teardown from bundled engine copies
+    description: "Engine bug: with a bundled dist present, test files importing
+      \"bun-test-utils\" resolve a second engine instance (dist/plugin.js),
+      which shares the global singleton. Every instance unconditionally
+      registered bunAfterAll(teardownSession); Bun fires afterAll hooks
+      registered by test-file-imported modules at that file's end, so the dist
+      copy tore the session down mid-run (observed as
+      packages/core/tests/nested/nested.test.ts seeing a session fixture set up
+      twice; full gate 223 pass / 1 fail). Fix: only the first-loaded engine
+      copy registers the afterAll hook (state.afterAllHooked guard in the shared
+      singleton); the preload copy loads first in every supported setup, so its
+      hook stays run-global. Acceptance: full 'bun test' green from repo root
+      (224 pass / 3 skip / 0 fail); lint and typecheck clean; dist rebuilt so
+      bundles carry the guard."
+    source_links: []
+    status: done
+    priority: P0
+    labels: []
+    repo_targets: []
+    acceptance_criteria: []
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-06T08:56:59.633Z
+    updated_at: 2026-10-06T08:59:35.590Z

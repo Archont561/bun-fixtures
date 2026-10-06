@@ -33,5 +33,7 @@ export function fixtureSteps(
   });
 }
 
+/** Public error surface, mirrored from core so subpath consumers can type catches. */
+export { BunTestUtilsError } from "@bun-test-utils/core";
 export type { FixtureContext, FixtureMap };
 export { openFixtures };

@@ -96,6 +96,8 @@ interface State {
   /** Test file currently executing — used to tear down file scope on file switch. */
   currentFile: string | null;
   exitHooked: boolean;
+  /** True once some loaded engine copy registered the run-global afterAll hook. */
+  afterAllHooked: boolean;
   defIds: WeakMap<object, number>;
   nextDefId: number;
   diagnostics?: DiagnosticsSink;
@@ -146,6 +148,7 @@ const state: State = (g.__BUN_TEST_UTILS__ ??= {
   files: new Map(),
   currentFile: null,
   exitHooked: false,
+  afterAllHooked: false,
   defIds: new WeakMap(),
   nextDefId: 1,
 } satisfies State);
@@ -971,11 +974,24 @@ if (!process.env.BUN_TEST_UTILS_NO_AUTODISCOVER) {
  * *global* hook that runs once after the whole test run — the right moment to
  * close session scope (and the last file's file scope). `beforeExit` stays as
  * a backstop for non-`bun test` usage.
+ *
+ * Bun scopes the hook differently depending on *when* the registering module
+ * is first loaded: a module loaded during the preload phase gets a run-global
+ * `afterAll`, while one first imported by a test file gets an `afterAll` that
+ * fires at that file's end. Bundled builds make that distinction bite: the
+ * published `dist/` copies carry their own engine instance, which shares this
+ * global singleton — so a test file importing `"bun-test-utils"` would hook a
+ * mid-run session teardown and every later file would silently rebuild its
+ * session fixtures. Only the first-loaded copy registers the hook; with the
+ * preload in place that is the preload copy, whose hook stays run-global.
  */
 try {
-  bunAfterAll(async () => {
-    await teardownSession();
-  });
+  if (!state.afterAllHooked) {
+    state.afterAllHooked = true;
+    bunAfterAll(async () => {
+      await teardownSession();
+    });
+  }
 } catch {
   // Not running under `bun test` — the process hook will have to do.
 }
