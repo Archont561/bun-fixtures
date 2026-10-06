@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir as osTmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { createFixture } from "@bun-test-utils/core";
 
 export interface TmpDirHelper {
@@ -25,6 +25,15 @@ export interface TmpDirHelper {
   remove(filename: string): void;
 }
 
+function resolveInside(dir: string, filename: string): string {
+  const target = resolve(dir, filename);
+  const relativeTarget = relative(dir, target);
+  if (relativeTarget === ".." || relativeTarget.startsWith(`..${sep}`)) {
+    throw new Error(`Path escapes temporary directory: ${filename}`);
+  }
+  return target;
+}
+
 export const tmpdirFixture = createFixture<TmpDirHelper>({
   scope: "test",
   setup: async (use) => {
@@ -32,22 +41,22 @@ export const tmpdirFixture = createFixture<TmpDirHelper>({
     const helper: TmpDirHelper = {
       dir,
       path(...parts: string[]) {
-        return join(dir, ...parts);
+        return resolveInside(dir, join(...parts));
       },
       write(filename: string, content: string) {
-        const full = join(dir, filename);
+        const full = resolveInside(dir, filename);
         mkdirSync(dirname(full), { recursive: true });
         writeFileSync(full, content);
         return full;
       },
       read(filename: string) {
-        return readFileSync(join(dir, filename), "utf8");
+        return readFileSync(resolveInside(dir, filename), "utf8");
       },
       exists(filename: string) {
-        return existsSync(join(dir, filename));
+        return existsSync(resolveInside(dir, filename));
       },
       remove(filename: string) {
-        rmSync(join(dir, filename), { recursive: true, force: true });
+        rmSync(resolveInside(dir, filename), { recursive: true, force: true });
       },
     };
 
