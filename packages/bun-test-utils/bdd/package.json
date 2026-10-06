@@ -1,0 +1,17 @@
+{
+  "name": "@bun-test-utils/bdd",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal BDD fixture bridge bundled as bun-test-utils/bdd.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@bun-test-utils/config": "workspace:*",
+    "bun-test-utils": "workspace:*"
+  }
+}

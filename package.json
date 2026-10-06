@@ -29,6 +29,7 @@
   },
   "packageManager": "bun@1.4.2",
   "devDependencies": {
+    "@aboviq/bun-test-cucumber": "^0.2.0",
     "@biomejs/biome": "2.5.15",
     "@bun-test-utils/config": "workspace:*",
     "@changesets/cli": "^3.0.3",

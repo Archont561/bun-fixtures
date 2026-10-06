@@ -1,14 +1,13 @@
 # 0014 — BDD Fixture Bridge (`withFixtures` + `bun-test-utils/bdd`)
 
-- **Status:** approved for implementation — depends on task_018 (rename) and
-  task_020 (fold into one package) landing first
+- **Status:** implemented in the `bun-test-utils/bdd` subpath; scenario-chain API revision documented below
 - **ADR:** [0012](../adr/0012-bdd-fixture-bridge.md)
-- **Implementation:** *(pending)* `packages/bun-test-utils/src/plugin.ts`
-  (new `withFixtures` export), `packages/bdd/` (internal workspace package,
+- **Implementation:** `packages/bun-test-utils/src/plugin.ts` (`openFixtures`/`withFixtures`),
+  `packages/bun-test-utils/bdd/` (internal workspace package,
   bundled into the published `bun-test-utils` package as the
   `bun-test-utils/bdd` subpath export)
-- **Tests:** *(pending)* `packages/bun-test-utils/tests/fixtures.test.ts`
-  ("withFixtures"), `packages/bdd/tests/`
+- **Tests:** `packages/bun-test-utils/tests/conformance/conformance.test.ts`,
+  `packages/bun-test-utils/tests/fixtures.test.ts`
 
 ## 2026-10-05 update (second revision, grill-me sessions)
 
@@ -158,3 +157,68 @@ a callback, for exactly this kind of external, two-phase caller.
 - Interaction with session fixtures across `.feature` files run in the same
   process — should match the existing cross-file session caching semantics,
   but needs an explicit test once implemented.
+
+## 2026-10-06 API revision — scenario chains
+
+The public scenario API is deliberately separate from the low-level Cucumber hook
+bridge. The supported user-facing shape is a typed fluent scenario chain:
+
+```ts
+test
+  .scenario("checkout succeeds")
+  .given("a customer exists", () => ({
+    customer: createCustomer(),
+  }))
+  .given("the customer has an empty cart", () => ({
+    cart: createCart(),
+  }))
+  .when("the customer checks out", async ({ api, customer, cart }) => ({
+    order: await api.checkout(customer, cart),
+  }))
+  .then("the order is created", ({ order, expect }) => {
+    expect(order).toBeDefined();
+  });
+```
+
+Each `given` and `when` callback returns an object that is merged into the
+context received by subsequent callbacks. `then` callbacks assert and do not
+extend the context. Fixtures from `test.extend()` and generated property values
+are direct context properties; there is no `get()` or `provide()` API.
+
+The builder enforces the phase order in its types:
+
+- `given()` may repeat only before the first `when()`;
+- `when()` may repeat after `given()` and before `then()`;
+- `then()` may repeat after `when()`;
+- `given()` and `when()` are unavailable after their phase closes.
+
+Property-based BDD uses the `test.scenario.prop()` namespace to avoid a naming
+collision with direct `test.prop()` tests. Strategies are always explicit as
+the second argument; they are never inferred from step strings:
+
+```ts
+test.scenario.prop("generated users can be persisted", {
+  user: userStrategy,
+  role: fc.constantFrom("admin", "member"),
+})
+  .given("a generated user", ({ user, role }) => ({
+    input: { ...user, role },
+  }))
+  .when("the user is persisted", async ({ api, input }) => ({
+    saved: await api.users.create(input),
+  }))
+  .then("the saved user matches the input", ({ saved, input, expect }) => {
+    expect(saved.name).toBe(input.name);
+    expect(saved.role).toBe(input.role);
+  });
+```
+
+A property scenario executes the complete chain for every generated example and
+shrink attempt. Test-scoped fixtures are rebuilt per example; session- and
+file-scoped fixtures retain their normal sharing semantics. Gherkin step text is
+stored for reporting and may use `<name>` placeholders for explicit property
+references; `@name` remains reserved for Gherkin tags.
+
+This API revision supersedes the earlier callback-context sketch below for new
+scenario tests. The lower-level `fixtureSteps`/`openFixtures` bridge remains an
+integration API for external Cucumber hooks.

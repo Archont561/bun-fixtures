@@ -505,6 +505,39 @@ async function instantiate(
   return inst.value;
 }
 
+/** Resolve a fixture map for integrations that manage their own lifecycle. */
+export async function openFixtures(
+  map: FixtureMap,
+  names: string[],
+  context: Partial<FixtureContext> = {},
+): Promise<{ fixtures: FixtureContext; close: () => Promise<void> }> {
+  const file = context.testFile ?? callerFile();
+  const order = resolveOrder(names, map, file);
+  const stack: Array<() => Promise<void>> = [];
+  const fixtures = Object.assign(Object.create(null), context, {
+    testFile: file,
+    scope: "test" as const,
+  }) as FixtureContext;
+  for (const name of order) {
+    fixtures[name] = await instantiate(name, map, fixtures, file, {}, stack);
+  }
+  return { fixtures, close: () => unwind(stack) };
+}
+
+export async function withFixtures<T>(
+  map: FixtureMap,
+  names: string[],
+  context: Partial<FixtureContext> = {},
+  body: (fixtures: FixtureContext) => T | Promise<T>,
+): Promise<T> {
+  const scope = await openFixtures(map, names, context);
+  try {
+    return await body(scope.fixtures);
+  } finally {
+    await scope.close();
+  }
+}
+
 async function unwind(stack: Array<() => Promise<void>>): Promise<void> {
   const errors: unknown[] = [];
   while (stack.length) {

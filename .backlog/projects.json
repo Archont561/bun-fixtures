@@ -3,8 +3,8 @@
   "projects": [
     {
       "id": "WS-df06f48c",
-      "path": "/home/user/bun-fixtures",
-      "name": "bun-fixture",
+      "path": "/home/user/bun-test-utils",
+      "name": "bun-test-utils",
       "added_at": "2026-10-05T15:14:53.564Z",
       "last_opened_at": "2026-10-05T15:14:53.564Z",
       "location": "in_repo",

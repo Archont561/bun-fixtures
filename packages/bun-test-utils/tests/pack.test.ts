@@ -42,6 +42,7 @@ const BUNDLED_SUBPATHS = [
   "browser",
   "vcr",
   "snapshot",
+  "bdd",
 ] as const;
 
 /** Files the tarball may contain besides `src/` and each bundled subpath's `src/`. */
@@ -102,6 +103,9 @@ describe("bun pm pack smoke test", () => {
         expect(manifest.name).toBe(PACKAGE_NAME);
         expect(manifest.private).toBeUndefined();
         expect(manifest.license).toBe("MIT OR Apache-2.0");
+        for (const peer of ["playwright", "happy-dom", "fast-check"]) {
+          expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
+        }
         // `bun pm pack` must rewrite workspace-ranges (e.g. workspace:^ → ^0.1.0) —
         // moot today since the published manifest has none, but guards regressions.
         expect(JSON.stringify(manifest)).not.toContain("workspace:");
