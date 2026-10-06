@@ -1,5 +1,8 @@
 # Browser fixtures (internal)
 
+> **Experimental:** browser capability APIs may change in minor releases. The
+> Playwright peer and browser-binary path make this the heaviest CI capability.
+
 The browser fixtures (`testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, and `browserHttpMock`) are internal workspace fixtures bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/browser` subpath.
 
 ```ts

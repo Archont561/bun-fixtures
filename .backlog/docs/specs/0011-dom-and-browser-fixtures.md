@@ -3,6 +3,7 @@
 - **Status:** in progress
 - **Implementation:** `packages/dom/`, `packages/browser/`
 - **Tests:** `packages/dom/tests/`, `packages/browser/tests/`
+- **Stability:** DOM is stable; browser is experimental and may change in minor releases ([ADR 0018](../adr/0018-release-compatibility-contract.md))
 
 ## Problem
 

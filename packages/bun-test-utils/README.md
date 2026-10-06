@@ -29,9 +29,36 @@ the root `test` context, and advanced runners hang off `test.*`:
 Mocking should be expressed as fixtures so setup, dependency ordering, and
 teardown remain in the fixture lifecycle.
 
+## Stability and platform support
+
+The fixture engine plus the standard, DOM, snapshot, property-testing, and minimal
+VCR capabilities are stable and follow semantic versioning. Browser and BDD are
+experimental: **experimental capabilities may change in minor versions**.
+
+The stable VCR surface is `cassette.record(callback)`,
+`cassette.replay(callback)`, and exact HTTP replay matching by uppercase method
+plus full URL. Matcher DSLs, configurable redaction, and cassette migration
+support are deferred.
+
+Linux and macOS are supported. Windows support is planned after the first
+release; the current scratch-project harness and BDD presets rely on POSIX paths.
+
 ## Explicit composition only
 
 There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Use `test.extend()` and import the extended runner from each test file that needs those fixtures.
+
+The root runner contributes nineteen keys to one flat namespace:
+
+- Standard: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`
+- DOM: `window`, `document`, `page`
+- Browser: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
+- VCR: `cassette`
+- Snapshots: `snapshot`
+
+Composition is last-definition-wins. A consumer fixture with one of these keys
+intentionally replaces the built-in for that runner, and a later `extend()`
+replaces an earlier definition. Dependencies continue to resolve by key and
+therefore receive the override too.
 
 ```ts
 // test.ts
@@ -122,6 +149,16 @@ test.scenario("chains every fluent phase")
     expect(result).toBe(3);
   });
 ```
+
+## Error compatibility
+
+Thrown capability errors expose machine-readable `code` and `details` when
+available; those fields are preferred for integrations. Four human-readable
+message templates are also contractual: unknown fixture, circular fixture
+dependency, a fixture finishing without `use(value)`, and an unexpected fetch
+blocked by `networkGuard`. Other diagnostic wording may change while its code
+and meaning remain compatible. The exact templates are listed in the
+[API specification](../../.backlog/docs/specs/0004-public-api-and-types.md).
 
 All workspace packages are implementation boundaries; only `bun-test-utils` is published.
 

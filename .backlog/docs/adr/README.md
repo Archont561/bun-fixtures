@@ -21,5 +21,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0015](./0015-per-package-readmes-concise-root.md) | Per-package READMEs with a concise canonical root | accepted |
 | [0016](./0016-package-test-layout-and-e2e-bdd.md) | Package test layout and E2E BDD | accepted, amended by 0017 |
 | [0017](./0017-shared-bdd-runner-helper.md) | Shared BDD runner helper in the config workspace | accepted |
+| [0018](./0018-release-compatibility-contract.md) | Release stability, fixture-key collisions, error messages, and platforms | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

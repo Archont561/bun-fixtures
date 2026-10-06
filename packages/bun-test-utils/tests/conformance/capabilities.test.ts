@@ -8,6 +8,41 @@ const overrideTest = test
     shared: { setup: async (use: any) => use("right") },
   });
 
+const builtInFixtureKeys = [
+  "clock",
+  "seed",
+  "networkGuard",
+  "tmpdir",
+  "env",
+  "stdio",
+  "window",
+  "document",
+  "page",
+  "testServer",
+  "serverUrl",
+  "browser",
+  "browserContext",
+  "browserPage",
+  "webPage",
+  "httpMock",
+  "browserHttpMock",
+  "cassette",
+  "snapshot",
+] as const;
+
+const builtInCollisionTest = test.extend(
+  Object.fromEntries(
+    builtInFixtureKeys.map((key) => [
+      key,
+      {
+        setup: async (use: (value: string) => Promise<void>) => {
+          await use(`consumer:${key}`);
+        },
+      },
+    ]),
+  ),
+);
+
 test("standard and VCR fixtures are available from the root test context", async ({
   cassette,
   tmpdir,
@@ -65,8 +100,18 @@ test("webPage and httpMock fixtures are available from the root test context", a
   expect(await webPage.textContent("#name")).toBe("Ada");
 });
 
+builtInCollisionTest(
+  "consumer fixtures override every built-in context key",
+  async (context) => {
+    for (const key of builtInFixtureKeys) {
+      expect(context[key]).toBe(`consumer:${key}`);
+    }
+  },
+  { fixtures: [...builtInFixtureKeys] },
+);
+
 overrideTest(
-  "extend order controls explicit fixture overrides",
+  "later extensions override earlier consumer definitions",
   async ({ shared }) => {
     expect(shared).toBe("right");
   },

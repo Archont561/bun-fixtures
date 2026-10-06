@@ -1,5 +1,8 @@
 # BDD integration (internal)
 
+> **Experimental:** BDD capability APIs may change in minor releases while the
+> integration depends on pre-1.0 `@aboviq/bun-test-cucumber`.
+
 The BDD workspace mirrors the PBT package shape for fluent scenario support. It exports `withBDDTesting(coreTest)`, which wraps a core fixture-aware test runner and gates `test.scenario(...)` behind the optional `@aboviq/bun-test-cucumber` peer.
 
 End users still import only from the public root package:

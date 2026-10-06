@@ -17,7 +17,9 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
   env.set("APP_MODE", "test");
   tmpdir.write("mode.txt", env.get("APP_MODE")!);
   snapshot.match({ mode: tmpdir.read("mode.txt") }, "mode");
-  expect(cassette.path).toContain("__cassettes__");
+  const readMode = () => tmpdir.read("mode.txt");
+  await cassette.record(readMode);
+  expect(await cassette.replay(readMode)).toBe("test");
 });
 ```
 
@@ -42,6 +44,9 @@ Gherkin discovery.
 
 ### Standard
 
+- `clock`: Frozen or controlled system time, restored on teardown.
+- `seed`: Deterministic `Math.random` sequences with replayable seed reporting.
+- `networkGuard`: Blocks unexpected fetches unless explicitly allowed.
 - `tmpdir`: Isolated temporary directory with helper methods (`write`, `read`, `exists`, `remove`, `path`) and automatic recursive wipe.
 - `env`: Environment variable sandboxing with exact restoration on teardown.
 - `stdio`: Output capture for stdout and stderr, with the real streams handed back on teardown.
@@ -51,7 +56,9 @@ Gherkin discovery.
 - `window`, `document`, and `page`: In-memory DOM fixtures powered by `happy-dom`, with automatic global cleanup.
 - `webPage`: A portable page helper that uses happy-dom by default and switches to real Playwright only when `BUN_TEST_UTILS_WEB_ENV=browser` (or `playwright`) is set. `page` and `browserPage` keep their original semantics.
 
-### Browser and server
+### Browser and server (experimental)
+
+Browser capability APIs may change in minor versions.
 
 - `testServer` and `serverUrl`: Ephemeral `Bun.serve` server on random port 0 with automatic shutdown.
 - `browser`, `browserPage`, `browserContext`: Playwright browser automation, loaded only when requested.
@@ -60,9 +67,15 @@ Gherkin discovery.
 
 ### VCR
 
-- `cassette`: Intercepts `globalThis.fetch` to record live HTTP requests to disk and replay them offline.
-- Automatic cassette files live at `__cassettes__/<test name>.json` next to the test file.
-- `record` / `replay` / `passthrough` modes are available through the fixture API or the `VCR_MODE` environment variable.
+The stable VCR surface is deliberately minimal:
+
+- `cassette.record(callback)`: executes a callback and stores its serializable result.
+- `cassette.replay(callback)`: returns that result without executing the callback.
+- HTTP replay matches uppercase method plus exact full URL only.
+
+The current implementation writes under `__cassettes__/`, but its schema is not
+yet a stable public format. Matcher DSLs, configurable redaction, and migration
+tooling are deferred.
 
 ### Snapshots
 
@@ -72,9 +85,9 @@ Gherkin discovery.
 
 ### Property and BDD-style tests
 
-- `test.prop(title, factory, fn, options)`: property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
-- `test.scenario(title)`: fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer.
-- `test.scenario.prop(title, factory)`: generated values plus fluent scenarios. Requires both optional peers.
+- `test.prop(title, factory, fn, options)`: stable property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
+- `test.scenario(title)`: experimental fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer and may change in minor versions.
+- `test.scenario.prop(title, factory)`: experimental generated values plus fluent scenarios. Requires both optional peers.
 
 
 ```ts
