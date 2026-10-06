@@ -29,12 +29,13 @@ bun --version          # must print 1.4.2
 bun install --frozen-lockfile
 ```
 
-**Install bun inside the workspace, and export that PATH in every command.** A plain
-`npm i -g bun` writes to `/usr/local/bin`, which is outside the persisted workspace: it can
-disappear mid-session, taking `node_modules/` with it. When a command that worked ten
-minutes ago reports `bun: command not found`, that is what happened — re-run the two
-commands above and carry on. Each `bash` call is a fresh shell, so the `export` has to be
-repeated; nothing persists but files.
+**Assume the toolchain is gone and reinstall it — nothing outside the git tree survives.**
+`bun` and `node_modules/` are both pruned between sessions, and have disappeared *mid*-session
+here; the install prefix makes no difference (`/usr/local` and a workspace-local
+`/home/user/.tools` were both wiped). So the two commands above are not a one-time bootstrap:
+run them again, without ceremony, whenever a command that worked ten minutes ago reports
+`bun: command not found` or an import resolves to nothing. Each `bash` call is also a fresh
+shell, so the `export` has to be repeated every time.
 
 **Pin the version to `packageManager` in the root `package.json`** (`bun@1.4.2` today). Do not
 `npm i -g bun` unpinned — a newer Bun than CI uses turns a green local run into a red CI run,
