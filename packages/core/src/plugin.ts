@@ -962,12 +962,13 @@ function warn(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Preload entry: discover on load                                            */
+/* Preload entry                                                               */
 /* -------------------------------------------------------------------------- */
 
-if (!process.env.BUN_TEST_UTILS_NO_AUTODISCOVER) {
-  await discoverFixtures();
-}
+// Fixture registration is explicit: consumers compose fixtures with
+// `test.extend()`. The test-only legacy bootstrap calls discoverFixtures()
+// directly for the engine's historical conformance fixtures; it is not part
+// of the published preload path.
 
 /**
  * When this module is loaded as a preload script, `afterAll` registers a

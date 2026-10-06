@@ -2,6 +2,6 @@
 # The core package (and some nested ones) also have their own bunfig.toml.
 [test]
 preload = [
-  "./packages/bun-test-utils/src/plugin.ts",
+  "./packages/bun-test-utils/tests/legacy-discovery.ts",
   "./packages/bun-test-utils/test-plugins.ts",
 ]
