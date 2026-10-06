@@ -1,5 +1,5 @@
 Feature: Parameterized fixtures
-  As a developer
+  As a developer using explicit fixture composition
   I want a parameterized fixture to multiply the tests that use it
   So that one test body covers every variant
 
@@ -7,15 +7,17 @@ Feature: Parameterized fixtures
     Given a project with bun-test-utils preloaded
 
   Scenario: One case per parameter
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         mode: { params: ["fast", "slow"], setup: async (use, ctx) => { await use(ctx.param); } },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("runs in each mode", async ({ mode }) => {
         expect(["fast", "slow"]).toContain(mode);
       });
@@ -26,16 +28,18 @@ Feature: Parameterized fixtures
     And the output contains "runs in each mode [mode=slow]"
 
   Scenario: Two parameterized fixtures produce the cartesian product
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         mode: { params: ["fast", "slow"], setup: async (use, ctx) => { await use(ctx.param); } },
         region: { params: ["eu", "us"], setup: async (use, ctx) => { await use(ctx.param); } },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("round trips", async ({ mode, region }) => {
         expect(`${mode}/${region}`).toMatch(/^(fast|slow)\/(eu|us)$/);
       });
@@ -46,16 +50,18 @@ Feature: Parameterized fixtures
     And the output contains "round trips [mode=slow, region=us]"
 
   Scenario: Parameters reach fixtures that depend on them
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         mode: { params: ["fast", "slow"], setup: async (use, ctx) => { await use(ctx.param); } },
         client: { setup: async (use, { mode }) => { await use(`client:${mode}`); } },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("dependent fixture is rebuilt per parameter", async ({ client }) => {
         console.log(`built ${client}`);
         expect(client).toStartWith("client:");

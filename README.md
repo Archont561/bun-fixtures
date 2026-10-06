@@ -23,13 +23,13 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-Optional capability dependencies:
+Optional capability dependencies are loaded by fixtures only when requested:
 
 ```bash
-bun add -d fast-check       # bun-test-utils/pbt
-bun add -d happy-dom        # bun-test-utils/dom
-bun add -d playwright       # bun-test-utils/browser
-bun add -d @aboviq/bun-test-cucumber # bun-test-utils/bdd integrations
+bun add -d fast-check # unlocks test.prop() / test.scenario.prop()
+bun add -d @aboviq/bun-test-cucumber # unlocks test.scenario()
+bun add -d happy-dom  # for DOM fixtures in the test context
+bun add -d playwright # for browser fixtures in the test context
 ```
 
 ## Quick start
@@ -57,7 +57,42 @@ test("returns the fixture value", async ({ user }) => {
 });
 ```
 
-For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Runnable examples live in the package READMEs:
+
+## Fixture composition
+
+There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and parent or sibling directories never contribute fixtures by location. Compose fixtures explicitly with `test.extend()` and import that extended test wherever the fixtures are needed.
+
+### Migration from fixture files
+
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+});
+```
+
+```ts
+// users.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
+
+test("uses the explicit fixture", async ({ db }) => {
+  expect(await db.health()).toBe("ok");
+});
+```
+
+The public package entrypoint intentionally exposes only `describe`, `test`, and `expect`. Built-in capabilities are fixtures on the root `test` context (`tmpdir`, `env`, `stdio`, `page`, `webPage`, `httpMock`, `testServer`, `serverUrl`, `cassette`, `snapshot`, and browser fixtures), while optional property and BDD-style tests live on `test.prop(...)`, `test.scenario(...)`, and `test.scenario.prop(...)`; those methods throw actionable missing-peer errors until `fast-check` and/or `@aboviq/bun-test-cucumber` are installed. Mocking should be modeled as fixtures, not as separate public helper exports.
+
+For the complete API, see the [documentation](https://archont561.github.io/bun-test-utils/). Internal package notes live in the package READMEs:
 
 - [Core fixture engine](packages/core/README.md)
 - [Standard fixtures](packages/std/README.md)
@@ -66,7 +101,7 @@ For the complete API, see the [documentation](https://archont561.github.io/bun-t
 - [Browser fixtures](packages/browser/README.md)
 - [HTTP cassettes](packages/vcr/README.md)
 - [Snapshots](packages/snapshot/README.md)
-- [BDD bridge](packages/bdd/README.md)
+- [Internal BDD integration notes](packages/bdd/README.md)
 - [Published wrapper and cross-cutting examples](packages/bun-test-utils/README.md)
 
 ## Status
@@ -81,6 +116,7 @@ bun run lint
 bun run typecheck
 bun run build
 bun test
+bun run test:bdd
 bun run docs:dev
 ```
 
@@ -88,7 +124,7 @@ The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight.
 
 ## Contributing
 
-Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun test` before opening a PR. Commit messages use Conventional Commits.
+Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun test && bun run test:bdd` before opening a PR. Commit messages use Conventional Commits.
 
 ## License
 

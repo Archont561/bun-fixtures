@@ -19,7 +19,7 @@
   "include": [
     "packages/*/src",
     "packages/*/tests",
-    "packages/bun-test-utils/test-plugins.ts",
-    "apps/**/*"
+    "apps/**/*",
+    "tests/**/*.ts"
   ]
 }

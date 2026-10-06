@@ -1,20 +1,77 @@
 # bun-test-utils
 
-The published wrapper package. It bundles the core engine and capability packs behind one install with subpath imports.
+The single published package. It exposes only three named exports to end users:
+`describe`, `test`, and `expect`.
 
 ```bash
 bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-## Cross-cutting examples
+Optional test-style peers are installed only if you use those styles:
 
-The root API combines fixtures with ordinary tests:
+```bash
+bun add -d fast-check # test.prop() / test.scenario.prop()
+bun add -d @aboviq/bun-test-cucumber # test.scenario()
+```
+
+## Public API shape
+
+There are no public capability subpaths. Built-in capabilities are fixtures on
+the root `test` context, and advanced runners hang off `test.*`:
+
+- `test(...)` for ordinary fixture-aware tests.
+- `test.extend(...)` for project fixtures and mocks.
+- `test.prop(...)` for property tests when `fast-check` is installed.
+- `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
+- `test.scenario.prop(...)` when both optional peers are installed.
+
+Mocking should be expressed as fixtures so setup, dependency ordering, and
+teardown remain in the fixture lifecycle.
+
+## Explicit composition only
+
+There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Use `test.extend()` and import the extended runner from each test file that needs those fixtures.
+
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+});
+```
+
+```ts
+// users.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
+
+test("uses the explicit fixture", async ({ db }) => {
+  expect(await db.health()).toBe("ok");
+});
+```
+
+## Built-in fixtures
+
+The root `test` includes standard, DOM, browser/server, web mocking, VCR, and snapshot
+fixtures in its context:
 
 ```ts
 import { expect, test } from "bun-test-utils";
 
-test("serves and snapshots a response", async ({ testServer, serverUrl, snapshot }) => {
+test("serves and snapshots a response", async ({
+  testServer,
+  serverUrl,
+  snapshot,
+}) => {
   testServer.handle(() => Response.json({ status: "ok" }));
   const response = await fetch(serverUrl);
   const body = await response.json();
@@ -24,51 +81,58 @@ test("serves and snapshots a response", async ({ testServer, serverUrl, snapshot
 });
 ```
 
-Property scenarios combine generated values, fixture context, and fluent steps:
+## Web environment and HTTP mocks
+
+`page` is always happy-dom and `browserPage` is always Playwright. Use `webPage`
+when one test should be selectable by `BUN_TEST_UTILS_WEB_ENV=dom` (default) or
+`BUN_TEST_UTILS_WEB_ENV=browser`. Use `httpMock` for MSW-like fetch handlers and
+`browserHttpMock` for the same handlers installed on the Playwright context.
 
 ```ts
-import { fc, test } from "bun-test-utils/pbt";
+test("loads mocked data", async ({ webPage, httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+  const user = await fetch("https://app.test/api/user").then((r) => r.json());
 
-test.scenario
-  .prop("calculates a total", {
-    price: fc.integer({ min: 0, max: 100 }),
-  })
-  .given("a quantity", () => ({ quantity: 2 }))
-  .when("the total is calculated", ({ price, quantity }) => ({
-    total: price * quantity,
-  }))
-  .then("the total is non-negative", ({ total, expect }) => {
-    expect(total).toBeGreaterThanOrEqual(0);
-  })
-  .then("the total is even", ({ total, expect }) => {
-    expect(total % 2).toBe(0);
-  });
+  await webPage.setContent(`<span id="name"></span>`);
+  webPage.raw.document.querySelector("#name")!.textContent = user.name;
+  expect(await webPage.textContent("#name")).toBe("Ada");
+});
 ```
 
-Values returned by `given` and `when` are merged into the next step's context. Session and file fixtures are shared across property samples; test fixtures are rebuilt per sample and shrink step.
+## Property and scenario tests
 
-## Included subpaths
+These APIs are present on `test`, but using them checks their optional peers and throws an actionable install message if the peer is missing.
 
-| Import | Provides | Example |
-| --- | --- | --- |
-| `bun-test-utils` | Core test API and all built-in fixtures | [core README](../core/README.md) |
-| `bun-test-utils/std` | `tmpdir`, `env`, `stdio` | [std README](../std/README.md) |
-| `bun-test-utils/pbt` | `test.prop`, `scenario.prop`, `fc` | [pbt README](../pbt/README.md) |
-| `bun-test-utils/dom` | Isolated happy-dom fixtures | [DOM README](../dom/README.md) |
-| `bun-test-utils/browser` | HTTP server and Playwright fixtures | [browser README](../browser/README.md) |
-| `bun-test-utils/vcr` | Fetch cassettes and callback replay | [VCR README](../vcr/README.md) |
-| `bun-test-utils/snapshot` | Value and file snapshots | [snapshot README](../snapshot/README.md) |
-| `bun-test-utils/bdd` | Gherkin lifecycle hooks | [BDD README](../bdd/README.md) |
+```ts
+import { expect, test } from "bun-test-utils";
+
+test.prop(
+  "calculates a total",
+  (fc) => ({ price: fc.integer({ min: 0, max: 100 }) }),
+  async ({ tmpdir }, { price }) => {
+    tmpdir.write("price.txt", String(price));
+    expect(Number(tmpdir.read("price.txt"))).toBe(price);
+  },
+);
+
+test.scenario("chains every fluent phase")
+  .given("a base value", () => ({ value: 2 }))
+  .when("the value is incremented", ({ value }) => ({ result: value + 1 }))
+  .then("the number is correct", ({ result, expect }) => {
+    expect(result).toBe(3);
+  });
+```
 
 All workspace packages are implementation boundaries; only `bun-test-utils` is published.
 
 ## Development
 
-This package's conformance tests exercise the assembled public exports. The Gherkin scratch-project suite is in [`e2e/`](./e2e/) and features are in [`features/`](./features/).
+This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/features/*.feature` and are loaded by the root-owned `tests/bdd/features.test.ts` entrypoint.
 
 ```bash
 bun run build
 bun test packages/bun-test-utils
+bun run test:bdd
 ```
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

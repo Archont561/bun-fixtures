@@ -85,7 +85,7 @@ export const initCommand = defineCommand({
   meta: {
     name: "init",
     description:
-      "Set up bunfig.toml preload and scaffold an extendable test.ts",
+      "Set up bunfig.toml preload for explicit test.extend() composition",
   },
   args: {
     dir: {

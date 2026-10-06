@@ -1,7 +1,7 @@
 import type { FixtureMap } from "@/types.ts";
 
 export default {
-  /** Third override of the same name: root → tests → tests/nested. */
+  /** Explicit override of the same name in a nested test.extend() chain. */
   origin: {
     scope: "session",
     setup: async (use) => {
@@ -9,7 +9,7 @@ export default {
     },
   },
 
-  /** Only visible to tests in this directory (and below). */
+  /** Visible only to tests that explicitly compose this fixture map. */
   nestedOnly: {
     setup: async (use, { origin }) => {
       await use(`hello from ${origin}`);

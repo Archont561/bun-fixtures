@@ -1,10 +1,8 @@
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { registerFixtures } from "@bun-test-utils/core";
-import { describe, expect, fc, test } from "@/index.ts";
+import fc from "fast-check";
+import { test as base, describe, expect } from "@/index.ts";
 import fixtures from "./fixtures.ts";
 
-registerFixtures(dirname(fileURLToPath(import.meta.url)), fixtures);
+const test = base.extend(fixtures);
 
 describe("@bun-test-utils/pbt", () => {
   test.prop(

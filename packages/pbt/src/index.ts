@@ -1,52 +1,108 @@
 import { realpathSync } from "node:fs";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import {
-  BunTestUtilsError,
-  test as baseTest,
   callerFile,
   createTest,
+  createTestWithFixtures,
   describe,
   detectFixtures,
   expect,
+  type FixtureAwareTest,
   type FixtureContext,
-  fixturesFor,
+  type FixtureMap,
   type GivenChain,
+  MissingOptionalDependencyError,
   type ScenarioContext,
   type ScenarioFactory,
   type TestFn,
 } from "@bun-test-utils/core";
-import type { Arbitrary, Parameters as FcParameters } from "fast-check";
 
-// `fast-check` is an `optionalDependency` of the published `bun-test-utils`
-// package (see its package.json) — it is not force-installed for consumers
-// who never import this subpath. A top-level dynamic import, rather than a
-// static one, turns a missing dependency into this clear, actionable error
-// instead of Bun's generic module-resolution failure.
-let fc: typeof import("fast-check").default;
-try {
-  const mod = await import("fast-check");
-  fc = (mod as any).default ?? (mod as any);
-} catch {
-  throw new BunTestUtilsError(
-    "MISSING_OPTIONAL_DEPENDENCY",
-    "[bun-test-utils/pbt] 'fast-check' is required for property-based testing fixtures. Install via 'bun add -d fast-check'.",
-    {
-      details: {
-        packageName: "fast-check",
-        installCommand: "bun add -d fast-check",
-      },
-    },
+// `fast-check` is an optional peer of the published `bun-test-utils`
+// package. Check for it only when property APIs are used so ordinary fixture
+// tests can import the root package without installing the generator library.
+const requireFromHere = createRequire(import.meta.url);
+let fastCheckAvailable: boolean | undefined;
+let fcPromise: Promise<any> | undefined;
+
+function missingFastCheck(): MissingOptionalDependencyError {
+  return new MissingOptionalDependencyError(
+    "fast-check",
+    "bun add -d fast-check",
+    "[bun-test-utils] test.prop() requires 'fast-check'. Install via 'bun add -d fast-check'.",
   );
 }
 
-export type { Arbitrary } from "fast-check";
-export { describe, expect, fc };
+function ensureFastCheckInstalled(): void {
+  if (fastCheckAvailable) return;
+  if (fastCheckAvailable === false) throw missingFastCheck();
+  try {
+    requireFromHere.resolve("fast-check");
+    fastCheckAvailable = true;
+  } catch {
+    fastCheckAvailable = false;
+    throw missingFastCheck();
+  }
+}
 
-export interface PropTestOptions extends FcParameters {
+async function loadFastCheck(): Promise<any> {
+  ensureFastCheckInstalled();
+  fcPromise ??= import("fast-check")
+    .then((mod) => (mod as any).default ?? mod)
+    .catch(() => {
+      fastCheckAvailable = false;
+      throw missingFastCheck();
+    });
+  return fcPromise;
+}
+
+export { describe, expect };
+
+const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
+const SCENARIO_GUARD_SYMBOL = Symbol.for("bun-test-utils.scenarioGuard");
+
+type ScenarioGuard = () => void;
+
+export interface PropertyTestingOptions {
+  scenarioGuard?: ScenarioGuard;
+}
+
+export type PbtFixtureAwareTest = TestFn &
+  Omit<FixtureAwareTest, "extend" | "scenario"> & {
+    prop: PropFn;
+    extend: (fixtures: FixtureMap) => PbtFixtureAwareTest;
+    scenario: ScenarioFactory;
+  };
+
+function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
+  return ((test as any)[FIXTURE_MAP_SYMBOL] ?? {}) as FixtureMap;
+}
+
+function scenarioGuardOf(test: FixtureAwareTest): ScenarioGuard | undefined {
+  return (test as any)[SCENARIO_GUARD_SYMBOL] as ScenarioGuard | undefined;
+}
+
+function explicitTestFor(file: string, map: FixtureMap): FixtureAwareTest {
+  return createTestWithFixtures(file, map);
+}
+
+export interface PropTestOptions {
   fixtures?: string[];
   timeout?: number;
+  [option: string]: unknown;
+}
+
+export interface Arbitrary<T = unknown> {
+  generate(mrng: any, biasFactor: number | undefined): { value: T };
+  canShrinkWithoutContext(value: unknown): value is T;
+  shrink(value: T, context?: unknown): unknown;
 }
 
 export type ArbitraryRecord = Record<string, Arbitrary<any>>;
+export type FastCheckApi = Record<string, any>;
+export type ArbitraryInput<T extends ArbitraryRecord> =
+  | T
+  | ((fc: FastCheckApi) => T);
 export type GeneratedValues<T extends ArbitraryRecord> = {
   [K in keyof T]: T[K] extends Arbitrary<infer U> ? U : never;
 };
@@ -58,7 +114,7 @@ export type PropTestFn<T extends ArbitraryRecord = ArbitraryRecord> = (
 
 export type PropFn = <T extends ArbitraryRecord>(
   title: string,
-  arbs: T,
+  arbs: ArbitraryInput<T>,
   testFn: PropTestFn<T>,
   opts?: PropTestOptions,
 ) => void;
@@ -76,32 +132,42 @@ export type PropFn = <T extends ArbitraryRecord>(
 function makeProp(runnerTest: TestFn): PropFn {
   return function prop<T extends ArbitraryRecord>(
     title: string,
-    arbs: T,
+    arbs: ArbitraryInput<T>,
     testFn: PropTestFn<T>,
     opts?: PropTestOptions,
   ) {
-    const recordArb = fc.record(arbs) as Arbitrary<GeneratedValues<T>>;
+    ensureFastCheckInstalled();
     const { fixtures, timeout, ...fcOpts } = opts ?? {};
     const requested = fixtures ?? detectFixtures(testFn, 0);
 
     runnerTest(
       title,
       async (ctx: FixtureContext) => {
+        const fc = await loadFastCheck();
+        const arbitraryRecord = typeof arbs === "function" ? arbs(fc) : arbs;
+        const recordArb = fc.record(arbitraryRecord) as Arbitrary<
+          GeneratedValues<T>
+        >;
         const property = fc.asyncProperty(
           recordArb,
           async (generated: GeneratedValues<T>) => {
             await ctx.iterate!((iterCtx) => testFn(iterCtx, generated));
           },
         );
-        await fc.assert(property as any, fcOpts);
+        await fc.assert(property as any, fcOpts as any);
       },
       { fixtures: requested, timeout, iterate: true },
     );
   };
 }
 
-function makeScenarioProp(): ScenarioFactory["prop"] {
-  return ((title: string, strategies: ArbitraryRecord) => {
+function makeScenarioProp(
+  map: FixtureMap,
+  propFn: PropFn,
+  scenarioGuard?: ScenarioGuard,
+): ScenarioFactory["prop"] {
+  return ((title: string, strategies: ArbitraryInput<ArbitraryRecord>) => {
+    scenarioGuard?.();
     const steps: Array<{
       phase: "given" | "when" | "then";
       name: string;
@@ -121,21 +187,19 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
       // biome-ignore lint/suspicious/noThenProperty: `then` is the fluent scenario phase.
       then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
         steps.push({ phase: "then", name, fn });
-        const generatedNames = new Set(Object.keys(strategies));
+        const generatedNames = new Set(
+          typeof strategies === "function" ? [] : Object.keys(strategies),
+        );
         const fixtureNames = [
           ...new Set(
             steps
               .flatMap((step) => detectFixtures(step.fn, 0))
-              .filter(
-                (name) =>
-                  !generatedNames.has(name) &&
-                  name in fixturesFor(callerFile()),
-              ),
+              .filter((name) => !generatedNames.has(name) && name in map),
           ),
         ];
         if (!registered) {
           registered = true;
-          prop(
+          propFn(
             title,
             strategies,
             async (fixtures, values) => {
@@ -169,12 +233,14 @@ function makeScenarioProp(): ScenarioFactory["prop"] {
  * ```
  */
 export function createPropTest(testFile?: string) {
-  const runner = createTest(testFile);
+  const file = resolve(testFile ?? callerFile([...SELF_PATHS]));
+  const runner = createTest(file);
+  const test = makePbtTest(fixtureMapOf(runner.test), file);
 
   return {
     ...runner,
-    prop: makeProp(runner.test),
-    fc,
+    test,
+    prop: test.prop,
   };
 }
 
@@ -197,35 +263,96 @@ const SELF_PATHS = new Set(
   ].filter(Boolean) as string[],
 );
 
-const propCache = new Map<string, PropFn>();
-const topLevelProp: PropFn = (title, arbs, testFn, opts) => {
-  const file = callerFile([...SELF_PATHS]);
-  let runnerProp = propCache.get(file);
-  if (!runnerProp) {
-    runnerProp = makeProp(createTest(file).test);
-    propCache.set(file, runnerProp);
+function makeExplicitProp(
+  map: FixtureMap,
+  fixedFile?: string,
+  runnerFor?: (file: string) => FixtureAwareTest,
+): PropFn {
+  const cache = new Map<string, FixtureAwareTest>();
+  const getRunner =
+    runnerFor ??
+    ((file: string) => {
+      let runner = cache.get(file);
+      if (!runner) {
+        runner = explicitTestFor(file, map);
+        cache.set(file, runner);
+      }
+      return runner;
+    });
+  return (title, arbs, testFn, opts) => {
+    const file = resolve(fixedFile ?? callerFile([...SELF_PATHS]));
+    return makeProp(getRunner(file))(title, arbs, testFn, opts);
+  };
+}
+
+function makePbtTest(
+  fixtures: FixtureMap = {},
+  fixedFile?: string,
+  options: PropertyTestingOptions = {},
+): PbtFixtureAwareTest {
+  const map = { ...fixtures };
+  const { scenarioGuard } = options;
+  const runnerCache = new Map<string, FixtureAwareTest>();
+  const resolveFile = () => resolve(fixedFile ?? callerFile([...SELF_PATHS]));
+  const runnerFor = (file: string) => {
+    let runner = runnerCache.get(file);
+    if (!runner) {
+      runner = explicitTestFor(file, map);
+      runnerCache.set(file, runner);
+    }
+    return runner;
+  };
+  const runner = () => runnerFor(resolveFile());
+  const prop = makeExplicitProp(map, fixedFile, runnerFor);
+  const pbtTest = ((name: string, fn: any, opts?: any) =>
+    runner()(name, fn, opts)) as unknown as PbtFixtureAwareTest;
+  pbtTest.extend = (more) =>
+    makePbtTest({ ...map, ...more }, fixedFile, options);
+  pbtTest.prop = prop;
+  pbtTest.scenario = Object.assign(
+    ((title: string) => {
+      scenarioGuard?.();
+      return runner().scenario(title);
+    }) as ScenarioFactory,
+    { prop: makeScenarioProp(map, prop, scenarioGuard) },
+  );
+  Object.defineProperty(pbtTest, FIXTURE_MAP_SYMBOL, {
+    value: map,
+    enumerable: false,
+  });
+  if (scenarioGuard) {
+    Object.defineProperty(pbtTest, SCENARIO_GUARD_SYMBOL, {
+      value: scenarioGuard,
+      enumerable: false,
+    });
   }
-  return runnerProp(title, arbs, testFn, opts);
-};
-export const prop: PropFn = topLevelProp;
+  return pbtTest;
+}
 
-const scenario = Object.assign(
-  ((title: string) => baseTest.scenario(title)) as ScenarioFactory,
-  { prop: makeScenarioProp() },
-);
+export function withPropertyTesting(
+  coreTest: FixtureAwareTest,
+  fixedFile?: string,
+  options: PropertyTestingOptions = {},
+): PbtFixtureAwareTest {
+  return makePbtTest(fixtureMapOf(coreTest), fixedFile, {
+    scenarioGuard: options.scenarioGuard ?? scenarioGuardOf(coreTest),
+  });
+}
 
-export const test = Object.assign(baseTest, { prop, scenario });
+export const prop: PropFn = makeExplicitProp({});
+
+export const test: PbtFixtureAwareTest = makePbtTest();
 
 export default {
-  fc,
   prop,
   test,
   describe,
   expect,
   createPropTest,
+  withPropertyTesting,
 };
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export {
   BunTestUtilsError,
   MissingOptionalDependencyError,

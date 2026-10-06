@@ -10,18 +10,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 /**
- * Error-path coverage for the optional `playwright` peer (spec 0011 R3 /
- * task_016 checklist: importing a gated subpath without its peer must fail
- * with a clear, actionable error naming the missing package).
+ * Error-path coverage for the optional `playwright` peer (spec 0011 R3):
+ * requesting the root `browser` fixture without its peer must fail with a clear,
+ * actionable error naming the missing package.
  *
  * A real uninstalled-peer simulation beats module mocking here: bun's mock
  * cache cannot reliably override a specifier the same process already loaded
- * from the monorepo. Instead the BUILT artifact (zero static imports —
- * playwright arrives via `await import()`) is copied into a temp directory
- * outside the workspace, where bare `playwright` genuinely resolves nowhere,
- * and a `bun` subprocess asks the fixture for a browser.
+ * from the monorepo. Instead the BUILT public root artifact (zero static
+ * playwright imports — playwright arrives via `await import()`) is copied into a
+ * temp directory outside the workspace, where bare `playwright` genuinely
+ * resolves nowhere, and a `bun test` subprocess asks the fixture for a browser.
  *
- * Skipped when dist/index.js is absent (run `bun run build` first; Turborepo's
+ * Skipped when dist/plugin.js is absent (run `bun run build` first; Turborepo's
  * `test` task already depends on `^build`).
  */
 const distEntry = join(
@@ -30,8 +30,7 @@ const distEntry = join(
   "..",
   "bun-test-utils",
   "dist",
-  "subpaths",
-  "browser.js",
+  "plugin.js",
 );
 const distBuilt = existsSync(distEntry);
 
@@ -43,16 +42,12 @@ describe.skipIf(!distBuilt)(
       try {
         copyFileSync(distEntry, join(scratch, "index.js"));
         writeFileSync(
-          join(scratch, "probe.js"),
+          join(scratch, "probe.test.js"),
           [
-            `const { browserFixture } = await import("./index.js");`,
-            `try {`,
-            `  await browserFixture.setup(async () => {}, { testFile: "probe" });`,
-            `  console.error("probe reached use() — launch should be impossible");`,
-            `  process.exit(1);`,
-            `} catch (error) {`,
-            `  console.log(String(error?.message ?? error));`,
-            `}`,
+            `import { test } from "./index.js";`,
+            `test("needs browser", async ({ browser }) => {`,
+            `  if (!browser) throw new Error("unreachable");`,
+            `});`,
           ].join("\n"),
         );
 
@@ -60,14 +55,15 @@ describe.skipIf(!distBuilt)(
         // bare "playwright" specifier from this directory is genuinely
         // unresolvable — the situation a consumer without the peer is in.
         const result = Bun.spawnSync({
-          cmd: [process.execPath, "--no-install", "probe.js"],
+          cmd: [process.execPath, "--no-install", "test", "probe.test.js"],
           cwd: scratch,
           stdout: "pipe",
           stderr: "pipe",
         });
+        const output = `${result.stdout.toString()}${result.stderr.toString()}`;
 
-        expect(result.exitCode).toBe(0);
-        expect(result.stdout.toString().trim()).toBe(
+        expect(result.exitCode).toBe(1);
+        expect(output).toContain(
           "[@bun-test-utils/browser] 'playwright' is required for browser fixtures. " +
             "Install via 'bun add -d playwright'.",
         );

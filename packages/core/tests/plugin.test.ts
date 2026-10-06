@@ -1,19 +1,20 @@
 import {
+  test as base,
   configureDiagnostics,
   createFixture,
   createTest,
   describe,
   destructuredKeys,
   expect,
-  fixturesFor,
   paramCombos,
   reportDiagnostic,
   resolveOrder,
-  test,
   UnknownFixtureError,
 } from "@/plugin.ts";
+import fixtures from "./fixtures.ts";
 
 const here = import.meta.path;
+const test = base.extend(fixtures);
 
 test("createFixture exposes a typed fixture declaration", () => {
   const definition = createFixture({
@@ -32,8 +33,17 @@ describe("injection", () => {
     expect(config.name).toBe("bun-test-utils");
   });
 
-  test("sees the fixtures.ts of its own directory", async ({ origin }) => {
+  test("uses fixtures composed with test.extend()", async ({ origin }) => {
     expect(origin).toBe("tests");
+  });
+
+  test("ignores fixture files on disk unless explicitly composed", () => {
+    const uncomposed = createTest(here).test;
+    expect(() =>
+      uncomposed("does not load tests/fixtures.ts", async ({ origin }) => {
+        expect(origin).toBe("tests");
+      }),
+    ).toThrow(/fixtures\.ts and conftest\.ts are not loaded automatically/);
   });
 
   test("resolves dependencies by name", async ({ client }) => {
@@ -195,9 +205,9 @@ describe("iteration protocol (opts.iterate)", () => {
 });
 
 describe("engine internals", () => {
-  const map = fixturesFor(here);
+  const map = fixtures;
 
-  test("merges every fixtures.ts from the root down to this directory", () => {
+  test("uses only the explicitly composed fixture map", () => {
     expect(Object.keys(map).sort()).toEqual([
       "answer",
       "client",
@@ -219,9 +229,9 @@ describe("engine internals", () => {
     ]);
   });
 
-  test("throws on an unknown fixture", () => {
+  test("throws on an unknown fixture with test.extend() guidance", () => {
     expect(() => resolveOrder(["nope"], map, here)).toThrow(
-      /unknown fixture "nope"/,
+      /unknown fixture "nope".*test\.extend.*not loaded automatically/s,
     );
   });
 
@@ -279,6 +289,20 @@ describe("engine internals", () => {
     expect(destructuredKeys((ctx: any) => ctx, 0)).toEqual([]);
   });
 
+  test("nested extend chains preserve dependency ordering", () => {
+    const nestedMap = {
+      ...map,
+      first: { setup: async (use: any) => use(1) },
+      second: { deps: ["first"], setup: async (use: any) => use(2) },
+      third: { deps: ["second"], setup: async (use: any) => use(3) },
+    };
+    expect(resolveOrder(["third"], nestedMap, here)).toEqual([
+      "first",
+      "second",
+      "third",
+    ]);
+  });
+
   test("createTest binds to an explicit file", () => {
     const bound = createTest(here);
     expect(typeof bound.test).toBe("function");
@@ -290,18 +314,18 @@ describe("engine internals", () => {
     const restore = configureDiagnostics((event) => events.push(event));
     try {
       reportDiagnostic({
-        code: "FIXTURE_DISCOVERY",
-        message: "ignored malformed fixture",
-        details: { file: "fixtures.ts" },
+        code: "FIXTURE_COMPOSITION",
+        message: "composition diagnostic",
+        details: { fixture: "db" },
       });
     } finally {
       restore();
     }
     expect(events).toEqual([
       {
-        code: "FIXTURE_DISCOVERY",
-        message: "ignored malformed fixture",
-        details: { file: "fixtures.ts" },
+        code: "FIXTURE_COMPOSITION",
+        message: "composition diagnostic",
+        details: { fixture: "db" },
       },
     ]);
   });

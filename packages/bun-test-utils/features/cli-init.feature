@@ -35,13 +35,13 @@ Feature: Project setup with the CLI
   Scenario: An existing test.ts is never clobbered by accident
     Given the file "test.ts":
       """
-      export default { mine: { setup: async (use) => { await use(1); } } };
+      export const mine = 1;
       """
     When I run "init"
     Then the file "test.ts" contains "mine"
     And the output contains "created bunfig.toml"
 
-  Scenario: The scaffolded project runs its first test
+  Scenario: The initialized project runs its first explicit fixture test
     When I run "init"
     And the file "a.test.ts":
       """

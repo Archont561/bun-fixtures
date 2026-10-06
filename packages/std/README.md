@@ -1,11 +1,9 @@
-# Standard fixtures
+# Standard fixtures (internal)
 
-`bun-test-utils/std` provides zero-dependency isolation for ordinary tests. The fixtures are available from the published package's `std` subpath.
-
-## Temporary files and environment
+The standard fixtures (`tmpdir`, `env`, `stdio`) are internal workspace fixtures bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/std` subpath.
 
 ```ts
-import { expect, test } from "bun-test-utils/std";
+import { expect, test } from "bun-test-utils";
 
 test("writes isolated state and reads test configuration", async ({ tmpdir, env }) => {
   env.set("APP_MODE", "test");
@@ -17,25 +15,6 @@ test("writes isolated state and reads test configuration", async ({ tmpdir, env 
 });
 ```
 
-`tmpdir` is removed and `env` is restored after the test.
-
-## Capturing output
-
-```ts
-import { expect, test } from "bun-test-utils/std";
-
-test("captures application output", async ({ stdio }) => {
-  console.log("started");
-  console.error("warning");
-
-  expect(stdio.stdout()).toContain("started");
-  expect(stdio.stderr()).toContain("warning");
-  expect(stdio.output()).toContain("started");
-});
-```
-
-The public helpers are `tmpdir`, `env`, and `stdio`. They are test-scoped and restore process state during teardown.
-
-See the [standard fixture guide](https://archont561.github.io/bun-test-utils/reference/plugins/#bun-test-utilsstd) and [`tests/`](./tests/) for more cases.
+`tmpdir` is removed, `env` is restored, and `stdio` hands the real streams back during fixture teardown.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

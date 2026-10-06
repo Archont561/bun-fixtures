@@ -6,7 +6,7 @@
 
 ## Problem
 
-Documentation for `bun-fixture` currently lives inside internal markdown files and READMEs. Users and contributors need a searchable, responsive, and structured documentation site published publicly via GitHub Pages.
+Documentation for `bun-test-utils` currently lives inside internal markdown files and READMEs. Users and contributors need a searchable, responsive, and structured documentation site published publicly via GitHub Pages.
 
 ## Requirements
 
@@ -16,9 +16,9 @@ Documentation for `bun-fixture` currently lives inside internal markdown files a
 | R2 | Root `package.json` MUST include `apps/*` in its `workspaces` array. |
 | R3 | Root `package.json` MUST provide convenience scripts (`docs:dev`, `docs:build`, `docs:preview`). |
 | R4 | `apps/docs/astro.config.mjs` MUST configure `@astrojs/starlight` with title, sidebar navigation, social links to GitHub, and search. |
-| R5 | GitHub Pages configuration MUST support custom or default base paths (e.g. `base: process.env.BASE_PATH || '/bun-fixtures/'`) and site URL. |
+| R5 | GitHub Pages configuration MUST support custom or default base paths (e.g. `base: process.env.BASE_PATH || '/bun-test-utils/'`) and site URL. |
 | R6 | A GitHub Actions deployment workflow (`.github/workflows/docs.yml`) MUST be configured to build the Astro Starlight site and deploy to GitHub Pages on pushes to `main`. |
-| R7 | Documentation pages MUST cover: Getting Started / Quickstart, Scopes & Teardown, Preload Discovery & Merging, Parameterized Fixtures, CLI (`bun-fixture init`), and Architecture / Design notes. |
+| R7 | Documentation pages MUST cover: Getting Started / Quickstart, Scopes & Teardown, Explicit Composition, Parameterized Fixtures, CLI (`test-utils init`), and Architecture / Design notes. |
 
 ## Design
 
@@ -37,7 +37,7 @@ apps/docs/
 │           ├── guides/
 │           │   ├── getting-started.md
 │           │   ├── scopes-and-teardown.md
-│           │   ├── discovery-and-merging.md
+│           │   ├── explicit-composition.md
 │           │   └── parameterized-fixtures.md
 │           ├── reference/
 │           │   ├── api.md

@@ -1,26 +1,36 @@
-/** Public entrypoint for the fixture engine and the complete built-in fixture test. */
+/** Public entrypoint: the only user-facing API is describe, test, and expect. */
 
+import { withBDDTesting } from "@bun-test-utils/bdd";
 import { browserFixtures } from "@bun-test-utils/browser";
-import { test as baseTest } from "@bun-test-utils/core";
+import {
+  test as baseTest,
+  describe,
+  expect,
+  type FixtureMap,
+} from "@bun-test-utils/core";
 import { domFixtures } from "@bun-test-utils/dom";
+import { withPropertyTesting } from "@bun-test-utils/pbt";
 import { snapshotFixtures } from "@bun-test-utils/snapshot";
 import { stdFixtures } from "@bun-test-utils/std";
 import { vcrFixtures } from "@bun-test-utils/vcr";
 
-export * from "@bun-test-utils/core";
-
-/**
- * Base runner with every built-in fixture registered.
- *
- * Optional capabilities are lazy: importing this runner does not require
- * Playwright, happy-dom, or fast-check. Requesting a fixture that needs an
- * absent optional package fails during setup with an actionable install
- * command.
- */
-export const test = baseTest.extend({
+const builtInFixtures: FixtureMap = {
   ...stdFixtures,
   ...domFixtures,
   ...browserFixtures,
   ...vcrFixtures,
   ...snapshotFixtures,
-});
+};
+
+/**
+ * Fixture-aware Bun test with all built-in fixtures in its context.
+ *
+ * Compose project fixtures with `test.extend(...)`. Property tests are
+ * available as `test.prop(...)`, and fluent BDD-style scenarios are available
+ * as `test.scenario(...)` / `test.scenario.prop(...)`.
+ */
+export const test = withPropertyTesting(
+  withBDDTesting(baseTest.extend(builtInFixtures)),
+);
+
+export { describe, expect };

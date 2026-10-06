@@ -1,4 +1,4 @@
-import type { FixtureMap } from "bun-test-utils";
+import type { FixtureMap } from "@bun-test-utils/core";
 
 /**
  * Lifecycle fixtures for the PBT suite: `box` must be recreated on every

@@ -12,7 +12,7 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-The `init` command adds the preload plugin to `bunfig.toml` and scaffolds an extendable `test.ts` module.
+The `init` command adds the preload plugin to `bunfig.toml`. It does not auto-load fixture files; create an extendable `test.ts` module for explicit composition.
 
 ## 2. Compose Fixtures
 
@@ -21,10 +21,7 @@ Edit `test.ts` and add project fixtures with `test.extend()`:
 ```ts
 // test.ts
 import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-
 export const test = base.extend({
-  ...stdFixtures,
   server: {
     scope: "session",
     setup: async (use) => {
@@ -64,4 +61,35 @@ Fixtures can depend on one another, have session, file, or test scope, and run t
 bun test
 ```
 
-Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.
+`fixtures.ts` and `conftest.ts` are not automatically loaded. Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.
+
+
+## Optional: Mock HTTP and switch web environments
+
+Built-in mocks are fixtures too. `httpMock` handles fetch-based tests and
+`browserHttpMock` installs the same handlers on Playwright routes. `webPage` runs
+against happy-dom by default; set `BUN_TEST_UTILS_WEB_ENV=browser` when you want
+a real Playwright page without changing the meaning of `browserPage`.
+
+```ts
+import { expect, test } from "bun-test-utils";
+
+test("renders mocked data", async ({ webPage, httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+  await webPage.setContent(`<main id="name"></main>`);
+
+  const user = await fetch("https://app.test/api/user").then((r) => r.json());
+  webPage.raw.document.querySelector("#name")!.textContent = user.name;
+
+  expect(await webPage.textContent("#name")).toBe("Ada");
+});
+```
+
+## Repository feature suites
+
+In this monorepo, package feature files live at `packages/*/features/*.feature`
+and are loaded by the root BDD entrypoint. Run the repo-wide BDD gate with:
+
+```bash
+bun run test:bdd
+```

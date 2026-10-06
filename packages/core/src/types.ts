@@ -22,7 +22,7 @@ export type BunTestUtilsErrorCode =
 /** Structured, opt-in diagnostics emitted by the fixture engine. */
 export interface DiagnosticEvent {
   /** Stable event category for filtering and aggregation. */
-  code: "FIXTURE_DISCOVERY" | "SESSION_TEARDOWN";
+  code: "FIXTURE_COMPOSITION" | "SESSION_TEARDOWN";
   /** Human-readable diagnostic message. */
   message: string;
   /** Additional context, when available. */
@@ -79,7 +79,7 @@ export interface FixtureContext {
  */
 export type UseFn<T> = (value: T) => Promise<void>;
 
-/** A fixture definition, as exported from a `fixtures.ts` / `conftest.ts` file. */
+/** A fixture definition declared in a map passed to `test.extend()`. */
 export interface FixtureDef<T = any> {
   /**
    * Builds the value. Call `use(value)` to publish it; `await use(value)` to
@@ -97,7 +97,7 @@ export interface FixtureDef<T = any> {
   deps?: string[];
 }
 
-/** The shape of a `fixtures.ts` default export. */
+/** A named collection of fixture definitions for explicit composition. */
 export type FixtureMap = Record<string, FixtureDef>;
 
 /** Options accepted by the patched `test()`. */
@@ -165,7 +165,9 @@ export type ScenarioFactory = {
   <S extends object = Record<string, unknown>>(name: string): GivenChain<S>;
   prop: <S extends object = Record<string, unknown>>(
     name: string,
-    strategies: Record<string, unknown>,
+    strategies:
+      | Record<string, unknown>
+      | ((tools: any) => Record<string, unknown>),
   ) => GivenChain<S>;
 };
 

@@ -23,7 +23,7 @@ export default {
       await use({ name: "bun-test-utils", origin });
     },
   },
-  /** Overridden by tests/nested/fixtures.ts — proves deeper directories win. */
+  /** Overridden by an explicit nested test.extend() chain. */
   origin: {
     scope: "session",
     setup: async (use) => {

@@ -1,7 +1,7 @@
 # bun-test-utils — documentation
 
-Working docs for the package and its ecosystem. User-facing documentation lives in the
-[root README](../../README.md), which is synchronized into the one publishable package; everything here is for people building `bun-test-utils`.
+Working docs for the package and its internal capabilities. User-facing documentation lives in the
+[root README](../../README.md) and the docs app; everything here is for people building `bun-test-utils`.
 
 | Area | What lives there |
 |------|------------------|
@@ -16,13 +16,13 @@ Working docs for the package and its ecosystem. User-facing documentation lives 
 | Milestone | Deliverable | Status |
 |-----------|-------------|--------|
 | [M1](./milestones/M1-fixture-engine.md) | Fixture engine (scopes, teardown, params) + `createTest` | ✅ done |
-| [M2](./milestones/M2-discovery.md) | Preload discovery + path-based merge | ✅ done |
-| [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit + scaffold) | ✅ done |
+| [M2](./milestones/M2-discovery.md) | Legacy preload discovery + path-based merge | superseded |
+| [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
 | [M5](./milestones/M5-publish.md) | Publish to npm | 🟡 in progress |
 
-Beyond the original M1–M5 plan, the ecosystem packages ([ADR 0013](./adr/0013-published-wrapper-internal-workspaces.md)) are
-delivered but not all of them fully meet their acceptance criteria:
+Beyond the original M1–M5 plan, the internal capability packages ([ADR 0013](./adr/0013-published-wrapper-internal-workspaces.md)) are
+delivered but remain implementation details behind the root `test` API:
 
 | Package | Spec | Task | Status |
 |---------|------|------|--------|
@@ -51,7 +51,7 @@ packages/
   browser/           @bun-test-utils/browser (Playwright & Bun.serve fixtures)
   vcr/               @bun-test-utils/vcr (HTTP record & replay cassette fixtures)
   snapshot/          @bun-test-utils/snapshot (value and file snapshots)
-  bdd/               @bun-test-utils/bdd (Cucumber fixture bridge)
+  bdd/               @bun-test-utils/bdd (internal BDD/scenario helpers)
   config/            @bun-test-utils/config (shared TypeScript configurations)
 .backlog/            Backlog project state (tasks, claims, runs)
 .backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)
@@ -63,7 +63,6 @@ tsconfig.json        root TypeScript configuration
 turbo.json           Turborepo monorepo pipeline configuration
 ```
 
-> There is deliberately **no package-root `fixtures.ts`** — fixtures used by
-> the suite live under `tests/`. Root-level discovery is still covered, by the
-> end-to-end test and the behavioural suite, both of which scaffold throwaway
-> projects in `tmpdir`.
+> Explicit composition only: `fixtures.ts` and `conftest.ts` are ordinary
+> module names and are not automatically loaded. Tests import a `test.extend()`
+> runner. Public imports come only from the root `bun-test-utils` package.

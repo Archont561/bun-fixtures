@@ -2,7 +2,7 @@
   "name": "@bun-test-utils/std",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal workspace package \u2014 standard zero-dependency built-in fixtures (tmpdir, env, stdio) for bun-test-utils. Bundled into the published bun-test-utils package as the \"bun-test-utils/std\" subpath; never published on its own.",
+  "description": "Internal workspace package \u2014 standard zero-dependency built-in fixtures (tmpdir, env, stdio) bundled into the public root test context.",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "main": "./src/index.ts",

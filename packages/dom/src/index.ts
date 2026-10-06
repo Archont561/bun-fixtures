@@ -46,9 +46,9 @@ const GLOBAL_PROPERTIES = [
 export const windowFixture = createFixture<GlobalWindow>({
   scope: "test",
   setup: async (use) => {
-    // `happy-dom` is an `optionalDependency` of the published `bun-test-utils`
+    // `happy-dom` is an optional peer of the published `bun-test-utils`
     // package (see its package.json) — it is not force-installed for
-    // consumers who never import this subpath. A lazy import, rather than a
+    // consumers who never request this fixture. A lazy import, rather than a
     // static one, turns a missing dependency into this clear, actionable
     // error instead of Bun's generic module-resolution failure.
     let GlobalWindowCtor: typeof GlobalWindow;
@@ -167,5 +167,5 @@ export const test = baseTest.extend(domFixtures);
 
 export default domFixtures;
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export { BunTestUtilsError, MissingOptionalDependencyError };

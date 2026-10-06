@@ -1,33 +1,29 @@
-# M2 — Preload discovery and merge
+# M2 — Legacy preload discovery and merge (superseded)
 
-- **Status:** ✅ done
-- **Estimate:** 0.5 d
+- **Status:** superseded
 - **Specs:** [0002](../specs/0002-discovery-and-merge.md)
-- **Backlog task:** `task_002`
 
-## Goal
+## Current state
 
-Dropping a `fixtures.ts` into any directory makes those fixtures available to
-tests in that directory and below, with no imports and no registration.
+The directory-scanning milestone is historical only. The implementation and
+public behavior were removed in favor of explicit `test.extend()` composition.
+`fixtures.ts` and `conftest.ts` are not automatically loaded, the preload does
+not walk directories, and fixtures are not inherited by filesystem ancestry.
 
-## Scope
+## Supported replacement
 
-- [x] Startup tree walk from the discovery root, skipping `node_modules`, dot-dirs, build output
-- [x] `fixtures.ts` / `conftest.ts` (+ `.tsx`) recognised
-- [x] Root → leaf last-wins merge, memoised per test file
-- [x] Idempotent across preload + direct import (global singleton state)
-- [x] `BUN_FIXTURE_ROOT`, `BUN_FIXTURE_NO_AUTODISCOVER`
-- [x] Broken fixture files warn instead of aborting the run
+Projects define a local runner and import it explicitly:
 
-## Exit criteria
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
+export const test = base.extend({ /* fixtures */ });
+```
 
-| # | Criterion | Evidence |
-|---|-----------|----------|
-| 1 | Nearest directory wins | "the nearest fixtures.ts wins" |
-| 2 | Ancestors are inherited | "inherits fixtures from ancestor directories" |
-| 3 | Siblings are invisible | "but not from a sibling directory" |
-| 4 | Works in a non-dogfooded project | "a fresh project: init → preload → run → teardown" |
+```ts
+// example.test.ts
+import { test } from "./test";
+```
 
-## Out of scope
-
-Per-directory preloading — blocked by [oven-sh/bun#19196](https://github.com/oven-sh/bun/issues/19196).
+This file is retained as historical context only; it is not a current milestone
+exit criterion.

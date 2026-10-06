@@ -1,15 +1,17 @@
 Feature: Fixture scopes
-  As a developer migrating from pytest
+  As a developer using explicit fixture composition
   I want fixtures that live for a session, a file, or a single test
   So that expensive setup is shared exactly as far as it is safe to share it
 
   Background:
     Given a project with bun-test-utils preloaded
 
-  Scenario: A session fixture is built once for the whole run
-    Given the file "fixtures.ts":
+  Scenario: A session fixture is built once for one explicit test chain
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         server: {
           scope: "session",
           setup: async (use) => {
@@ -18,18 +20,18 @@ Feature: Fixture scopes
             console.log("server:teardown");
           },
         },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("a uses the server", async ({ server }) => {
         expect(server.port).toBe(1234);
       });
       """
     And the file "b.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("b uses the same server", async ({ server }) => {
         expect(server.port).toBe(1234);
       });
@@ -40,10 +42,12 @@ Feature: Fixture scopes
     And "server:setup" comes before "server:teardown"
 
   Scenario: A file fixture is rebuilt for each test file
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
       let n = 0;
-      export default {
+      export const test = base.extend({
         db: {
           scope: "file",
           setup: async (use) => {
@@ -52,17 +56,17 @@ Feature: Fixture scopes
             console.log(`db:teardown:${n}`);
           },
         },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("first test in file a", async ({ db }) => { expect(db.id).toBe(1); });
       test("second test in file a", async ({ db }) => { expect(db.id).toBe(1); });
       """
     And the file "b.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("first test in file b", async ({ db }) => { expect(db.id).toBe(2); });
       """
     When I run the test suite
@@ -72,9 +76,11 @@ Feature: Fixture scopes
     And "db:teardown:1" comes before "db:setup:2"
 
   Scenario: A test fixture is rebuilt for every test
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         tmp: {
           setup: async (use) => {
             console.log("tmp:setup");
@@ -82,11 +88,11 @@ Feature: Fixture scopes
             console.log("tmp:teardown");
           },
         },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("one", async ({ tmp }) => { expect(tmp).toBeDefined(); });
       test("two", async ({ tmp }) => { expect(tmp).toBeDefined(); });
       """
@@ -96,9 +102,11 @@ Feature: Fixture scopes
     And the output contains "tmp:teardown" 2 times
 
   Scenario: Teardown runs last-in-first-out
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         outer: {
           setup: async (use) => {
             console.log("outer:setup");
@@ -113,11 +121,11 @@ Feature: Fixture scopes
             console.log("inner:teardown");
           },
         },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("nested fixtures", async ({ inner }) => {
         expect(inner).toBe("inner-of-outer");
       });
@@ -128,20 +136,22 @@ Feature: Fixture scopes
     And "inner:teardown" comes before "outer:teardown"
 
   Scenario: A failing test still tears its fixtures down
-    Given the file "fixtures.ts":
+    Given the file "test.ts":
       """
-      export default {
+      import { test as base } from "bun-test-utils";
+      export { expect } from "bun-test-utils";
+      export const test = base.extend({
         resource: {
           setup: async (use) => {
             await use("held");
             console.log("resource:released");
           },
         },
-      };
+      });
       """
     And the file "a.test.ts":
       """
-      import { test, expect } from "bun-test-utils";
+      import { test, expect } from "./test";
       test("fails on purpose", async ({ resource }) => {
         expect(resource).toBe("something else");
       });

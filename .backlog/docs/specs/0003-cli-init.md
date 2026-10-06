@@ -2,7 +2,7 @@
 
 - **Status:** implemented
 - **Milestone:** M3
-- **Implementation:** `packages/bun-fixture/src/cli.ts`
+- **Implementation:** `packages/core/src/cli.ts`
 - **Tests:** `packages/core/tests/cli.test.ts` (focused behavior) and `packages/bun-test-utils/e2e/` (installed behavior)
 
 ## Problem
@@ -14,13 +14,13 @@ bare `node_modules/...` preload path and needs `./node_modules/...`.
 
 | # | Requirement |
 |---|-------------|
-| R1 | `bun-fixture init` MUST read or create `bunfig.toml` and append the preload entry to `[test].preload` |
-| R2 | The default entry MUST be `./node_modules/bun-fixture/src/plugin.ts` |
+| R1 | `test-utils init` MUST read or create `bunfig.toml` and append the preload entry to `[test].preload` |
+| R2 | The default entry MUST be `./node_modules/bun-test-utils/dist/plugin.js` |
 | R3 | It MUST be idempotent — a second run MUST NOT duplicate the entry |
 | R4 | An existing string `preload` MUST be normalized to a list, preserving the original value |
 | R5 | Unrelated `bunfig.toml` sections MUST survive the round-trip |
-| R6 | It MUST scaffold a root `fixtures.ts` when absent, and MUST NOT overwrite an existing one without `--force` |
-| R7 | Options `--dir`, `--entry`, `--force`, `--help`, `--version` MUST be supported, with generated help |
+| R6 | It MUST NOT scaffold fixture files; projects compose fixtures explicitly with `test.extend()` |
+| R7 | Options `--dir`, `--entry`, `--force`, `--help`, `--version` MUST be supported, with generated help; `--force` is retained for compatibility and does not overwrite project files |
 | R8 | Loss of TOML comments MUST be warned about when the original file had any |
 
 ## Design
@@ -43,8 +43,8 @@ preserving comments (see ADR 0004).
 
 | Requirement | Test |
 |-------------|------|
-| R1, R2 | "adds the preload entry to an empty bunfig", "`init` scaffolds a project end to end" |
+| R1, R2 | "adds the preload entry to an empty bunfig", "`init` initializes a project end to end" |
 | R3, R5 | "preserves existing config and is idempotent" |
 | R4 | "normalizes a string preload into a list" |
 | R7 | "parses arguments with citty", `features/cli-init.feature` |
-| R1–R6 | "a fresh project: init → preload → run → teardown", `features/cli-init.feature` (5 scenarios) |
+| R1–R6 | "a fresh project: init → preload → run → teardown", `features/cli-init.feature` |

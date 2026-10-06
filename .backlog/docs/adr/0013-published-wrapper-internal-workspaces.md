@@ -1,56 +1,36 @@
 # 0013 — Published wrapper over internal workspaces
 
-- **Status:** partially superseded by [0014](./0014-bunup-built-publication.md)
+- **Status:** revised
 - **Supersedes:** [0011](./0011-brand-identity-and-modular-ecosystem.md)
 
 ## Context
 
-The repository publishes one npm package, `bun-test-utils`, while maintaining distinct
-capabilities as private workspaces. After those workspaces were flattened under `packages/`,
-the publishable package still owned the fixture engine implementation and its focused unit
-tests. That made it both an implementation package and the assembly boundary, unlike every
-other capability, and mixed package-local tests with cross-capability conformance tests.
-
-The source layout also used broad test filenames such as `std.test.ts` and `vcr.test.ts`, which
-stopped reflecting the implementation files as packages gained more than one source module.
+The repository publishes one npm package, `bun-test-utils`, while maintaining distinct capabilities as private workspaces. End users should not import those workspaces or any package subpaths; the public surface is the root package only.
 
 ## Decision
 
-`packages/bun-test-utils` is the public assembly wrapper. It owns the npm manifest, public
-entrypoint adapters, CLI adapter, licences and README. Its tests cover only the assembled
-product: subpath composition, behavioural scratch projects, the installed CLI, tarball contents
-and consumer quickstarts.
+`packages/bun-test-utils` is the public assembly wrapper. It owns the npm manifest, root entrypoint, CLI adapter, licences, README, conformance tests, behavioural scratch projects, installed CLI tests, tarball audit, and consumer quickstarts.
 
-The fixture engine, type definitions and CLI internals live in the private
-`packages/core` workspace as `@bun-test-utils/core`. All capabilities, including core, are
-siblings under `packages/` and remain unpublished.
+The fixture engine, type definitions, CLI internals, and capability implementations live in private sibling workspaces under `packages/`. Bunup bundles the internal workspaces into the root `dist/plugin.js` entrypoint. The published package exports only `.` and `./package.json`; users import only:
 
-Before normal workspace use, the wrapper stages each internal `src/` as a symlink so public
-subpath imports resolve to the canonical workspace source and Bun loads one engine instance.
-Before `bun pm pack`, `prepack` replaces those symlinks with source copies; `postpack` restores
-the development links. The resulting tarball remains one self-contained raw-TypeScript package.
+```ts
+import { describe, expect, test } from "bun-test-utils";
+```
 
-Every internal package uses parallel `src/` and `tests/` directories. A test file mirrors the
-source module it primarily verifies: for example, `src/cassette.ts` has
-`tests/cassette.test.ts`, and `src/env.ts` has `tests/env.test.ts`. Test-only fixture and support
-files may sit beside those mirrored tests.
+Property tests, fluent scenarios, and built-in fixtures are available from `test.*` and the test context. Mocking belongs in fixtures composed with `test.extend()`.
+
+Every internal package uses parallel `src/` and `tests/` directories. A test file mirrors the source module it primarily verifies; cross-capability behavior is covered in the wrapper conformance and packed-consumer suites.
 
 ## Consequences
 
-**Good:** the npm package is a thin, auditable assembly boundary; focused tests live with their
-implementation; cross-package failures have one obvious home; internal source can be reorganized
-without changing public import paths; test filenames reveal coverage gaps.
+**Good:** the npm package has one auditable root API, no generated staging tree, and no public subpath compatibility burden.
 
-**Bad:** local public imports depend on the staging step run by `bun install`; packing has a
-prepack/postpack filesystem transition; direct edits under generated
-`packages/bun-test-utils/<subpath>/` directories are discarded. CI and contributors must use the
-locked install before running tests.
+**Good:** internal workspaces can change shape without changing user imports.
+
+**Trade-off:** capability-specific helpers and error classes are no longer user-facing exports; consumers observe errors by `name`, `message`, and `code` on thrown values rather than importing classes.
 
 ## Alternatives considered
 
-- **Keep core in the public wrapper:** fewer staging concerns, but preserves the asymmetric
-  package and mixed test responsibilities this decision is intended to remove.
-- **Publish every workspace independently:** avoids staging but reintroduces version skew and
-  multiple install targets, contrary to the single-package product decision.
-- **Commit duplicated bundled sources:** makes packing simple but creates two editable copies of
-  every implementation and invites drift.
+- **Publish every workspace independently:** rejected because it creates version skew and multiple install targets.
+- **Expose capability subpaths from the single package:** rejected because it expands the public API beyond `describe`, `test`, and `expect`.
+- **Stage internal sources under the wrapper:** rejected after removing public subpaths; Bunup can bundle the private workspaces directly.

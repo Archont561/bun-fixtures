@@ -24,14 +24,26 @@ hero:
 `bun-test-utils` brings **pytest-style dependency injection** to `bun test`:
 
 ```ts
-import { test, expect } from "bun-test-utils";
+// test.ts
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
+  db: { scope: "file", setup: async (use) => { await use(await createDb()); } },
+  user: { setup: async (use, { db }) => { await use(await db.insertUser("ada")); } },
+});
+```
+
+```ts
+// user.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
 
 test("creates and verifies a user", async ({ db, user }) => {
   expect(await db.find(user.id)).toMatchObject({ name: "ada" });
 });
 ```
 
-No manual wiring, no global mocks. `db` and `user` are declared in `test.ts`, built in topological order, injected into tests, and cleanly destroyed in reverse (LIFO) order.
+No manual wiring, no global mocks, and no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded; fixtures are available only through the imported `test.extend()` chain. `db` and `user` are built in topological order, injected into tests, and cleanly destroyed in reverse (LIFO) order.
 
 ---
 
@@ -44,8 +56,8 @@ No manual wiring, no global mocks. `db` and `user` are declared in `test.ts`, bu
   </div>
 
   <div class="feature-card">
-    <h3>🌳 Directory Inheritance</h3>
-    <p>Place <code>test.ts</code> anywhere in your folder structure. Child folders inherit fixtures from ancestors with nearest-wins overrides.</p>
+    <h3>🧩 Explicit Composition</h3>
+    <p>Compose fixtures with <code>test.extend()</code> and import that runner. Directories never contribute fixtures implicitly.</p>
   </div>
 
   <div class="feature-card">
@@ -64,8 +76,8 @@ No manual wiring, no global mocks. `db` and `user` are declared in `test.ts`, bu
   </div>
 
   <div class="feature-card">
-    <h3>📦 Modular Ecosystem</h3>
-    <p>Cherry-pick bundled subpaths — no extra install: <code>bun-test-utils/std</code>, <code>bun-test-utils/pbt</code>, <code>bun-test-utils/dom</code>, <code>bun-test-utils/browser</code>, and <code>bun-test-utils/vcr</code>.</p>
+    <h3>📦 Built-in Capabilities</h3>
+    <p>Use one import: <code>describe</code>, <code>test</code>, and <code>expect</code>. Standard, DOM, browser/server, VCR, and snapshot capabilities live on the root <code>test</code> context; optional property and scenario styles live on <code>test.*</code> after their peers are installed.</p>
   </div>
 </div>
 
@@ -80,11 +92,13 @@ bun add -d bun-test-utils
 bunx test-utils init
 ```
 
-This updates your `bunfig.toml` preload configuration and scaffolds a starter `test.ts`:
+This updates your `bunfig.toml` preload configuration. Create a local `test.ts` and compose fixtures explicitly:
 
 ```ts
 // test.ts
-export default {
+import { test as base } from "bun-test-utils";
+
+export const test = base.extend({
   db: {
     scope: "file",
     setup: async (use) => {
@@ -93,7 +107,7 @@ export default {
       await db.close(); // teardown runs here!
     },
   },
-};
+});
 ```
 
 ---

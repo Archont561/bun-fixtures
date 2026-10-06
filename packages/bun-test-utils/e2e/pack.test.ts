@@ -2,19 +2,10 @@
  * M5 pack smoke test (spec 0005 R7, milestone M5 exit criteria 1–2).
  *
  * Packs the single publishable package with `bun pm pack`, proves the tarball
- * contains only what the spec allows (Bunup-built ESM and declarations,
- * README + both licences + manifest, no source workspaces or `workspace:`
- * ranges), then installs the
- * tarball into a scratch project — no workspace, no symlinks — and runs the
- * quickstart (`test-utils init` → `bun test`) against it, including a
- * subpath import. What is verified here is what a consumer downloading from
+ * contains only the public root entrypoint, then installs it into a scratch
+ * project and runs the quickstart (`test-utils init` → `bun test`) against the
+ * packed artifact. What is verified here is what a consumer downloading from
  * npm will get.
- *
- * Since the single-package consolidation (ADR superseding ADR 0011,
- * task_018/task_020), `core`, `std`, `pbt`, `dom`, `browser`, `vcr`, and
- * `snapshot` are sibling internal, unpublished (`private: true`) workspace
- * packages are linked into the wrapper during development and bundled by Bunup
- * into its `dist/`; they are never published on their own.
  */
 
 import {
@@ -35,8 +26,9 @@ const PACKAGE_DIR = join(import.meta.dir, "..");
 /** The one publishable package — everything else it bundles is `private: true`. */
 const PACKAGE_NAME = "bun-test-utils";
 
-/** Internal workspace packages bundled in as subpaths; never published on their own. */
-const BUNDLED_SUBPATHS = [
+/** Internal workspace packages that must stay private. */
+const INTERNAL_WORKSPACES = [
+  "core",
   "std",
   "pbt",
   "dom",
@@ -77,9 +69,6 @@ function run(cmd: string[], cwd?: string): string {
 /** Packs the package and reads back its tarball. */
 function pack(scratch: string): Packed {
   const tgz = join(scratch, `${PACKAGE_NAME}.tgz`);
-  // dist/ is built by Turborepo before the test task. Use the wrapper's
-  // checked-in README directly; package documentation is no longer copied
-  // from the repository root during packing.
   run(
     [BUN, "pm", "pack", "--quiet", "--ignore-scripts", "--filename", tgz],
     PACKAGE_DIR,
@@ -100,29 +89,23 @@ function pack(scratch: string): Packed {
 }
 
 describe("bun pm pack smoke test", () => {
-  test("the publishable package wraps a sibling internal core", () => {
-    expect(existsSync(join(PACKAGE_DIR, "..", "core", "package.json"))).toBe(
-      true,
-    );
+  test("the publishable package wraps sibling internal workspaces", () => {
+    for (const workspace of INTERNAL_WORKSPACES) {
+      expect(
+        existsSync(join(PACKAGE_DIR, "..", workspace, "package.json")),
+        `${workspace} workspace is missing`,
+      ).toBe(true);
+      expect(existsSync(join(PACKAGE_DIR, workspace, "package.json"))).toBe(
+        false,
+      );
+    }
     expect(
       readFileSync(join(PACKAGE_DIR, "src", "plugin.ts"), "utf8"),
     ).toContain("@bun-test-utils/core");
-    expect(
-      existsSync(join(PACKAGE_DIR, "..", "core", "src", "plugin.ts")),
-    ).toBe(true);
-  });
-
-  test("internal workspace sources live beside the publishable package", () => {
-    for (const sub of BUNDLED_SUBPATHS) {
-      expect(existsSync(join(PACKAGE_DIR, "..", sub, "package.json"))).toBe(
-        true,
-      );
-      expect(existsSync(join(PACKAGE_DIR, sub, "package.json"))).toBe(false);
-    }
   });
 
   test(
-    "the one publishable tarball matches the spec",
+    "the one publishable tarball exposes only the root API",
     () => {
       const scratch = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-"));
       try {
@@ -134,12 +117,22 @@ describe("bun pm pack smoke test", () => {
         expect(manifest.main).toBe("./dist/plugin.js");
         expect(manifest.types).toBe("./dist/plugin.d.ts");
         expect(entries.some((entry) => entry.startsWith("dist/"))).toBe(true);
-        for (const peer of ["playwright", "happy-dom", "fast-check"]) {
-          expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
-        }
-        // `bun pm pack` must rewrite workspace-ranges (e.g. workspace:^ → ^0.1.0) —
-        // moot today since the published manifest has none, but guards regressions.
         expect(JSON.stringify(manifest)).not.toContain("workspace:");
+        expect(Object.keys(manifest.exports).sort()).toEqual([
+          ".",
+          "./package.json",
+        ]);
+
+        for (const peer of [
+          "playwright",
+          "happy-dom",
+          "fast-check",
+          "@aboviq/bun-test-cucumber",
+        ]) {
+          expect(manifest.peerDependencies?.[peer]).toBeString();
+          expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
+          expect(manifest.optionalDependencies?.[peer]).toBeUndefined();
+        }
 
         for (const required of ALLOWED_TOP_LEVEL) {
           expect(entries).toContain(required);
@@ -148,25 +141,14 @@ describe("bun pm pack smoke test", () => {
           "dist/plugin.js",
           "dist/plugin.d.ts",
           "dist/cli.js",
-          "dist/types.d.ts",
+          "dist/cli.d.ts",
         ]) {
           expect(entries).toContain(required);
         }
         expect(entries.some((e) => e.startsWith("src/"))).toBe(false);
         expect(entries.some((e) => e.startsWith("core/"))).toBe(false);
+        expect(entries.some((e) => e.startsWith("dist/subpaths/"))).toBe(false);
 
-        for (const sub of BUNDLED_SUBPATHS) {
-          const output = `./dist/subpaths/${sub}`;
-          expect(entries).toContain(`${output.slice(2)}.js`);
-          expect(entries).toContain(`${output.slice(2)}.d.ts`);
-          expect(manifest.exports?.[`./${sub}`]).toEqual({
-            types: `${output}.d.ts`,
-            import: `${output}.js`,
-            default: `${output}.js`,
-          });
-        }
-
-        // Nothing else at the top level — no tests/, features/, sources, or repo tooling.
         for (const entry of entries) {
           const topLevel = entry.split("/")[0];
           const ok = ALLOWED_TOP_LEVEL.has(entry) || topLevel === "dist";
@@ -179,20 +161,14 @@ describe("bun pm pack smoke test", () => {
     { timeout: 120_000 },
   );
 
-  test("publication audit: exports, peers, and private workspaces are clean", () => {
+  test("publication audit: peers and private workspaces are clean", () => {
     const manifest = JSON.parse(
       readFileSync(join(PACKAGE_DIR, "package.json"), "utf8"),
     );
-    const expectedExports = [
+    expect(Object.keys(manifest.exports).sort()).toEqual([
       ".",
-      "./plugin",
-      "./types",
-      ...BUNDLED_SUBPATHS.map((subpath) => `./${subpath}`),
       "./package.json",
-    ];
-    expect(Object.keys(manifest.exports).sort()).toEqual(
-      expectedExports.sort(),
-    );
+    ]);
 
     for (const peer of [
       "playwright",
@@ -200,11 +176,12 @@ describe("bun pm pack smoke test", () => {
       "fast-check",
       "@aboviq/bun-test-cucumber",
     ]) {
+      expect(manifest.peerDependencies?.[peer]).toBeString();
       expect(manifest.peerDependenciesMeta?.[peer]?.optional).toBe(true);
-      expect(manifest.optionalDependencies?.[peer]).toBeString();
+      expect(manifest.optionalDependencies?.[peer]).toBeUndefined();
     }
 
-    for (const workspace of ["core", ...BUNDLED_SUBPATHS]) {
+    for (const workspace of INTERNAL_WORKSPACES) {
       const workspaceManifest = JSON.parse(
         readFileSync(
           join(PACKAGE_DIR, "..", workspace, "package.json"),
@@ -221,21 +198,10 @@ describe("bun pm pack smoke test", () => {
     expect(
       licenseFiles.every((file) => existsSync(join(PACKAGE_DIR, file))),
     ).toBe(true);
-    expect(
-      licenseFiles.some((file) =>
-        existsSync(join(PACKAGE_DIR, "..", "core", file)),
-      ),
-    ).toBe(false);
 
     for (const file of [
       join(PACKAGE_DIR, "dist", "plugin.js"),
-      ...BUNDLED_SUBPATHS.map((subpath) =>
-        join(PACKAGE_DIR, "dist", "subpaths", `${subpath}.js`),
-      ),
       join(PACKAGE_DIR, "dist", "plugin.d.ts"),
-      ...BUNDLED_SUBPATHS.map((subpath) =>
-        join(PACKAGE_DIR, "dist", "subpaths", `${subpath}.d.ts`),
-      ),
     ]) {
       const output = readFileSync(file, "utf8");
       expect(output).not.toMatch(/(?:from|import)\s*["']@bun-test-utils\//);
@@ -243,7 +209,7 @@ describe("bun pm pack smoke test", () => {
   });
 
   test(
-    "the tarball installs and runs the quickstart, including a bundled subpath",
+    "the tarball installs and runs the quickstart through the root entrypoint",
     () => {
       const packDir = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-core-"));
       const project = mkdtempSync(join(tmpdir(), "bun-test-utils-quickstart-"));
@@ -262,21 +228,13 @@ describe("bun pm pack smoke test", () => {
         ).toBe(true);
         expect(
           existsSync(
-            join(
-              project,
-              "node_modules",
-              PACKAGE_NAME,
-              "dist",
-              "subpaths",
-              "std.js",
-            ),
+            join(project, "node_modules", PACKAGE_NAME, "dist", "subpaths"),
           ),
-        ).toBe(true);
+        ).toBe(false);
         expect(
           existsSync(join(project, "node_modules", PACKAGE_NAME, "src")),
         ).toBe(false);
 
-        // `bunx test-utils init` — through the installed bin, like a consumer.
         run(
           [
             BUN,
@@ -293,67 +251,46 @@ describe("bun pm pack smoke test", () => {
         );
         expect(existsSync(join(project, "test.ts"))).toBe(false);
 
-        // The README quickstart against the tarball: explicit fixture
-        // composition and a bundled subpath resolve with no extra install.
-        writeFileSync(
-          join(project, "test.ts"),
-          `import { test as base } from "bun-test-utils";
-import { stdFixtures } from "bun-test-utils/std";
-export const test = base.extend(stdFixtures);
-`,
-        );
         writeFileSync(
           join(project, "quickstart.test.ts"),
-          `import { expect } from "bun-test-utils";
-import { test } from "./test";
-import { tmpdirFixture } from "bun-test-utils/std";
+          `import { describe, expect, test } from "bun-test-utils";
 
-test("quickstart: explicit fixtures inject", async ({ tmpdir }) => {
-  expect(tmpdir).toBeTruthy();
-});
+describe("packed public API", () => {
+  test("built-in fixtures inject from the root test", async ({ tmpdir }) => {
+    tmpdir.write("hello.txt", "hello");
+    expect(tmpdir.read("hello.txt")).toBe("hello");
+  });
 
-test("quickstart: bundled subpath resolves with no extra install", () => {
-  expect(typeof tmpdirFixture.setup).toBe("function");
+  test("only root sub-APIs are exposed", async () => {
+    expect(typeof test.prop).toBe("function");
+    const specifier = "bun-test-utils/std";
+    await expect(import(specifier)).rejects.toThrow();
+  });
+
+  test("fixture-based httpMock is bundled into the root context", async ({ httpMock }) => {
+    httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+    const user = await fetch("https://example.test/api/user").then((r) =>
+      r.json(),
+    );
+    expect(user).toEqual({ name: "Ada" });
+    expect(httpMock.calls()[0]).toMatchObject({ handled: true });
+  });
+
+  test("optional test styles explain their missing peers", () => {
+    expect(() =>
+      test.prop("needs fast-check", (fc) => ({ n: fc.integer() }), () => {}),
+    ).toThrow("fast-check");
+    expect(() => test.scenario("needs bdd integration")).toThrow(
+      "@aboviq/bun-test-cucumber",
+    );
+  });
 });
 `,
         );
         const output = run([BUN, "test"], project);
-        expect(output).toContain("2 pass");
+        expect(output).toContain("4 pass");
         expect(output).toContain("0 fail");
 
-        // Each published entrypoint currently bundles its own copy of the
-        // error classes. Verify the consumer-visible contract explicitly:
-        // errors retain their stable name/code across entrypoints, while
-        // cross-entrypoint instanceof is not promised. This prevents a
-        // future bundler change from silently changing the documented
-        // identity decision.
-        writeFileSync(
-          join(project, "error-identity.test.ts"),
-          `import { CassetteError as RootCassetteError } from "bun-test-utils";
-import { CassetteError as VcrCassetteError } from "bun-test-utils/vcr";
-import { expect, test } from "bun:test";
-
-test("published entrypoints expose compatible but independent error classes", () => {
-  const rootError = new RootCassetteError("CASSETTE_MISMATCH", "root");
-  const vcrError = new VcrCassetteError("CASSETTE_MISMATCH", "vcr");
-
-  expect(rootError).toBeInstanceOf(RootCassetteError);
-  expect(vcrError).toBeInstanceOf(VcrCassetteError);
-  expect(rootError).not.toBeInstanceOf(VcrCassetteError);
-  expect(vcrError).not.toBeInstanceOf(RootCassetteError);
-  expect(rootError.name).toBe(vcrError.name);
-  expect(rootError.code).toBe(vcrError.code);
-});
-`,
-        );
-        const identityOutput = run(
-          [BUN, "test", "error-identity.test.ts"],
-          project,
-        );
-        expect(identityOutput).toContain("1 pass");
-        expect(identityOutput).toContain("0 fail");
-
-        // Sanity: the packed manifest is what a registry consumer sees.
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
       } finally {
         rmSync(packDir, { recursive: true, force: true });

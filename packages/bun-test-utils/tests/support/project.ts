@@ -3,7 +3,7 @@
  *
  * Every scenario gets a real, throwaway Bun project with `bun-test-utils`
  * installed, so the behaviour under test is what an actual user sees:
- * preload discovery, `bun test` output, exit codes — no internals poked.
+ * explicit fixture composition, `bun test` output, exit codes — no internals poked.
  */
 import {
   existsSync,
@@ -35,7 +35,7 @@ export interface Project {
   dir: string;
 }
 
-/** Creates a scratch project with `bunfig.toml` preloading bun-test-utils. */
+/** Creates a scratch project with `bunfig.toml` preloading bun-test-utils teardown hooks. */
 export function createProject(): Project {
   const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-bdd-"));
   mkdirSync(join(dir, "node_modules"), { recursive: true });
@@ -98,11 +98,7 @@ function run(
 
 /** Runs `bun test` inside the scratch project. */
 export function runTests(project: Project): RunResult {
-  // Legacy behavioural fixtures are retained only for the migration suite;
-  // consumer projects do not receive this opt-in environment flag.
-  return run(project, [BUN, "test"], {
-    BUN_TEST_UTILS_LEGACY_DISCOVERY: "1",
-  });
+  return run(project, [BUN, "test"]);
 }
 
 /** Runs the bun-test-utils CLI inside the scratch project. */

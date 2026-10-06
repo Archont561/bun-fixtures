@@ -1,4 +1,6 @@
+import { Buffer } from "node:buffer";
 import {
+  BunTestUtilsError,
   test as baseTest,
   createFixture,
   type FixtureMap,
@@ -54,28 +56,36 @@ export const serverUrlFixture = createFixture<string>({
 });
 
 const PLAYWRIGHT_MODULE = "playwright";
+const HAPPY_DOM_MODULE = "happy-dom";
+
+async function loadPlaywright(): Promise<any> {
+  try {
+    return await import(PLAYWRIGHT_MODULE);
+  } catch {
+    throw new MissingOptionalDependencyError(
+      "playwright",
+      "bun add -d playwright",
+      "[@bun-test-utils/browser] 'playwright' is required for browser fixtures. Install via 'bun add -d playwright'.",
+    );
+  }
+}
+
+function chromiumFrom(playwright: any): any {
+  const chromium = playwright.chromium || playwright.default?.chromium;
+  if (!chromium) {
+    throw new MissingOptionalDependencyError(
+      "chromium",
+      "bunx playwright install chromium",
+      "[@bun-test-utils/browser] Failed to locate chromium in playwright.",
+    );
+  }
+  return chromium;
+}
 
 export const browserFixture = createFixture<any>({
   scope: "session",
   setup: async (use) => {
-    let playwright: any;
-    try {
-      playwright = await import(PLAYWRIGHT_MODULE);
-    } catch {
-      throw new MissingOptionalDependencyError(
-        "playwright",
-        "bun add -d playwright",
-        "[@bun-test-utils/browser] 'playwright' is required for browser fixtures. Install via 'bun add -d playwright'.",
-      );
-    }
-    const chromium = playwright.chromium || playwright.default?.chromium;
-    if (!chromium) {
-      throw new MissingOptionalDependencyError(
-        "chromium",
-        "bunx playwright install chromium",
-        "[@bun-test-utils/browser] Failed to locate chromium in playwright.",
-      );
-    }
+    const chromium = chromiumFrom(await loadPlaywright());
     const browser = await chromium.launch({
       headless: true,
     });
@@ -113,12 +123,412 @@ export const browserPageFixture = createFixture<any>({
   },
 });
 
+export type WebEnvironment = "dom" | "browser";
+
+export interface WebPageHelper {
+  /** The concrete backend chosen for this test. */
+  mode: WebEnvironment;
+  /** The underlying happy-dom window or Playwright Page. */
+  raw: any;
+  goto(url: string): Promise<void>;
+  setContent(html: string): Promise<void>;
+  mount(html: string): Promise<void>;
+  click(selector: string): Promise<void>;
+  type(selector: string, text: string): Promise<void>;
+  textContent(selector: string): Promise<string | null>;
+  html(): Promise<string>;
+  evaluate<T>(fn: () => T | Promise<T>): Promise<T>;
+}
+
+function webEnvironment(): WebEnvironment {
+  const value = process.env.BUN_TEST_UTILS_WEB_ENV?.toLowerCase();
+  if (value === "browser" || value === "playwright") return "browser";
+  return "dom";
+}
+
+async function createDomWebPage(): Promise<{
+  helper: WebPageHelper;
+  close: () => Promise<void>;
+}> {
+  let GlobalWindowCtor: any;
+  try {
+    ({ GlobalWindow: GlobalWindowCtor } = await import(HAPPY_DOM_MODULE));
+  } catch {
+    throw new MissingOptionalDependencyError(
+      "happy-dom",
+      "bun add -d happy-dom",
+      "[@bun-test-utils/browser] webPage in DOM mode requires 'happy-dom'. Install via 'bun add -d happy-dom'.",
+    );
+  }
+
+  const win = new GlobalWindowCtor({ url: "http://localhost" });
+  const doc = win.document as Document;
+
+  const helper: WebPageHelper = {
+    mode: "dom",
+    raw: win,
+    async goto(url) {
+      const response = await fetch(url);
+      doc.body.innerHTML = await response.text();
+    },
+    async setContent(html) {
+      doc.body.innerHTML = html;
+    },
+    async mount(html) {
+      doc.body.innerHTML = html;
+    },
+    async click(selector) {
+      const el = doc.querySelector<HTMLElement>(selector);
+      if (!el) throw missingElement(selector, "webPage.click");
+      el.dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
+    },
+    async type(selector, text) {
+      const el = doc.querySelector<HTMLInputElement>(selector);
+      if (!el) throw missingElement(selector, "webPage.type");
+      el.value = text;
+      el.dispatchEvent(new win.Event("input", { bubbles: true }));
+      el.dispatchEvent(new win.Event("change", { bubbles: true }));
+    },
+    async textContent(selector) {
+      return doc.querySelector(selector)?.textContent ?? null;
+    },
+    async html() {
+      return doc.body.innerHTML;
+    },
+    async evaluate(fn) {
+      return await fn.call(win);
+    },
+  };
+
+  return {
+    helper,
+    close: async () => {
+      await win.happyDOM.abort();
+      await win.happyDOM.close();
+    },
+  };
+}
+
+async function createBrowserWebPage(): Promise<{
+  helper: WebPageHelper;
+  close: () => Promise<void>;
+}> {
+  const chromium = chromiumFrom(await loadPlaywright());
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  const helper: WebPageHelper = {
+    mode: "browser",
+    raw: page,
+    async goto(url) {
+      await page.goto(url);
+    },
+    async setContent(html) {
+      await page.setContent(html);
+    },
+    async mount(html) {
+      await page.setContent(html);
+    },
+    async click(selector) {
+      await page.click(selector);
+    },
+    async type(selector, text) {
+      await page.fill(selector, text);
+    },
+    async textContent(selector) {
+      return await page.textContent(selector);
+    },
+    async html() {
+      return await page.content();
+    },
+    async evaluate(fn) {
+      return await page.evaluate(fn);
+    },
+  };
+
+  return {
+    helper,
+    close: async () => {
+      await page.close();
+      await context.close();
+      await browser.close();
+    },
+  };
+}
+
+function missingElement(selector: string, api: string): BunTestUtilsError {
+  return new BunTestUtilsError(
+    "INVALID_API_USAGE",
+    `[@bun-test-utils/browser] ${api} could not find element "${selector}"`,
+    { details: { selector } },
+  );
+}
+
+export const webPageFixture = createFixture<WebPageHelper>({
+  scope: "test",
+  setup: async (use) => {
+    const page =
+      webEnvironment() === "browser"
+        ? await createBrowserWebPage()
+        : await createDomWebPage();
+    try {
+      await use(page.helper);
+    } finally {
+      await page.close();
+    }
+  },
+});
+
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS"
+  | "*";
+
+export type HttpMockMatcher = string | RegExp | ((request: Request) => boolean);
+
+export interface HttpMockCall {
+  method: string;
+  url: string;
+  request: Request;
+  handled: boolean;
+}
+
+export type HttpMockResponder = (
+  request: Request,
+  call: HttpMockCall,
+) => Response | undefined | Promise<Response | undefined>;
+
+export interface HttpMockHelper {
+  use(
+    method: HttpMethod,
+    matcher: HttpMockMatcher,
+    responder: HttpMockResponder,
+  ): void;
+  get(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  post(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  put(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  patch(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  delete(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  head(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  options(matcher: HttpMockMatcher, responder: HttpMockResponder): void;
+  passthrough(matcher?: HttpMockMatcher): void;
+  reset(): void;
+  calls(): HttpMockCall[];
+  install(target: any): Promise<() => Promise<void>>;
+}
+
+interface HttpMockHandler {
+  method: HttpMethod;
+  matcher: HttpMockMatcher;
+  responder?: HttpMockResponder;
+}
+
+interface HttpMockState {
+  handlers: HttpMockHandler[];
+  calls: HttpMockCall[];
+}
+
+function createHttpMock(): HttpMockHelper {
+  const state: HttpMockState = { handlers: [], calls: [] };
+
+  const helper: HttpMockHelper = {
+    use(method, matcher, responder) {
+      state.handlers.unshift({
+        method: method.toUpperCase() as HttpMethod,
+        matcher,
+        responder,
+      });
+    },
+    get(matcher, responder) {
+      helper.use("GET", matcher, responder);
+    },
+    post(matcher, responder) {
+      helper.use("POST", matcher, responder);
+    },
+    put(matcher, responder) {
+      helper.use("PUT", matcher, responder);
+    },
+    patch(matcher, responder) {
+      helper.use("PATCH", matcher, responder);
+    },
+    delete(matcher, responder) {
+      helper.use("DELETE", matcher, responder);
+    },
+    head(matcher, responder) {
+      helper.use("HEAD", matcher, responder);
+    },
+    options(matcher, responder) {
+      helper.use("OPTIONS", matcher, responder);
+    },
+    passthrough(matcher = /.*/) {
+      state.handlers.unshift({ method: "*", matcher });
+    },
+    reset() {
+      state.handlers.length = 0;
+      state.calls.length = 0;
+    },
+    calls() {
+      return [...state.calls];
+    },
+    async install(target) {
+      return installPlaywrightRoutes(target, state);
+    },
+  };
+
+  Object.defineProperty(helper, "__state", {
+    value: state,
+    enumerable: false,
+  });
+
+  return helper;
+}
+
+async function resolveMock(
+  request: Request,
+  state: HttpMockState,
+): Promise<Response | undefined> {
+  for (const handler of state.handlers) {
+    if (!methodMatches(handler.method, request.method)) continue;
+    if (!matcherMatches(handler.matcher, request)) continue;
+
+    const call: HttpMockCall = {
+      method: request.method,
+      url: request.url,
+      request: request.clone(),
+      handled: Boolean(handler.responder),
+    };
+    state.calls.push(call);
+
+    if (!handler.responder) return undefined;
+    return await handler.responder(request.clone(), call);
+  }
+  state.calls.push({
+    method: request.method,
+    url: request.url,
+    request: request.clone(),
+    handled: false,
+  });
+  return undefined;
+}
+
+function methodMatches(expected: HttpMethod, actual: string): boolean {
+  return expected === "*" || expected === actual.toUpperCase();
+}
+
+function matcherMatches(matcher: HttpMockMatcher, request: Request): boolean {
+  if (typeof matcher === "function") return matcher(request.clone());
+  if (matcher instanceof RegExp) return matcher.test(request.url);
+
+  const url = new URL(request.url);
+  if (/^https?:\/\//.test(matcher)) return request.url === matcher;
+  return url.pathname === matcher || request.url.endsWith(matcher);
+}
+
+async function installPlaywrightRoutes(
+  target: any,
+  state: HttpMockState,
+): Promise<() => Promise<void>> {
+  if (typeof target?.route !== "function") {
+    throw new BunTestUtilsError(
+      "INVALID_API_USAGE",
+      "[@bun-test-utils/browser] httpMock.install(target) expects a Playwright BrowserContext or Page",
+    );
+  }
+
+  const routeHandler = async (route: any) => {
+    const pwRequest = route.request();
+    const method = pwRequest.method();
+    const body = ["GET", "HEAD"].includes(method)
+      ? undefined
+      : (pwRequest.postDataBuffer?.() ?? pwRequest.postData?.() ?? undefined);
+    const request = new Request(pwRequest.url(), {
+      method,
+      headers: pwRequest.headers(),
+      body,
+    });
+    const response = await resolveMock(request, state);
+    if (!response) {
+      await route.continue();
+      return;
+    }
+
+    await route.fulfill({
+      status: response.status,
+      headers: headersObject(response.headers),
+      body: Buffer.from(await response.arrayBuffer()),
+    });
+  };
+
+  await target.route("**/*", routeHandler);
+  return async () => {
+    if (typeof target.unroute === "function") {
+      await target.unroute("**/*", routeHandler);
+    }
+  };
+}
+
+function headersObject(headers: Headers): Record<string, string> {
+  const out: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    out[key] = value;
+  });
+  return out;
+}
+
+export const httpMockFixture = createFixture<HttpMockHelper>({
+  scope: "test",
+  setup: async (use) => {
+    const originalFetch = globalThis.fetch;
+    const httpMock = createHttpMock();
+    const state = (httpMock as any).__state as HttpMockState;
+    (globalThis as any).fetch = async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const request = new Request(input, init);
+      const response = await resolveMock(request, state);
+      if (response) return response;
+      return originalFetch(input, init);
+    };
+
+    try {
+      await use(httpMock);
+    } finally {
+      (globalThis as any).fetch = originalFetch;
+    }
+  },
+});
+
+export const browserHttpMockFixture = createFixture<HttpMockHelper>({
+  scope: "test",
+  deps: ["httpMock", "browserContext"],
+  setup: async (use, { httpMock, browserContext }) => {
+    const uninstall = await (httpMock as HttpMockHelper).install(
+      browserContext,
+    );
+    try {
+      await use(httpMock as HttpMockHelper);
+    } finally {
+      await uninstall();
+    }
+  },
+});
+
 export const browserFixtures: FixtureMap = {
   testServer: testServerFixture,
   serverUrl: serverUrlFixture,
   browser: browserFixture,
   browserContext: browserContextFixture,
   browserPage: browserPageFixture,
+  webPage: webPageFixture,
+  httpMock: httpMockFixture,
+  browserHttpMock: browserHttpMockFixture,
 };
 
 /** Playwright-style test preconfigured with browser fixtures. */
@@ -126,7 +536,7 @@ export const test = baseTest.extend(browserFixtures);
 
 export default browserFixtures;
 
-/** Public error surface, mirrored from core so subpath consumers can type catches. */
+/** Internal error re-exports for workspace-local tests and adapters. */
 export {
   BunTestUtilsError,
   MissingOptionalDependencyError,

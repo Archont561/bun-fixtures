@@ -1,6 +1,6 @@
 # docs (apps/docs)
 
-Documentation website for `bun-test-utils` built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/).
+Documentation website for `bun-test-utils` built with [Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/). The docs must describe explicit fixture composition only: `fixtures.ts` and `conftest.ts` are not automatically loaded; users compose fixtures with `test.extend()`.
 
 ## Commands
 

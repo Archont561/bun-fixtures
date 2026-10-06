@@ -1,53 +1,50 @@
-# 0002 — Preload discovery and directory merge
+# 0002 — Legacy preload discovery and directory merge (superseded)
 
-- **Status:** implemented
-- **Milestone:** M2
-- **Implementation:** `packages/bun-fixture/src/plugin.ts` (`discoverFixtures`, `fixturesFor`)
-- **Tests:** `packages/core/tests/nested/nested.test.ts`, `tests/plugin.test.ts` ("merges every fixtures.ts…")
+- **Status:** superseded by explicit fixture composition
+- **Superseded by:** current public API based on `test.extend()` chains
+- **Historical implementation:** removed from `packages/core/src/plugin.ts`
 
-## Problem
+## Current decision
 
-pytest loads a `conftest.py` per directory. Bun's test scanner is closed
-([oven-sh/bun#19196](https://github.com/oven-sh/bun/issues/19196)), so
-per-directory preloading is impossible; the hierarchy must be emulated.
+Implicit fixture discovery is no longer supported. The preload does not walk the
+project tree, `fixtures.ts` and `conftest.ts` are not special filenames, and
+fixtures are not inherited by parent or sibling directories.
 
-## Requirements
+A fixture is available to a test only when the test imports a runner whose
+`test.extend()` chain includes that fixture, or when an integration explicitly
+opens a fixture map through a documented API such as `openFixtures()`.
 
-| # | Requirement |
-|---|-------------|
-| R1 | At startup the preload MUST walk the project tree and import every `fixtures.ts` / `conftest.ts` (`.tsx` too) |
-| R2 | The walk MUST skip `node_modules`, dot-directories, and build/cache output (`dist`, `build`, `out`, `coverage`, …) |
-| R3 | A test file MUST see the merge of every fixture file from the discovery root down to its own directory |
-| R4 | Deeper directories MUST win (last-wins merge, root → leaf) |
-| R5 | Fixtures from sibling directories MUST NOT be visible |
-| R6 | A fixture file that fails to import or lacks a default export MUST warn, not abort the run |
-| R7 | The discovery root MUST default to `process.cwd()` and be overridable with `BUN_FIXTURE_ROOT`; `BUN_FIXTURE_NO_AUTODISCOVER` MUST skip the automatic walk |
-| R8 | Discovery MUST be idempotent — loading the module as preload *and* as an import MUST NOT double-register |
+## Migration
 
-## Design
+```ts
+// test.ts
+import { test as base } from "bun-test-utils";
 
-`collectFixtureFiles` recurses with a depth cap of 24, returning paths sorted
-shallow → deep. Each is dynamically imported; its default export is stored
-against `dirname(file)` in `dirMap`.
+export const test = base.extend({
+  db: {
+    scope: "file",
+    setup: async (use) => {
+      const db = await createDatabase();
+      await use(db);
+      await db.close();
+    },
+  },
+});
+```
 
-`fixturesFor(testFile)` builds the ancestor chain from the root to the test
-file's directory, `Object.assign`s the maps in that order, and memoises the
-result. A test file outside the discovery root falls back to its own directory
-only.
+```ts
+// users.test.ts
+import { expect } from "bun-test-utils";
+import { test } from "./test";
 
-State lives on the global singleton, so the second load of the module is a
-no-op.
+test("uses the explicit fixture", async ({ db }) => {
+  expect(await db.health()).toBe("ok");
+});
+```
 
-## Out of scope
+## Historical note
 
-Watch mode / re-discovery; fixtures declared inline in a test file;
-per-directory preloading (blocked upstream).
-
-## Verification
-
-| Requirement | Test |
-|-------------|------|
-| R3, R4 | "the nearest fixtures.ts wins", "inherits fixtures from ancestor directories" |
-| R5 | "but not from a sibling directory" |
-| R3 | "merges every fixtures.ts from the root down to this directory" |
-| R1, R4 | "a fresh project: init → preload → run → teardown" (root + `sub/` fixture files) |
+Earlier milestones experimented with a pytest-style directory scanner. That
+model was removed because it made fixture availability depend on filesystem
+layout and preload side effects. This document is retained only to explain the
+superseded design; it is not a supported behavior specification.

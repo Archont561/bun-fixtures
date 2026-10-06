@@ -1,77 +1,90 @@
 ---
-title: Plugins & Ecosystem
-description: Official companion packages for standard, DOM, browser, and property testing.
+title: Built-in fixtures
+description: Root test-context fixtures for standard, DOM, browser, VCR, snapshot, and property testing.
 ---
 
-## Bundled Ecosystem Subpaths
+> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
-Every subpath below ships inside the single `bun-test-utils` npm package — no extra
-install for the pack itself. A few wrap a heavy third-party library declared as an
-`optionalDependency` (`playwright`, `happy-dom`, `fast-check`); add it yourself with
-`bun add -d <name>` if `bun install` skipped it on your platform.
 
-### `bun-test-utils/std`
+## Public surface
 
-Zero-dependency standard fixtures — spread the bundle into your `test.ts`:
+`bun-test-utils` exposes only `describe`, `test`, and `expect`. There are no public capability subpaths. Request built-in capabilities by destructuring fixtures from the root `test` context.
 
 ```ts
-import { stdFixtures } from "bun-test-utils/std";
+import { expect, test } from "bun-test-utils";
 
-export default {
-  ...stdFixtures,
-};
+test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
+  env.set("APP_MODE", "test");
+  tmpdir.write("mode.txt", env.get("APP_MODE")!);
+  snapshot.match({ mode: tmpdir.read("mode.txt") }, "mode");
+  expect(cassette.path).toContain("__cassettes__");
+});
 ```
+
+
+## Repo-wide BDD gate
+
+The repository's behavioural specs live under `packages/*/features/*.feature` and
+are loaded by the root-owned entrypoint `tests/bdd/features.test.ts`. Run the
+same gate locally and in CI with:
+
+```bash
+bun run test:bdd
+```
+
+The entrypoint also checks that every runtime workspace either has meaningful
+feature coverage or a documented exemption. Package-local `bunfig` and
+`test-plugins.ts` files are not required for Gherkin discovery.
+
+## Fixtures
+
+### Standard
 
 - `tmpdir`: Isolated temporary directory with helper methods (`write`, `read`, `exists`, `remove`, `path`) and automatic recursive wipe.
 - `env`: Environment variable sandboxing with exact restoration on teardown.
 - `stdio`: Output capture for stdout and stderr, with the real streams handed back on teardown.
 
-### `bun-test-utils/pbt`
+### DOM
 
-Property-based testing integration — see the [Property-Based Testing guide](/bun-test-utils/guides/property-based-testing/):
+- `window`, `document`, and `page`: In-memory DOM fixtures powered by `happy-dom`, with automatic global cleanup.
+- `webPage`: A portable page helper that uses happy-dom by default and switches to real Playwright only when `BUN_TEST_UTILS_WEB_ENV=browser` (or `playwright`) is set. `page` and `browserPage` keep their original semantics.
 
-- `test.prop(title, arbitraries, testFn, options)` combining `fast-check` with fixture injection.
-- Requested fixtures auto-detect from `testFn`'s destructured first parameter (or `options.fixtures`).
-- **Per-sample lifecycle**: session/file fixtures are shared across the run, while test-scoped fixtures are rebuilt and torn down (LIFO) for every generated sample — and every shrink step.
+### Browser and server
 
-### `bun-test-utils/dom`
+- `testServer` and `serverUrl`: Ephemeral `Bun.serve` server on random port 0 with automatic shutdown.
+- `browser`, `browserPage`, `browserContext`: Playwright browser automation, loaded only when requested.
+- `httpMock`: MSW-like `get` / `post` / `put` / `patch` / `delete` / `head` / `options` handlers for fetch-based tests, plus `passthrough`, `reset`, and `calls()` assertions.
+- `browserHttpMock`: The same mock helper installed on the Playwright `browserContext`; use `httpMock.install(browserPage)` for page-scoped routes.
 
-In-memory DOM simulation powered by `happy-dom`:
-
-- `window`, `document`, and `page` fixtures with automatic global cleanup.
-
-### `bun-test-utils/browser`
-
-Headless browser & web server testing:
-
-- `testServer` & `serverUrl`: Ephemeral `Bun.serve` server on random port 0 with automatic shutdown.
-- `browser`, `browserPage`, `browserContext`: Session and test-scoped Playwright browser automation.
-
-### `bun-test-utils/vcr`
-
-HTTP Cassette recording and replaying — see the [Recording HTTP Cassettes guide](/bun-test-utils/guides/recording-http-cassettes/):
+### VCR
 
 - `cassette`: Intercepts `globalThis.fetch` to record live HTTP requests to disk and replay them offline.
-- **Automatic cassette files**: `__cassettes__/<test name>.json` next to the test file — auto-saved on teardown in record mode, auto-loaded at setup in replay mode, exposed as `cassette.path`.
-- `record` / `replay` / `passthrough` modes via API or the `VCR_MODE` environment variable, with sensitive headers redacted by default.
+- Automatic cassette files live at `__cassettes__/<test name>.json` next to the test file.
+- `record` / `replay` / `passthrough` modes are available through the fixture API or the `VCR_MODE` environment variable.
 
-### `bun-test-utils/snapshot`
+### Snapshots
 
-Value and file snapshot testing — see the [Snapshot Testing guide](/bun-test-utils/guides/snapshot-testing/):
+- `snapshot`: Serializes a value (or a file's contents via `matchFile`) and compares it against a stored snapshot.
+- Automatic snapshot files live at `__snapshots__/<test name>.snap.json` next to the test file.
+- `match` / `update` / `ci` modes are available through the fixture API or the `SNAPSHOT_MODE` environment variable.
 
-- `snapshot`: Serializes a value (or a file's contents via `matchFile`) and compares it against a stored snapshot, recording a new one on first run.
-- **Automatic snapshot files**: `__snapshots__/<test name>.snap.json` next to the test file, exposed as `snapshot.path`; multiple snapshots per test are auto-numbered or explicitly named.
-- `match` / `update` / `ci` modes via API or the `SNAPSHOT_MODE` environment variable (`ci` auto-selected in CI), plus pluggable custom serializers.
+### Property and BDD-style tests
 
-## Runnable package examples
+- `test.prop(title, factory, fn, options)`: property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
+- `test.scenario(title)`: fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer.
+- `test.scenario.prop(title, factory)`: generated values plus fluent scenarios. Requires both optional peers.
 
-Each workspace package README keeps a small, user-facing test example:
 
-- [Core fixture engine README](https://github.com/Archont561/bun-test-utils/blob/main/packages/core/README.md)
-- [Standard fixtures README](https://github.com/Archont561/bun-test-utils/blob/main/packages/std/README.md)
-- [PBT README](https://github.com/Archont561/bun-test-utils/blob/main/packages/pbt/README.md)
-- [DOM README](https://github.com/Archont561/bun-test-utils/blob/main/packages/dom/README.md)
-- [Browser README](https://github.com/Archont561/bun-test-utils/blob/main/packages/browser/README.md)
-- [VCR README](https://github.com/Archont561/bun-test-utils/blob/main/packages/vcr/README.md)
-- [Snapshot README](https://github.com/Archont561/bun-test-utils/blob/main/packages/snapshot/README.md)
-- [BDD README](https://github.com/Archont561/bun-test-utils/blob/main/packages/bdd/README.md)
+```ts
+import { expect, test } from "bun-test-utils";
+
+test("mocks fetch through a fixture", async ({ httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+
+  const data = await fetch("https://app.test/api/user").then((r) => r.json());
+  expect(data).toEqual({ name: "Ada" });
+  expect(httpMock.calls()).toHaveLength(1);
+});
+```
+
+Mocking should be expressed as fixtures and composed with `test.extend()` so mocks get dependency ordering and teardown just like built-in capabilities.

@@ -13,7 +13,7 @@ As the scope of `bun-fixture` broadens to cover advanced testing paradigms (Prop
    - Clear, trustworthy Unix-philosophy positioning.
 
 2. **Adopt a Microkernel + Modular Ecosystem Architecture:**
-   - `packages/bun-fixture`: Core DI engine, scoping (`session`, `file`, `test`), auto-discovery, LIFO teardown, parameter matrices.
+   - `packages/bun-fixture`: Core DI engine, scoping (`session`, `file`, `test`), explicit `test.extend()` composition, LIFO teardown, parameter matrices.
    - Companion workspace packages:
      - `@bun-fixture/std` (or built-in): Zero-dependency standard fixtures (`tmpdir`, `env`, `stdio`).
      - `@bun-fixture/fast-check`: Property-Based Testing (`test.prop`) with fixture DI and shrink-safe teardown.
