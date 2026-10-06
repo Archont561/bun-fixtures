@@ -218,4 +218,31 @@ describe("@bun-test-utils/snapshot", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test("serializes nested values deterministically, including bigint and errors", async () => {
+    const { dir, ctx } = scratch("stable nested value");
+    const snapshotPath = join(
+      dir,
+      "__snapshots__",
+      "stable-nested-value.snap.json",
+    );
+
+    try {
+      await snapshotFixture.setup(async (snap) => {
+        snap.setMode("match");
+        snap.match(new Error("boom"), "error");
+        snap.match({ z: [2n, { b: "second", a: "first" }] });
+      }, ctx);
+
+      const stored = JSON.parse(readFileSync(snapshotPath, "utf8"));
+      expect(stored.error).toBe("Error: boom");
+      expect(stored.value).toContain('"z": [');
+      expect(stored.value).toContain('"2n"');
+      expect(stored.value.indexOf('"a"')).toBeLessThan(
+        stored.value.indexOf('"b"'),
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

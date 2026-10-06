@@ -40,6 +40,21 @@ describe("@bun-test-utils/pbt", () => {
     .then("the result is greater than the input", ({ total, n, expect }) => {
       expect(total).toBeGreaterThan(n);
     });
+
+  test.prop(
+    "generated arrays preserve their length after a map operation",
+    {
+      values: fc.array(fc.integer(), { maxLength: 12 }),
+    },
+    async (_ctx, { values }) => {
+      const doubled = values.map((value) => value * 2);
+      expect(doubled).toHaveLength(values.length);
+      expect(doubled.every((value, index) => value === values[index]! * 2)).toBe(
+        true,
+      );
+    },
+    { numRuns: 75, seed: 20261006 },
+  );
 });
 
 // Lifecycle breadcrumbs: prop samples run inside one wrapper test, so the
