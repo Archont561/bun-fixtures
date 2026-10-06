@@ -43,6 +43,13 @@ support are deferred.
 Linux and macOS are supported. Windows support is planned after the first
 release; the current scratch-project harness and BDD presets rely on POSIX paths.
 
+Everything deliberately deferred out of `0.1.0` — database and filesystem-sandbox
+fixtures, worker-scoped fixtures, Windows, the VCR matcher DSL and cassette
+migration tooling — is listed with the condition that would unpark it in the
+[roadmap](https://github.com/Archont561/bun-test-utils#roadmap--deliberately-deferred),
+alongside what ships but is not yet frozen (header redaction, browser, BDD).
+Deferrals are decisions, not oversights.
+
 ## Explicit composition only
 
 There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Use `test.extend()` and import the extended runner from each test file that needs those fixtures.

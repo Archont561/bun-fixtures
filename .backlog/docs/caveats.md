@@ -2,6 +2,10 @@
 
 What `bun-test-utils` deliberately does not do, and where the implementation has known boundaries.
 
+Non-goals below are permanent. Work that is merely *deferred* — parked with a trigger that
+would unpark it — lives in the [roadmap](../../README.md#roadmap--deliberately-deferred)
+and in `task_042`. The difference matters: a non-goal is closed, a deferral is waiting.
+
 ## Non-goals
 
 | Area | Why |

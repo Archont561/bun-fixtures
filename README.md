@@ -76,6 +76,34 @@ Linux and macOS are supported. Windows support is planned after the first releas
 
 The repository is in pre-release publication work. The engine and capability packs are implemented and covered by unit, conformance, Gherkin, and packed-consumer tests. npm publication of `bun-test-utils@0.1.0` is the remaining release milestone.
 
+## Roadmap — deliberately deferred
+
+Parked as decisions rather than omissions, each with the condition that would start the work. Anything promoted off this list gets its own task with full acceptance criteria before any code is written.
+
+**Not implemented — absent from `0.1.0` entirely:**
+
+| Parked | Trigger that unparks it |
+|--------|-------------------------|
+| Database fixture (temporary `bun:sqlite`) | user demand — no speculative design before someone needs it |
+| Public CLI / scratch-project runner fixture | user demand; would productize the internal `e2e/bdd/support/project.ts` harness |
+| Filesystem sandbox beyond `tmpdir` | user demand not already met by the `tmpdir` fixture |
+| Worker / concurrency-scoped fixtures | Bun's test parallelism semantics stabilize — `session` scope currently assumes a single process |
+| Windows support | POSIX `URL.pathname` assumptions removed from the harness and BDD presets, **and** a Windows CI lane exists |
+| VCR matcher DSL and cassette migration tooling | post-release demand establishes the right API; `0.1.x` freezes callback record/replay with exact method-plus-URL matching ([ADR 0018](./.backlog/docs/adr/0018-release-compatibility-contract.md)) |
+| Mutation testing as an internal quality gate | the engine suite needs a stronger signal than line coverage |
+| Fuzzing beyond fast-check | an invariant appears that property testing cannot express |
+| Benchmark fixtures | a performance claim needs defending |
+
+**Present in `0.1.0` but outside the stable contract** — usable, and free to change in a minor release:
+
+| Ships, not yet stable | Trigger that stabilizes it |
+|-----------------------|----------------------------|
+| Header redaction (`cassette.redactHeader(name)`, plus a built-in sensitive-header default) | post-release demand settles the configuration shape; only `record`/`replay` are frozen for `0.1.x` |
+| Browser capability (Playwright fixtures) | the Playwright peer and its CI path prove stable across releases |
+| BDD capability (`test.scenario`) | `@aboviq/bun-test-cucumber` reaches 1.0, **or** the Gherkin integration is vendored |
+
+The non-goals that are *not* coming back at all — implicit fixture discovery, public capability subpaths, shipping a runner — are in [caveats](./.backlog/docs/caveats.md).
+
 ## Development
 
 ```bash

@@ -2199,20 +2199,41 @@ tasks:
   - id: task_042
     title: "Post-release parking lot: fixtures and techniques deferred by design"
     description: "Deliberately deferred work, parked so it is a decision rather than
-      an omission. Fixtures: database fixture (tmp bun:sqlite) once demand shows
-      up; public CLI/scratch-project runner fixture (productize
-      e2e/bdd/support/project.ts); filesystem sandbox beyond tmpdir;
-      worker/concurrency-scoped fixtures once Bun's test parallelism semantics
-      stabilize (session scope currently assumes single-process). Platform:
-      Windows support (replace POSIX URL.pathname usage in harness and presets,
-      add Windows CI lane). Techniques: mutation testing as an internal quality
-      gate for the engine suite; fuzzing beyond fast-check; benchmark fixtures.
-      vcr growth items deferred by the stability-tier task: matcher DSL,
-      redaction, cassette migration tooling. bdd graduation: promote from
-      experimental when @aboviq/bun-test-cucumber reaches 1.0 or the gherkin
-      integration is vendored."
+      an omission. Each item carries the trigger that unparks it; nothing here
+      ships as a supported API in 0.1.0, and anything promoted off the list gets
+      its own task with full acceptance criteria before code is written. NOT
+      IMPLEMENTED AT ALL (verified by grep over packages/*/src): database
+      fixture (tmp bun:sqlite) - trigger: user demand; public
+      CLI/scratch-project runner fixture productizing e2e/bdd/support/project.ts
+      - trigger: user demand; filesystem sandbox beyond tmpdir - trigger: demand
+      not met by the tmpdir fixture; worker/concurrency-scoped fixtures -
+      trigger: Bun test parallelism semantics stabilize, since session scope
+      assumes a single process; Windows support - trigger: POSIX URL.pathname
+      assumptions removed from harness and BDD presets AND a Windows CI lane
+      exists; VCR matcher DSL - trigger: post-release demand settles the API;
+      VCR cassette migration tooling - trigger: same; mutation testing as an
+      engine quality gate - trigger: engine suite needs a stronger signal than
+      line coverage; fuzzing beyond fast-check - trigger: an invariant property
+      testing cannot express; benchmark fixtures - trigger: a performance claim
+      needs defending. SHIPS BUT OUTSIDE THE STABLE CONTRACT (correction found
+      while verifying criterion 2 - the earlier wording wrongly implied these
+      were absent): header redaction IS implemented as
+      cassette.redactHeader(name) plus a built-in SENSITIVE_HEADERS default in
+      packages/vcr/src/cassette.ts, and is usable in 0.1.0 - only its
+      stable/configurable form is deferred, trigger: post-release demand settles
+      the configuration shape; browser capability - trigger: Playwright peer and
+      CI path prove stable; BDD capability - trigger: @aboviq/bun-test-cucumber
+      reaches 1.0 or the integration is vendored. EVIDENCE for 'no parked item
+      ships': the public API gate
+      packages/bun-test-utils/tests/conformance/public-api.test.ts passes (3/3)
+      and pins root exports to exactly describe, expect, test, so no parked
+      fixture is reachable; grep over packages/*/src confirms matcher DSL and
+      migration tooling are absent. VISIBILITY: the list is published as the
+      'Roadmap - deliberately deferred' section of the root README, with a
+      pointer from the published package README (absolute URL, since .backlog/
+      is not in the npm tarball)."
     source_links: []
-    status: ready
+    status: done
     priority: P3
     labels:
       - post-release
@@ -2246,7 +2267,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:51:08.448Z
-    updated_at: 2026-10-06T17:51:08.448Z
+    updated_at: 2026-10-06T20:57:11.949Z
   - id: task_043
     title: Typecheck the e2e/ directories
     description: "Add e2e to each package tsconfig include list so e2e tests and BDD
