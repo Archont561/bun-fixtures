@@ -33,8 +33,7 @@ bun run test:bdd
 ```
 
 The entrypoint also checks that every runtime workspace either has meaningful
-feature coverage or a documented exemption. Package-local `bunfig` and
-`test-plugins.ts` files are not required for Gherkin discovery.
+feature coverage or a documented exemption. Package-local `bunfig` files are not required for Gherkin discovery.
 
 ## Fixtures
 

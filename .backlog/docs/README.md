@@ -52,7 +52,7 @@ packages/
   vcr/               @bun-test-utils/vcr (HTTP record & replay cassette fixtures)
   snapshot/          @bun-test-utils/snapshot (value and file snapshots)
   bdd/               @bun-test-utils/bdd (internal BDD/scenario helpers)
-  config/            @bun-test-utils/config (shared TypeScript configurations)
+  config/            @bun-test-utils/config (shared TypeScript and BDD configuration)
 .backlog/            Backlog project state (tasks, claims, runs)
 .backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)
 .agents/skills/      agent skills (refactor, tdd, skill-creator)

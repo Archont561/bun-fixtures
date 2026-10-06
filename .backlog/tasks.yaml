@@ -221,7 +221,7 @@ tasks:
       - steps drive only files, bun test output and exit codes — no engine
         imports
       - scratch projects removed after each scenario
-      - runs under plain bun test via tests/features.test.ts
+      - runs under plain bun test via packages/config/bdd/features.test.ts
     dependencies:
       - task_001
       - task_002
@@ -1615,10 +1615,10 @@ tasks:
     description: >-
       Add one repository-wide BDD testing entrypoint so every workspace package can own
       features/*.feature coverage without package-local references to
-      packages/bun-test-utils/test-plugins.ts. The runner should discover package feature
+      packages/config/bdd/features.test.ts. The runner should discover package feature
       files and package step definitions from the repository root, enforce that packages
       expected to have behavioural coverage actually have a features/ directory, and keep
-      BDD config in one root-owned place. Also refactor browser/DOM testing fixtures so
+      BDD config in the shared config workspace. Also refactor browser/DOM testing fixtures so
       tests can choose a happy-dom-backed fast path or a real Playwright-backed browser
       path through a coherent fixture API. Add an MSW-like response mocking fixture that
       works with both environments: fetch interception for DOM/server tests and
@@ -1636,7 +1636,7 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - "A root-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package bunfig or test-plugin references."
+      - "A config-owned BDD entrypoint loads packages/*/features/*.feature and package step definitions without per-package Bun config or plugin references."
       - "Every runtime workspace either has meaningful features/*.feature coverage or is explicitly exempted with a documented reason checked by the BDD runner."
       - "Root package scripts and turbo configuration expose a repo-wide BDD gate that can run locally and in CI."
       - "Existing bun-test-utils and core feature suites are migrated to the repo-wide runner without changing public imports."

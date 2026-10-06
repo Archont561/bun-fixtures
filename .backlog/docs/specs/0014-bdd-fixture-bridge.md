@@ -40,8 +40,8 @@ test.scenario("checks a file")
 | R6 | The internal BDD workspace MUST expose `withBDDTesting(coreTest)` so the root wrapper composes BDD behaviour the same way it composes PBT behaviour. |
 | R7 | `test.scenario(...)` MUST throw an actionable missing-peer error until the user installs `@aboviq/bun-test-cucumber`. |
 
-## Historical note
+## Implementation note
 
-An earlier design exposed a Gherkin lifecycle bridge. That helper remains an
-internal workspace detail for repository tests only and is not part of the
-published surface.
+The internal BDD workspace only supplies the `test.scenario(...)` wrapper.
+Repository-wide Gherkin tests use their own test-only step definitions, and no BDD
+helper is part of the published surface.

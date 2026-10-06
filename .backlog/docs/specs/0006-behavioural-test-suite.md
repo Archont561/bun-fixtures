@@ -2,8 +2,8 @@
 
 - **Status:** implemented
 - **Milestone:** M4
-- **Implementation:** `packages/bun-test-utils/{features,tests}/` — `features/*.feature`, `tests/steps/*.steps.ts`, `tests/support/project.ts`, `test-plugins.ts`
-- **Entrypoint:** `packages/bun-test-utils/e2e/features.test.ts` — `bun run test:bdd`
+- **Implementation:** package-owned `features/*.feature` files, the shared step definitions in `packages/bun-test-utils/tests/steps/fixtures.steps.ts`, and their scratch-project harness in `packages/bun-test-utils/tests/support/project.ts`
+- **Entrypoint:** `packages/config/bdd/features.test.ts` — `bun run test:bdd`
 
 ## Problem
 
@@ -23,13 +23,13 @@ The dogfooding suite tests focused engine internals in process. That is fast and
 ## Design
 
 `@aboviq/bun-test-cucumber` compiles each `.feature` into `describe`/`it` via a
-Bun loader plugin, registered in `test-plugins.ts`. Bun's scanner ignores `.feature` files
-([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so
-`e2e/features.test.ts` loads them with `loadFeatures`. The top-level `e2e/` directory is kept
-beside `tests/` to make its assembled-product responsibility distinct from in-process tests.
+Bun loader plugin. Bun's scanner ignores `.feature` files
+([oven-sh/bun#3440](https://github.com/oven-sh/bun/issues/3440)), so the shared
+`packages/config/bdd/features.test.ts` entrypoint registers the plugin and loads each
+package's features with `loadFeatures`.
 
 Scenario state (`{ project, lastRun }`) flows through the typed `withState`
-helper. `tests/support/project.ts` owns the harness: `createProject`,
+helper. `packages/bun-test-utils/tests/support/project.ts` owns the harness: `createProject`,
 `writeProjectFile`, `runTests`, `runCli`, `removeProject`. The Bun binary used
 for subprocesses is `process.execPath`, so the suite tests the same runtime it
 runs on.
