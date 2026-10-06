@@ -1907,10 +1907,13 @@ tasks:
       e2e/bdd harness are unchanged.
 
 
-      NOT PROVEN LOCALLY: the Playwright suite's 8 tests skip here (playwright
-      is an optionalDependency and chromium is not installed), so that file is
-      verified by lint and typecheck only, never executed. It is in its own
-      commit for easy revert if CI disagrees.
+      PLAYWRIGHT SLICE: the 8 Playwright tests skip locally (playwright is an
+      optionalDependency and chromium is not installed here), so that file was
+      committed separately as lint/typecheck-only evidence. CI closed the gap:
+      .github/workflows/ci.yml installs chromium-headless-shell and then runs
+      bun run test:all, and the Test job passed on PR #22 (run 37516863606,
+      52s). The converted Playwright suite is therefore genuinely exercised on
+      real Chromium, not merely compiled.
 
 
       Follow-up recorded as task_045 (base-dir override vs exporting createTest
