@@ -216,6 +216,93 @@ The package ships Bun-targeted ESM and TypeScript declarations built with Bunup.
 workspace implementations are bundled into the public entries; optional integrations remain
 external so you install only the tools you use.
 
+## 🧩 Capability subpaths
+
+All capability packs are included in `bun-test-utils`; their private workspace packages are
+source-organization boundaries, not separate install targets.
+
+### `bun-test-utils/std`
+
+Zero-dependency fixtures for common test isolation:
+
+- `tmpdir` creates a unique scratch directory and provides `path`, `write`, `read`, `exists`, and
+  `remove` helpers before recursively cleaning it up.
+- `env` snapshots `process.env`, supports `set`, `delete`, `get`, and `snapshot`, and restores the
+  original environment during teardown.
+- `stdio` captures stdout and stderr with `stdout()`, `stderr()`, `output()`, and `clear()`.
+
+```ts
+import stdFixtures, { tmpdirFixture } from "bun-test-utils/std";
+```
+
+### `bun-test-utils/pbt`
+
+Property-based testing powered by `fast-check`. `test.prop` combines arbitraries with fixture
+injection; session/file fixtures are shared while test-scoped fixtures are rebuilt and torn down
+for every generated sample and shrink step.
+
+```ts
+import { expect, fc, test } from "bun-test-utils/pbt";
+
+test.prop("reverses twice", [fc.string()], async ({ tmpdir }, value) => {
+  expect(value.split("").reverse().reverse().join("")).toBe(value);
+});
+```
+
+Install `fast-check` if your package manager skipped the optional dependency.
+
+### `bun-test-utils/dom`
+
+In-memory DOM fixtures powered by `happy-dom`: isolated `window` and `document` fixtures plus a
+`page` helper for mounting markup, querying elements, clicking, typing, and inspecting HTML.
+DOM globals are restored during teardown.
+
+```ts
+import domFixtures, { pageFixture } from "bun-test-utils/dom";
+```
+
+Install `happy-dom` if your package manager skipped the optional dependency.
+
+### `bun-test-utils/browser`
+
+Browser integration provides an ephemeral `Bun.serve` test server, its URL, a session-scoped
+Playwright browser, and isolated test-scoped contexts and pages.
+
+```ts
+import browserFixtures, { browserPageFixture } from "bun-test-utils/browser";
+```
+
+Install `playwright` and its browser binaries when using this subpath.
+
+### `bun-test-utils/vcr`
+
+The `cassette` fixture records and replays `fetch` traffic, redacts configured headers, and uses
+conventional `__cassettes__/<test-name>.json` files while retaining explicit `save()` and `load()`
+controls.
+
+```ts
+import vcrFixtures, { cassetteFixture } from "bun-test-utils/vcr";
+```
+
+### `bun-test-utils/snapshot`
+
+The `snapshot` fixture records, matches, or updates named values and files. It supports custom
+serializers, deterministic anonymous snapshot numbering, and CI mode that rejects missing
+snapshots.
+
+```ts
+import snapshotFixtures, { snapshotFixture } from "bun-test-utils/snapshot";
+```
+
+### `bun-test-utils/bdd`
+
+`fixtureSteps` bridges fixture maps into BDD `Before`/`After` hooks, and `openFixtures` exposes the
+same scoped lifecycle for custom integrations without making this package a Gherkin runner.
+
+```ts
+import { fixtureSteps, openFixtures } from "bun-test-utils/bdd";
+```
+
 ## ⚡ Quick start
 
 Declare a fixture in any directory, then ask for it by name:
@@ -277,14 +364,14 @@ Mistakes are reported while tests are collected, not while they run:
 | **Scope-safe** | Lifetime violations are registration errors, not flaky tests |
 | **Fail-early** | Unknown names, cycles and scope mismatches surface during collection |
 | **Non-invasive** | `bun:test` is untouched; opt in per file with an explicit import |
-| **No build step** | Raw TypeScript ships to npm; Bun runs it directly |
+| **Conventional artifact** | Bunup emits Bun-targeted ESM and declarations; private workspace imports never leak to consumers |
 | **Modular** | Fixture packs are ordinary subpath imports contributing plain objects — one install, pick what you use |
 | **Self-tested** | The engine is exercised through its own fixtures, plus a behavioural suite that runs real scratch projects |
 
 ## 🛠️ Development
 
-[Bun](https://bun.sh) is the only toolchain — no compiler, no bundler.
-[Turborepo](https://turbo.build) fans tasks out across the workspace.
+[Bun](https://bun.sh) runs the toolchain, [Bunup](https://bunup.dev) builds each code package,
+and [Turborepo](https://turbo.build) fans tasks out across the workspace.
 
 ```bash
 bun install        # link workspace packages and install Git hooks
@@ -314,7 +401,7 @@ bun run lint       # Biome
 | core unit / dogfooding | `packages/core/tests/` | Engine and CLI internals, in-process, using the engine's own fixtures |
 | capability unit | `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/tests/` | Each internal package, with test filenames mirroring its `src/` modules |
 | cross-cutting conformance | `packages/bun-test-utils/tests/conformance/` | Public subpaths compose through the assembled package without collisions |
-| behavioural and packaging E2E | `packages/bun-test-utils/tests/e2e/` | Scratch projects, published CLI behavior, tarball contents, and consumer quickstarts |
+| behavioural and packaging E2E | `packages/bun-test-utils/e2e/` | Scratch projects, published CLI behavior, tarball contents, and consumer quickstarts; kept beside `tests/` because these exercise the assembled product rather than in-process test units |
 
 Lefthook runs Biome and `typecheck` on commit, commitlint on the message, and the full test
 suite on push — so CI and a local commit can only disagree if the lockfile did.
@@ -355,7 +442,7 @@ of the same tarball.
 
 ```bash
 bun run changeset        # describe the change; commit the generated file
-bun run release:version  # consume changesets: bump the version, write the CHANGELOG
+bun run release:version  # consume changesets and apply version updates
 bun run release:publish  # publish and tag
 ```
 

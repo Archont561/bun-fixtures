@@ -1,7 +1,7 @@
 # bun-test-utils — documentation
 
 Working docs for the package and its ecosystem. User-facing documentation lives in the
-[root README](../../README.md) and individual package READMEs; everything here is for people building `bun-test-utils`.
+[root README](../../README.md), which is synchronized into the one publishable package; everything here is for people building `bun-test-utils`.
 
 | Area | What lives there |
 |------|------------------|

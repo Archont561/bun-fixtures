@@ -15,6 +15,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
+    "readme:sync": "bun scripts/sync-package-readme.ts",
     "dev": "turbo run dev",
     "docs:dev": "bun --filter docs dev",
     "docs:build": "bun --filter docs build",

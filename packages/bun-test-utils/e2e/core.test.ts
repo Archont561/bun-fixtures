@@ -8,7 +8,7 @@ describe("end to end", () => {
     "a fresh project: init → preload → run → teardown",
     async () => {
       const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-e2e-"));
-      const repo = join(import.meta.dir, "..", "..");
+      const repo = join(import.meta.dir, "..");
       mkdirSync(join(dir, "node_modules"), { recursive: true });
       symlinkSync(repo, join(dir, "node_modules", "bun-test-utils"));
       mkdirSync(join(dir, "sub"), { recursive: true });

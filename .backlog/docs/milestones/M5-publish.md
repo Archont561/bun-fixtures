@@ -15,7 +15,7 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 - [x] CI runs lint, typecheck and tests on pushes and pull requests.
 - [x] The pack smoke test verifies the one tarball's built JavaScript/declarations, licences and
       exports, installs it in a scratch project, runs the CLI, and executes the quickstart
-      (`packages/bun-test-utils/tests/e2e/pack.test.ts`).
+      (`packages/bun-test-utils/e2e/pack.test.ts`).
 - [x] The published package declares dual MIT OR Apache-2.0 licensing and includes both texts.
 - [x] Release tooling is configured; private internal workspaces are excluded from publishing.
 - [x] Package metadata and the `0.1.0` changelog are present.

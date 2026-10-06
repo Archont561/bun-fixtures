@@ -3,7 +3,7 @@
 - **Status:** implemented
 - **Milestone:** M3
 - **Implementation:** `packages/bun-fixture/src/cli.ts`
-- **Tests:** `packages/core/tests/cli.test.ts` (focused behavior) and `packages/bun-test-utils/tests/e2e/` (installed behavior)
+- **Tests:** `packages/core/tests/cli.test.ts` (focused behavior) and `packages/bun-test-utils/e2e/` (installed behavior)
 
 ## Problem
 

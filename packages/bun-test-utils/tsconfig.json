@@ -10,6 +10,7 @@
     "src",
     "*/src",
     "tests",
+    "e2e",
     "test-plugins.ts",
     "scripts",
     "bunup.config.ts"

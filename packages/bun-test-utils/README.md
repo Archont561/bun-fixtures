@@ -1,6 +1,36 @@
 # bun-test-utils
 
-**pytest-style scoped, injectable fixtures for `bun test`.**
+<p align="center">
+  <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/releases"><img src="https://img.shields.io/github/v/release/Archont561/bun-test-utils?label=release" alt="Release"></a>
+  <a href="https://archont561.github.io/bun-test-utils/"><img src="https://img.shields.io/badge/docs-starlight-6d28d9" alt="Documentation"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/blob/main/LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="MIT OR Apache-2.0"></a>
+  <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-%E2%89%A51.1-black?logo=bun" alt="Bun >=1.1"></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript" alt="TypeScript strict"></a>
+  <a href="https://github.com/Archont561/bun-test-utils/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome"></a>
+</p>
+
+<p align="center">
+  <strong>pytest-style scoped, injectable fixtures for <code>bun test</code>.</strong><br>
+  Declare what a test depends on; the engine builds it, injects it, and tears it down in order.
+</p>
+
+---
+
+> [!IMPORTANT]
+> **Nothing is published to npm yet.** The engine itself is real and tested: scopes,
+> LIFO teardown, dependency injection, parameterization, directory-scoped discovery
+> and the `init` CLI all work, covered by 211 passing tests across focused internal
+> suites, cross-package conformance checks, Gherkin scratch projects, and an installed-tarball
+> smoke test. What remains is the publication audit, a `v0.1.0` tag, the publish itself, and a
+> post-publish consumer rerun — milestone [M5](.backlog/docs/milestones/M5-publish.md).
+> Until then, use it from a checkout.
+
+`bun test` has no fixture API ([oven-sh/bun#8257](https://github.com/oven-sh/bun/issues/8257)).
+`bun-test-utils` adds one without touching `bun:test`: a test names its dependencies in its
+parameter list, and a preload plugin resolves them from `fixtures.ts` files found by walking
+the directory tree — the same idea as `conftest.py`.
 
 ```ts
 import { test, expect } from "bun-test-utils";
@@ -10,79 +40,56 @@ test("creates a user", async ({ db }) => {
 });
 ```
 
-`db` was never imported, constructed, or reset here. It was declared once, in a
-`fixtures.ts` next to the tests that need it, and the engine built it, injected
-it, and tore it down.
+`db` was never imported, constructed, or reset here.
 
----
+## 🧠 Philosophy and model
 
-## Philosophy
+### Setup is a dependency, not a prologue
 
-**Setup is a dependency, not a prologue.** A test should name what it needs and
-receive it. `beforeEach` chains describe *when* things happen; fixtures describe
-*what a test depends on*, and let the runner work out the order.
+A test should name what it needs and receive it. `beforeEach` chains describe *when* things
+happen; fixtures describe *what a test depends on* and let the runner work out the order.
 
-**Teardown is the second half of setup.** Cleanup written far from the code that
-allocated the resource rots. One function owns both halves, split by the moment
-it hands the value over:
+The design commitments behind that:
+
+- **Teardown is the second half of setup.** One function owns both halves, split by the
+  moment it hands the value over. Cleanup written far from the allocation rots.
+- **Scope is a contract.** `session`, `file` and `test` say how long a value lives and
+  therefore who may share it. A long-lived fixture may not depend on a short-lived one —
+  it would outlive its own dependency.
+- **The directory tree is the configuration.** Fixtures belong to the tests beneath them,
+  and a nearer declaration wins. Moving a test to another folder changes what it can ask for.
+- **Failures belong at registration.** Unknown names, dependency cycles and scope violations
+  surface during collection, with the available fixtures listed — not as a mystery failure
+  on test 47.
+- **No magic, no globals.** `bun:test` is left untouched and `test` is an explicit import,
+  opt-in per file. A file that does not import it behaves exactly as before.
+- **A thin wrapper, deliberately.** If Bun ships a fixture API, this engine should become a
+  compatibility shim and get out of the way.
+
+### The model
+
+A fixture is one object. `await use(value)` suspends until the scope ends, so everything
+after it is teardown:
 
 ```ts
-setup: async (use) => {
-  const server = await startServer();
-  await use(server);   // the test runs here
-  await server.stop(); // …and this is guaranteed to follow
+interface FixtureDef<T = any> {
+  setup: (use: (value: T) => Promise<void>, ctx: FixtureContext) => void | Promise<void>;
+  scope?: "session" | "file" | "test";  // default: "test"
+  params?: T[];                         // multiplies the tests that use it
+  deps?: string[];                      // explicit, when destructuring won't do
 }
 ```
 
-**Scope is a contract.** `session`, `file`, `test` say how long a value lives
-and therefore who may share it. The engine enforces the implication: a
-long-lived fixture may not depend on a short-lived one, because it would
-outlive its own dependency. That is a registration error, not a mystery failure
-on test 47.
-
-**The directory tree is the configuration.** Fixtures declared in a directory
-belong to the tests beneath it, and a nearer declaration wins over a farther
-one. Nothing is registered, imported, or wired by hand — moving a test to
-another folder changes what it can ask for, exactly as `conftest.py` does.
-
-**Failures belong at registration.** Unknown names, dependency cycles, and
-scope violations are detected while tests are being collected, with the
-available fixtures listed in the message — before a single assertion runs.
-
-**No magic, no globals.** `bun:test` is left untouched; `test` is an explicit
-import, opt-in per file. A file that does not import it behaves exactly as it
-did before.
-
-**A thin wrapper, deliberately.** This exists because `bun test` has no fixture
-API ([oven-sh/bun#8257](https://github.com/oven-sh/bun/issues/8257)). If Bun
-ships one, the engine should become a compatibility shim and get out of the
-way.
-
----
-
-## The API
-
-### Setup
-
-```bash
-bun add -d bun-test-utils
-bunx bun-test-utils init     # adds the preload to bunfig.toml, scaffolds fixtures.ts
-```
-
-### Declaring fixtures
-
-Any directory may hold a `fixtures.ts` (or `conftest.ts`). The default export
-maps a name to a definition.
+A representative `fixtures.ts` looks like this:
 
 ```ts
-// fixtures.ts
 export default {
   server: {
     scope: "session",
     setup: async (use) => {
       const s = await startServer();
-      await use(s);
-      await s.stop();
+      await use(s);        // the tests run here
+      await s.stop();      // …and this is guaranteed to follow
     },
   },
 
@@ -100,160 +107,397 @@ export default {
       await use(await db.insert({ name: "ada" }));
     },
   },
-};
+} satisfies FixtureMap;
 ```
-
-```ts
-interface FixtureDef<T = any> {
-  setup: (use: (value: T) => Promise<void>, ctx: FixtureContext) => void | Promise<void>;
-  scope?: "session" | "file" | "test";   // default: "test"
-  params?: T[];                          // multiplies the tests that use it
-  deps?: string[];                       // explicit, when destructuring won't do
-}
-```
-
-`await use(value)` suspends until the scope ends, so everything after it is
-teardown. Not awaiting is allowed — the fixture then has none.
-
-### Scopes
 
 | Scope | Built | Destroyed |
-|-------|-------|-----------|
+| --- | --- | --- |
 | `"session"` | once per `bun test` run | after the run |
 | `"file"` | once per test file | when the file is done |
 | `"test"` | every test (**default**) | immediately after the test |
 
 Teardown is **LIFO** — dependents before their dependencies.
 
-### Using fixtures
+### User-facing API
+
+| Surface | API today | Role |
+| --- | --- | --- |
+| Test | `test(name, fn, opts?)` | Fixture-aware test; finds its own file from the stack. `opts`: `{ fixtures?, timeout?, iterate? }` |
+| Test | `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
+| Test | `expect`, `describe` | Re-exported from `bun:test`, unchanged |
+| Iteration | `opts.iterate` → `ctx.iterate(fn)` | Defer test-scoped fixtures: each `ctx.iterate` call builds them fresh and unwinds them LIFO — the per-sample lifecycle property runners use (see [`@bun-test-utils/pbt`](./packages/pbt)) |
+| CLI | `bunx bun-test-utils init [--dir] [--entry] [--force]` | Append the preload to `bunfig.toml` and scaffold a root `fixtures.ts` |
+| Types | `FixtureDef`, `FixtureMap`, `FixtureContext`, `Scope`, `TestOptions`, `IterateFn` | The public type surface |
+| Engine | `discoverFixtures`, `fixturesFor`, `resolveOrder`, `paramCombos`, `detectFixtures`, `callerFile`, `teardownFile`, `teardownSession` | Internals exported for tooling and for testing fixture trees |
+
+Two environment variables override discovery: `BUN_TEST_UTILS_ROOT` sets the tree root, and
+`BUN_TEST_UTILS_NO_AUTODISCOVER` disables the startup walk entirely.
+
+## 🧭 Architecture
+
+```text
+                        bun test  +  [test].preload
+                                   │
+                                   ▼
+                 discovery — walk the directory tree once
+                 fixtures.ts / conftest.ts, merged root → leaf
+                                   │
+                                   ▼
+                 resolution — dependencies, scopes, params
+                                   │
+          ┌─────────────┬──────────┴──────────┬─────────────┐
+          ▼             ▼                     ▼             ▼
+       session         file                  test      parameterized
+      (per run)     (per file)            (per test)  (cartesian product)
+          └─────────────┴──────────┬──────────┴─────────────┘
+                                   ▼
+                      injected into the test function
+                                   │
+                                   ▼
+                        LIFO teardown, per scope
+```
+
+| Layer | Package | Role |
+| --- | --- | --- |
+| Assembly | [`bun-test-utils`](./packages/bun-test-utils) | Published wrapper, public entrypoints, packaging, and cross-cutting conformance tests |
+| Engine | [`@bun-test-utils/core`](./packages/core) | Discovery, scope cache, DI, parameterization, types, and CLI internals |
+| Fixtures | [`@bun-test-utils/std`](./packages/std) | Zero-dependency `tmpdir`, `env`, `stdio` with automatic restoration |
+| Fixtures | [`@bun-test-utils/pbt`](./packages/pbt) | `test.prop` — property-based testing over injected fixtures |
+| Fixtures | [`@bun-test-utils/dom`](./packages/dom) | `window`, `document`, `page` via happy-dom, globals restored on teardown |
+| Fixtures | [`@bun-test-utils/browser`](./packages/browser) | Ephemeral `Bun.serve` test server and Playwright `browser`/`context`/`page` |
+| Fixtures | [`@bun-test-utils/vcr`](./packages/vcr) | Cassette fixture that records and replays `fetch` deterministically |
+| Fixtures | [`@bun-test-utils/snapshot`](./packages/snapshot) | Value and file snapshot fixture with pluggable serializers and CI-strict mode |
+| Internal | [`@bun-test-utils/config`](./packages/config) | Shared `base`/`lib`/`app` TypeScript configurations (private) |
+
+Every row except "Assembly" is an internal, unpublished (`private: true`) workspace package —
+none of them ship to npm on their own. They're bundled into the single published
+`bun-test-utils` package and reached as subpath imports (`bun-test-utils/std`,
+`bun-test-utils/vcr`, ...), each contributing a plain `FixtureMap` object — there is no
+plugin registry or lifecycle to learn.
+
+## 📦 Installation
+
+> [!NOTE]
+> Not on npm yet. The commands below are what installation *will* be; today, clone the
+> repository and run `bun install`.
+
+```bash
+bun add -d bun-test-utils
+bunx bun-test-utils init
+```
+
+`init` appends `./node_modules/bun-test-utils/dist/plugin.js` to `[test].preload` in
+`bunfig.toml` — idempotently, preserving the rest of the file — and scaffolds a root
+`fixtures.ts`. Every fixture pack ships inside this one package as a subpath import —
+no extra installs for the pack itself, import the one you want:
 
 ```ts
-import { test, expect, describe } from "bun-test-utils";
+import { tmpdirFixture } from "bun-test-utils/std";
+import { prop } from "bun-test-utils/pbt";
+import { windowFixture } from "bun-test-utils/dom";
+import { browserFixture } from "bun-test-utils/browser";
+import { cassetteFixture } from "bun-test-utils/vcr";
+import { snapshotFixture } from "bun-test-utils/snapshot";
+```
 
-test("the user can log in", async ({ user, server }) => {
-  expect(await server.login(user)).toBe(true);
+A few subpaths wrap a heavy third-party library that only installs as an
+`optionalDependency` — add it yourself if `bun install` skipped it on your platform:
+
+```bash
+bun add -d playwright   # only for bun-test-utils/browser
+bun add -d happy-dom    # only for bun-test-utils/dom
+bun add -d fast-check   # only for bun-test-utils/pbt
+```
+
+Importing a subpath without its optional dependency installed throws a clear error naming
+the missing package and the install command — it never fails silently.
+
+The package ships Bun-targeted ESM and TypeScript declarations built with Bunup. Private
+workspace implementations are bundled into the public entries; optional integrations remain
+external so you install only the tools you use.
+
+## 🧩 Capability subpaths
+
+All capability packs are included in `bun-test-utils`; their private workspace packages are
+source-organization boundaries, not separate install targets.
+
+### `bun-test-utils/std`
+
+Zero-dependency fixtures for common test isolation:
+
+- `tmpdir` creates a unique scratch directory and provides `path`, `write`, `read`, `exists`, and
+  `remove` helpers before recursively cleaning it up.
+- `env` snapshots `process.env`, supports `set`, `delete`, `get`, and `snapshot`, and restores the
+  original environment during teardown.
+- `stdio` captures stdout and stderr with `stdout()`, `stderr()`, `output()`, and `clear()`.
+
+```ts
+import stdFixtures, { tmpdirFixture } from "bun-test-utils/std";
+```
+
+### `bun-test-utils/pbt`
+
+Property-based testing powered by `fast-check`. `test.prop` combines arbitraries with fixture
+injection; session/file fixtures are shared while test-scoped fixtures are rebuilt and torn down
+for every generated sample and shrink step.
+
+```ts
+import { expect, fc, test } from "bun-test-utils/pbt";
+
+test.prop("reverses twice", [fc.string()], async ({ tmpdir }, value) => {
+  expect(value.split("").reverse().reverse().join("")).toBe(value);
 });
 ```
 
-Fixtures are read from the destructured parameter. When that is not possible —
-a wrapper, a minifier, no destructuring — name them:
+Install `fast-check` if your package manager skipped the optional dependency.
+
+### `bun-test-utils/dom`
+
+In-memory DOM fixtures powered by `happy-dom`: isolated `window` and `document` fixtures plus a
+`page` helper for mounting markup, querying elements, clicking, typing, and inspecting HTML.
+DOM globals are restored during teardown.
 
 ```ts
-test("explicit", async (ctx) => { ctx.db; }, { fixtures: ["db"], timeout: 10_000 });
+import domFixtures, { pageFixture } from "bun-test-utils/dom";
 ```
 
-Besides fixture values, the context carries `testFile` and `testName`.
+Install `happy-dom` if your package manager skipped the optional dependency.
 
-### Directory hierarchy
+### `bun-test-utils/browser`
 
-```
-fixtures.ts                 # server, db, user
-tests/
-  fixtures.ts               # overrides db, adds apiClient
-  api/
-    fixtures.ts             # adds fakeStripe
-    checkout.test.ts        # sees: server, user, db(tests), apiClient, fakeStripe
+Browser integration provides an ephemeral `Bun.serve` test server, its URL, a session-scoped
+Playwright browser, and isolated test-scoped contexts and pages.
+
+```ts
+import browserFixtures, { browserPageFixture } from "bun-test-utils/browser";
 ```
 
-Root → leaf, last wins. Siblings never see each other.
+Install `playwright` and its browser binaries when using this subpath.
 
-### Parameterization
+### `bun-test-utils/vcr`
+
+The `cassette` fixture records and replays `fetch` traffic, redacts configured headers, and uses
+conventional `__cassettes__/<test-name>.json` files while retaining explicit `save()` and `load()`
+controls.
+
+```ts
+import vcrFixtures, { cassetteFixture } from "bun-test-utils/vcr";
+```
+
+### `bun-test-utils/snapshot`
+
+The `snapshot` fixture records, matches, or updates named values and files. It supports custom
+serializers, deterministic anonymous snapshot numbering, and CI mode that rejects missing
+snapshots.
+
+```ts
+import snapshotFixtures, { snapshotFixture } from "bun-test-utils/snapshot";
+```
+
+### `bun-test-utils/bdd`
+
+`fixtureSteps` bridges fixture maps into BDD `Before`/`After` hooks, and `openFixtures` exposes the
+same scoped lifecycle for custom integrations without making this package a Gherkin runner.
+
+```ts
+import { fixtureSteps, openFixtures } from "bun-test-utils/bdd";
+```
+
+## ⚡ Quick start
+
+Declare a fixture in any directory, then ask for it by name:
+
+```ts
+// tests/fixtures.ts
+export default {
+  tmpDir: {
+    setup: async (use) => {
+      const dir = `${process.env.TMPDIR ?? "/tmp"}/t-${crypto.randomUUID().slice(0, 8)}`;
+      await Bun.$`mkdir -p ${dir}`.quiet();
+      await use(dir);
+      await Bun.$`rm -rf ${dir}`.quiet();
+    },
+  },
+};
+```
+
+```ts
+// tests/writes.test.ts
+import { test, expect } from "bun-test-utils";
+
+test("writes into a scratch directory", async ({ tmpDir }) => {
+  await Bun.write(`${tmpDir}/note.txt`, "hello");
+  expect(await Bun.file(`${tmpDir}/note.txt`).text()).toBe("hello");
+});
+```
+
+Parameterized fixtures expand into one `bun test` case per combination — the cartesian
+product, including any parameterized fixture reached transitively:
 
 ```ts
 mode:   { params: ["fast", "slow"], setup: async (use, { param }) => use(param) },
 region: { params: ["eu", "us"],     setup: async (use, { param }) => use(param) },
 ```
 
-```ts
-test("round trips", async ({ mode, region }) => { /* … */ });
-```
-
-One `bun test` case per combination — the cartesian product, including any
-parameterized fixture reached transitively:
-
-```
+```text
 ✓ round trips [mode=fast, region=eu]
 ✓ round trips [mode=fast, region=us]
 ✓ round trips [mode=slow, region=eu]
 ✓ round trips [mode=slow, region=us]
 ```
 
-### Errors you get instead of surprises
+Mistakes are reported while tests are collected, not while they run:
 
-```
+```text
 [bun-test-utils] unknown fixture "reel" requested in tests/api.test.ts. Available: db, server, user
 [bun-test-utils] scope mismatch: "cache" (session) cannot depend on "tmp" (test) — a fixture
               may only use equally or longer-lived fixtures.
 [bun-test-utils] circular fixture dependency: a → b → a (tests/api.test.ts)
-[bun-test-utils] fixture "forgetful" finished without calling use(value)
 ```
 
-### Exports
+## ✨ Design goals
 
-```ts
-import { test, expect, describe, createTest } from "bun-test-utils";
-import type { FixtureDef, FixtureMap, FixtureContext, Scope, TestOptions } from "bun-test-utils";
-```
+| Goal | What it means |
+| --- | --- |
+| **Declarative** | A test names its dependencies; the engine resolves order, caching and cleanup |
+| **Directory-scoped** | Discovery follows the filesystem — nearest `fixtures.ts` wins, siblings stay invisible |
+| **Scope-safe** | Lifetime violations are registration errors, not flaky tests |
+| **Fail-early** | Unknown names, cycles and scope mismatches surface during collection |
+| **Non-invasive** | `bun:test` is untouched; opt in per file with an explicit import |
+| **Conventional artifact** | Bunup emits Bun-targeted ESM and declarations; private workspace imports never leak to consumers |
+| **Modular** | Fixture packs are ordinary subpath imports contributing plain objects — one install, pick what you use |
+| **Self-tested** | The engine is exercised through its own fixtures, plus a behavioural suite that runs real scratch projects |
 
-| Export | Purpose |
-|--------|---------|
-| `test(name, fn, opts?)` | fixture-aware test; finds its own file from the stack |
-| `createTest(file?)` | `{ test, describe, expect }` bound to an explicit file — pass `import.meta.path` |
-| `expect`, `describe` | re-exported from `bun:test`, unchanged |
+## 🛠️ Development
 
-The published entrypoint is a thin wrapper over the private `@bun-test-utils/core` workspace;
-that distinction is repository-internal and does not change consumer imports. Engine internals
-remain exported for tooling and for testing fixture trees:
-`discoverFixtures`, `registerFixtures`, `fixturesFor`, `resolveOrder`,
-`paramCombos`, `destructuredKeys`, `teardownFile`, `teardownSession`.
-
-### CLI
+[Bun](https://bun.sh) runs the toolchain, [Bunup](https://bunup.dev) builds each code package,
+and [Turborepo](https://turbo.build) fans tasks out across the workspace.
 
 ```bash
-bunx bun-test-utils init [--dir <path>] [--entry <preload path>] [--force]
+bun install        # link workspace packages and install Git hooks
+bun test           # unit, behavioural and plugin suites
+bun run typecheck  # tsc --noEmit in every package
+bun run lint       # Biome
 ```
 
-Appends the preload entry to `[test].preload` in `bunfig.toml` (idempotent,
-preserves the rest of the file) and scaffolds a root `fixtures.ts`.
+> [!TIP]
+> A [Dev Container](.devcontainer/devcontainer.json) is checked in — **Reopen in Container**
+> in VS Code, or `devcontainer up --workspace-folder .`, and it installs Bun at the version
+> `packageManager` pins, runs `bun install --frozen-lockfile`, and forwards the docs site
+> (`4321`) and the Backlog board (`7878`).
 
-### Environment
+| Task | Purpose |
+| --- | --- |
+| `test` / `test:unit` / `test:bdd` | All suites · dogfooding suite only · Gherkin suite only |
+| `typecheck` | `tsc --noEmit` across every workspace package |
+| `lint` / `lint:fix` / `format` | Biome check, autofix, and format |
+| `docs:dev` / `docs:build` / `docs:preview` | Serve, build or preview the Astro + Starlight site |
+| `changeset` | Describe a change for the next release |
+| `release:version` / `release:publish` | Consume changesets · publish to npm |
+| `status` / `board` | Backlog project summary · kanban board |
 
-| Variable | Effect |
-|----------|--------|
-| `BUN_TEST_UTILS_ROOT` | discovery root (default: `process.cwd()`) |
-| `BUN_TEST_UTILS_NO_AUTODISCOVER` | skip the startup walk; call `discoverFixtures()` yourself |
+| Suite | Where | What it proves |
+| --- | --- | --- |
+| core unit / dogfooding | `packages/core/tests/` | Engine and CLI internals, in-process, using the engine's own fixtures |
+| capability unit | `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/tests/` | Each internal package, with test filenames mirroring its `src/` modules |
+| cross-cutting conformance | `packages/bun-test-utils/tests/conformance/` | Public subpaths compose through the assembled package without collisions |
+| behavioural and packaging E2E | `packages/bun-test-utils/e2e/` | Scratch projects, published CLI behavior, tarball contents, and consumer quickstarts; kept beside `tests/` because these exercise the assembled product rather than in-process test units |
 
----
+Lefthook runs Biome and `typecheck` on commit, commitlint on the message, and the full test
+suite on push — so CI and a local commit can only disagree if the lockfile did.
 
-## Ecosystem subpaths
+## 🗂️ Repository map
 
-Every fixture pack below ships inside this one package — no extra install for the pack
-itself, just import the subpath. A few wrap a heavy third-party library declared as an
-`optionalDependency`; if `bun install` skipped it (e.g. unsupported platform) or you're in a
-minimal install, add it yourself — importing the subpath without it throws a clear error
-naming the missing package and the install command, it never fails silently.
+| Path | Purpose |
+| --- | --- |
+| `packages/bun-test-utils/` | Thin public wrapper, cross-cutting tests, and the single publishable npm package |
+| `packages/core/` | Internal fixture engine, types, and CLI implementation (`@bun-test-utils/core`) |
+| `packages/{std,pbt,dom,browser,vcr,snapshot,bdd}/` | Internal capability packages — bundled into `bun-test-utils` as flat subpath exports (`bun-test-utils/std`, `bun-test-utils/pbt`, ...), never published on their own |
+| `packages/config/` | Shared `base`/`lib`/`app` tsconfigs (private) |
+| `apps/docs/` | Astro + Starlight documentation site |
+| `.backlog/` | Backlog project state — tasks, claims, runs |
+| `.backlog/docs/` | Specs, milestones, ADRs, workflow and caveats |
+| `.changeset/` | Pending unreleased changes |
+| `.agents/skills/` | Agent skills (`session`, `tdd`, `refactor`, `grill-me`, `skill-creator`) |
+| `.devcontainer/` | Dev Container — Node base image, Bun pinned from `packageManager` |
+| `bunfig.toml` | `[test].preload` for running `bun test` from the root |
+| `turbo.json` · `biome.json` · `lefthook.yml` | Pipeline, lint/format and Git hooks |
 
-| Subpath | Wraps | Needs |
-|---------|-------|-------|
-| [`bun-test-utils/std`](https://github.com/Archont561/bun-test-utils/tree/main/packages/std#readme) | — (zero-dependency) | nothing extra |
-| [`bun-test-utils/pbt`](https://github.com/Archont561/bun-test-utils/tree/main/packages/pbt#readme) | [`fast-check`](https://fast-check.dev) | `bun add -d fast-check` |
-| [`bun-test-utils/dom`](https://github.com/Archont561/bun-test-utils/tree/main/packages/dom#readme) | [`happy-dom`](https://github.com/capricorn86/happy-dom) | `bun add -d happy-dom` |
-| [`bun-test-utils/browser`](https://github.com/Archont561/bun-test-utils/tree/main/packages/browser#readme) | [`playwright`](https://playwright.dev) | `bun add -d playwright` |
-| [`bun-test-utils/vcr`](https://github.com/Archont561/bun-test-utils/tree/main/packages/vcr#readme) | — (zero-dependency) | nothing extra |
-| [`bun-test-utils/snapshot`](https://github.com/Archont561/bun-test-utils/tree/main/packages/snapshot#readme) | — (zero-dependency) | nothing extra |
+The root `package.json` is `private: true`; `packages/bun-test-utils/` is the only package that
+ever publishes to npm — everything under `packages/{core,std,pbt,dom,browser,vcr,snapshot,bdd}/`
+is an internal workspace package bundled into it. Every internal workspace maps its local
+`@/*` alias to `src/*`.
 
-Each linked README covers that subpath's fixtures in full; this table is the index. These
-are internal, unpublished (`private: true`) workspace packages — they exist for source
-organization inside this monorepo, not as separate npm installs.
+> [!TIP]
+> There is deliberately **no package-root `fixtures.ts`** ([ADR 0008](.backlog/docs/adr/0008-no-root-fixtures-file.md)).
+> Root-level discovery is covered instead by the end-to-end test and the behavioural suite,
+> which both scaffold throwaway projects in `tmpdir`.
 
----
+## 🚢 Releases
 
-Limits, trade-offs, and what this deliberately does not do:
-[.backlog/docs/caveats.md](../../.backlog/docs/caveats.md). Design rationale:
-[.backlog/docs/adr](../../.backlog/docs/adr). Contributing: [the workspace
-root](../../README.md).
+Releases are driven by [Changesets](https://changesets.dev). `bun-test-utils` is the only
+package that ever versions or publishes — everything under its internal `{std,pbt,dom,
+browser,vcr,snapshot}/` workspace packages is `private: true` and moves in lockstep as part
+of the same tarball.
 
-## License
+```bash
+bun run changeset        # describe the change; commit the generated file
+bun run release:version  # consume changesets and apply version updates
+bun run release:publish  # publish and tag
+```
 
-Dual-licensed under either of [Apache-2.0](./LICENSE-APACHE) or
-[MIT](./LICENSE-MIT) at your option — SPDX `MIT OR Apache-2.0`.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) and are
+enforced by commitlint through Lefthook.
+
+> [!WARNING]
+> The package is still at an unpublished `0.1.0`. Changesets bumps *from* the current
+> version, so a changeset landed now would make the first release `0.1.1` and skip `0.1.0`.
+> Cut `0.1.0` first — see [`.changeset/README.md`](.changeset/README.md).
+
+## 🗺️ Roadmap
+
+| Milestone | Outcome | Status |
+| ---: | --- | --- |
+| M1 | Fixture engine — scopes, teardown, DI, parameterization | ✅ Done |
+| M2 | Preload discovery and path-based merge | ✅ Done |
+| M3 | CLI `init` — `bunfig.toml` edit and scaffold | ✅ Done |
+| M4 | Types, docs and dogfooding tests | ✅ Done |
+| M5 | Publish to npm | 🚧 In progress |
+
+| Ecosystem subpath | Outcome | Status |
+| --- | --- | --- |
+| `@bun-test-utils/config` (internal, build-time only) | Shared monorepo TypeScript configurations | ✅ Done |
+| `apps/docs` | Astro Starlight site on GitHub Pages | ✅ Done |
+| `bun-test-utils/std` | `tmpdir`, `env`, `stdio` | 🚧 Not yet dogfooded by the core suite |
+| `bun-test-utils/pbt` | `test.prop` property-based testing | 🚧 No per-iteration fixture lifecycle |
+| `bun-test-utils/dom` · `browser` | happy-dom and Playwright fixtures | 🚧 Playwright path untested |
+| `bun-test-utils/vcr` | HTTP record and replay | 🚧 No `__cassettes__/` convention |
+| `bun-test-utils/snapshot` | Value and file snapshot testing | ✅ Done |
+
+Task state is authoritative in Backlog — `bunx backlog status`. Every 🚧 task records its
+precise remaining gap in its description (`bunx backlog task show <id>`). The narrative plan
+lives in [`.backlog/docs/milestones/`](.backlog/docs/milestones) and the rationale in
+[`.backlog/docs/adr/`](.backlog/docs/adr).
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Run the same gates CI runs before opening a PR:
+
+```bash
+bun run lint && bun run typecheck && bun test
+```
+
+The working loop is claim → red → green → refactor → verify, described in
+[`.backlog/docs/workflow.md`](.backlog/docs/workflow.md). A public API change needs the
+README **and** the matching spec in [`.backlog/docs/specs/`](.backlog/docs/specs); a design
+change needs a new ADR. Keep changes focused and put tests beside the source they cover.
+
+## 📄 License
+
+Licensed under either of the following, at your option:
+
+- [Apache License, Version 2.0](LICENSE-APACHE)
+- [MIT License](LICENSE-MIT)
+
+Unless you state otherwise, any contribution you intentionally submit for inclusion in this
+work shall be dual-licensed as above, with no additional terms or conditions.

@@ -30,7 +30,7 @@ import { join } from "node:path";
 import { describe, expect, test } from "bun-test-utils";
 
 const BUN = process.execPath;
-const PACKAGE_DIR = join(import.meta.dir, "..", "..");
+const PACKAGE_DIR = join(import.meta.dir, "..");
 
 /** The one publishable package — everything else it bundles is `private: true`. */
 const PACKAGE_NAME = "bun-test-utils";

@@ -17,7 +17,7 @@
 | R6 | `engines.bun` MUST state the minimum supported Bun. |
 | R7 | Publishing MUST be blocked unless frozen install, build, lint, typecheck, tests, docs build, and packed-consumer checks pass. |
 | R8 | A smoke test MUST install the packed tarball into a scratch project, run the CLI, and execute the quickstart. |
-| R9 | Releases MUST be tagged `v<version>` with a CHANGELOG entry. |
+| R9 | Releases MUST be tagged `v<version>` and described by the consumed Changeset and GitHub release notes; per-package CHANGELOG files MUST NOT be generated. |
 | R10 | Publishing MUST happen from `packages/bun-test-utils`; every sibling workspace and the repository root are private and MUST never be published. |
 | R11 | The published package MUST declare `"license": "MIT OR Apache-2.0"` and ship both licence texts. |
 | R12 | Private workspace implementations MUST be bundled into the public entries; optional public peers (`playwright`, `happy-dom`, and `fast-check`) MUST remain external. |
@@ -43,7 +43,7 @@ package. Runtime builds likewise bundle private workspaces while preserving thir
 
 ## Verification
 
-`packages/bun-test-utils/tests/e2e/pack.test.ts` runs `bun pm pack`, verifies the built allowlist
+`packages/bun-test-utils/e2e/pack.test.ts` runs `bun pm pack`, verifies the built allowlist
 and export map, rejects source/private-workspace leakage, installs the tarball into a scratch
 project, runs `bun-test-utils init`, and executes a quickstart using the core API and a capability
 subpath.
