@@ -326,6 +326,38 @@ test("quickstart: bundled subpath resolves with no extra install", () => {
         expect(output).toContain("2 pass");
         expect(output).toContain("0 fail");
 
+        // Each published entrypoint currently bundles its own copy of the
+        // error classes. Verify the consumer-visible contract explicitly:
+        // errors retain their stable name/code across entrypoints, while
+        // cross-entrypoint instanceof is not promised. This prevents a
+        // future bundler change from silently changing the documented
+        // identity decision.
+        writeFileSync(
+          join(project, "error-identity.test.ts"),
+          `import { CassetteError as RootCassetteError } from "bun-test-utils";
+import { CassetteError as VcrCassetteError } from "bun-test-utils/vcr";
+import { expect, test } from "bun:test";
+
+test("published entrypoints expose compatible but independent error classes", () => {
+  const rootError = new RootCassetteError("CASSETTE_MISMATCH", "root");
+  const vcrError = new VcrCassetteError("CASSETTE_MISMATCH", "vcr");
+
+  expect(rootError).toBeInstanceOf(RootCassetteError);
+  expect(vcrError).toBeInstanceOf(VcrCassetteError);
+  expect(rootError).not.toBeInstanceOf(VcrCassetteError);
+  expect(vcrError).not.toBeInstanceOf(RootCassetteError);
+  expect(rootError.name).toBe(vcrError.name);
+  expect(rootError.code).toBe(vcrError.code);
+});
+`,
+        );
+        const identityOutput = run(
+          [BUN, "test", "error-identity.test.ts"],
+          project,
+        );
+        expect(identityOutput).toContain("1 pass");
+        expect(identityOutput).toContain("0 fail");
+
         // Sanity: the packed manifest is what a registry consumer sees.
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
       } finally {
