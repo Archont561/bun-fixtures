@@ -2528,3 +2528,57 @@ tasks:
       push_comments: false
     created_at: 2026-10-06T21:32:11.486Z
     updated_at: 2026-10-06T21:32:19.547Z
+  - id: task_047
+    title: Remove parameterized fixtures in favour of test.prop
+    description: "Per ADR 0020 (session 2026-10-07): the engine's parameterized
+      fixtures are removed before 0.1.0 — FixtureDef.params, ctx.param,
+      paramCombos, and the [key=value] case-name suffixes. The stable engine
+      keeps scopes, DI, LIFO teardown, and the iterate protocol; variation over
+      values is test.prop with fc.constantFrom. Amends ADR 0018 (stable engine
+      no longer includes parameterization), spec 0001 (drops R8–R10), spec 0010
+      (R5 loses the fixture-parameter clause), spec 0015 (property cell no
+      longer names paramCombos), and the docs guide (rewritten as the test.prop
+      recipe). No changeset: still pre-0.1.0. LANDED: ADR 0020 + amended 0018 +
+      specs/mirror tables (77ee4f4); engine and suite removal with a red→green
+      removal pin — a params-carrying fixture now runs exactly once under its
+      given name with no ctx.param (613307a; plugin.test.ts 'parameterization
+      removal (ADR 0020)'); docs guide/nav/card/READMEs rewritten around
+      test.prop (8ae16b4). Evidence: root suite 354 → 326 passing (the delta is
+      removed param coverage: 8 core unit, 1 pbt property, 21 BDD step-tests, +2
+      removal pins); bun run test:all 28/28 Turbo tasks green; paramCombos
+      absent from src and from built dist."
+    source_links: []
+    status: done
+    priority: P1
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - a params key on a fixture definition no longer expands the test and
+        ctx.param is not injected
+      - paramCombos is no longer exported from packages/core and no source
+        references it
+      - core unit, e2e/bdd (feature deleted), pbt engine property, and
+        conformance suites pass without the removed surface
+      - docs guide, astro nav label, index card, package and root READMEs, and
+        specs 0001/0010/0015 describe test.prop, not params
+      - bun test and bun run typecheck green from the repository root
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-07T21:12:22.077Z
+    updated_at: 2026-10-07T21:16:20.705Z
