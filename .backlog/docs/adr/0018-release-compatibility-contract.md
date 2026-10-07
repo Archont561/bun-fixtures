@@ -1,7 +1,12 @@
 # 0018 — Release compatibility contract
 
-- **Status:** accepted
+- **Status:** accepted, amended by 0020
 - **Date:** 2026-10-06
+
+> Amended by [ADR-0020](./0020-remove-parameterized-fixtures.md): the stable
+> fixture engine no longer includes parameterized fixtures. `params`,
+> `ctx.param`, `paramCombos`, and the `[key=value]` case-name suffixes were
+> removed before the first release; everything else in this contract stands.
 
 ## Context
 

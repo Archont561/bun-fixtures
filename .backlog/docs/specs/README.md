@@ -6,7 +6,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 
 | # | Spec | Status | Implementation |
 |---|------|--------|----------------|
-| [0001](./0001-fixture-engine.md) | Fixture engine — scopes, teardown, DI, params | implemented | `packages/core/src/plugin.ts` |
+| [0001](./0001-fixture-engine.md) | Fixture engine — scopes, teardown, DI (`params` removed by ADR 0020) | implemented | `packages/core/src/plugin.ts` |
 | [0002](./0002-discovery-and-merge.md) | Legacy preload discovery + directory merge | superseded | removed; use `test.extend()` |
 | [0003](./0003-cli-init.md) | CLI `init` | implemented | `packages/core/src/cli.ts` |
 | [0004](./0004-public-api-and-types.md) | Public API + types | implemented | `packages/core/src/plugin.ts`, `packages/core/src/types.ts` |

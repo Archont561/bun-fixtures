@@ -2,11 +2,16 @@
 
 - **Status:** implemented
 - **Implementation:** `packages/pbt/` (`test.prop` built on the engine's `opts.iterate` protocol in `packages/core/src/plugin.ts`)
-- **Tests:** `packages/pbt/tests/index.test.ts`, `packages/pbt/tests/engine.test.ts` (cartesian `paramCombos` and topological `resolveOrder`), engine protocol in `packages/core/tests/plugin.test.ts` ("iteration protocol (opts.iterate)"). Capability-pack invariants live next to their fixtures: `packages/{vcr,snapshot,std}/tests/invariants.test.ts`.
+- **Tests:** `packages/pbt/tests/index.test.ts`, `packages/pbt/tests/engine.test.ts` (topological `resolveOrder`), engine protocol in `packages/core/tests/plugin.test.ts` ("iteration protocol (opts.iterate)"). Capability-pack invariants live next to their fixtures: `packages/{vcr,snapshot,std}/tests/invariants.test.ts`.
 
 ## Problem
 
-Parameterized fixtures in `bun-fixture` today only support static arrays expanding to Cartesian products at registration time. Complex algorithms, serializers, and state machines require property-based testing with dynamic arbitrary generators and automatic counterexample shrinking.
+Test suites need to vary one test over many values. Static, hand-listed values
+(the engine's former `params`, removed by
+[ADR 0020](../adr/0020-remove-parameterized-fixtures.md)) only cover the cases
+the author thought of. Complex algorithms, serializers, and state machines
+require property-based testing with dynamic arbitrary generators and automatic
+counterexample shrinking.
 
 ## Requirements
 
@@ -16,7 +21,7 @@ Parameterized fixtures in `bun-fixture` today only support static arrays expandi
 | R2 | Session and file-scoped fixtures MUST remain cached and shared across the iteration run of `fc.assert`. |
 | R3 | Test/iteration fixtures MUST reset or clean up between sample executions. |
 | R4 | When `fast-check` fails and performs shrinking, LIFO fixture teardown MUST execute cleanly on each shrink step. |
-| R5 | Failure output MUST report the minimal shrunk counterexample alongside active fixture parameters. |
+| R5 | Failure output MUST report the minimal shrunk counterexample alongside the replay seed. |
 
 ## Design
 
