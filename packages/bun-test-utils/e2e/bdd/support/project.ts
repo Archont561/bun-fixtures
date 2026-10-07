@@ -1,5 +1,7 @@
 /**
- * Scratch-project harness for the behavioural (Gherkin) suite.
+ * Scratch-project harness for the behavioural (Gherkin) suite, also used by
+ * `e2e/style-matrix.test.ts` for the cells whose fixtures follow the
+ * file-based conventions (`__snapshots__/`, `__cassettes__/`).
  *
  * Every scenario gets a real, throwaway Bun project with `bun-test-utils`
  * installed, so the behaviour under test is what an actual user sees:
