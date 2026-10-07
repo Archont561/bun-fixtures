@@ -1,7 +1,7 @@
 # bun-test-utils
 
-The single published package. Its only named runtime exports are `describe`,
-`test`, and `expect`. Type-only definition aliases add no runtime exports.
+The single published package. Its named runtime exports are `describe`, `expect`,
+`propTestSchema`, and `test`. Type-only definition aliases add no runtime values.
 
 ```bash
 bun add -d bun-test-utils
@@ -24,11 +24,14 @@ typecheck without the peer; using property APIs still requires the runtime peer.
 ## Public API shape
 
 There are no public capability subpaths. Built-in capabilities are fixtures on
-the root `test` context, and advanced runners hang off `test.*`:
+the root `test` context, and the test runners hang off `test.*`. `propTestSchema`
+is the single root helper: it contextually types a schema factory and returns
+that factory unchanged.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
+- `propTestSchema(...)` to define reusable fast-check records or factories without importing the `FastCheckApi` type in each schema module.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
 
@@ -165,21 +168,21 @@ test.scenario("chains every fluent phase")
 
 ## Shared property schemas
 
-Schema factories are plain functions, explicitly imported from shared modules. Use `FastCheckApi` to type the factory argument; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. Schemas compose with ordinary object spread—there is no registry or runtime schema helper.
+Schema factories are ordinary functions, explicitly imported from shared modules. Wrap a factory in the root `propTestSchema` helper to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the schema unchanged, and schemas compose with ordinary object spread.
 
 ```ts
 // schemas.ts
-import type { FastCheckApi } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils";
 
-export const baseSchema = (fc: FastCheckApi) => ({
+export const baseSchema = propTestSchema((fc) => ({
   name: fc.string(),
   age: fc.nat(),
-});
+}));
 
-export const adminSchema = (fc: FastCheckApi) => ({
+export const adminSchema = propTestSchema((fc) => ({
   ...baseSchema(fc),
   canManageUsers: fc.boolean(),
-});
+}));
 ```
 
 ```ts

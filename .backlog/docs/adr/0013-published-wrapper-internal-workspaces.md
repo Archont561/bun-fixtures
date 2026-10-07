@@ -1,6 +1,6 @@
 # 0013 — Published wrapper over internal workspaces
 
-- **Status:** revised
+- **Status:** revised, amended by [0021](./0021-prop-test-schema-root-wrapper.md)
 - **Supersedes:** [0011](./0011-brand-identity-and-modular-ecosystem.md)
 
 ## Context
@@ -11,13 +11,18 @@ The repository publishes one npm package, `bun-test-utils`, while maintaining di
 
 `packages/bun-test-utils` is the public assembly wrapper. It owns the npm manifest, root entrypoint, CLI adapter, licences, README, conformance tests, behavioural scratch projects, installed CLI tests, tarball audit, and consumer quickstarts.
 
-The fixture engine, type definitions, CLI internals, and capability implementations live in private sibling workspaces under `packages/`. Bunup bundles the internal workspaces into the root `dist/plugin.js` entrypoint. The published package exports only `.` and `./package.json`; users import only:
+The fixture engine, type definitions, CLI internals, and capability implementations live in private sibling workspaces under `packages/`. Bunup bundles the internal workspaces into the root `dist/plugin.js` entrypoint. The published package exports only `.` and `./package.json`; users originally
+imported the runner values from the root:
 
 ```ts
 import { describe, expect, test } from "bun-test-utils";
 ```
 
-Property tests, fluent scenarios, and built-in fixtures are available from `test.*` and the test context. Mocking belongs in fixtures composed with `test.extend()`.
+ADR 0021 later adds exactly one top-level runtime helper, `propTestSchema`,
+without changing the package export map or allowing capability subpaths.
+Property tests, fluent scenarios, and built-in fixtures are available from
+`test.*` and the test context. Mocking belongs in fixtures composed with
+`test.extend()`.
 
 Every internal package uses parallel `src/` and `tests/` directories. A test file mirrors the source module it primarily verifies; cross-capability behavior is covered in the wrapper conformance and packed-consumer suites.
 

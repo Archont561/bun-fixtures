@@ -11,7 +11,7 @@
 | # | Requirement |
 |---|-------------|
 | R1 | `import { test, expect, describe } from "bun-test-utils"` MUST work with no global monkey-patching. |
-| R2 | The published root package MUST NOT export implementation helpers, type-helper values, capability subpaths, or default objects. |
+| R2 | The published root package MUST NOT export general implementation helpers, capability subpaths, or default objects; the single explicit helper exception is `propTestSchema`, the typed identity wrapper for reusable PBT schemas. |
 | R3 | The root `test` MUST expose built-in fixture context for std, DOM, browser, VCR, and snapshot capabilities. |
 | R4 | Property and BDD-style APIs MUST live on `test.*`: `test.prop`, `test.scenario`, and `test.scenario.prop`. |
 | R5 | `test.extend(fixtures)` MUST remain the only public composition hook for user fixtures and mocks. |
@@ -21,26 +21,29 @@
 | R9 | The root fixture context MUST use one flat namespace containing exactly `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`, `cassette`, and `snapshot`. |
 | R10 | Fixture composition MUST be last-definition-wins: a consumer `test.extend()` definition overrides a built-in key, and a later extension overrides an earlier one. Dependencies MUST resolve the winning definition by key. |
 | R11 | The exact human-readable templates for unknown fixtures, circular dependencies, a fixture finishing without `use(value)`, and a fetch blocked by `networkGuard` MUST remain contractual; other diagnostic wording MAY change while machine-readable codes and meaning remain compatible. |
+| R12 | `propTestSchema` MUST accept an arbitrary record or fast-check factory, contextually type the factory API, preserve generated-value inference, and return the supplied definition unchanged. |
 
 ## Design
 
-The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The wrapper assembles internal fixture maps once and exports a single user-facing API.
+The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The wrapper assembles internal fixture maps once and exports the root runner (`describe`, `expect`, and `test`) plus the single explicitly sanctioned helper `propTestSchema`.
 
 `use` is typed `(value: T) => Promise<void>` rather than `=> void`: a `void` return makes `await use(v)` meaningless and teardown impossible. Awaiting remains optional.
 
 Stack-trace detection compares frames against both `import.meta.path` and its `realpathSync`, because a linked package reports a different path in the stack than in `import.meta`.
 
-### Reusable type-only definitions (task_048)
+### Reusable schemas and scenario steps (task_048)
 
-The selected design is **types-only plus convention**. Property schemas and scenario steps remain plain functions in consumer-owned modules, shared through explicit imports. A consumer may compose a schema with normal TypeScript object spread and may compose a step sequence with a consumer-owned function that accepts and returns a `GivenChain`.
+The task initially selected **types-only plus convention**. Shared scenario steps remain plain functions in consumer-owned modules, explicitly imported and optionally composed by a consumer-owned function that accepts and returns a `GivenChain`. The root declaration exposes type-only helpers for schemas (`FastCheckApi`, `ArbitraryInput`, `GeneratedValues`) and steps (`GivenChain`, `ScenarioContext`, `GivenStep`, `WhenStep`, `ThenStep`). The step types do not change fixture autodetection, scenario reporting, or runtime behavior.
 
-The root declaration exposes type-only helpers for this pattern: `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues` for property schemas, plus `GivenChain`, `ScenarioContext`, `GivenStep`, `WhenStep`, and `ThenStep` for scenario callbacks. These are erased at runtime: the root runtime exports remain exactly `describe`, `expect`, and `test`; no `test.*` members, capability subpaths, runtime combinators, or global registries are added. The existing `Object.keys` conformance gate is unchanged.
+**Sequencing deviation (task_048):** The initial types-only direction was selected before implementation, but this spec note was written after source/test edits had begun. The task criterion requiring a spec/ADR note before code was therefore not met in repository chronology. This is recorded rather than represented as compliant; the task remains `in_progress` until the user explicitly waives or reframes that requirement.
 
-This choice keeps definitions explicit and lets existing fixture detection resolve imported step callbacks. The types do not add a fixture-discovery mechanism or change the scenario runner's reporting behavior.
+### Revised schema helper decision (ADR 0021)
 
-**Sequencing deviation (task_048):** The types-only direction was selected before implementation, but this spec note was written after source/test edits had begun. The task criterion requiring a spec/ADR note before code was therefore not met in repository chronology. This is recorded rather than represented as compliant; the task remains `in_progress` until the user explicitly waives or reframes that requirement.
+The user later authorized one top-level runtime helper: `propTestSchema`. It is a typed identity wrapper for either a schema record or a factory. The factory's `fc` parameter is contextually typed as `FastCheckApi`, and the wrapper preserves the exact arbitrary record type for inference at `test.prop` and `test.scenario.prop` call sites. This lets shared schema modules use the helper without importing `FastCheckApi` in each file; ordinary object spread remains the composition convention.
 
-The root declaration now references `fast-check` types for `FastCheckApi` and arbitrary inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` must install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking the missing optional peer declaration. This tradeoff preserves the actual fast-check builder and generated-value types without adding runtime exports.
+The root runtime exports are now exactly `describe`, `expect`, `propTestSchema`, and `test`. Type-only aliases remain erased. No `test.schema` member, registry, global lookup, capability subpath, or other runtime helper is added. The `Object.keys` conformance gate is updated to pin this four-value surface. ADR 0021 records the revised decision and amends ADRs 0012 and 0013 only as to the additional named root value.
+
+The root declaration still references `fast-check` types for `FastCheckApi` and arbitrary inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` must install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking the missing optional peer declaration. `propTestSchema` itself does not load fast-check at runtime.
 
 ### Fixture-key collisions
 
@@ -69,7 +72,7 @@ The contractual network-guard template is also requirement R10 in
 
 ## Out of scope
 
-Public `test.each`, `test.skip/only/todo` fixture variants, custom matchers, and public capability helper imports.
+Public `test.each`, `test.skip/only/todo` fixture variants, custom matchers, capability subpaths, and root helpers other than `propTestSchema`.
 
 ## Verification
 
@@ -80,3 +83,4 @@ Public `test.each`, `test.skip/only/todo` fixture variants, custom matchers, and
 | R8 | `bun run typecheck` in CI |
 | R9-R10 | wrapper collision conformance in `packages/bun-test-utils/tests/conformance/capabilities.test.ts` |
 | R11 | exact contract tests in `packages/core/tests/error-messages.test.ts` and `packages/std/tests/network-guard.test.ts` |
+| R12 | `packages/bun-test-utils/tests/conformance/public-api.test.ts` and `shared-definitions.test.ts` verify the named export, identity semantics, contextual factory type, and inferred values |

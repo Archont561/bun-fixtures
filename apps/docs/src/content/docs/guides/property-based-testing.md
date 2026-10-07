@@ -46,22 +46,23 @@ test.prop(
 
 A schema is an ordinary record or factory. Export it from a shared module and
 import it explicitly wherever a property needs it; there is no registry or
-runtime schema helper. Annotate a shared factory with `FastCheckApi` when you
-want its fast-check methods typed outside a `test.prop` call:
+schema-processing machinery. Wrap shared factories with the top-level
+`propTestSchema` identity helper to get contextual fast-check typing without
+importing `FastCheckApi` in each schema file:
 
 ```ts
 // schemas.ts
-import type { FastCheckApi } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils";
 
-export const userSchema = (fc: FastCheckApi) => ({
+export const userSchema = propTestSchema((fc) => ({
   name: fc.string(),
   age: fc.nat(),
-});
+}));
 
-export const adminUserSchema = (fc: FastCheckApi) => ({
+export const adminUserSchema = propTestSchema((fc) => ({
   ...userSchema(fc),
   permissions: fc.array(fc.constantFrom("read", "write")),
-});
+}));
 ```
 
 The derived schema reuses the base factory with ordinary object spread. Every

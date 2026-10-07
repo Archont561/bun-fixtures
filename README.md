@@ -32,6 +32,18 @@ bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
 
+Use the root `propTestSchema` identity wrapper for reusable property schemas. It
+contextually types the fast-check API parameter and returns the schema unchanged:
+
+```ts
+import { propTestSchema } from "bun-test-utils";
+
+export const userSchema = propTestSchema((fc) => ({
+  name: fc.string(),
+  age: fc.nat(),
+}));
+```
+
 ## Quick start
 
 ```ts

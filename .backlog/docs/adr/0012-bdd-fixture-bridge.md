@@ -1,11 +1,13 @@
 # 0012 — BDD-style scenarios through the root `test` API
 
-- **Status:** revised
+- **Status:** accepted, amended by [0021](./0021-prop-test-schema-root-wrapper.md)
 
 ## Context
 
-The package now exposes only `describe`, `test`, and `expect` to end users. A
-separate BDD subpath would violate that public-surface rule and make fixture
+At the time of this decision, the package exposed only `describe`, `test`, and
+`expect` to end users. ADR 0021 later amended that root surface only to add the
+`propTestSchema` identity wrapper; no BDD or capability subpaths were added. A
+separate BDD subpath would violate the public-surface rule and make fixture
 availability depend on helper imports outside the test context.
 
 ## Decision

@@ -8,11 +8,26 @@ description: Public TypeScript API reference for bun-test-utils.
 
 ## Public exports
 
-The published package exposes only:
+The published root package exposes these named runtime values and type-only helpers:
 
 ```ts
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, propTestSchema, test } from "bun-test-utils";
+import type {
+  ArbitraryInput,
+  FastCheckApi,
+  GeneratedValues,
+  GivenChain,
+  GivenStep,
+  ScenarioContext,
+  ThenStep,
+  WhenStep,
+} from "bun-test-utils";
 ```
+
+`propTestSchema` is an identity wrapper for an arbitrary record or factory. It
+contextually types a factory's `fc` parameter and preserves its generated types
+for `test.prop` and `test.scenario.prop`; see the
+[property-testing guide](/bun-test-utils/guides/property-based-testing/).
 
 Capability packs are internal. Do not import `bun-test-utils/std`,
 `bun-test-utils/pbt`, `bun-test-utils/vcr`, or other subpaths; their fixtures and

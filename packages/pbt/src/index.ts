@@ -111,6 +111,21 @@ export type GeneratedValues<T extends ArbitraryRecord> = {
   [K in keyof T]: T[K] extends Arbitrary<infer U> ? U : never;
 };
 
+/**
+ * Type a reusable fast-check schema without changing its runtime value.
+ * Factories receive contextual typing for `fc`, and their generated types are
+ * preserved when passed to `test.prop` or `test.scenario.prop`.
+ */
+export function propTestSchema<T extends ArbitraryRecord>(
+  schema: (fc: FastCheckApi) => T,
+): (fc: FastCheckApi) => T;
+export function propTestSchema<T extends ArbitraryRecord>(schema: T): T;
+export function propTestSchema(
+  schema: ArbitraryInput<ArbitraryRecord>,
+): ArbitraryInput<ArbitraryRecord> {
+  return schema;
+}
+
 export type PropTestFn<T extends ArbitraryRecord = ArbitraryRecord> = (
   fixtures: FixtureContext,
   values: GeneratedValues<T>,

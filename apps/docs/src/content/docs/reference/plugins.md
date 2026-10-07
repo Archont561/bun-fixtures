@@ -8,7 +8,7 @@ description: Root test-context fixtures for standard, DOM, browser, VCR, snapsho
 
 ## Public surface
 
-`bun-test-utils` exposes only `describe`, `test`, and `expect`. There are no public capability subpaths. Request built-in capabilities by destructuring fixtures from the root `test` context.
+`bun-test-utils` exposes the named runtime values `describe`, `expect`, `propTestSchema`, and `test`. `propTestSchema` is an identity wrapper for reusable fast-check records and factories. There are no public capability subpaths; request built-in capabilities by destructuring fixtures from the root `test` context.
 
 ```ts
 import { expect, test } from "bun-test-utils";
