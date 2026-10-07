@@ -55,8 +55,6 @@ export interface FixtureContext {
   testFile: string;
   /** Name of the currently running test (undefined while resolving session fixtures eagerly). */
   testName?: string;
-  /** Current parameter value, when the fixture being set up declares `params`. */
-  param?: any;
   /** Scope the fixture being set up is cached in. */
   scope?: Scope;
   /**
@@ -88,8 +86,6 @@ export interface FixtureDef<T = any> {
   setup: (use: UseFn<T>, ctx: FixtureContext) => void | Promise<void>;
   /** Defaults to `"test"`. */
   scope?: Scope;
-  /** Parameterizes the fixture: every requesting test is expanded once per param. */
-  params?: T[];
   /**
    * Explicit dependency list. Optional: dependencies are auto-detected from a
    * destructured second parameter, e.g. `setup: async (use, { db }) => ...`.

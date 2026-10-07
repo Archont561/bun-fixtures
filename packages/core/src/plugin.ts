@@ -272,27 +272,6 @@ export function resolveOrder(
   return order;
 }
 
-/** Cartesian product of every parameterized fixture in `order`. */
-export function paramCombos(
-  order: string[],
-  map: FixtureMap,
-): Array<Record<string, number>> {
-  const parameterized = order.filter(
-    (n) => Array.isArray(map[n]!.params) && map[n]!.params!.length > 0,
-  );
-  let combos: Array<Record<string, number>> = [{}];
-  for (const name of parameterized) {
-    const next: Array<Record<string, number>> = [];
-    for (const combo of combos) {
-      for (let i = 0; i < map[name]!.params!.length; i++) {
-        next.push({ ...combo, [name]: i });
-      }
-    }
-    combos = next;
-  }
-  return combos;
-}
-
 /* -------------------------------------------------------------------------- */
 /* Instantiation                                                              */
 /* -------------------------------------------------------------------------- */
@@ -328,7 +307,6 @@ async function build(
   name: string,
   def: FixtureDef,
   ctx: FixtureContext,
-  paramIndex: number | undefined,
 ): Promise<Instance> {
   let release!: () => void;
   const released = new Promise<void>((r) => (release = r));
@@ -352,7 +330,6 @@ async function build(
 
   const fixtureCtx: FixtureContext = Object.assign(Object.create(null), ctx, {
     scope: scopeOf(def),
-    param: paramIndex === undefined ? undefined : def.params![paramIndex],
   });
 
   let finished = false;
@@ -396,18 +373,16 @@ async function instantiate(
   map: FixtureMap,
   ctx: FixtureContext,
   file: string,
-  combo: Record<string, number>,
   testStack: Array<() => Promise<void>>,
 ): Promise<any> {
   const def = map[name]!;
   const scope = scopeOf(def);
-  const paramIndex = name in combo ? combo[name] : undefined;
-  const key = `${mapId(map)}:${name}#${defId(def)}${paramIndex === undefined ? "" : `[${paramIndex}]`}`;
+  const key = `${mapId(map)}:${name}#${defId(def)}`;
 
   if (scope === "session") {
     const hit = state.session.get(key);
     if (hit) return hit.value;
-    const inst = await build(name, def, ctx, paramIndex);
+    const inst = await build(name, def, ctx);
     state.session.set(key, inst);
     state.sessionStack.push(inst.teardown);
     hookProcessExit();
@@ -418,13 +393,13 @@ async function instantiate(
     const fs = fileState(file);
     const hit = fs.cache.get(key);
     if (hit) return hit.value;
-    const inst = await build(name, def, ctx, paramIndex);
+    const inst = await build(name, def, ctx);
     fs.cache.set(key, inst);
     fs.stack.push(inst.teardown);
     return inst.value;
   }
 
-  const inst = await build(name, def, ctx, paramIndex);
+  const inst = await build(name, def, ctx);
   testStack.push(inst.teardown);
   return inst.value;
 }
@@ -443,7 +418,7 @@ export async function openFixtures(
     scope: "test" as const,
   }) as FixtureContext;
   for (const name of order) {
-    fixtures[name] = await instantiate(name, map, fixtures, file, {}, stack);
+    fixtures[name] = await instantiate(name, map, fixtures, file, stack);
   }
   return { fixtures, close: () => unwind(stack) };
 }
@@ -524,95 +499,64 @@ function hookProcessExit() {
 /* Public API                                                                 */
 /* -------------------------------------------------------------------------- */
 
-function label(
-  name: string,
-  combo: Record<string, number>,
-  map: FixtureMap,
-): string {
-  const keys = Object.keys(combo);
-  if (keys.length === 0) return name;
-  const parts = keys.map((k) => `${k}=${format(map[k]!.params![combo[k]!])}`);
-  return `${name} [${parts.join(", ")}]`;
-}
-
-function format(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === null || typeof value !== "object") return String(value);
-  try {
-    return JSON.stringify(value) ?? String(value);
-  } catch {
-    return String(value);
-  }
-}
-
 function makeTest(file: string, map: FixtureMap): TestFn {
   const abs = resolve(file);
   return (name, fn, opts?: TestOptions) => {
     const requested = opts?.fixtures ?? detectFixtures(fn, 0);
     const order = resolveOrder(requested, map, abs);
-    const combos = paramCombos(order, map);
+    const testName = name;
 
-    for (const combo of combos) {
-      const testName = label(name, combo, map);
-      const body = async () => {
-        await enterFile(abs);
-        const testStack: Array<() => Promise<void>> = [];
-        const ctx: FixtureContext = { testFile: abs, testName };
+    const body = async () => {
+      await enterFile(abs);
+      const testStack: Array<() => Promise<void>> = [];
+      const ctx: FixtureContext = { testFile: abs, testName };
 
-        const buildAll = async (
-          target: FixtureContext,
-          stack: Array<() => Promise<void>>,
-          names: string[],
-        ) => {
-          for (const fixture of names) {
-            target[fixture] = await instantiate(
-              fixture,
-              map,
-              target,
-              abs,
-              combo,
-              stack,
-            );
-          }
-        };
-
-        try {
-          if (opts?.iterate) {
-            // Defer test-scope fixtures to ctx.iterate: the wrapper context
-            // holds only session/file values, and each iterate() call builds
-            // a fresh set of test-scope fixtures with LIFO unwind — the
-            // per-sample lifecycle property runners need.
-            ctx.iterate = (async <T>(
-              fn2: (iterCtx: FixtureContext) => T | Promise<T>,
-            ): Promise<T> => {
-              const iterStack: Array<() => Promise<void>> = [];
-              const iterCtx: FixtureContext = {
-                testFile: abs,
-                testName,
-              };
-              try {
-                await buildAll(iterCtx, iterStack, order);
-                return await fn2(iterCtx);
-              } finally {
-                await unwind(iterStack);
-              }
-            }) satisfies IterateFn;
-            await buildAll(
-              ctx,
-              testStack,
-              order.filter((n) => scopeOf(map[n]!) !== "test"),
-            );
-          } else {
-            await buildAll(ctx, testStack, order);
-          }
-          await fn(ctx);
-        } finally {
-          await unwind(testStack);
+      const buildAll = async (
+        target: FixtureContext,
+        stack: Array<() => Promise<void>>,
+        names: string[],
+      ) => {
+        for (const fixture of names) {
+          target[fixture] = await instantiate(fixture, map, target, abs, stack);
         }
       };
-      if (opts?.timeout === undefined) bunTest(testName, body);
-      else bunTest(testName, body, opts.timeout);
-    }
+
+      try {
+        if (opts?.iterate) {
+          // Defer test-scope fixtures to ctx.iterate: the wrapper context
+          // holds only session/file values, and each iterate() call builds
+          // a fresh set of test-scope fixtures with LIFO unwind — the
+          // per-sample lifecycle property runners need.
+          ctx.iterate = (async <T>(
+            fn2: (iterCtx: FixtureContext) => T | Promise<T>,
+          ): Promise<T> => {
+            const iterStack: Array<() => Promise<void>> = [];
+            const iterCtx: FixtureContext = {
+              testFile: abs,
+              testName,
+            };
+            try {
+              await buildAll(iterCtx, iterStack, order);
+              return await fn2(iterCtx);
+            } finally {
+              await unwind(iterStack);
+            }
+          }) satisfies IterateFn;
+          await buildAll(
+            ctx,
+            testStack,
+            order.filter((n) => scopeOf(map[n]!) !== "test"),
+          );
+        } else {
+          await buildAll(ctx, testStack, order);
+        }
+        await fn(ctx);
+      } finally {
+        await unwind(testStack);
+      }
+    };
+    if (opts?.timeout === undefined) bunTest(testName, body);
+    else bunTest(testName, body, opts.timeout);
   };
 }
 

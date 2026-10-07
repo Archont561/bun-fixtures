@@ -62,22 +62,6 @@ export default {
     },
   },
 
-  /** Parameterized: every requesting test runs once per param. */
-  mode: {
-    params: ["fast", "slow"],
-    setup: async (use, ctx) => {
-      await use(ctx.param);
-    },
-  },
-
-  /** Parameterized too — combined, they produce a cartesian product. */
-  region: {
-    params: ["eu", "us"],
-    setup: async (use, ctx) => {
-      await use(ctx.param);
-    },
-  },
-
   /** A fixture with no teardown (never awaits `use`). */
   answer: {
     scope: "session",
