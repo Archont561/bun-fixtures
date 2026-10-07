@@ -2582,3 +2582,125 @@ tasks:
       push_comments: false
     created_at: 2026-10-07T21:12:22.077Z
     updated_at: 2026-10-07T21:16:20.705Z
+  - id: task_048
+    title: "Reusable definition libraries: composable fast-check schemas and shared
+      scenario steps"
+    description: >-
+      Make definitions first-class reusable across files for the two expressive
+      APIs. Both halves are additive; both already work at runtime today, so the
+      deliverable is typing, composition ergonomics, documentation, and tests —
+      not new machinery.
+
+
+      MEASURED INVENTORY (2026-10-07, after ADR 0020 removed params):
+
+      PBT SCHEMAS — a schema today is an inline record or factory passed to
+      test.prop: ArbitraryInput<T> = T | ((fc: FastCheckApi) => T), with
+      FastCheckApi = Record<string, any> (packages/pbt/src/index.ts:95-108).
+      Nothing binds a schema to a file or test, so exporting the factory from a
+      shared module already works at runtime — nothing tests or documents it.
+      The friction is typing: because `fc` is `any`, generated values widen to
+      `unknown` at the call site —
+      packages/bun-test-utils/tests/conformance/style-matrix.test.ts needs
+      `segments as string[]` and `value as string` casts (lines 38-40, 79-80).
+      test.scenario.prop types its strategies as Record<string, unknown> |
+      ((tools: any) => Record<string, unknown>)
+      (packages/core/src/types.ts:161-166) — no typing at all. Spec 0004 R8
+      forbids `any` leaking into public signatures, so this is
+      contract-relevant, and spec 0010 R1 is the home requirement.
+
+      BDD STEPS — a step today is a plain callback on the fluent chain; fixtures
+      are auto-detected per step (steps.flatMap((step) =>
+      detectFixtures(step.fn, 0)) in scenarioFactory,
+      packages/core/src/plugin.ts:618-690), so a step defined in another module
+      already gets its fixtures resolved without the scenario listing them.
+      Missing: exported step types (ScenarioContext exists; a Given/When/Then
+      step alias does not), so a shared step is hand-typed against a context
+      slice and nothing checks it composes with the chain that uses it. No way
+      to reuse a sequence of steps (an "authenticated admin" prefix) without
+      repeating the calls. Step names never reach the test name or failure
+      output — makeTest is called with the scenario title only
+      (plugin.ts:646-676) — so reuse has no reporting story. The scenarios guide
+      (apps/docs/src/content/docs/guides/scenarios-and-fluent-api.md) documents
+      inline steps only. Repo-internal Gherkin steps are already shared
+      repo-wide by glob discovery (spec 0015, ADR 0017) — that is NOT the gap,
+      and parsing/running .feature files stays a permanent non-goal
+      (caveats.md).
+
+
+      SHARED DESIGN QUESTION — where does a definition live? Decide and record
+      before code, because the options freeze different contracts:
+
+      (a) TYPES-ONLY + convention: schemas and steps stay plain functions; the
+      deliverable is exported types, type-level composition, docs, tests. Zero
+      change to the pinned public surface — the conformance gate pins root
+      runtime exports to exactly describe/expect/test, and type-only exports are
+      invisible to Object.keys.
+
+      (b) MEMBERS ON test.* (e.g. test.schema / test.steps): additive, but
+      amends spec 0004 R4 and freezes more surface under ADR 0018.
+
+      (c) NEW ROOT EXPORTS: breaks spec 0004 R2, the public-api conformance
+      gate, and ADR 0012 — needs a superseding ADR.
+
+      RECOMMENDATION: (a). Both features already work at runtime; what is
+      missing is types, composition ergonomics at the type level, and
+      documentation. Revisit (b) only if a runtime helper earns its keep (e.g. a
+      step-sequence combinator that needs to inspect steps).
+
+
+      TIMING — additive either way. Landing before task_005 tag makes it part of
+      0.1.0 and must be reflected in spec 0004/ADR 0018 wording; landing after
+      makes it a 0.2.0 minor with the repository's first changeset. Default:
+      after 0.1.0, so the release does not grow a new surface at the last
+      minute. BDD is experimental (ADR 0018), so its half may ride a minor
+      regardless.
+
+
+      NON-GOALS — Gherkin parsing/running for consumers; implicit fixture
+      discovery; a string-keyed schema/step registry with global lookup
+      (definitions stay explicit imports, matching the explicit-composition
+      culture of ADR 0005/0008).
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - a schema defined once in a shared module is reused by property tests in
+        two different files, and the generated values are inferred at the call
+        site with no casts under bun run typecheck
+      - "schemas compose: a derived schema reuses a base one (spread/merge or
+        pick/omit) and is exercised by a property test; test.scenario.prop
+        strategies receive the same typed treatment"
+      - a scenario step defined in a shared module is reused by two scenarios
+        and its fixtures resolve without either scenario listing them
+      - shared steps are typed from exported step types, and a reused sequence
+        of steps has a documented pattern covered by a test
+      - "documentation: property-based-testing and scenarios guides gain
+        sharing/composition sections, and package READMEs follow; the public-api
+        conformance gate is unchanged unless the recorded design decision says
+        otherwise"
+      - the definition-surface decision (types-only vs test.* member vs root
+        export) is recorded in a spec note or ADR before code; bun test and bun
+        run typecheck green from the repository root
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-07T21:21:00.895Z
+    updated_at: 2026-10-07T21:21:00.895Z
