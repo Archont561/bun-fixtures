@@ -15,7 +15,45 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests.
+The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Its type declarations are referenced by the public root declaration; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
+
+## Shared schemas
+
+Schema factories are plain functions that can live in shared modules and be imported by any property-test file. `FastCheckApi` types the factory argument; `ArbitraryInput<T>` and `GeneratedValues<T>` are available as type-only root exports when consumers need to name the input or generated shape.
+
+```ts
+// schemas.ts
+import type { FastCheckApi } from "bun-test-utils";
+
+export const userSchema = (fc: FastCheckApi) => ({
+  name: fc.string(),
+  age: fc.nat(),
+});
+
+export const adminSchema = (fc: FastCheckApi) => ({
+  ...userSchema(fc),
+  permissions: fc.array(fc.constantFrom("read", "write")),
+});
+```
+
+```ts
+// admin.test.ts
+import { expect, test } from "bun-test-utils";
+import { adminSchema } from "./schemas";
+
+test.prop("generates typed admin records", adminSchema, async (_fixtures, {
+  name,
+  age,
+  permissions,
+}) => {
+  const typedName: string = name;
+  const typedAge: number = age;
+  const typedPermissions: ("read" | "write")[] = permissions;
+  expect(typedName.length + typedAge + typedPermissions.length).toBeGreaterThan(0);
+});
+```
+
+Use explicit imports and ordinary object spread for composition. No schema registry or runtime helper is part of the API. `test.scenario.prop` accepts the same factory type and preserves the generated value types through the scenario chain.
 
 The property API is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, including the per-iteration fixture lifecycle: a test-scoped fixture is rebuilt and torn down around every generated sample and every shrink step, while session- and file-scoped fixtures are shared across them.
 

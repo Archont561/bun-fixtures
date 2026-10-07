@@ -1,7 +1,7 @@
 # bun-test-utils
 
-The single published package. It exposes only three named exports to end users:
-`describe`, `test`, and `expect`.
+The single published package. Its only named runtime exports are `describe`,
+`test`, and `expect`. Type-only definition aliases add no runtime exports.
 
 ```bash
 bun add -d bun-test-utils
@@ -14,6 +14,12 @@ Optional test-style peers are installed only if you use those styles:
 bun add -d fast-check # test.prop() / test.scenario.prop()
 bun add -d @aboviq/bun-test-cucumber # test.scenario()
 ```
+
+`fast-check` is optional at runtime. Its declarations are referenced by the
+published root `.d.ts` to preserve typed property schemas, so TypeScript
+consumers using `skipLibCheck: false` must install `fast-check` even if they
+only use non-property root APIs. With `skipLibCheck: true`, ordinary root imports
+typecheck without the peer; using property APIs still requires the runtime peer.
 
 ## Public API shape
 
@@ -156,6 +162,46 @@ test.scenario("chains every fluent phase")
     expect(result).toBe(3);
   });
 ```
+
+## Shared property schemas
+
+Schema factories are plain functions, explicitly imported from shared modules. Use `FastCheckApi` to type the factory argument; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. Schemas compose with ordinary object spread—there is no registry or runtime schema helper.
+
+```ts
+// schemas.ts
+import type { FastCheckApi } from "bun-test-utils";
+
+export const baseSchema = (fc: FastCheckApi) => ({
+  name: fc.string(),
+  age: fc.nat(),
+});
+
+export const adminSchema = (fc: FastCheckApi) => ({
+  ...baseSchema(fc),
+  canManageUsers: fc.boolean(),
+});
+```
+
+```ts
+// admin.test.ts
+import { expect, test } from "bun-test-utils";
+import { adminSchema } from "./schemas";
+
+test.prop("generates typed admins", adminSchema, async (_fixtures, {
+  name,
+  age,
+  canManageUsers,
+}) => {
+  const typedName: string = name;
+  const typedAge: number = age;
+  const canManage: boolean = canManageUsers;
+  expect(typedName.length + typedAge + Number(canManage)).toBeGreaterThan(0);
+});
+```
+
+## Shared scenario steps
+
+`GivenStep`, `WhenStep`, and `ThenStep` are type-only aliases for shared callbacks. Import a consumer-owned sequence function into as many scenario files as needed. Imported step fixtures are auto-detected just like inline step fixtures; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
 
 ## Error compatibility
 

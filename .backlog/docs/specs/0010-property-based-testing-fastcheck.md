@@ -22,6 +22,7 @@ counterexample shrinking.
 | R3 | Test/iteration fixtures MUST reset or clean up between sample executions. |
 | R4 | When `fast-check` fails and performs shrinking, LIFO fixture teardown MUST execute cleanly on each shrink step. |
 | R5 | Failure output MUST report the minimal shrunk counterexample alongside the replay seed. |
+| R6 | `test.prop` and `test.scenario.prop` MUST accept reusable schema records or factories with typed fast-check APIs and infer generated values at the callback site; schemas MUST compose through ordinary TypeScript operations. |
 
 ## Design
 
@@ -40,10 +41,15 @@ test.prop(
 );
 ```
 
+### Reusable schemas (task_048)
+
+A schema remains an ordinary object or factory that consumers can export from a shared module and explicitly import from any property test. `FastCheckApi` is the fast-check API type; `ArbitraryInput<T>` describes a record or factory, and `GeneratedValues<T>` maps each fast-check arbitrary to its generated value type. Both `test.prop` and `test.scenario.prop` use the same typing, so consumers need no casts at generated-value call sites. Base schemas compose with normal object spread; no registry or runtime schema helper is introduced. The public type-only decision and its runtime-export boundary are recorded in [spec 0004](./0004-public-api-and-types.md#reusable-type-only-definitions-task_048).
+
 ## Verification
 
 - Tests verifying shrinking reproducer output.
 - Verification that fixture teardown hooks execute once per sample or test as configured.
+- Shared conformance schemas are imported from two test files, derived through object spread, and typechecked without generated-value casts; the same schema type flows through `test.scenario.prop`.
 
 ## Notes on the shipped design
 
@@ -55,3 +61,11 @@ test-scoped fixtures and unwinds them LIFO even when the predicate throws.
 Requested fixtures are auto-detected from the test function's destructured
 first parameter; the top-level `prop` resolves the calling test file per call
 via the exported `callerFile`, exactly like the engine's top-level `test`.
+
+The optional runtime peer's declarations are present in the bundled root type
+surface. An isolated strict consumer (`skipLibCheck: false`) without
+`fast-check` fails while resolving the PBT declaration imports, even when its
+source uses only `test` and `expect`; setting `skipLibCheck: true` lets ordinary
+root imports typecheck. This is documented in the shipped README. Keep the
+peer optional for runtime installs; changing the declaration dependency model
+would require a separate API design review.

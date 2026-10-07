@@ -15,6 +15,7 @@
  */
 import { existsSync } from "node:fs";
 import { describe, expect, test } from "bun-test-utils";
+import { textFileSchema } from "./shared/property-schemas.ts";
 
 const SEED = 20261007;
 const ISOLATION_RUNS = 20;
@@ -26,19 +27,11 @@ const sampleDirs: string[] = [];
 describe("style matrix: property cells over the assembled root", () => {
   test.prop(
     "std × pbt: generated paths and contents round-trip through tmpdir",
-    (fc) => ({
-      segments: fc.array(fc.stringMatching(/^[a-z0-9]{1,8}$/), {
-        minLength: 1,
-        maxLength: 4,
-      }),
-      contents: fc.stringMatching(/^[\x20-\x7e]{0,32}$/),
-    }),
+    textFileSchema,
     async ({ tmpdir }, { segments, contents }) => {
-      const parts = segments as string[];
-      const body = contents as string;
-      const relPath = `${parts.join("/")}.txt`;
-      tmpdir.write(relPath, body);
-      expect(tmpdir.read(relPath)).toBe(body);
+      const relPath = `${segments.join("/")}.txt`;
+      tmpdir.write(relPath, contents);
+      expect(tmpdir.read(relPath)).toBe(contents);
       expect(tmpdir.exists(relPath)).toBe(true);
     },
     { numRuns: 25, seed: SEED },
@@ -51,11 +44,10 @@ describe("style matrix: property cells over the assembled root", () => {
       value: fc.stringMatching(/^[\x20-\x7e]{0,32}$/),
     }),
     async ({ env }, { key, value }) => {
-      const valueText = value as string;
-      const name = `${ENV_PREFIX}${key as string}`;
-      env.set(name, valueText);
-      expect(env.get(name)).toBe(valueText);
-      expect(process.env[name]).toBe(valueText);
+      const name = `${ENV_PREFIX}${key}`;
+      env.set(name, value);
+      expect(env.get(name)).toBe(value);
+      expect(process.env[name]).toBe(value);
       env.delete(name);
       expect(env.get(name)).toBeUndefined();
       expect(process.env[name]).toBeUndefined();
@@ -114,13 +106,14 @@ describe("style matrix: property cells over the assembled root", () => {
   test.scenario
     .prop(
       "bdd × pbt × std: generated values flow through a fluent scenario",
-      (fc) => ({ contents: fc.stringMatching(/^[\x20-\x7e]{0,32}$/) }),
+      textFileSchema,
     )
     .given(
       "a generated payload written to the temporary directory",
-      ({ contents, tmpdir }) => {
-        tmpdir.write("payload.txt", contents as string);
-        return { file: "payload.txt" };
+      ({ contents, segments, tmpdir }) => {
+        const file = `${segments.join("/")}.txt`;
+        tmpdir.write(file, contents);
+        return { file };
       },
     )
     .when("the file is read back", ({ tmpdir, file }) => ({

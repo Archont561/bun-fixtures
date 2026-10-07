@@ -31,6 +31,45 @@ test.scenario("checks a file")
   });
 ```
 
-Mocking and BDD state should be modeled as fixtures and values in the scenario context.
+## Reusing typed steps
+
+Steps can be exported from a shared module and imported by multiple scenarios. The type-only `GivenStep`, `WhenStep`, and `ThenStep` aliases describe each step's context and returned state. A small consumer-owned function can apply a reusable sequence to a `GivenChain`:
+
+```ts
+// scenario-steps.ts
+import type { GivenChain, GivenStep, ThenStep, WhenStep } from "bun-test-utils";
+
+export const writeFile: GivenStep<object, { filename: string }> = ({ tmpdir }) => {
+  const filename = "shared.txt";
+  tmpdir.write(filename, "shared scenario data");
+  return { filename };
+};
+
+export const readFile: WhenStep<{ filename: string }, { contents: string }> = ({
+  tmpdir,
+  filename,
+}) => ({ contents: tmpdir.read(filename) });
+
+export const assertContents: ThenStep<{ contents: string }> = ({
+  contents,
+  expect,
+}) => expect(contents).toBe("shared scenario data");
+
+export const withSharedFile = (chain: GivenChain) =>
+  chain.given("a shared file", writeFile).when("the file is read", readFile);
+```
+
+```ts
+// first.test.ts and second.test.ts can both use this sequence
+import { test } from "bun-test-utils";
+import { assertContents, withSharedFile } from "./scenario-steps";
+
+withSharedFile(test.scenario("reads a shared file")).then(
+  "the shared contents are available",
+  assertContents,
+);
+```
+
+Fixtures destructured by imported steps are auto-detected for each step; do not repeat a fixture list on the scenario. The sequence function belongs to the consumer and adds no `test.*` member or runtime helper to the package. Mocking and BDD state should be modeled as fixtures and values in the scenario context.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

@@ -1,4 +1,4 @@
-/** Public entrypoint: the only user-facing API is describe, test, and expect. */
+/** Public entrypoint: the only named runtime values are describe, test, and expect. */
 
 import { withBDDTesting } from "@bun-test-utils/bdd";
 import { browserFixtures } from "@bun-test-utils/browser";
@@ -33,4 +33,16 @@ export const test = withPropertyTesting(
   withBDDTesting(baseTest.extend(builtInFixtures)),
 );
 
+export type {
+  GivenChain,
+  GivenStep,
+  ScenarioContext,
+  ThenStep,
+  WhenStep,
+} from "@bun-test-utils/core";
+export type {
+  ArbitraryInput,
+  FastCheckApi,
+  GeneratedValues,
+} from "@bun-test-utils/pbt";
 export { describe, expect };

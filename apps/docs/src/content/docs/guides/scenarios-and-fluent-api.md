@@ -54,6 +54,55 @@ test.scenario("uses a fixture")
   });
 ```
 
+## Sharing typed steps and sequences
+
+Steps are plain callbacks, so put them in a shared module and import them into
+each scenario. `GivenStep`, `WhenStep`, and `ThenStep` describe the state each
+callback reads and returns. A consumer-owned function can apply a reusable
+sequence to a `GivenChain`; the function is ordinary application code, not a
+new `bun-test-utils` runtime helper.
+
+```ts
+// scenario-steps.ts
+import type { GivenChain, GivenStep, ThenStep, WhenStep } from "bun-test-utils";
+
+export const writeFile: GivenStep<object, { filename: string }> = ({ tmpdir }) => {
+  const filename = "shared.txt";
+  tmpdir.write(filename, "shared scenario data");
+  return { filename };
+};
+
+export const readFile: WhenStep<{ filename: string }, { contents: string }> = ({
+  tmpdir,
+  filename,
+}) => ({ contents: tmpdir.read(filename) });
+
+export const assertSharedContents: ThenStep<{ contents: string }> = ({
+  contents,
+  expect,
+}) => expect(contents).toBe("shared scenario data");
+
+export const withSharedFile = (chain: GivenChain) =>
+  chain.given("a shared file", writeFile).when("the file is read", readFile);
+```
+
+Use the same sequence from separate scenario files:
+
+```ts
+// first.test.ts (second.test.ts imports the same sequence)
+import { test } from "bun-test-utils";
+import { assertSharedContents, withSharedFile } from "./scenario-steps";
+
+withSharedFile(test.scenario("reads a file from a shared sequence")).then(
+  "the contents are available",
+  assertSharedContents,
+);
+```
+
+Fixtures destructured by imported steps are auto-detected per step, just as
+inline steps are; scenarios do not need to repeat a fixture list. Continue to
+compose project fixtures explicitly with `test.extend()`.
+
 `then` steps are assertions and their return values are not merged. The chain is typed so `given` comes before `when`, `when` comes before `then`, and multiple steps in each phase are supported.
 
 ## Property scenarios

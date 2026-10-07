@@ -30,6 +30,18 @@ The core engine still owns explicit composition, fixture ordering, teardown, sta
 
 Stack-trace detection compares frames against both `import.meta.path` and its `realpathSync`, because a linked package reports a different path in the stack than in `import.meta`.
 
+### Reusable type-only definitions (task_048)
+
+The selected design is **types-only plus convention**. Property schemas and scenario steps remain plain functions in consumer-owned modules, shared through explicit imports. A consumer may compose a schema with normal TypeScript object spread and may compose a step sequence with a consumer-owned function that accepts and returns a `GivenChain`.
+
+The root declaration exposes type-only helpers for this pattern: `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues` for property schemas, plus `GivenChain`, `ScenarioContext`, `GivenStep`, `WhenStep`, and `ThenStep` for scenario callbacks. These are erased at runtime: the root runtime exports remain exactly `describe`, `expect`, and `test`; no `test.*` members, capability subpaths, runtime combinators, or global registries are added. The existing `Object.keys` conformance gate is unchanged.
+
+This choice keeps definitions explicit and lets existing fixture detection resolve imported step callbacks. The types do not add a fixture-discovery mechanism or change the scenario runner's reporting behavior.
+
+**Sequencing deviation (task_048):** The types-only direction was selected before implementation, but this spec note was written after source/test edits had begun. The task criterion requiring a spec/ADR note before code was therefore not met in repository chronology. This is recorded rather than represented as compliant; the task remains `in_progress` until the user explicitly waives or reframes that requirement.
+
+The root declaration now references `fast-check` types for `FastCheckApi` and arbitrary inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` must install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking the missing optional peer declaration. This tradeoff preserves the actual fast-check builder and generated-value types without adding runtime exports.
+
 ### Fixture-key collisions
 
 All built-ins and consumer fixtures share one namespace. `test.extend()` is an
