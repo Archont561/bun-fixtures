@@ -2,7 +2,7 @@
 
 - **Status:** implemented
 - **Implementation:** `packages/pbt/` (`test.prop` built on the engine's `opts.iterate` protocol in `packages/core/src/plugin.ts`)
-- **Tests:** `packages/pbt/tests/index.test.ts`, engine protocol in `packages/core/tests/plugin.test.ts` ("iteration protocol (opts.iterate)")
+- **Tests:** `packages/pbt/tests/index.test.ts`, `packages/pbt/tests/engine.test.ts` (cartesian `paramCombos` and topological `resolveOrder`), engine protocol in `packages/core/tests/plugin.test.ts` ("iteration protocol (opts.iterate)"). Capability-pack invariants live next to their fixtures: `packages/{vcr,snapshot,std}/tests/invariants.test.ts`.
 
 ## Problem
 

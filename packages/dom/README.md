@@ -24,4 +24,6 @@ select `BUN_TEST_UTILS_WEB_ENV=dom` (default) or `browser`; do not overload
 
 These fixtures are exercised in [`tests/`](./tests/) through this package's own `test.extend(...)` composition. Requesting `{ page }` alone is enough — the engine resolves the `window` → `document` → `page` dependency chain and restores the patched globals on teardown.
 
+There is no property-based suite here: the package is thin glue over happy-dom and has no algebraic invariant of its own (see [spec 0015](../../.backlog/docs/specs/0015-package-test-layout.md)).
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

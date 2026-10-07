@@ -33,4 +33,6 @@ During fixture teardown, `tmpdir` is removed, `env` is restored, `stdio` hands t
 
 These fixtures are exercised in [`tests/`](./tests/) through this package's own `test.extend(...)` composition — injected by name, torn down by the engine. Teardown assertions live in the test *after* the one using a fixture because the engine tears down after the test body returns.
 
+Property tests in `tests/invariants.test.ts` pin `env` set/get/delete round-trips and `tmpdir` write/read identity over generated relative paths, plus the escape check for `..` and absolute paths.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
