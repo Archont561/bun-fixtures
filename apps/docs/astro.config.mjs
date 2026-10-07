@@ -43,7 +43,7 @@ export default defineConfig({
               slug: "guides/explicit-composition",
             },
             {
-              label: "Parameterized Fixtures",
+              label: "Parameterizing Tests",
               slug: "guides/parameterized-fixtures",
             },
             {
