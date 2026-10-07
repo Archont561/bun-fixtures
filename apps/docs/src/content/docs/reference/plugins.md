@@ -8,7 +8,7 @@ description: Root test-context fixtures for standard, DOM, browser, VCR, snapsho
 
 ## Public surface
 
-`bun-test-utils` exposes the named runtime values `describe`, `expect`, `propTestSchema`, and `test`. `propTestSchema` is an identity wrapper for reusable fast-check records and factories. There are no public capability subpaths; request built-in capabilities by destructuring fixtures from the root `test` context.
+The root `bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The only public helper subpaths are `bun-test-utils/pbt` for reusable typed fast-check schemas and `bun-test-utils/bdd` for typed scenario-step callbacks; neither subpath exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
 
 ```ts
 import { expect, test } from "bun-test-utils";

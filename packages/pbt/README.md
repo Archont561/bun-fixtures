@@ -1,6 +1,6 @@
 # Property-based testing (internal)
 
-Property testing is an internal workspace capability surfaced on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. There is no public `bun-test-utils/pbt` subpath.
+Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `bun-test-utils/pbt` subpath exposes `propTestSchema` and PBT type aliases; it does not expose a runner or fixtures.
 
 ```ts
 import { expect, test } from "bun-test-utils";
@@ -15,15 +15,15 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory in the root `propTestSchema` helper to get contextual typing without importing `FastCheckApi` in each schema module. Its type declarations are referenced by the public root declaration; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
+The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `propTestSchema` from `bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each schema module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
 
 ## Shared schemas
 
-Schema factories are plain functions that can live in shared modules and be imported by any property-test file. The root `propTestSchema` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` remain available as type-only root exports when consumers need to name those types explicitly.
+Schema factories are plain functions that can live in shared modules and be imported by any property-test file. The `bun-test-utils/pbt` `propTestSchema` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
 
 ```ts
 // schemas.ts
-import { propTestSchema } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 export const userSchema = propTestSchema((fc) => ({
   name: fc.string(),

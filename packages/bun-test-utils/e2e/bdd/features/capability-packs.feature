@@ -1,7 +1,7 @@
 Feature: Built-in capability behaviour
   As a consumer of bun-test-utils
   I want built-in fixtures and advanced runners exercised through the root API
-  So that packaging and fixture composition regressions are caught without public subpaths
+  So that packaging and fixture composition regressions are caught without exposing runner or fixture-pack subpaths
 
   @std
   Scenario: Standard fixtures isolate files and environment variables

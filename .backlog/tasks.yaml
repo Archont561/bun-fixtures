@@ -1053,9 +1053,9 @@ tasks:
       internal package's source into packages/bun-test-utils/dist/<name>/, wired
       through an 'exports' map on the published package.json producing flat root
       imports for the runner values describe, test, and expect. Task_048/ADR
-      0021 later adds the single approved `propTestSchema` root helper for
-      shared property schemas; no capability subpaths are exposed. Types must
-      resolve correctly from the root entrypoint.
+      0022 later adds only the helper subpaths `./pbt` and `./bdd`, with no
+      runner or fixture exports. Types must resolve correctly from the root
+      entrypoint and the two typed helper subpaths.
 
       - Heavy per-capability deps (playwright for browser, happy-dom for dom,
       the fast-check library for the root test.prop() API, bdd's
@@ -1102,9 +1102,9 @@ tasks:
       - Exactly one package (bun-test-utils) is marked publishable;
         std/pbt/dom/browser/vcr/snapshot/bdd are all private:true internal
         workspace packages
-      - bun-test-utils's exports map exposes only the root entrypoint;
-        capabilities are available as fixtures, /browser, /pbt, /snapshot, /bdd
-        each resolving to real bundled output with correct types
+      - bun-test-utils exports the root runner plus only the helper-only `./pbt`
+        and `./bdd` subpaths authorized later by task_048/ADR 0022; those
+        subpaths expose no runners or fixture packs
       - Heavy peer deps (playwright, happy-dom, fast-check,
         @aboviq/bun-test-cucumber) are optional
         peerDependencies/peerDependenciesMeta.optional, with no
@@ -1450,8 +1450,8 @@ tasks:
         cassette/callback failures
       - Original messages and cause information are preserved
       - Error classes stay unexported from the public root; its approved runtime
-        values are describe, test, expect, and `propTestSchema` as added by
-        task_048/ADR 0021
+        values are describe, test, and expect. Typed PBT and BDD helpers live
+        only on the narrow subpaths authorized by task_048/ADR 0022
       - Tests assert error types and codes rather than relying only on message
         matching
       - README or API documentation lists the supported error categories
@@ -1670,7 +1670,9 @@ tasks:
         passthrough, reset, and call assertions for both fetch-based DOM/server
         tests and Playwright browser tests.
       - Mocking stays fixture-based and composes through test.extend() and the
-        root test context; no public capability subpaths are introduced.
+        root test context; no capability runner or fixture-pack subpaths are
+        introduced. The helper-only `/pbt` and `/bdd` paths authorized later by
+        task_048/ADR 0022 do not expose those capabilities.
       - Docs and examples show repo-wide BDD usage, environment selection, and
         MSW-like response mocking.
       - Biome, typecheck, build, full test suite, docs build, and
@@ -2675,14 +2677,22 @@ tasks:
       met in repository chronology.
 
 
-      FOLLOW-UP USER DECISION (2026-10-08): The user authorized one top-level
+      FOLLOW-UP USER DECISION (2026-10-08): The user first authorized one top-level
       runtime identity wrapper, `propTestSchema`, so shared schema factories
       receive contextual fast-check typing without importing the type in each
-      schema file. ADR 0021 records this revised design before follow-up source
-      edits. This supersedes the initial types-only choice only for schema
-      definitions; shared scenario steps remain types-only plus convention.
-      Keep the task in_progress until the new helper/tests/docs validate and the
-      user explicitly waives or reframes the original sequencing requirement.
+      schema file. ADR 0021 records that intermediate revision before its source
+      edits.
+
+
+      FOLLOW-UP USER DECISION (2026-10-08, later): The user requested a strict
+      move to capability-scoped typed helper subpaths. `propTestSchema` belongs
+      at `bun-test-utils/pbt`; `givenStep`, `whenStep`, and `thenStep` plus the
+      scenario type aliases belong at `bun-test-utils/bdd`. Remove the helper
+      and scenario type aliases from the root, and keep both subpaths limited
+      to their helper/type surfaces. ADR 0022 records this decision before
+      implementation. The original design-note-before-code criterion remains
+      unresolved; keep the task in_progress unless the user explicitly waives
+      or reframes it.
     source_links: []
     status: in_progress
     priority: P2
@@ -2696,20 +2706,25 @@ tasks:
       - "schemas compose: a derived schema reuses a base one (spread/merge or
         pick/omit) and is exercised by a property test; test.scenario.prop
         strategies receive the same typed treatment"
-      - `propTestSchema` is a public top-level identity wrapper that contextually
-        types shared factories without per-schema type imports; the root runtime
-        conformance gate reflects the authorized export
+      - >-
+        `bun-test-utils/pbt` exports the `propTestSchema` identity wrapper that
+        contextually types shared factories without per-schema type imports; PBT
+        type aliases are imported from that subpath
       - a scenario step defined in a shared module is reused by two scenarios
         and its fixtures resolve without either scenario listing them
-      - shared steps are typed from exported step types, and a reused sequence
-        of steps has a documented pattern covered by a test
+      - >-
+        `bun-test-utils/bdd` exports `givenStep`, `whenStep`, and `thenStep` typed
+        identity wrappers plus scenario type aliases; shared steps and reusable
+        sequences import these from the subpath and are covered by tests
       - "documentation: property-based-testing and scenarios guides gain
-        sharing/composition sections, and package READMEs follow; the public-api
-        conformance gate is unchanged unless the recorded design decision says
-        otherwise"
-      - the definition-surface decision (types-only vs test.* member vs root
-        export) is recorded in a spec note or ADR before code; bun test and bun
-        run typecheck green from the repository root
+        sharing/composition sections, and package READMEs follow; conformance
+        pins the three root runtime values and only the authorized helper
+        subpaths"
+      - the definition-surface decision (types-only, test.* member, root helper, or
+        capability-scoped helper subpath) is recorded in a spec note or ADR
+        before implementation; bun test and bun run typecheck green from the
+        repository root. Keep the task in_progress until the user waives or
+        reframes the original sequencing criterion.
     dependencies: []
     planning:
       split_status: pending
@@ -2728,4 +2743,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-07T21:21:00.895Z
-    updated_at: 2026-10-07T22:52:15.922Z
+    updated_at: 2026-10-07T23:41:53.342Z

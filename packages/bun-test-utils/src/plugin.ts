@@ -1,4 +1,4 @@
-/** Public entrypoint: named runtime values are describe, expect, propTestSchema, and test. */
+/** Public root entrypoint: named runtime values are describe, expect, and test. */
 
 import { withBDDTesting } from "@bun-test-utils/bdd";
 import { browserFixtures } from "@bun-test-utils/browser";
@@ -9,7 +9,7 @@ import {
   type FixtureMap,
 } from "@bun-test-utils/core";
 import { domFixtures } from "@bun-test-utils/dom";
-import { propTestSchema, withPropertyTesting } from "@bun-test-utils/pbt";
+import { withPropertyTesting } from "@bun-test-utils/pbt";
 import { snapshotFixtures } from "@bun-test-utils/snapshot";
 import { stdFixtures } from "@bun-test-utils/std";
 import { vcrFixtures } from "@bun-test-utils/vcr";
@@ -33,16 +33,4 @@ export const test = withPropertyTesting(
   withBDDTesting(baseTest.extend(builtInFixtures)),
 );
 
-export type {
-  GivenChain,
-  GivenStep,
-  ScenarioContext,
-  ThenStep,
-  WhenStep,
-} from "@bun-test-utils/core";
-export type {
-  ArbitraryInput,
-  FastCheckApi,
-  GeneratedValues,
-} from "@bun-test-utils/pbt";
-export { describe, expect, propTestSchema };
+export { describe, expect };

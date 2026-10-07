@@ -56,31 +56,31 @@ test.scenario("uses a fixture")
 
 ## Sharing typed steps and sequences
 
-Steps are plain callbacks, so put them in a shared module and import them into
-each scenario. `GivenStep`, `WhenStep`, and `ThenStep` describe the state each
-callback reads and returns. A consumer-owned function can apply a reusable
-sequence to a `GivenChain`; the function is ordinary application code, not a
-new `bun-test-utils` runtime helper.
+Put reusable steps in a shared module and wrap them with the phase-specific
+helpers from `bun-test-utils/bdd`. The generic arguments declare the incoming
+scenario state and the state returned by `given`/`when`; `then` declares only
+its input state. The same subpath exports `GivenStep`, `WhenStep`, `ThenStep`,
+`ScenarioContext`, and `GivenChain` for explicit type annotations. A
+consumer-owned function can still apply a reusable sequence to a `GivenChain`.
 
 ```ts
 // scenario-steps.ts
-import type { GivenChain, GivenStep, ThenStep, WhenStep } from "bun-test-utils";
+import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
+import type { GivenChain } from "bun-test-utils/bdd";
 
-export const writeFile: GivenStep<object, { filename: string }> = ({ tmpdir }) => {
+export const writeFile = givenStep<object, { filename: string }>(({ tmpdir }) => {
   const filename = "shared.txt";
   tmpdir.write(filename, "shared scenario data");
   return { filename };
-};
+});
 
-export const readFile: WhenStep<{ filename: string }, { contents: string }> = ({
-  tmpdir,
-  filename,
-}) => ({ contents: tmpdir.read(filename) });
+export const readFile = whenStep<{ filename: string }, { contents: string }>(
+  ({ tmpdir, filename }) => ({ contents: tmpdir.read(filename) }),
+);
 
-export const assertSharedContents: ThenStep<{ contents: string }> = ({
-  contents,
-  expect,
-}) => expect(contents).toBe("shared scenario data");
+export const assertSharedContents = thenStep<{ contents: string }>(
+  ({ contents, expect }) => expect(contents).toBe("shared scenario data"),
+);
 
 export const withSharedFile = (chain: GivenChain) =>
   chain.given("a shared file", writeFile).when("the file is read", readFile);

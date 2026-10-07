@@ -1,6 +1,6 @@
 # 0021 — Root `propTestSchema` identity wrapper
 
-- **Status:** accepted
+- **Status:** accepted; superseded as to placement and root surface by [0022](./0022-typed-helper-subpaths.md)
 - **Date:** 2026-10-08
 
 ## Context

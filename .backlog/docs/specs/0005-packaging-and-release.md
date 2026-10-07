@@ -12,7 +12,7 @@
 | R1 | Every code workspace MUST build Bun-targeted ESM and TypeScript declarations into `dist/` with Bunup. |
 | R2 | Code workspaces MUST consume the typed shared `createBunupConfig()` factory through a local `bunup.config.ts`. |
 | R3 | The public tarball MUST contain built `dist/`, `README.md`, `LICENSE-MIT`, `LICENSE-APACHE`, and package metadata; it MUST NOT contain `src/` or private workspace trees. |
-| R4 | `exports` MUST expose only `.`, and `./package.json`; all capabilities are bundled behind the root entrypoint. |
+| R4 | `exports` MUST expose exactly `.`, `./package.json`, `./pbt`, and `./bdd`; the root entrypoint contains all runners/fixtures while the two helper subpaths expose only their typed definition wrappers and related types. |
 | R5 | `bin.test-utils` MUST point at `./dist/cli.js`, which retains the `#!/usr/bin/env bun` shebang. |
 | R6 | `engines.bun` MUST state the minimum supported Bun. |
 | R7 | Publishing MUST be blocked unless frozen install, build, lint, typecheck, tests, docs build, and packed-consumer checks pass. |
@@ -44,4 +44,5 @@ package. Runtime builds likewise bundle private workspaces while preserving thir
 
 `packages/bun-test-utils/e2e/pack.test.ts` runs `bun pm pack`, verifies the built allowlist
 and export map, rejects source/private-workspace leakage, installs the tarball into a scratch
-project, runs `test-utils init`, and executes a quickstart using the root API only.
+project, runs `test-utils init`, and executes a quickstart using the root runner and both
+helper-only paths without optional peers.

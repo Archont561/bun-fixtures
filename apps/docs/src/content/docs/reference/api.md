@@ -8,30 +8,38 @@ description: Public TypeScript API reference for bun-test-utils.
 
 ## Public exports
 
-The published root package exposes these named runtime values and type-only helpers:
+The root package exposes the runner values `describe`, `expect`, and `test`:
 
 ```ts
-import { describe, expect, propTestSchema, test } from "bun-test-utils";
+import { describe, expect, test } from "bun-test-utils";
+```
+
+Typed definition helpers live on two helper-only subpaths:
+
+```ts
+import { propTestSchema } from "bun-test-utils/pbt";
+import type { ArbitraryInput, FastCheckApi, GeneratedValues } from "bun-test-utils/pbt";
+
+import { givenStep, whenStep, thenStep } from "bun-test-utils/bdd";
 import type {
-  ArbitraryInput,
-  FastCheckApi,
-  GeneratedValues,
   GivenChain,
   GivenStep,
   ScenarioContext,
   ThenStep,
   WhenStep,
-} from "bun-test-utils";
+} from "bun-test-utils/bdd";
 ```
 
-`propTestSchema` is an identity wrapper for an arbitrary record or factory. It
-contextually types a factory's `fc` parameter and preserves its generated types
-for `test.prop` and `test.scenario.prop`; see the
-[property-testing guide](/bun-test-utils/guides/property-based-testing/).
+`propTestSchema` is an identity wrapper for an arbitrary record or factory; it
+contextually types a factory's `fc` parameter and preserves generated types for
+`test.prop` and `test.scenario.prop`. The phase-specific scenario wrappers
+contextually type each callback's input and returned state, then return the
+callback unchanged. See the [property-testing guide](/bun-test-utils/guides/property-based-testing/)
+and [scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/).
 
-Capability packs are internal. Do not import `bun-test-utils/std`,
-`bun-test-utils/pbt`, `bun-test-utils/vcr`, or other subpaths; their fixtures and
-runners are available through the root `test` object.
+These subpaths expose only typed definition helpers and aliases—not runners or
+fixtures. Do not import `bun-test-utils/std`, `bun-test-utils/vcr`, or other
+capability paths; fixtures and execution APIs remain on the root `test` object.
 
 ## Stability and platforms
 

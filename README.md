@@ -32,17 +32,21 @@ bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
 
-Use the root `propTestSchema` identity wrapper for reusable property schemas. It
-contextually types the fast-check API parameter and returns the schema unchanged:
+Use `propTestSchema` from the helper-only `bun-test-utils/pbt` subpath for
+reusable property schemas. It contextually types the fast-check API parameter
+and returns the schema unchanged:
 
 ```ts
-import { propTestSchema } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 export const userSchema = propTestSchema((fc) => ({
   name: fc.string(),
   age: fc.nat(),
 }));
 ```
+
+For reusable scenario callbacks, import `givenStep`, `whenStep`, and `thenStep`
+from `bun-test-utils/bdd`. Scenario execution itself remains on root `test.scenario(...)`.
 
 ## Quick start
 
@@ -116,7 +120,7 @@ Parked as decisions rather than omissions, each with the condition that would st
 | Browser capability (Playwright fixtures) | the Playwright peer and its CI path prove stable across releases |
 | BDD capability (`test.scenario`) | `@aboviq/bun-test-cucumber` reaches 1.0, **or** the Gherkin integration is vendored |
 
-The non-goals that are *not* coming back at all — implicit fixture discovery, public capability subpaths, shipping a runner — are in [caveats](./.backlog/docs/caveats.md).
+The non-goals that are *not* coming back at all — implicit fixture discovery, public capability runner/fixture subpaths, shipping a runner — are in [caveats](./.backlog/docs/caveats.md).
 
 ## Development
 

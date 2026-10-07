@@ -2,10 +2,10 @@
  * M5 pack smoke test (spec 0005 R7, milestone M5 exit criteria 1–2).
  *
  * Packs the single publishable package with `bun pm pack`, proves the tarball
- * contains only the public root entrypoint, then installs it into a scratch
- * project and runs the quickstart (`test-utils init` → `bun test`) against the
- * packed artifact. What is verified here is what a consumer downloading from
- * npm will get.
+ * contains the public root and the two approved typed-helper subpaths, then
+ * installs it into a scratch project and runs the quickstart
+ * (`test-utils init` → `bun test`) against the packed artifact. What is verified
+ * here is what a consumer downloading from npm will get.
  */
 
 import {
@@ -105,7 +105,7 @@ describe("bun pm pack smoke test", () => {
   });
 
   test(
-    "the one publishable tarball exposes only the root API",
+    "the one publishable tarball exposes only the root runner and typed-helper subpaths",
     () => {
       const scratch = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-"));
       try {
@@ -120,7 +120,9 @@ describe("bun pm pack smoke test", () => {
         expect(JSON.stringify(manifest)).not.toContain("workspace:");
         expect(Object.keys(manifest.exports).sort()).toEqual([
           ".",
+          "./bdd",
           "./package.json",
+          "./pbt",
         ]);
 
         for (const peer of [
@@ -140,6 +142,10 @@ describe("bun pm pack smoke test", () => {
         for (const required of [
           "dist/plugin.js",
           "dist/plugin.d.ts",
+          "dist/pbt.js",
+          "dist/pbt.d.ts",
+          "dist/bdd.js",
+          "dist/bdd.d.ts",
           "dist/cli.js",
           "dist/cli.d.ts",
         ]) {
@@ -167,7 +173,9 @@ describe("bun pm pack smoke test", () => {
     );
     expect(Object.keys(manifest.exports).sort()).toEqual([
       ".",
+      "./bdd",
       "./package.json",
+      "./pbt",
     ]);
 
     for (const peer of [
@@ -202,6 +210,10 @@ describe("bun pm pack smoke test", () => {
     for (const file of [
       join(PACKAGE_DIR, "dist", "plugin.js"),
       join(PACKAGE_DIR, "dist", "plugin.d.ts"),
+      join(PACKAGE_DIR, "dist", "pbt.js"),
+      join(PACKAGE_DIR, "dist", "pbt.d.ts"),
+      join(PACKAGE_DIR, "dist", "bdd.js"),
+      join(PACKAGE_DIR, "dist", "bdd.d.ts"),
     ]) {
       const output = readFileSync(file, "utf8");
       expect(output).not.toMatch(/(?:from|import)\s*["']@bun-test-utils\//);
@@ -254,6 +266,8 @@ describe("bun pm pack smoke test", () => {
         writeFileSync(
           join(project, "quickstart.test.ts"),
           `import { describe, expect, test } from "bun-test-utils";
+import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 describe("packed public API", () => {
   test("built-in fixtures inject from the root test", async ({ tmpdir }) => {
@@ -261,10 +275,22 @@ describe("packed public API", () => {
     expect(tmpdir.read("hello.txt")).toBe("hello");
   });
 
-  test("only root sub-APIs are exposed", async () => {
+  test("only root runner and helper subpaths are exposed", async () => {
     expect(typeof test.prop).toBe("function");
     const specifier = "bun-test-utils/std";
     await expect(import(specifier)).rejects.toThrow();
+  });
+
+  test("typed helper subpaths load without optional peers", () => {
+    const schema = (fc: unknown) => ({ value: fc });
+    const given = (ctx: unknown) => ({ value: ctx });
+    const when = (ctx: unknown) => ({ value: ctx });
+    const then = (_ctx: unknown) => {};
+
+    expect(propTestSchema(schema)).toBe(schema);
+    expect(givenStep(given)).toBe(given);
+    expect(whenStep(when)).toBe(when);
+    expect(thenStep(then)).toBe(then);
   });
 
   test("fixture-based httpMock is bundled into the root context", async ({ httpMock }) => {
@@ -288,7 +314,7 @@ describe("packed public API", () => {
 `,
         );
         const output = run([BUN, "test"], project);
-        expect(output).toContain("4 pass");
+        expect(output).toContain("5 pass");
         expect(output).toContain("0 fail");
 
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);

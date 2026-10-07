@@ -46,13 +46,13 @@ test.prop(
 
 A schema is an ordinary record or factory. Export it from a shared module and
 import it explicitly wherever a property needs it; there is no registry or
-schema-processing machinery. Wrap shared factories with the top-level
-`propTestSchema` identity helper to get contextual fast-check typing without
-importing `FastCheckApi` in each schema file:
+schema-processing machinery. Wrap shared factories with `propTestSchema` from
+the helper-only `bun-test-utils/pbt` subpath to get contextual fast-check typing
+without importing `FastCheckApi` in each schema file:
 
 ```ts
 // schemas.ts
-import { propTestSchema } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 export const userSchema = propTestSchema((fc) => ({
   name: fc.string(),

@@ -1,6 +1,6 @@
 # Core fixture engine (internal)
 
-`@bun-test-utils/core` is the private workspace that powers the published `bun-test-utils` package. End users import `describe`, `test`, `expect`, and the typed schema wrapper `propTestSchema` from `bun-test-utils`; core helpers and fixture-pack helpers remain internal implementation details.
+`@bun-test-utils/core` is the private workspace that powers the published `bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed schema and scenario-step helpers are limited to `bun-test-utils/pbt` and `bun-test-utils/bdd`. Core helpers and fixture-pack helpers remain internal implementation details.
 
 ## Explicit composition only
 

@@ -2,7 +2,7 @@
 
 `@bun-test-utils/config` is a private workspace package used by the repository's TypeScript and Bunup configuration. It is not a consumer-facing runtime package.
 
-> Repository runtime packages use explicit fixture composition. `fixtures.ts` and `conftest.ts` are not automatically loaded by bun-test-utils; consumer tests import the runner and `propTestSchema` from `bun-test-utils`; capability fixtures are provided through the root `test` context.
+> Repository runtime packages use explicit fixture composition. `fixtures.ts` and `conftest.ts` are not automatically loaded by bun-test-utils; consumer tests import runner values from the root and typed definitions from the approved `/pbt` and `/bdd` helper subpaths; capability fixtures are provided through the root `test` context.
 
 It centralizes the strict library/app compiler presets, the Bunup configuration factory used by capability packs, and the shared BDD runner helper. Runtime packages keep their own entrypoint at `e2e/bdd/features.test.ts`, reduced to a single `runPackageFeatures("<package-dir>", import.meta)` call ([ADR-0017](../../.backlog/docs/adr/0017-shared-bdd-runner-helper.md)); consumer tests should import from `bun-test-utils`, not from this package.
 

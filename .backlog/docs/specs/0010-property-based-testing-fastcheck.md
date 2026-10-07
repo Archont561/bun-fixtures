@@ -23,7 +23,7 @@ counterexample shrinking.
 | R4 | When `fast-check` fails and performs shrinking, LIFO fixture teardown MUST execute cleanly on each shrink step. |
 | R5 | Failure output MUST report the minimal shrunk counterexample alongside the replay seed. |
 | R6 | `test.prop` and `test.scenario.prop` MUST accept reusable schema records or factories with typed fast-check APIs and infer generated values at the callback site; schemas MUST compose through ordinary TypeScript operations. |
-| R7 | The public root package MUST export `propTestSchema`, an identity wrapper that contextually types reusable factory schemas and preserves their arbitrary types. |
+| R7 | The `bun-test-utils/pbt` helper subpath MUST export `propTestSchema`, an identity wrapper that contextually types reusable factory schemas and preserves their arbitrary types. |
 
 ## Design
 
@@ -44,14 +44,14 @@ test.prop(
 
 ### Reusable schemas (task_048)
 
-A schema remains an ordinary object or factory that consumers can export from a shared module and explicitly import from any property test. The root `propTestSchema` identity wrapper contextually types factory arguments as the fast-check API, preserving its arbitrary record type without requiring each schema file to import `FastCheckApi`. `ArbitraryInput<T>` describes a record or factory, and `GeneratedValues<T>` maps each fast-check arbitrary to its generated value type. Both `test.prop` and `test.scenario.prop` use the same typing, so consumers need no casts at generated-value call sites. Base schemas compose with normal object spread; no registry or schema-processing runtime helper is introduced. The root runtime boundary and wrapper decision are recorded in [spec 0004](./0004-public-api-and-types.md#reusable-schemas-and-scenario-steps-task_048) and [ADR 0021](../adr/0021-prop-test-schema-root-wrapper.md).
+A schema remains an ordinary object or factory that consumers can export from a shared module and explicitly import from any property test. The `bun-test-utils/pbt` `propTestSchema` identity wrapper contextually types factory arguments as the fast-check API, preserving its arbitrary record type without requiring each schema file to import `FastCheckApi`. `ArbitraryInput<T>` describes a record or factory, and `GeneratedValues<T>` maps each fast-check arbitrary to its generated value type. Both `test.prop` and `test.scenario.prop` use the same typing, so consumers need no casts at generated-value call sites. Base schemas compose with normal object spread; no registry or schema-processing runtime helper is introduced. The subpath decision is recorded in [spec 0004](./0004-public-api-and-types.md#capability-scoped-typed-helpers-adr-0022) and [ADR 0022](../adr/0022-typed-helper-subpaths.md).
 
 ## Verification
 
 - Tests verifying shrinking reproducer output.
 - Verification that fixture teardown hooks execute once per sample or test as configured.
 - Shared conformance schemas are imported from two test files, derived through object spread, and typechecked without generated-value casts; the same schema type flows through `test.scenario.prop`.
-- `propTestSchema` is tested as a root export and identity wrapper; shared factory declarations receive contextual fast-check typing without importing `FastCheckApi`.
+- `bun-test-utils/pbt` is tested as the `propTestSchema` identity-wrapper subpath; shared factory declarations receive contextual fast-check typing without importing `FastCheckApi`.
 
 ## Notes on the shipped design
 

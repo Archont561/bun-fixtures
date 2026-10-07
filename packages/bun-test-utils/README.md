@@ -1,7 +1,9 @@
 # bun-test-utils
 
-The single published package. Its named runtime exports are `describe`, `expect`,
-`propTestSchema`, and `test`. Type-only definition aliases add no runtime values.
+The single published package. The root runtime exports are `describe`, `expect`,
+and `test`. Typed schema and scenario-step helpers live on the narrow
+`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; they expose no runners or
+fixtures.
 
 ```bash
 bun add -d bun-test-utils
@@ -16,22 +18,24 @@ bun add -d @aboviq/bun-test-cucumber # test.scenario()
 ```
 
 `fast-check` is optional at runtime. Its declarations are referenced by the
-published root `.d.ts` to preserve typed property schemas, so TypeScript
-consumers using `skipLibCheck: false` must install `fast-check` even if they
-only use non-property root APIs. With `skipLibCheck: true`, ordinary root imports
-typecheck without the peer; using property APIs still requires the runtime peer.
+published root and `/pbt` `.d.ts` files to preserve typed property schemas, so
+TypeScript consumers using `skipLibCheck: false` must install `fast-check` even
+if they only use non-property root APIs. With `skipLibCheck: true`, ordinary
+root imports typecheck without the peer; using property APIs still requires the
+runtime peer.
 
 ## Public API shape
 
-There are no public capability subpaths. Built-in capabilities are fixtures on
-the root `test` context, and the test runners hang off `test.*`. `propTestSchema`
-is the single root helper: it contextually types a schema factory and returns
-that factory unchanged.
+Built-in capabilities are fixtures on the root `test` context, and the test
+runners hang off `test.*`. The only helper subpaths are `bun-test-utils/pbt`
+and `bun-test-utils/bdd`; they expose typed definitions, not capability runners
+or fixture packs.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
-- `propTestSchema(...)` to define reusable fast-check records or factories without importing the `FastCheckApi` type in each schema module.
+- `propTestSchema(...)` from `bun-test-utils/pbt` to define reusable fast-check records or factories without importing the `FastCheckApi` type in each schema module.
+- `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `bun-test-utils/bdd` to contextually type reusable scenario callbacks.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
 
@@ -168,11 +172,11 @@ test.scenario("chains every fluent phase")
 
 ## Shared property schemas
 
-Schema factories are ordinary functions, explicitly imported from shared modules. Wrap a factory in the root `propTestSchema` helper to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the schema unchanged, and schemas compose with ordinary object spread.
+Schema factories are ordinary functions, explicitly imported from shared modules. Wrap a factory with `propTestSchema` from `bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the schema unchanged, and schemas compose with ordinary object spread.
 
 ```ts
 // schemas.ts
-import { propTestSchema } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 export const baseSchema = propTestSchema((fc) => ({
   name: fc.string(),
@@ -204,7 +208,7 @@ test.prop("generates typed admins", adminSchema, async (_fixtures, {
 
 ## Shared scenario steps
 
-`GivenStep`, `WhenStep`, and `ThenStep` are type-only aliases for shared callbacks. Import a consumer-owned sequence function into as many scenario files as needed. Imported step fixtures are auto-detected just like inline step fixtures; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
+Import `givenStep`, `whenStep`, and `thenStep` from `bun-test-utils/bdd` to contextually type shared scenario callbacks; the same subpath exports `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` for explicit annotations. A consumer-owned sequence function can be imported into as many scenario files as needed. Imported step fixtures are auto-detected just like inline steps; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
 
 ## Error compatibility
 

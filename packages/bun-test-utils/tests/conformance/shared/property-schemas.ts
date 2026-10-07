@@ -1,4 +1,4 @@
-import { propTestSchema } from "bun-test-utils";
+import { propTestSchema } from "bun-test-utils/pbt";
 
 /** Shared value schema used by property tests in separate files. */
 export const textFileSchema = propTestSchema((fc) => ({
