@@ -14,7 +14,7 @@ Scoped, injectable fixtures for [`bun test`](https://bun.sh/docs/test/overview).
 
 ## Why this exists
 
-Bun's native test runner is fast, but it does not provide a fixture model. `bun-test-utils` adds one without replacing `bun:test`: explicit composition, typed test contexts, `session`/`file`/`test` scopes, dependency injection, parameterization, property tests, snapshots, browser/DOM helpers, and BDD lifecycle hooks.
+Bun's native test runner is fast, but it does not provide a fixture model. `bun-test-utils` adds one without replacing `bun:test`: explicit composition, typed test contexts, `session`/`file`/`test` scopes, dependency injection, property tests, snapshots, browser/DOM helpers, and BDD lifecycle hooks.
 
 ## Install
 

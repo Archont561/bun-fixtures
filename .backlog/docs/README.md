@@ -16,7 +16,7 @@ Working docs for the package and its internal capabilities. User-facing document
 
 | Milestone | Deliverable | Status |
 |-----------|-------------|--------|
-| [M1](./milestones/M1-fixture-engine.md) | Fixture engine (scopes, teardown, params) + `createTest` | ✅ done |
+| [M1](./milestones/M1-fixture-engine.md) | Fixture engine (scopes, teardown, DI) + `createTest` | ✅ done |
 | [M2](./milestones/M2-discovery.md) | Legacy preload discovery + path-based merge | superseded |
 | [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |

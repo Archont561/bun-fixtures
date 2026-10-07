@@ -15,7 +15,7 @@
 | R3 | The root `test` MUST expose built-in fixture context for std, DOM, browser, VCR, and snapshot capabilities. |
 | R4 | Property and BDD-style APIs MUST live on `test.*`: `test.prop`, `test.scenario`, and `test.scenario.prop`. |
 | R5 | `test.extend(fixtures)` MUST remain the only public composition hook for user fixtures and mocks. |
-| R6 | Fixture metadata (`testFile`, `testName`, `param`, `scope`, `iterate`) MUST be injectable internally but MUST NOT be treated as user fixtures. |
+| R6 | Fixture metadata (`testFile`, `testName`, `scope`, `iterate`) MUST be injectable internally but MUST NOT be treated as user fixtures. |
 | R7 | The internal core package MAY export engine helpers for private workspaces; those helpers MUST NOT be re-exported from the public root package. |
 | R8 | The package MUST typecheck under `strict` with no `any` leaking into public signatures other than dynamic fixture values. |
 | R9 | The root fixture context MUST use one flat namespace containing exactly `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`, `cassette`, and `snapshot`. |

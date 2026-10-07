@@ -19,6 +19,6 @@ The first argument passed to the arbitrary factory is the `fast-check` API, load
 
 The property API is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, including the per-iteration fixture lifecycle: a test-scoped fixture is rebuilt and torn down around every generated sample and every shrink step, while session- and file-scoped fixtures are shared across them.
 
-Engine combinatorics that would otherwise live in `packages/core` — cartesian `paramCombos` and topological `resolveOrder` (the setup order LIFO teardown reverses) — are property-tested here so core never depends on this package. `dom` and `browser` have no property suites: the former is thin happy-dom glue, the latter a Playwright subprocess whose randomized runs would be slow and flaky.
+Engine combinatorics that would otherwise live in `packages/core` — topological `resolveOrder` (the setup order LIFO teardown reverses) — are property-tested here so core never depends on this package. `dom` and `browser` have no property suites: the former is thin happy-dom glue, the latter a Playwright subprocess whose randomized runs would be slow and flaky.
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

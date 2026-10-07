@@ -78,8 +78,7 @@ test.prop(
 ## Shrinking and failure output
 
 When a sample fails, `fast-check` shrinks the input to the minimal failing
-case and reports that counterexample. Parameterized fixture values still
-appear in the test name, as they do for plain tests.
+case and reports that counterexample together with the replay seed.
 
 ## When to list fixtures explicitly
 

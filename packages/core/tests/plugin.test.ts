@@ -6,7 +6,6 @@ import {
   describe,
   destructuredKeys,
   expect,
-  paramCombos,
   reportDiagnostic,
   resolveOrder,
   UnknownFixtureError,
@@ -92,28 +91,34 @@ describe("scopes", () => {
   });
 });
 
-describe("parameterization", () => {
-  const seen: string[] = [];
+/**
+ * Pins ADR-0020: parameterized fixtures are removed. A `params` key is
+ * ignored like any other unknown fixture-definition key — the test is
+ * registered exactly once, under exactly the name it was given, and
+ * `ctx.param` is not injected.
+ */
+describe("parameterization removal (ADR 0020)", () => {
+  const runs: Array<{ param: unknown; legacy: unknown }> = [];
 
-  test("runs once per param", async ({ mode }) => {
-    seen.push(mode);
-    expect(["fast", "slow"]).toContain(mode);
-  });
+  const legacyTest = base.extend({
+    legacy: {
+      params: ["a", "b"],
+      setup: async (use: any, ctx: any) => {
+        await use(ctx.param);
+      },
+    },
+  } as any);
 
-  test("produces the cartesian product", async ({ mode, region }) => {
-    seen.push(`${mode}/${region}`);
-    expect(`${mode}/${region}`).toMatch(/^(fast|slow)\/(eu|us)$/);
-  });
+  legacyTest(
+    "ignores params and injects no ctx.param",
+    async (ctx: any) => {
+      runs.push({ param: ctx.param, legacy: ctx.legacy });
+    },
+    { fixtures: ["legacy"] },
+  );
 
-  test("...which means 2 + 4 cases ran before this one", () => {
-    expect(seen.sort()).toEqual([
-      "fast",
-      "fast/eu",
-      "fast/us",
-      "slow",
-      "slow/eu",
-      "slow/us",
-    ]);
+  test("...which means it ran exactly once, with no param", () => {
+    expect(runs).toEqual([{ param: undefined, legacy: undefined }]);
   });
 });
 
@@ -205,9 +210,7 @@ describe("engine internals", () => {
       "config",
       "db",
       "events",
-      "mode",
       "origin",
-      "region",
       "tmp",
     ]);
   });
@@ -258,15 +261,6 @@ describe("engine internals", () => {
     expect(() => resolveOrder(["a"], cyclic, here)).toThrow(
       /circular fixture dependency/,
     );
-  });
-
-  test("computes param combinations", () => {
-    expect(paramCombos(["mode", "region"], map)).toEqual([
-      { mode: 0, region: 0 },
-      { mode: 0, region: 1 },
-      { mode: 1, region: 0 },
-      { mode: 1, region: 1 },
-    ]);
   });
 
   test("detects destructured parameters", () => {

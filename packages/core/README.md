@@ -54,6 +54,6 @@ test.scenario("creates a user")
 
 ## Tests
 
-Core behaviour is exercised in [`tests/`](./tests/), including explicit composition, scopes, dependency ordering, teardown, parameterization, scenario chains, and collection-time validation. The assembled public surface is covered by the [conformance tests](../bun-test-utils/tests/conformance/).
+Core behaviour is exercised in [`tests/`](./tests/), including explicit composition, scopes, dependency ordering, teardown, scenario chains, and collection-time validation. The assembled public surface is covered by the [conformance tests](../bun-test-utils/tests/conformance/).
 
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

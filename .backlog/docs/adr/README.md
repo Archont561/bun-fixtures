@@ -21,7 +21,8 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0015](./0015-per-package-readmes-concise-root.md) | Per-package READMEs with a concise canonical root | accepted |
 | [0016](./0016-package-test-layout-and-e2e-bdd.md) | Package test layout and E2E BDD | accepted, amended by 0017 |
 | [0017](./0017-shared-bdd-runner-helper.md) | Shared BDD runner helper in the config workspace | accepted |
-| [0018](./0018-release-compatibility-contract.md) | Release stability, fixture-key collisions, error messages, and platforms | accepted |
+| [0018](./0018-release-compatibility-contract.md) | Release stability, fixture-key collisions, error messages, and platforms | accepted, amended by 0020 |
 | [0019](./0019-no-base-directory-override-in-0-1-x.md) | No base-directory override for the cassette and snapshot conventions in 0.1.x | accepted |
+| [0020](./0020-remove-parameterized-fixtures.md) | Remove parameterized fixtures; `test.prop` covers the axis | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

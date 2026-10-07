@@ -35,3 +35,8 @@ Two deviations from the original spec, both documented in
 [ADR 0006](../adr/0006-use-returns-a-promise.md) and
 [ADR 0007](../adr/0007-file-scope-closes-on-file-switch.md): `use` returns a
 promise, and file scope closes when the next file starts.
+
+Parameterized fixtures — the scope checkbox above and exit criterion 4 — were
+removed before `0.1.0` by [ADR 0020](../adr/0020-remove-parameterized-fixtures.md);
+this record is kept as delivered at the time. `test.prop` (spec 0010) is the
+replacement.
