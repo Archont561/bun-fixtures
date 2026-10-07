@@ -1976,7 +1976,7 @@ tasks:
       excluded: dom (thin glue over happy-dom, weak invariants) and browser
       (subprocess + Playwright makes randomized runs slow and flaky)."
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - pbt
@@ -2020,7 +2020,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-06T17:44:24.942Z
-    updated_at: 2026-10-06T17:44:24.942Z
+    updated_at: 2026-10-07T20:05:14.014Z
   - id: task_039
     title: Style-matrix conformance coverage in the bun-test-utils wrapper
     description: Accrue cross-cutting test-style coverage (example-based,

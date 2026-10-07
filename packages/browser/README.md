@@ -37,4 +37,6 @@ For Playwright route interception, use `browserHttpMock` or call
 
 These fixtures are exercised in [`tests/`](./tests/) through `test.extend(...)` composition. The Playwright suite is the clearest illustration of scope: `browser` is session-scoped and therefore shared by consecutive tests, while `browserContext` and `browserPage` are test-scoped, so isolation is asserted *across* tests rather than by opening two contexts inside one.
 
+There is no property-based suite here: a Playwright subprocess makes randomized runs slow and flaky, so algebraic coverage lives in vcr, snapshot, std, and the engine combinatorics hosted by `@bun-test-utils/pbt` (see [spec 0015](../../.backlog/docs/specs/0015-package-test-layout.md)).
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

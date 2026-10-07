@@ -92,6 +92,7 @@
       "name": "@bun-test-utils/config",
       "version": "0.1.0",
       "devDependencies": {
+        "@aboviq/bun-test-cucumber": "^0.2.0",
         "bunup": "0.16.32",
       },
     },
@@ -134,6 +135,7 @@
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
         "@bun-test-utils/core": "workspace:*",
+        "@bun-test-utils/pbt": "workspace:*",
       },
     },
     "packages/std": {
@@ -142,6 +144,7 @@
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
         "@bun-test-utils/core": "workspace:*",
+        "@bun-test-utils/pbt": "workspace:*",
       },
     },
     "packages/vcr": {
@@ -150,6 +153,7 @@
       "devDependencies": {
         "@bun-test-utils/config": "workspace:*",
         "@bun-test-utils/core": "workspace:*",
+        "@bun-test-utils/pbt": "workspace:*",
       },
     },
   },

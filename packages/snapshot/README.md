@@ -16,4 +16,6 @@ Snapshots are scoped fixtures: setup, storage, and teardown stay in the test con
 
 The snapshot fixture is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, with `createTest(<path>)` binding the suite to a scratch test file so the `__snapshots__/` convention resolves into a temp directory. Because the fixture writes during teardown, every on-disk assertion lives in the test that follows its writer.
 
+Property tests in `tests/invariants.test.ts` pin serialization identity and key-order stability: matching a generated JSON value, then matching a key-rotated copy, does not throw.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

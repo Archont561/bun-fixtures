@@ -57,3 +57,15 @@ Required scripts for runtime packages:
 
 Packages without direct E2E scenarios may retain the scripts for workspace-level
 consistency, but their runner must not discover another package's features.
+
+## Test styles by layer
+
+Which styles a suite may use is a function of the layer, not of taste. Property
+coverage is added only where a real algebraic invariant exists; BDD stays a
+consumer-workflow language.
+
+| Layer | Example-based | Property-based (`test.prop` / `@bun-test-utils/pbt`) | BDD (Gherkin) |
+|-------|---------------|------------------------------------------------------|---------------|
+| Trust anchor (`packages/core`) | unit tests in `tests/` | **no** — a core devDependency on pbt would cycle the turbo graph. Engine combinatorics (`paramCombos`, `resolveOrder`) and iterate-protocol LIFO are property-tested from `packages/pbt/tests`. | consumer workflows in `e2e/bdd` |
+| Capability packs | unit tests in `tests/` | algebraic invariants in `tests/` for **vcr** (record→replay identity; method+URL matching), **snapshot** (serialization stability / key-order fixed point), and **std** (env round-trip; tmpdir path handling). **Not** `dom` (thin glue over happy-dom, weak invariants) or `browser` (Playwright subprocess; randomized runs are slow and flaky). | consumer workflows only; no unit-level Gherkin |
+| Wrapper (`packages/bun-test-utils`) | conformance + e2e | the cross-cutting matrix (see `task_039`) | consumer-workflow Gherkin; exactly one seeded prop-inside-BDD scenario |

@@ -28,4 +28,6 @@ Mocking and network fakes should live in fixtures so tests continue to request d
 
 The cassette fixture is exercised in [`tests/`](./tests/) through `test.extend(...)` composition. That suite is also worth reading for two techniques: binding the fixture-aware `test` to a scratch test file with `createTest(<path>)` so the `__cassettes__/` convention resolves into a temp directory, and overriding the `cassette` key with an added `deps` entry so an environment-setting fixture builds before it and tears down after it.
 
+Property tests in `tests/invariants.test.ts` pin record→replay identity over generated JSON values and HTTP replay matching by uppercase method plus exact full URL.
+
 [MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
