@@ -1,0 +1,135 @@
+/**
+ * The wrapper's cross-cutting property matrix (spec 0015, task_039).
+ *
+ * The capability packs property-test their own invariants in their own
+ * `tests/`; what only this suite proves is that those behaviours hold through
+ * the *assembled* public root — the fixture set the published package
+ * composes, injected under fast-check generation. Every cell is seeded and
+ * bounded so the suite stays deterministic, and every cell here is fileless:
+ * the file-bearing snapshot and HTTP-cassette cells live in
+ * `e2e/style-matrix.test.ts`, which runs them inside a scratch project.
+ *
+ * Deliberately absent: `dom × property` and `browser × property` are excluded
+ * by spec 0015 (thin glue / subprocess cost), and prop-inside-BDD stays the
+ * one seeded scratch-project scenario in `e2e/bdd/features/property.feature`.
+ */
+import { existsSync } from "node:fs";
+import { describe, expect, test } from "bun-test-utils";
+
+const SEED = 20261007;
+const ISOLATION_RUNS = 20;
+const ENV_PREFIX = "BUN_TEST_UTILS_MATRIX_";
+
+/** Every `tmpdir` handed to the isolation cell, in sample order. */
+const sampleDirs: string[] = [];
+
+describe("style matrix: property cells over the assembled root", () => {
+  test.prop(
+    "std × pbt: generated paths and contents round-trip through tmpdir",
+    (fc) => ({
+      segments: fc.array(fc.stringMatching(/^[a-z0-9]{1,8}$/), {
+        minLength: 1,
+        maxLength: 4,
+      }),
+      contents: fc.stringMatching(/^[\x20-\x7e]{0,32}$/),
+    }),
+    async ({ tmpdir }, { segments, contents }) => {
+      const parts = segments as string[];
+      const body = contents as string;
+      const relPath = `${parts.join("/")}.txt`;
+      tmpdir.write(relPath, body);
+      expect(tmpdir.read(relPath)).toBe(body);
+      expect(tmpdir.exists(relPath)).toBe(true);
+    },
+    { numRuns: 25, seed: SEED },
+  );
+
+  test.prop(
+    "std × pbt: generated env values round-trip and sandbox process.env",
+    (fc) => ({
+      key: fc.stringMatching(/^[A-Z0-9]{1,12}$/),
+      value: fc.stringMatching(/^[\x20-\x7e]{0,32}$/),
+    }),
+    async ({ env }, { key, value }) => {
+      const valueText = value as string;
+      const name = `${ENV_PREFIX}${key as string}`;
+      env.set(name, valueText);
+      expect(env.get(name)).toBe(valueText);
+      expect(process.env[name]).toBe(valueText);
+      env.delete(name);
+      expect(env.get(name)).toBeUndefined();
+      expect(process.env[name]).toBeUndefined();
+    },
+    { numRuns: 25, seed: SEED },
+  );
+
+  test.prop(
+    "vcr × pbt: generated payloads record once and replay through the root cassette",
+    (fc) => ({ payload: fc.jsonValue({ maxDepth: 3 }) }),
+    async ({ cassette }, { payload }) => {
+      let calls = 0;
+      const load = () => {
+        calls++;
+        return payload;
+      };
+
+      expect(await cassette.record(load)).toEqual(payload);
+      expect(calls).toBe(1);
+      expect(await cassette.replay(load)).toEqual(
+        JSON.parse(JSON.stringify(payload)),
+      );
+      expect(calls).toBe(1);
+    },
+    { numRuns: 25, seed: SEED },
+  );
+
+  test.prop(
+    "std × vcr × pbt: every generated sample gets its own fixture set",
+    (fc) => ({ n: fc.integer({ min: 1, max: 1_000_000 }) }),
+    async ({ cassette, env, tmpdir }, { n }) => {
+      sampleDirs.push(tmpdir.dir);
+      env.set(`${ENV_PREFIX}N`, String(n));
+      expect(env.get(`${ENV_PREFIX}N`)).toBe(String(n));
+
+      let calls = 0;
+      const load = () => {
+        calls++;
+        return { n };
+      };
+      expect(await cassette.record(load)).toEqual({ n });
+      expect(await cassette.replay(load)).toEqual({ n });
+      expect(calls).toBe(1);
+    },
+    { numRuns: ISOLATION_RUNS, seed: SEED },
+  );
+
+  test("std × vcr × pbt: sample fixtures were distinct and torn down", () => {
+    expect(sampleDirs).toHaveLength(ISOLATION_RUNS);
+    expect(new Set(sampleDirs).size).toBe(ISOLATION_RUNS);
+    for (const dir of sampleDirs) {
+      expect(existsSync(dir)).toBe(false);
+    }
+  });
+
+  test.scenario
+    .prop(
+      "bdd × pbt × std: generated values flow through a fluent scenario",
+      (fc) => ({ contents: fc.stringMatching(/^[\x20-\x7e]{0,32}$/) }),
+    )
+    .given(
+      "a generated payload written to the temporary directory",
+      ({ contents, tmpdir }) => {
+        tmpdir.write("payload.txt", contents as string);
+        return { file: "payload.txt" };
+      },
+    )
+    .when("the file is read back", ({ tmpdir, file }) => ({
+      readBack: tmpdir.read(file),
+    }))
+    .then(
+      "the read-back value matches the generated one",
+      ({ contents, readBack, expect: scenarioExpect }) => {
+        scenarioExpect(readBack).toBe(contents);
+      },
+    );
+});
