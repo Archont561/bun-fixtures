@@ -62,7 +62,7 @@ packages/
   config/            @bun-test-utils/config (shared TypeScript and BDD configuration)
 .backlog/            Backlog project state (tasks, claims, runs)
 .backlog/docs/       this directory (specs, milestones, ADRs, workflow, caveats)
-.agents/skills/      agent skills (session, tdd, refactor, grill-me, skill-creator)
+.agents/skills/      agent skills (session, tdd, refactor, grill-me, skill-creator, clean-code-principles, audit)
 skills-lock.json     pinned skill sources
 bunfig.toml          preload config when running from the root
 package.json         private workspace root

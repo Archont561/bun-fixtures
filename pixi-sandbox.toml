@@ -1,0 +1,8 @@
+schema = 1
+branch_prefix = "sandbox"
+cargo_vendor = false
+
+[[bundle]]
+name = "bun-test-utils"
+environments = ["default", "browser"]
+platforms = ["linux-64"]
