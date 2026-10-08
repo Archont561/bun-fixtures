@@ -3547,3 +3547,176 @@ tasks:
       push_comments: false
     created_at: 2026-10-08T20:56:07.927Z
     updated_at: 2026-10-08T20:56:07.927Z
+  - id: task_065
+    title: cassette.record silently corrupts callback values JSON cannot round-trip
+    description: >-
+      Measured on 2026-10-08 against the built package (scratch project,
+      VCR_MODE=record, record then replay of one callback per value shape).
+      serializeOutput in packages/vcr/src/cassette.ts:83 is JSON.stringify with
+      a bigint replacer, and deserializeOutput is JSON.parse, so anything JSON
+      does not round-trip comes back wrong with no warning:
+
+
+      | recorded        | replayed           | failure mode            |
+
+      |-----------------|--------------------|-------------------------|
+
+      | plain object    | correct            | —                       |
+
+      | undefined       | correct            | special-cased           |
+
+      | Date            | string             | silent type loss        |
+
+      | BigInt          | "123n" (string)    | silent type loss        |
+
+      | NaN / Infinity  | null               | silent corruption       |
+
+      | class instance  | plain object       | silent prototype loss   |
+
+      | Map             | {}                 | SILENT DATA LOSS        |
+
+      | Set             | {}                 | SILENT DATA LOSS        |
+
+      | Error           | {}                 | SILENT DATA LOSS        |
+
+      | circular        | raw TypeError: JSON.stringify cannot serialize cyclic
+      structures. (no code, no [bun-test-utils/vcr] prefix) | loud but unbranded
+      |
+
+
+      Six of ten come back wrong and three come back literally empty. The record
+      run passes and the cassette is written and committed, so every replay
+      afterwards returns {} — silently, forever. This is the worst failure mode
+      available: a wrong answer persisted to a file the user checks in.
+
+
+      Why it is release-relevant: spec 0012 R4 puts
+      record(callback)/replay(callback) in the STABLE surface, promising "the
+      recorded serializable result". A Map is serializable in any ordinary
+      sense.
+
+
+      Scope note: this is NOT task_050. task_050 designs reversible, versionable
+      serializers — an extension point and an on-disk format, i.e. a public
+      contract. That work can wait: spec 0012 R2 already declares "The on-disk
+      schema is not yet a stable public format", so there is no compatibility
+      reason to rush it into 0.1.0. This task is the smaller, prior question: a
+      value that cannot round-trip must be REFUSED loudly rather than quietly
+      corrupted. Whether such values should instead be SUPPORTED is task_050's
+      design decision — resolve that there, and record the answer here.
+
+
+      Minimum fix: make serializeOutput detect values it cannot round-trip and
+      throw a named BunTestUtilsError; wrap the circular-structure TypeError so
+      it carries a code and the [bun-test-utils/vcr] prefix like every other
+      diagnostic.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - vcr
+      - bug
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - a Map, Set, Error, BigInt, Date, NaN/Infinity or class instance is
+        refused with a named bun-test-utils error instead of being recorded as
+        {}, null or a string
+      - a circular callback value raises a BunTestUtilsError carrying a code and
+        the [bun-test-utils/vcr] prefix, not a raw TypeError
+      - a red test reproduces each measured row above in packages/vcr/tests/
+      - the refuse-only vs round-trip decision is made in task_050 and recorded
+        here
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T21:21:53.450Z
+    updated_at: 2026-10-08T21:21:53.450Z
+  - id: task_066
+    title: "release.yml publishes through an `environment: npm` the repository does
+      not define"
+    description: >-
+      Found on 2026-10-08 while surveying what blocks v0.1.0.
+      .github/workflows/release.yml declares `environment: npm` on its publish
+      job. The repository's environments (gh api
+      repos/Archont561/bun-test-utils/environments) are `github-pages` and
+      `release` — there is no `npm`.
+
+
+      Two possible outcomes, and neither was confirmed:
+
+      - GitHub auto-creates a referenced environment on first use, in which case
+      the publish works but is NOT gated by anything.
+
+      - It does not, in which case the very first publish job fails to start.
+
+
+      Either way there is a decision to make, because `release` exists precisely
+      to gate releases and currently has no protection rules. If the intent was
+      "a human approves every npm publish", the workflow as written walks around
+      the gate that was built for it.
+
+
+      This cannot be resolved by the auto-release dry run: that workflow only
+      runs its own verify job, and `gh workflow run release.yml` publishes for
+      real. Note that `publish sandbox` (.github/workflows/publish-sandbox.yml)
+      is pixi-sandbox generated and unrelated to the npm release path — do not
+      confuse the two when reading the Actions tab.
+
+
+      Resolve BEFORE the first real publish, not during it.
+
+
+      Related: task_005 (M5) remains in_progress pending the npm Trusted
+      Publisher registration on npmjs.org (repository Archont561/bun-test-utils,
+      workflow .github/workflows/release.yml, environment: none), the v0.1.0
+      tag, and the post-publish rerun of the installed-consumer harness. The
+      name `bun-test-utils` is free on npm (registry returns 404).
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - ci
+      - release
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - release.yml's publish job references an environment that resolves at run
+        time, verified before the first real publish
+      - the chosen environment carries the protection rules intended to gate a
+        public npm publish, or the decision to leave it ungated is recorded
+      - the workflow header comment and .changeset/README.md agree with the
+        mechanism actually used
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T21:22:10.539Z
+    updated_at: 2026-10-08T21:22:10.539Z
