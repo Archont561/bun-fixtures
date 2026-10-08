@@ -29,5 +29,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0023](./0023-define-arbitraries-helper.md) | Name the PBT identity helper `defineArbitraries` | accepted |
 | [0024](./0024-self-dogfooding-at-public-boundaries.md) | Self-dogfooding at public boundaries | accepted |
 | [0025](./0025-report-the-first-failure-when-a-teardown-also-fails.md) | Report the first failure when a teardown also fails | accepted |
+| [0026](./0026-refuse-callback-results-that-cannot-round-trip.md) | Refuse callback results that JSON cannot round-trip | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

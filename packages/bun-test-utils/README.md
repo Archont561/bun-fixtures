@@ -53,7 +53,9 @@ experimental: **experimental capabilities may change in minor versions**.
 The stable VCR surface is `cassette.record(callback)`,
 `cassette.replay(callback)`, and exact HTTP replay matching by uppercase method
 plus full URL. Matcher DSLs, configurable redaction, and cassette migration
-support are deferred.
+support are deferred. `cassette.record` refuses a callback result that is not
+plain data, such as a `Date`, `Map`, or `BigInt`, with the
+`CALLBACK_NOT_SERIALIZABLE` error code.
 
 Linux and macOS are supported. Windows support is planned after the first
 release; the current scratch-project harness and BDD presets rely on POSIX paths.

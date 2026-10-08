@@ -46,7 +46,27 @@ test("replays a user lookup", async ({ cassette }) => {
 ```
 
 Callback identity is derived without executing the callback during replay. A
-callback result must be serializable.
+callback result must be plain data: `null`, booleans, strings, finite numbers
+other than `-0`, arrays without holes, and plain objects. JSON cannot represent
+anything else exactly, so `record` throws a `CassetteError` with the code
+`CALLBACK_NOT_SERIALIZABLE`, names the path of the value, and stores nothing.
+Convert the value inside the callback first:
+
+```ts
+// Refused: a Date, a Map, and a BigInt do not survive JSON.
+const rawAccount = () => ({
+  createdAt: new Date(0),
+  roles: new Map([["admin", true]]),
+  balance: 10n,
+});
+
+// Accepted: convert inside the callback.
+const account = () => ({
+  createdAt: new Date(0).toISOString(),
+  roles: Object.fromEntries(new Map([["admin", true]])),
+  balance: String(10n),
+});
+```
 
 ## Record and replay HTTP traffic
 

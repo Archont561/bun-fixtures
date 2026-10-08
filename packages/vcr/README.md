@@ -8,6 +8,10 @@ URL. Matcher DSLs, configurable redaction, and cassette migration tooling are
 deferred. Other helpers currently used inside the workspace are provisional,
 not part of the stable release contract.
 
+`record` refuses a callback result that is not plain data, such as a `Date`,
+`Map`, `BigInt`, class instance, or `NaN`, with a `CALLBACK_NOT_SERIALIZABLE`
+`CassetteError` (ADR 0026). A value JSON cannot round-trip never reaches replay.
+
 ```ts
 import { expect, test } from "bun-test-utils";
 

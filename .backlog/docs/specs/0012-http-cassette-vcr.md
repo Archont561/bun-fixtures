@@ -19,11 +19,13 @@ Integration tests hitting 3rd-party HTTP APIs (Stripe, GitHub, OpenAI) are slow,
 | R4 | The stable callback surface MUST consist of `record(callback)` and `replay(callback)`; replay MUST return the recorded serializable result without executing the callback. |
 | R5 | Original `globalThis.fetch` MUST be restored upon fixture teardown. |
 | R6 | Matcher DSLs, configurable redaction, and cassette migration tooling MUST remain explicitly deferred from the stable `0.1.x` contract. |
+| R7 | `record(callback)` MUST refuse a callback result that is not plain data, as defined in [ADR 0026](../adr/0026-refuse-callback-results-that-cannot-round-trip.md). The refusal MUST be a `CassetteError` with code `CALLBACK_NOT_SERIALIZABLE`, the `[bun-test-utils/vcr]` prefix, and the offending path, and MUST register nothing. A circular structure MUST be refused with the same code. |
 
 ## Verification
 
 - Tests verifying record then replay sequence against an ephemeral Bun HTTP server.
 - Tests verifying that unmatched requests in replay mode throw informative mismatch errors.
+- Tests verifying that each callback result JSON cannot round-trip is refused with `CALLBACK_NOT_SERIALIZABLE`, and that replay then reports `CALLBACK_NOT_RECORDED` (`packages/vcr/tests/cassette.test.ts`).
 
 ## 2026-10-06 API revision — explicit callback registry
 
@@ -73,11 +75,28 @@ The same fixture is available in normal tests, `test.prop`,
 The implementation MUST restore any interception and close the cassette at test
 teardown, including when a callback throws.
 
+## 2026-10-09 — refuse results JSON cannot round-trip
+
+`record(callback)` refuses a result that JSON cannot represent exactly, instead of
+storing a corrupted copy (R7). A result is accepted only when it is plain data:
+`null`, booleans, strings, finite numbers other than `-0`, arrays without holes or
+extra properties, and objects whose prototype is `Object.prototype` or `null` and
+whose own properties are all enumerable string keys. `Date`, `BigInt`, `Map`, `Set`,
+`Error`, `RegExp`, typed arrays, class instances, `NaN`, `Infinity`, `-0`, cycles,
+and nested `undefined`, functions, or symbols are refused. A top-level function or
+symbol uses the same code, and a top-level `undefined` is still accepted.
+
+The check runs on the first `record` call, after the callback runs and before anything
+is stored, so `replay` reports `CALLBACK_NOT_RECORDED` and never returns a rejected
+value. The on-disk schema does not change. Supporting these values is deferred to
+task_050. The decision and its alternatives are in
+[ADR 0026](../adr/0026-refuse-callback-results-that-cannot-round-trip.md).
+
 ## Implementation status
 
 The callback registry is implemented on `CassetteHelper`: callback source identity is
 hashed without executing the callback, `record()` serializes and stores one result, and
-`replay()` returns that result without invoking the callback. HTTP replay compares the
+`replay()` returns that result without invoking the callback, and `record()` refuses a result that is not plain data (R7). HTTP replay compares the
 uppercase method and full URL exactly. Coverage lives in the VCR unit suite and the
 public root `cassette` fixture conformance suite.
 
