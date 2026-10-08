@@ -87,16 +87,19 @@ preload = ["./test-serializers.ts"]
 ```
 
 Global serializers are automatically used by every `snapshot` fixture in the
-Bun process, including nested values. They run newest-first after serializers
-registered with `snapshot.addSerializer()` and before the built-in serializers.
-The serializer must return `undefined` for values it does not handle.
+Bun process, including nested values inside objects and arrays. Fixture-local
+serializers from `snapshot.addSerializer()` run first; within each group,
+newer registrations run first. Global serializers run before the built-in
+string / `Error` / sorted-key-JSON / `String()` fallbacks. A serializer must
+return `undefined` for values it does not handle.
 
-`registerSnapshotSerializer` is also available when the serializer is already
-stored in a reusable variable:
+`registerSnapshotSerializer` and `createSnapshotSerializer` both return the
+registered function. Keep that reference to unregister it when its owner ends:
 
 ```ts
 import {
-  registerSnapshotSerializer,
+  createSnapshotSerializer,
+  unregisterSnapshotSerializer,
   type Serializer,
 } from "bun-test-utils/snap";
 
@@ -105,9 +108,48 @@ const redactSecrets: Serializer = (value) =>
     ? "<secret>"
     : undefined;
 
-registerSnapshotSerializer(redactSecrets);
+const registered = createSnapshotSerializer(redactSecrets);
+// At the end of the suite or preload lifecycle:
+unregisterSnapshotSerializer(registered);
 ```
 
-Global registration is process-wide by design. Put it in a preload file rather
-than inside an individual test so test order cannot control registration.
+Unregistering removes every registration of that exact function and returns
+`true` if any were removed (`false` otherwise). `resetSnapshotSerializers()`
+clears the process-wide registry while preserving the shared registry used by
+the root entrypoint and `/snap` subpath. Use it at a controlled suite or watch
+reload boundary before registering the current set again:
+
+```ts
+import {
+  createSnapshotSerializer,
+  resetSnapshotSerializers,
+} from "bun-test-utils/snap";
+
+resetSnapshotSerializers();
+createSnapshotSerializer((value) =>
+  value instanceof Date ? "<date>" : undefined,
+);
 ```
+
+Both operations affect every snapshot fixture in this Bun process. Do not reset
+the registry between concurrently running tests; register preload-wide
+serializers once, or unregister only the serializer owned by a suite.
+
+## Recursive values and diagnostics
+
+Custom serializers run at the root and recursively for object properties and
+array entries. At each value, fixture-local serializers take precedence over
+global serializers; the newest serializer in each group runs first. The built-in
+`Error` fallback is recursive too, so a nested error snapshots as
+`Error: <message>` unless a custom serializer handles it first. Reusing the same
+acyclic object in two places serializes it at both locations; only a reference
+back to an object on the current recursion path is a cycle.
+
+Cyclic values fail with an `Error` named `SnapshotSerializationError`, code
+`SNAPSHOT_CIRCULAR_REFERENCE`, and details containing the snapshot name/path,
+the value path (for example `$.user.items[0]`), and the path where the object was
+first seen. If a custom serializer throws, snapshotting fails with code
+`SNAPSHOT_SERIALIZER_FAILED`; the diagnostic identifies the snapshot and value
+path, and the original thrown value is preserved as `cause`. These stable codes
+and details make recursive failures actionable without silently replacing the
+value with `[object Object]`.

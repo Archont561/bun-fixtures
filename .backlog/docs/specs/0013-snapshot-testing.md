@@ -27,6 +27,10 @@ built-in equivalent.
 | R6 | Mode MUST be switchable via the `SNAPSHOT_MODE` environment variable (`match` \| `update` \| `ci`) or `setMode()`, and MUST default to `"ci"` when `process.env.CI` is set and `SNAPSHOT_MODE` is unset. |
 | R7 | Custom serializers MUST be pluggable via `addSerializer()`, running before the built-in string / `Error` / sorted-key-JSON / `String()` fallbacks. |
 | R8 | A mismatch in `"match"`/`"ci"` mode MUST throw an error that includes both the stored and received values. |
+| R9 | Global serializers MUST be removable by exact function identity (`unregisterSnapshotSerializer`, returning whether anything was removed) or cleared process-wide (`resetSnapshotSerializers`). Reset MUST mutate the shared registry in place so independently bundled root and `/snap` entrypoints observe the same lifecycle. |
+| R10 | Custom serializers MUST run recursively for object properties and array elements. Fixture-local serializers run before global serializers; within each group, newest registrations run first. The built-in `Error` fallback MUST also apply recursively. |
+| R11 | Serialization MUST detect a circular reference on the active recursion path and throw a stable diagnostic with code `SNAPSHOT_CIRCULAR_REFERENCE`, snapshot name/path, value path, and first-seen path. Repeated references that are not cycles MUST serialize normally. |
+| R12 | A custom serializer exception MUST be wrapped in a stable diagnostic with code `SNAPSHOT_SERIALIZER_FAILED`, snapshot name/path, value path, and the original thrown value as `cause`. |
 
 ## Verification
 
@@ -35,6 +39,8 @@ built-in equivalent.
 - Tests verifying `"ci"` mode refuses to create a missing snapshot.
 - Tests verifying auto-numbered keys for multiple anonymous `match()` calls in one test.
 - Tests verifying a registered custom serializer is used ahead of the built-ins.
+- Tests verifying public global serializer unregister/reset controls share state across the root and `/snap` bundles and prevent leaks into later snapshots.
+- Tests verifying nested object/array precedence, recursive `Error` handling, non-cyclic shared references, cyclic-value diagnostics, and serializer-failure cause/context.
 - Tests verifying `matchFile()` against a file on disk, including the not-found error path.
 - Installed-consumer boundary (ADR 0024): `packages/bun-test-utils/e2e/snap-serializer.test.ts`
   packs the publishable tarball, installs it into a scratch project, preloads a module

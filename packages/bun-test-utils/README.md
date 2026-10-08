@@ -1,9 +1,10 @@
 # bun-test-utils
 
 The single published package. The root runtime exports are `describe`, `expect`,
-and `test`. Typed arbitrary-definition and scenario-step helpers live on the narrow
-`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; they expose no runners or
-fixtures.
+and `test`. Typed arbitrary-definition and scenario-step helpers live on the
+`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; global snapshot serializer
+lifecycle helpers live on `bun-test-utils/snap`. These subpaths expose helpers,
+not runners or fixture packs.
 
 ```bash
 bun add -d bun-test-utils
@@ -27,9 +28,10 @@ runtime peer.
 ## Public API shape
 
 Built-in capabilities are fixtures on the root `test` context, and the test
-runners hang off `test.*`. The only helper subpaths are `bun-test-utils/pbt`
-and `bun-test-utils/bdd`; they expose typed definitions, not capability runners
-or fixture packs.
+runners hang off `test.*`. The helper subpaths are `bun-test-utils/pbt`,
+`bun-test-utils/bdd`, and `bun-test-utils/snap`: PBT/BDD expose typed definitions,
+while `/snap` exposes global snapshot serializer helpers. None exports a runner
+or fixture pack.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
@@ -213,12 +215,13 @@ Import `givenStep`, `whenStep`, and `thenStep` from `bun-test-utils/bdd` to cont
 ## Error compatibility
 
 Thrown capability errors expose machine-readable `code` and `details` when
-available; those fields are preferred for integrations. Four human-readable
-message templates are also contractual: unknown fixture, circular fixture
+available; those fields are preferred for integrations. Four core human-readable
+message templates are contractual: unknown fixture, circular fixture
 dependency, a fixture finishing without `use(value)`, and an unexpected fetch
-blocked by `networkGuard`. Other diagnostic wording may change while its code
-and meaning remain compatible. The exact templates are listed in the
-[API specification](../../.backlog/docs/specs/0004-public-api-and-types.md).
+blocked by `networkGuard`. Snapshot serialization also has stable diagnostic
+codes for circular values and custom serializer failures; see the
+[snapshot guide](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/)
+and [snapshot spec](../../.backlog/docs/specs/0013-snapshot-testing.md).
 
 All workspace packages are implementation boundaries; only `bun-test-utils` is published.
 

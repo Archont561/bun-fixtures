@@ -1,6 +1,6 @@
 # 0022 — Capability-scoped typed helper subpaths
 
-- **Status:** accepted, amended by [0023](./0023-define-arbitraries-helper.md) for PBT helper naming
+- **Status:** accepted; PBT helper naming amended by [0023](./0023-define-arbitraries-helper.md); snapshot serializer subpath added separately under [0024](./0024-self-dogfooding-at-public-boundaries.md) and task_057
 - **Date:** 2026-10-08
 - **Supersedes:** [0021](./0021-prop-test-schema-root-wrapper.md) as to helper placement and the public runtime surface
 
@@ -32,15 +32,17 @@ type-only aliases `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and
 entrypoint; root `test.prop` and `test.scenario` remain fully typed through
 inference.
 
-The package export map exposes only `.`, `./package.json`, `./pbt`, and `./bdd`.
-The two capability subpaths expose only their typed helper/type surfaces; they
-do not expose runners, fixture packs, or internal capability APIs. No other
-subpath, root helper, or `test.*` member is added.
+The package export map exposes `.`, `./package.json`, `./pbt`, `./bdd`, and
+`./snap`. The PBT and BDD subpaths expose only their typed helper/type surfaces;
+`/snap` exposes only global snapshot serializer helpers, as scoped by ADR 0024
+and proven at the installed-consumer boundary in task_057. None exposes runners
+or fixture packs; no other subpath, root helper, or `test.*` member is added.
 
-This amends ADRs 0012, 0013, and 0021 only as needed for helper placement and the
-two narrow subpaths. It does not change fixture autodetection, schema/step
-composition, optional-peer runtime behavior, or the decision to keep this work
-out of `0.1.0`.
+This decision covers PBT and BDD helper placement. The snapshot serializer
+helper subpath was added separately under ADR 0024 and task_057; it does not
+expose a runner or fixture pack. Neither decision changes fixture
+autodetection, schema/step composition, optional-peer runtime behavior, or the
+decision to keep the PBT/BDD helper additions out of `0.1.0`.
 
 ## Consequences
 
