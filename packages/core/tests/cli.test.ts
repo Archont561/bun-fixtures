@@ -19,17 +19,21 @@ describe("cli", () => {
   });
 
   test("defaults to the entry Bun can actually resolve", () => {
-    expect(DEFAULT_ENTRY).toBe("./node_modules/bun-test-utils/dist/plugin.js");
+    expect(DEFAULT_ENTRY).toBe(
+      "./node_modules/@archont561/bun-test-utils/dist/plugin.js",
+    );
   });
 
   test("adds the preload entry to an empty bunfig", () => {
     const { text, changed } = addPreload(
       "",
-      "node_modules/bun-test-utils/dist/plugin.js",
+      "node_modules/@archont561/bun-test-utils/dist/plugin.js",
     );
     expect(changed).toBe(true);
     expect(text).toContain("preload");
-    expect(text).toContain("node_modules/bun-test-utils/dist/plugin.js");
+    expect(text).toContain(
+      "node_modules/@archont561/bun-test-utils/dist/plugin.js",
+    );
   });
 
   test("preserves existing config and is idempotent", () => {
@@ -37,14 +41,14 @@ describe("cli", () => {
       '[install]\nregistry = "https://registry.npmjs.org"\n\n[test]\npreload = ["./other.ts"]\n';
     const once = addPreload(
       start,
-      "node_modules/bun-test-utils/dist/plugin.js",
+      "node_modules/@archont561/bun-test-utils/dist/plugin.js",
     );
     expect(once.changed).toBe(true);
     expect(once.text).toContain("./other.ts");
     expect(once.text).toContain("registry");
     const twice = addPreload(
       once.text,
-      "node_modules/bun-test-utils/dist/plugin.js",
+      "node_modules/@archont561/bun-test-utils/dist/plugin.js",
     );
     expect(twice.changed).toBe(false);
   });

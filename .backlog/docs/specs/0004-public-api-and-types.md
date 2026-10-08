@@ -10,7 +10,7 @@
 
 | # | Requirement |
 |---|-------------|
-| R1 | `import { test, expect, describe } from "bun-test-utils"` MUST work with no global monkey-patching. |
+| R1 | `import { test, expect, describe } from "@archont561/bun-test-utils"` MUST work with no global monkey-patching. |
 | R2 | The package MUST expose the root runner plus the helper-only `./pbt`, `./bdd`, and `./snap` subpaths (and `./package.json`); `/snap` is limited to global snapshot serializer helpers. It MUST NOT expose runner/fixture subpaths, general implementation helpers, default objects, or any other subpaths. |
 | R3 | The root `test` MUST expose built-in fixture context for std, DOM, browser, VCR, and snapshot capabilities. |
 | R4 | Property and BDD-style APIs MUST live on `test.*`: `test.prop`, `test.scenario`, and `test.scenario.prop`. |
@@ -21,12 +21,12 @@
 | R9 | The root fixture context MUST use one flat namespace containing exactly `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`, `cassette`, and `snapshot`. |
 | R10 | Fixture composition MUST be last-definition-wins: a consumer `test.extend()` definition overrides a built-in key, and a later extension overrides an earlier one. Dependencies MUST resolve the winning definition by key. |
 | R11 | The exact human-readable templates for unknown fixtures, circular dependencies, a fixture finishing without `use(value)`, and a fetch blocked by `networkGuard` MUST remain contractual; snapshot cycle and serializer-failure codes/details are governed by spec 0013. Other diagnostic wording MAY change while machine-readable codes and meaning remain compatible. |
-| R12 | `bun-test-utils/pbt` MUST export `defineArbitraries`, accepting an arbitrary record or fast-check factory, contextually typing the factory API, preserving generated-value inference, and returning the supplied definition unchanged. |
-| R13 | `bun-test-utils/bdd` MUST export `givenStep`, `whenStep`, and `thenStep` identity wrappers with contextual input/output-state typing, plus the related scenario type aliases; each wrapper returns its callback unchanged. |
+| R12 | `@archont561/bun-test-utils/pbt` MUST export `defineArbitraries`, accepting an arbitrary record or fast-check factory, contextually typing the factory API, preserving generated-value inference, and returning the supplied definition unchanged. |
+| R13 | `@archont561/bun-test-utils/bdd` MUST export `givenStep`, `whenStep`, and `thenStep` identity wrappers with contextual input/output-state typing, plus the related scenario type aliases; each wrapper returns its callback unchanged. |
 
 ## Design
 
-The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The root package exposes the runner (`describe`, `expect`, and `test`); typed definition helpers are capability-scoped under `bun-test-utils/pbt` and `bun-test-utils/bdd`.
+The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The root package exposes the runner (`describe`, `expect`, and `test`); typed definition helpers are capability-scoped under `@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd`.
 
 `use` is typed `(value: T) => Promise<void>` rather than `=> void`: a `void` return makes `await use(v)` meaningless and teardown impossible. Awaiting remains optional.
 
@@ -44,7 +44,7 @@ The user first authorized `propTestSchema` as a top-level runtime identity wrapp
 
 ### Capability-scoped typed helpers (ADR 0022)
 
-`bun-test-utils/pbt` exports `defineArbitraries` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. `bun-test-utils/snap` exposes only the global snapshot serializer helpers; its lifecycle and diagnostics are specified in [spec 0013](./0013-snapshot-testing.md). The root runtime surface is exactly `describe`, `expect`, and `test`; helper subpaths expose no runners or fixtures, and no other root helper or `test.*` member is added. ADR 0023 records the pre-release rename from `propTestSchema` to `defineArbitraries`; ADR 0024 records public-boundary dogfooding.
+`@archont561/bun-test-utils/pbt` exports `defineArbitraries` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `@archont561/bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. `@archont561/bun-test-utils/snap` exposes only the global snapshot serializer helpers; its lifecycle and diagnostics are specified in [spec 0013](./0013-snapshot-testing.md). The root runtime surface is exactly `describe`, `expect`, and `test`; helper subpaths expose no runners or fixtures, and no other root helper or `test.*` member is added. ADR 0023 records the pre-release rename from `propTestSchema` to `defineArbitraries`; ADR 0024 records public-boundary dogfooding.
 
 The declarations still reference `fast-check` types for PBT inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` may need to install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking a missing optional peer declaration. Neither the PBT definition helper nor the BDD step wrappers load an optional peer at runtime.
 

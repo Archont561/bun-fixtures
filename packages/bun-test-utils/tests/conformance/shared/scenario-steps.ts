@@ -1,5 +1,5 @@
-import type { GivenChain } from "bun-test-utils/bdd";
-import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
+import type { GivenChain } from "@archont561/bun-test-utils/bdd";
+import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
 
 /** Shared step that exercises fixture detection from an imported module. */
 export const writeSharedFile = givenStep<

@@ -44,7 +44,7 @@ built-in equivalent.
 - Tests verifying `matchFile()` against a file on disk, including the not-found error path.
 - Installed-consumer boundary (ADR 0024): `packages/bun-test-utils/e2e/snap-serializer.test.ts`
   packs the publishable tarball, installs it into a scratch project, preloads a module
-  registering a global serializer via the public `bun-test-utils/snap` subpath, and verifies
+  registering a global serializer via the public `@archont561/bun-test-utils/snap` subpath, and verifies
   the generated `__snapshots__/<test>.snap.json` — including nested values and match-mode replay
   against the stored file. The registry rerun of this flow is task_005 criterion 5.
 

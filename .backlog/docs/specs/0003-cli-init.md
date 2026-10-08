@@ -15,7 +15,7 @@ bare `node_modules/...` preload path and needs `./node_modules/...`.
 | # | Requirement |
 |---|-------------|
 | R1 | `test-utils init` MUST read or create `bunfig.toml` and append the preload entry to `[test].preload` |
-| R2 | The default entry MUST be `./node_modules/bun-test-utils/dist/plugin.js` |
+| R2 | The default entry MUST be `./node_modules/@archont561/bun-test-utils/dist/plugin.js` |
 | R3 | It MUST be idempotent — a second run MUST NOT duplicate the entry |
 | R4 | An existing string `preload` MUST be normalized to a list, preserving the original value |
 | R5 | Unrelated `bunfig.toml` sections MUST survive the round-trip |

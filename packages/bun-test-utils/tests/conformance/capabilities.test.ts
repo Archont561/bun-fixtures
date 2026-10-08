@@ -1,4 +1,4 @@
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 const overrideTest = test
   .extend({

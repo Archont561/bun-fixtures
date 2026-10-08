@@ -18,7 +18,7 @@ import {
   type TestFn,
 } from "@bun-test-utils/core";
 
-// `fast-check` is an optional peer of the published `bun-test-utils`
+// `fast-check` is an optional peer of the published `@archont561/bun-test-utils`
 // package. Check for it only when property APIs are used so ordinary fixture
 // tests can import the root package without installing the generator library.
 const requireFromHere = createRequire(import.meta.url);

@@ -33,6 +33,7 @@ import { createTest, type FixtureContext } from "@bun-test-utils/core";
 import {
   type CassetteEntry,
   CassetteError,
+  type CassetteHelper,
   cassetteFixture,
   describe,
   expect,
@@ -201,6 +202,345 @@ describe("@bun-test-utils/vcr", () => {
     expect(cassette.entries[0]!.request.headers.authorization).toBe(
       "[REDACTED]",
     );
+  });
+});
+
+/** A class instance: its data is real, but its prototype is not plain. */
+class Point {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+/**
+ * Records a callback whose result JSON cannot round-trip. The first `record`
+ * must throw the coded diagnostic. Nothing is registered, so `replay` must then
+ * report the unrecorded callback instead of returning a corrupted value.
+ */
+async function expectRefused(
+  cassette: CassetteHelper,
+  callback: () => unknown,
+): Promise<CassetteError> {
+  let refusal: unknown;
+  try {
+    await cassette.record(callback);
+  } catch (caught) {
+    refusal = caught;
+  }
+  expect(refusal).toBeInstanceOf(CassetteError);
+  const error = refusal as CassetteError;
+  expect(error.code).toBe("CALLBACK_NOT_SERIALIZABLE");
+  expect(error.message.startsWith("[bun-test-utils/vcr] ")).toBe(true);
+
+  let replayed: unknown;
+  try {
+    await cassette.replay(callback);
+  } catch (caught) {
+    replayed = caught;
+  }
+  expect(replayed).toBeInstanceOf(CassetteError);
+  expect((replayed as CassetteError).code).toBe("CALLBACK_NOT_RECORDED");
+  return error;
+}
+
+describe("callback results JSON cannot round-trip", () => {
+  test("refuses a Date instead of replaying a string", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Date(0));
+  });
+
+  test("refuses a BigInt instead of replaying a string", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => 123n);
+  });
+
+  test("refuses NaN instead of replaying null", async ({ cassette }) => {
+    await expectRefused(cassette, () => Number.NaN);
+  });
+
+  test("refuses Infinity instead of replaying null", async ({ cassette }) => {
+    await expectRefused(cassette, () => Number.POSITIVE_INFINITY);
+  });
+
+  test("refuses -0 instead of replaying 0", async ({ cassette }) => {
+    await expectRefused(cassette, () => -0);
+  });
+
+  test("refuses a class instance instead of replaying a plain object", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => new Point(1, 2));
+  });
+
+  test("refuses a Map instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Map([["id", "user-1"]]));
+  });
+
+  test("refuses a Set instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Set(["admin"]));
+  });
+
+  test("refuses an Error instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Error("boom"));
+  });
+
+  test("refuses a RegExp instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => /user-\d+/g);
+  });
+
+  test("refuses a typed array instead of replaying an index-keyed object", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => new Uint8Array([1, 2]));
+  });
+
+  test("names the path of a nested undefined, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => ({
+      id: "user-1",
+      nickname: undefined,
+    }));
+    expect(error.message).toContain("$.nickname");
+    expect(error.details).toMatchObject({
+      path: "$.nickname",
+      valueType: "undefined",
+    });
+  });
+
+  test("names the path of a nested function, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => ({
+      id: "user-1",
+      format: () => "ada",
+    }));
+    expect(error.message).toContain("$.format");
+  });
+
+  test("refuses a symbol-keyed property, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const secret = Symbol("secret");
+    await expectRefused(cassette, () => ({ id: "user-1", [secret]: "hidden" }));
+  });
+
+  test("refuses a sparse array, which JSON would turn into nulls", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => {
+      const items: unknown[] = [];
+      items[0] = "first";
+      items[2] = "third";
+      return items;
+    });
+  });
+
+  test("refuses a top-level function with the coded diagnostic", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => () => "not data");
+  });
+
+  test("refuses a top-level symbol with the coded diagnostic", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => Symbol("token"));
+  });
+
+  test("wraps a circular structure in a coded diagnostic, not a raw TypeError", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => {
+      const node: { self?: unknown } = {};
+      node.self = node;
+      return node;
+    });
+    expect(error).not.toBeInstanceOf(TypeError);
+    expect(error.message).toContain("circular");
+    expect(error.message).toContain("$.self");
+  });
+
+  test("still records and replays a top-level undefined", async ({
+    cassette,
+  }) => {
+    const nothing = () => undefined;
+    expect(await cassette.record(nothing)).toBeUndefined();
+    expect(await cassette.replay(nothing)).toBeUndefined();
+  });
+
+  test("still records and replays nested plain data exactly", async ({
+    cassette,
+  }) => {
+    const payload = () => ({
+      id: "user-1",
+      tags: ["admin", "ops"],
+      count: 0,
+      ratio: 0.5,
+      active: true,
+      owner: null,
+      meta: { empty: [], nothing: {} },
+    });
+    expect(await cassette.record(payload)).toEqual(payload());
+    expect(await cassette.replay(payload)).toEqual(payload());
+  });
+
+  test("still records and replays a null-prototype object as plain data", async ({
+    cassette,
+  }) => {
+    const dictionary = () =>
+      Object.assign(Object.create(null), { id: "user-1" }) as { id: string };
+    expect((await cassette.record(dictionary)).id).toBe("user-1");
+    expect((await cassette.replay(dictionary)).id).toBe("user-1");
+  });
+
+  test("still records and replays repeated references that are not cycles", async ({
+    cassette,
+  }) => {
+    const shared = () => {
+      const tag = { name: "admin" };
+      return { first: tag, second: tag };
+    };
+    const expected = { first: { name: "admin" }, second: { name: "admin" } };
+    expect(await cassette.record(shared)).toEqual(expected);
+    expect(await cassette.replay(shared)).toEqual(expected);
+  });
+});
+
+describe("callback identity (ADR 0027)", () => {
+  /**
+   * Closures from one factory share source text and differ only in captured
+   * values, which a function cannot expose without running. `runs` records
+   * which body actually executed, so a test can see a skipped callback.
+   */
+  function loaderFactory() {
+    const runs: string[] = [];
+    const makeLoader = (id: string) => () => {
+      runs.push(id);
+      return { id };
+    };
+    return { runs, makeLoader };
+  }
+
+  /** Replays a fresh closure that must be refused, and returns the refusal. */
+  async function replayRefusal(
+    cassette: CassetteHelper,
+    callback: () => unknown,
+  ): Promise<CassetteError> {
+    let refusal: unknown;
+    try {
+      await cassette.replay(callback);
+    } catch (caught) {
+      refusal = caught;
+    }
+    expect(refusal).toBeInstanceOf(CassetteError);
+    return refusal as CassetteError;
+  }
+
+  test("two closures from one factory each run and record their own result", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+
+    expect(await cassette.record(makeLoader("a"))).toEqual({ id: "a" });
+    expect(await cassette.record(makeLoader("b"))).toEqual({ id: "b" });
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("replay returns the result recorded for each closure, in any order", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    const a = makeLoader("a");
+    const b = makeLoader("b");
+
+    await cassette.record(a);
+    await cassette.record(b);
+    expect(await cassette.replay(b)).toEqual({ id: "b" });
+    expect(await cassette.replay(a)).toEqual({ id: "a" });
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("record of a recorded closure returns its stored result without running it again", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    const a = makeLoader("a");
+
+    expect(await cassette.record(a)).toEqual({ id: "a" });
+    expect(await cassette.record(a)).toEqual({ id: "a" });
+    expect(runs).toEqual(["a"]);
+  });
+
+  test("a fresh closure whose recordings disagree is refused and not run", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+    await cassette.record(makeLoader("b"));
+
+    const error = await replayRefusal(cassette, makeLoader("c"));
+    expect(error.code).toBe("CALLBACK_AMBIGUOUS");
+    expect(error.message.startsWith("[bun-test-utils/vcr] ")).toBe(true);
+    expect(error.message).toContain("same function object");
+    expect(error.details?.recordings).toBe(2);
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("a fresh closure whose recordings agree returns the agreed result, not run", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+    await cassette.record(makeLoader("a"));
+
+    expect(await cassette.replay(makeLoader("a"))).toEqual({ id: "a" });
+    expect(runs).toEqual(["a", "a"]);
+  });
+
+  test("a fresh closure matching one recording returns it: the documented limit (ADR 0027)", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+
+    // Captured values differ, but the source text matches the one recording.
+    expect(await cassette.replay(makeLoader("b"))).toEqual({ id: "a" });
+    expect(runs).toEqual(["a"]);
+  });
+
+  test("an inline closure written with the same code replays the recording", async ({
+    cassette,
+  }) => {
+    let runs = 0;
+    expect(await cassette.record(() => ({ id: `user-${++runs}` }))).toEqual({
+      id: "user-1",
+    });
+    expect(await cassette.replay(() => ({ id: `user-${++runs}` }))).toEqual({
+      id: "user-1",
+    });
+    expect(runs).toBe(1);
+  });
+
+  test("concurrent record calls for one closure keep the first recording", async ({
+    cassette,
+  }) => {
+    let started = 0;
+    const slow = async () => {
+      const n = ++started;
+      await Bun.sleep(n === 1 ? 10 : 1);
+      return { n };
+    };
+
+    const [first, second] = await Promise.all([
+      cassette.record(slow),
+      cassette.record(slow),
+    ]);
+    expect(second).toEqual(first);
+    expect(await cassette.replay(slow)).toEqual(first);
   });
 });
 

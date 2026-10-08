@@ -3,7 +3,7 @@ Feature: Snapshot fixtures
     Given a project with bun-test-utils preloaded
     And the file "snapshot.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("records a snapshot", async ({ snapshot }) => {
         snapshot.setMode("update");

@@ -14,7 +14,7 @@ The dogfooding suite tests focused engine internals in process. That is fast and
 | # | Requirement |
 |---|-------------|
 | R1 | Behaviour MUST be specified in Gherkin, readable without knowing the implementation |
-| R2 | Each scenario MUST run against a real throwaway project: its own directory, `bunfig.toml`, `node_modules/bun-test-utils`, and a real `bun test` subprocess |
+| R2 | Each scenario MUST run against a real throwaway project: its own directory, `bunfig.toml`, `node_modules/@archont561/bun-test-utils`, and a real `bun test` subprocess |
 | R3 | Steps MUST NOT import the fixture engine — only files, process output, and exit codes |
 | R4 | Scenarios MUST cover scopes, LIFO teardown, teardown after failure, explicit composition and overriding, graph validation errors, parameterization, and CLI `init` |
 | R5 | Scratch projects MUST be removed after each scenario |

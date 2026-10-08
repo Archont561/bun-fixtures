@@ -14,7 +14,7 @@
  * one seeded scratch-project scenario in `e2e/bdd/features/property.feature`.
  */
 import { existsSync } from "node:fs";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 import { textFileSchema } from "./shared/property-schemas.ts";
 
 const SEED = 20261007;
@@ -57,7 +57,12 @@ describe("style matrix: property cells over the assembled root", () => {
 
   test.prop(
     "vcr × pbt: generated payloads record once and replay through the root cassette",
-    (fc) => ({ payload: fc.jsonValue({ maxDepth: 3 }) }),
+    (fc) => ({
+      // JSON has no -0 (it is written as 0), so generate only canonical JSON.
+      payload: fc
+        .jsonValue({ maxDepth: 3 })
+        .map((value) => JSON.parse(JSON.stringify(value)) as typeof value),
+    }),
     async ({ cassette }, { payload }) => {
       let calls = 0;
       const load = () => {

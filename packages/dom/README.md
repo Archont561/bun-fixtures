@@ -1,9 +1,9 @@
 # DOM fixtures (internal)
 
-The DOM fixtures (`window`, `document`, `page`) are internal workspace fixtures bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/dom` subpath.
+The DOM fixtures (`window`, `document`, `page`) are internal workspace fixtures bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/dom` subpath.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("mounts markup and dispatches clicks", async ({ page }) => {
   page.mount(`<button id="add">add</button><span id="count">0</span>`);

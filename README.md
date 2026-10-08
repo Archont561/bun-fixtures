@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml"><img src="https://github.com/Archont561/bun-test-utils/actions/workflows/docs.yml/badge.svg" alt="Docs"></a>
-  <a href="https://img.shields.io/npm/v/bun-test-utils"><img src="https://img.shields.io/npm/v/bun-test-utils?label=npm" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@archont561/bun-test-utils"><img src="https://img.shields.io/npm/v/%40archont561%2Fbun-test-utils?label=npm" alt="npm version"></a>
   <a href="https://archont561.github.io/bun-test-utils/"><img src="https://img.shields.io/badge/docs-Starlight-6d28d9" alt="Documentation"></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-%E2%89%A51.1-black?logo=bun" alt="Bun >=1.1"></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript" alt="TypeScript strict"></a>
@@ -19,7 +19,7 @@ Bun's native test runner is fast, but it does not provide a fixture model. `bun-
 ## Install
 
 ```bash
-bun add -d bun-test-utils
+bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
@@ -32,12 +32,12 @@ bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
 
-Use `defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath for
+Use `defineArbitraries` from the helper-only `@archont561/bun-test-utils/pbt` subpath for
 reusable fast-check arbitrary records. It contextually types the factory API
 parameter and returns the definition unchanged:
 
 ```ts
-import { defineArbitraries } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
@@ -46,13 +46,13 @@ export const userArbitraries = defineArbitraries((fc) => ({
 ```
 
 For reusable scenario callbacks, import `givenStep`, `whenStep`, and `thenStep`
-from `bun-test-utils/bdd`. Scenario execution itself remains on root `test.scenario(...)`.
+from `@archont561/bun-test-utils/bdd`. Scenario execution itself remains on root `test.scenario(...)`.
 
 ## Quick start
 
 ```ts
 // tests/test.ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
   user: {
@@ -65,7 +65,7 @@ export const test = base.extend({
 
 ```ts
 // tests/user.test.ts
-import { expect } from "bun-test-utils";
+import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
 test("returns the fixture value", async ({ user }) => {
@@ -90,7 +90,7 @@ Linux and macOS are supported. Windows support is planned after the first releas
 
 ## Status
 
-The repository is in pre-release publication work. The engine and capability packs are implemented and covered by unit, conformance, Gherkin, and packed-consumer tests. npm publication of `bun-test-utils@0.1.0` is the remaining release milestone.
+The repository is in pre-release publication work. The engine and capability packs are implemented and covered by unit, conformance, Gherkin, and packed-consumer tests. npm publication of `@archont561/bun-test-utils@0.1.0` is the remaining release milestone.
 
 ## Roadmap — deliberately deferred
 

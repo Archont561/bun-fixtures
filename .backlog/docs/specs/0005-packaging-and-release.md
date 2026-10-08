@@ -24,6 +24,8 @@
 | R13 | The engine plus standard, DOM, snapshot, property-testing, and minimal VCR capabilities MUST be labeled stable and follow semantic versioning. |
 | R14 | Browser and BDD MUST be labeled experimental, with the public policy that experimental capabilities MAY change in minor versions. |
 | R15 | The `0.1.x` support declaration MUST name Linux and macOS; Windows MUST remain post-release until POSIX path assumptions are removed and a Windows CI lane exists. |
+| R16 | The one published package MUST be named `@archont561/bun-test-utils` (ADR 0028), so its npm tarball is `archont561-bun-test-utils-<version>.tgz`. |
+| R17 | A release MUST be a `v<version>` tag on a commit on `main`. It MUST publish the verified package to npm (Trusted Publishing, environment `npm`, no npm token) and to GitHub Packages (`@archont561` scope), then attach the packed tarball to the GitHub Release (ADR 0029). |
 
 ### Why the licence files are listed in `files`
 

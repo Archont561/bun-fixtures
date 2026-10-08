@@ -9,7 +9,7 @@ Feature: Property-based tests in a consumer project
     Given a project with bun-test-utils preloaded
     And the file "property.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test.prop("reversing a string twice preserves it", (fc) => ({ value: fc.string() }), async (_ctx, { value }) => {
         expect(value.split("").reverse().reverse().join("")).toBe(value);

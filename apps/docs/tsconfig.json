@@ -3,7 +3,9 @@
   "compilerOptions": {
     "types": ["bun"],
     "paths": {
-      "bun-test-utils": ["../../packages/bun-test-utils/src/plugin.ts"]
+      "@archont561/bun-test-utils": [
+        "../../packages/bun-test-utils/src/plugin.ts"
+      ]
     }
   },
   "include": [".astro/types.d.ts", "**/*"]

@@ -18,7 +18,7 @@ opens a fixture map through a documented API such as `openFixtures()`.
 
 ```ts
 // test.ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
   db: {
@@ -34,7 +34,7 @@ export const test = base.extend({
 
 ```ts
 // users.test.ts
-import { expect } from "bun-test-utils";
+import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
 test("uses the explicit fixture", async ({ db }) => {

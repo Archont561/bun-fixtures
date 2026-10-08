@@ -3,7 +3,7 @@
  *
  * The standard fixtures (`tmpdir`, `env`, `stdio`, `clock`, `seed`, and
  * `networkGuard`) are not called directly
- * here — the public `bun-test-utils` test export composes them explicitly,
+ * here — the public `@archont561/bun-test-utils` test export composes them explicitly,
  * so this file proves the package works the way a real consumer sees it:
  * explicit composition, name-based DI, and engine-driven LIFO teardown.
  *
@@ -14,7 +14,7 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 
 type TmpDirHelper = {
   dir: string;

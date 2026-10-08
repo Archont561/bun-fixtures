@@ -6,6 +6,7 @@
       "name": "bun-test-utils-monorepo",
       "devDependencies": {
         "@aboviq/bun-test-cucumber": "^0.2.0",
+        "@archont561/bun-test-utils": "workspace:*",
         "@biomejs/biome": "2.5.15",
         "@bun-test-utils/config": "workspace:*",
         "@changesets/cli": "^3.0.3",
@@ -14,7 +15,6 @@
         "@playwright/cli": "^0.1.22",
         "@types/bun": "^1.4.2",
         "backlog": "^1.4.56",
-        "bun-test-utils": "workspace:*",
         "bunup": "0.16.32",
         "lefthook": "^2.1.17",
         "skills": "^1.7.0",
@@ -55,7 +55,7 @@
       },
     },
     "packages/bun-test-utils": {
-      "name": "bun-test-utils",
+      "name": "@archont561/bun-test-utils",
       "version": "0.1.0",
       "bin": {
         "test-utils": "./dist/cli.js",
@@ -162,6 +162,8 @@
     "@aboviq/bun-test-cucumber": ["@aboviq/bun-test-cucumber@0.2.0", "", { "dependencies": { "@cucumber/cucumber-expressions": "^18.0.1", "@cucumber/gherkin": "^35.1.0", "@cucumber/messages": "^30.0.0", "@cucumber/tag-expressions": "^7.0.0", "arkregex": "^0.0.3" } }, "sha512-Fq6UGP+y4Lh3i6ej3XYfTbDLtQoCL0CjvkGXccK2v8L6wi+XK6T+1lOp1gG28QY+T3JyCnGwsxDTzstrbrc5tA=="],
 
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.91.1", "", { "dependencies": { "json-schema-to-ts": "^3.1.1" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-LAmu761tSN9r66ixvmciswUj/ZC+1Q4iAfpedTfSVLeswRwnY3n2Nb6Tsk+cLPP28aLOPWeMgIuTuCcMC6W/iw=="],
+
+    "@archont561/bun-test-utils": ["@archont561/bun-test-utils@workspace:packages/bun-test-utils"],
 
     "@ark/util": ["@ark/util@0.55.0", "", {}, "sha512-aWFNK7aqSvqFtVsl1xmbTjGbg91uqtJV7Za76YGNEwIO4qLjMfyY8flmmbhooYMuqPCO2jyxu8hve943D+w3bA=="],
 
@@ -782,8 +784,6 @@
     "boxen": ["boxen@8.0.1", "", { "dependencies": { "ansi-align": "^3.0.1", "camelcase": "^8.0.0", "chalk": "^5.3.0", "cli-boxes": "^3.0.0", "string-width": "^7.2.0", "type-fest": "^4.21.0", "widest-line": "^5.0.0", "wrap-ansi": "^9.0.0" } }, "sha512-F3PH5k5juxom4xktynS7MoFY+NUWH5LC4CnH11YB8NPew+HLpmBLCybSAEyb2F+4pRXhuhWqFesoQd6DAyc2hw=="],
 
     "buffer-image-size": ["buffer-image-size@0.6.4", "", { "dependencies": { "@types/node": "*" } }, "sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ=="],
-
-    "bun-test-utils": ["bun-test-utils@workspace:packages/bun-test-utils"],
 
     "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
 

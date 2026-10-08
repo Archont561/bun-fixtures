@@ -9,7 +9,7 @@ Feature: Teardown errors
   Scenario: A failing body is reported ahead of a failing teardown
     Given the file "a.test.ts":
       """
-      import { expect, test as base } from "bun-test-utils";
+      import { expect, test as base } from "@archont561/bun-test-utils";
 
       export const test = base.extend({
         flaky: {
@@ -33,7 +33,7 @@ Feature: Teardown errors
   Scenario: A failing fixture setup is reported ahead of a sibling teardown
     Given the file "a.test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
 
       export const test = base.extend({
         first: {
@@ -59,7 +59,7 @@ Feature: Teardown errors
   Scenario: A passing body still fails when its teardown throws
     Given the file "a.test.ts":
       """
-      import { expect, test as base } from "bun-test-utils";
+      import { expect, test as base } from "@archont561/bun-test-utils";
 
       export const test = base.extend({
         flaky: {

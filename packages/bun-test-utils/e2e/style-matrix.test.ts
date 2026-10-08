@@ -11,7 +11,7 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 import {
   createProject,
   type Project,
@@ -42,7 +42,7 @@ describe("style matrix: file-bearing cells in a scratch project", () => {
       writeProjectFile(
         project,
         "snapshot-matrix.test.ts",
-        `import { expect, test } from "bun-test-utils";
+        `import { expect, test } from "@archont561/bun-test-utils";
 
 function withRotatedKeys(value) {
   if (Array.isArray(value)) return value.map(withRotatedKeys);
@@ -107,7 +107,7 @@ test.prop(
       writeProjectFile(
         project,
         "vcr-matrix.test.ts",
-        `import { expect, test } from "bun-test-utils";
+        `import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
   "record then replay matches on method and full URL",

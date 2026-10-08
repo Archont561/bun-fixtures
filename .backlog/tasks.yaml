@@ -155,8 +155,8 @@ tasks:
     updated_at: 2026-10-05T15:18:13.943Z
   - id: task_005
     title: M5 — Publish to npm
-    description: "Release bun-test-utils 0.1.0 as the repository’s only public npm
-      package. The public package is a thin assembly wrapper;
+    description: "Release @archont561/bun-test-utils 0.1.0 as the repository’s only
+      public npm package. The public package is a thin assembly wrapper;
       @bun-test-utils/core and all capability workspaces are private and bundled
       into its tarball (ADR 0013, ADR 0014). PROGRESS: CI, dual licensing,
       release tooling, changelog, the pack/install/CLI/internal-capability smoke
@@ -164,13 +164,14 @@ tasks:
       tiers, the frozen minimal VCR surface, fixture-key collision precedence,
       contractual error messages, and Linux/macOS support are defined before
       0.1.0. task_057 is done: the installed-consumer serializer preload flow
-      (bun-test-utils/snap subpath + global serializer + generated snapshot) is
-      now proven against the packed tarball in
+      (@archont561/bun-test-utils/snap subpath + global serializer + generated
+      snapshot) is now proven against the packed tarball in
       packages/bun-test-utils/e2e/snap-serializer.test.ts. REMAINING: create the
-      v0.1.0 tag, publish bun-test-utils, and rerun the installed-consumer
-      harness — including the task_057 serializer flow — against the registry
-      package. No tag exists yet (git tag -l is empty). Tagging and publishing
-      require maintainer sanction because they create public artifacts."
+      v0.1.0 tag, publish @archont561/bun-test-utils, and rerun the
+      installed-consumer harness — including the task_057 serializer flow —
+      against the registry package. No tag exists yet (git tag -l is empty).
+      Tagging and publishing require maintainer sanction because they create
+      public artifacts."
     source_links: []
     status: in_progress
     priority: P1
@@ -3584,10 +3585,24 @@ tasks:
       |
 
 
-      Six of ten come back wrong and three come back literally empty. The record
-      run passes and the cassette is written and committed, so every replay
-      afterwards returns {} — silently, forever. This is the worst failure mode
-      available: a wrong answer persisted to a file the user checks in.
+      Seven of the ten rows come back wrong with no warning, and three of those
+      come back literally empty. The record run passes, so the failure is
+      invisible at record time, and every replay of that callback returns the
+      corrupted value.
+
+
+      Correction (2026-10-09, reproduced on main): the callback result never
+      reaches the cassette file. The callback registry is in memory per test and
+      save() writes only HTTP entries, so the corruption stays inside the test
+      that recorded the value; a later test that replays the same callback gets
+      CALLBACK_NOT_RECORDED. The first record call returns the live value. Only
+      replays are wrong.
+
+
+      Same mechanism, same rule, also measured: nested undefined (key dropped),
+      -0 (replays as 0; bun:test toEqual tells them apart), RegExp and typed
+      arrays (become {} or index-keyed objects), nested functions and
+      symbol-keyed properties (dropped), sparse array holes (become null).
 
 
       Why it is release-relevant: spec 0012 R4 puts
@@ -3603,15 +3618,21 @@ tasks:
       reason to rush it into 0.1.0. This task is the smaller, prior question: a
       value that cannot round-trip must be REFUSED loudly rather than quietly
       corrupted. Whether such values should instead be SUPPORTED is task_050's
-      design decision — resolve that there, and record the answer here.
+      design decision; the refuse-only decision is recorded in ADR 0026.
 
 
       Minimum fix: make serializeOutput detect values it cannot round-trip and
       throw a named BunTestUtilsError; wrap the circular-structure TypeError so
       it carries a code and the [bun-test-utils/vcr] prefix like every other
       diagnostic.
+
+
+      Decision (ADR 0026, 2026-10-09): refuse-only, with the code
+      CALLBACK_NOT_SERIALIZABLE and one plain-data rule covering every shape
+      above. Callback identity keyed on source text is a separate defect:
+      task_067.
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - vcr
@@ -3625,8 +3646,8 @@ tasks:
       - a circular callback value raises a BunTestUtilsError carrying a code and
         the [bun-test-utils/vcr] prefix, not a raw TypeError
       - a red test reproduces each measured row above in packages/vcr/tests/
-      - the refuse-only vs round-trip decision is made in task_050 and recorded
-        here
+      - the refuse-only decision is recorded here (ADR 0026); supporting these
+        values stays with task_050
     dependencies: []
     planning:
       split_status: pending
@@ -3645,7 +3666,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T21:21:53.450Z
-    updated_at: 2026-10-08T21:21:53.450Z
+    updated_at: 2026-10-08T22:11:16.004Z
   - id: task_066
     title: "release.yml publishes through an `environment: npm` the repository does
       not define"
@@ -3685,7 +3706,10 @@ tasks:
       Publisher registration on npmjs.org (repository Archont561/bun-test-utils,
       workflow .github/workflows/release.yml, environment: none), the v0.1.0
       tag, and the post-publish rerun of the installed-consumer harness. The
-      name `bun-test-utils` is free on npm (registry returns 404).
+      package is published as `@archont561/bun-test-utils` (ADR 0028), so the
+      trusted publisher is registered for that name. The release.yml upload glob
+      `bun-test-utils-*.tgz` must change to `archont561-bun-test-utils-*.tgz` in
+      the same change, or the upload step fails on fail_on_unmatched_files.
     source_links: []
     status: ready
     priority: P1
@@ -3720,3 +3744,103 @@ tasks:
       push_comments: false
     created_at: 2026-10-08T21:22:10.539Z
     updated_at: 2026-10-08T21:22:10.539Z
+  - id: task_067
+    title: cassette.record keys callbacks by source text, so closures from one
+      factory share a registry entry
+    description: "Found while testing task_065 (2026-10-09). callbackIdentity in
+      packages/vcr/src/cassette.ts keys a callback by its source text (fnv1a of
+      Function.prototype.toString plus its length), without executing it. Two
+      closures created by one factory have identical source text, so they share
+      one registry entry. Verified: const makeLoader = (id) => () => ({ id });
+      await cassette.record(makeLoader('a')); await
+      cassette.record(makeLoader('b')) returns { id: 'a' } for the second call,
+      and the second closure's body never runs, so the wrong value is returned
+      with no warning. The first record call of the second closure returns the
+      first closure's result. Stable surface: spec 0012 R4 promises the recorded
+      result for record(callback). Needs a design decision first (how a
+      callback's identity is derived without executing it, e.g. an explicit key
+      or a hash of the captured values), recorded as an ADR before any
+      implementation."
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - vcr
+      - bug
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - two closures from one factory with different captured values get
+        distinct registry entries, and each record call runs its own callback
+        and returns its own result
+      - replay of each closure returns the result recorded for that closure
+      - the identity scheme is recorded in an ADR before the implementation lands
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T22:05:45.806Z
+    updated_at: 2026-10-08T22:46:25.082Z
+  - id: task_068
+    title: Rename the public package to @archont561/bun-test-utils
+    description: "The public wrapper (packages/bun-test-utils) is renamed to the
+      owner-scoped npm name @archont561/bun-test-utils: the name already
+      reserved on npm, and the one trusted publishing and GitHub Packages need.
+      Private @bun-test-utils/* workspaces, the test-utils binary, the
+      repository URL, the docs base path, the packages/bun-test-utils directory,
+      and runtime diagnostic prefixes and Symbol.for keys keep their names.
+      Decision: ADR 0028. The release.yml tarball glob (bun-test-utils-*.tgz) is
+      reported, not changed: it belongs to task_066."
+    source_links: []
+    status: done
+    priority: P1
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - ADR 0028 records the scoped name in its own docs commit before the
+        rename lands
+      - The public manifest name is @archont561/bun-test-utils and npm pack
+        --dry-run produces archont561-bun-test-utils-0.1.0.tgz
+      - Import specifiers, install commands, the npm badge, README and docs-site
+        examples, and the CLI scaffold and preload path use the scoped name;
+        test-utils init writes
+        ./node_modules/@archont561/bun-test-utils/dist/plugin.js
+      - Workspace wiring follows the rename (root devDependency, tsconfig paths,
+        turbo pkg#task keys, e2e harness, pack test) and bun.lock is regenerated
+        by bun install
+      - Forced build, typecheck, lint, root bun test, and forced turbo test pass
+      - release.yml tarball glob and the trusted-publisher setup for the scoped
+        name are reported as task_066 follow-ups, not changed here
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T23:01:12.172Z
+    updated_at: 2026-10-08T23:07:53.288Z

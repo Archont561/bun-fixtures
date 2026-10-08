@@ -3,7 +3,7 @@
  *
  * Packs the publishable package, installs the tarball into a scratch project,
  * preloads a module that registers a global serializer through the public
- * `bun-test-utils/snap` subpath, runs a root `bun-test-utils` snapshot test,
+ * `@archont561/bun-test-utils/snap` subpath, runs a root `bun-test-utils` snapshot test,
  * and verifies the generated snapshot — the exact flow task_005 criterion 5
  * re-runs against the registry package after publication.
  */
@@ -17,11 +17,13 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 
 const BUN = process.execPath;
 const PACKAGE_DIR = join(import.meta.dir, "..");
-const PACKAGE_NAME = "bun-test-utils";
+const PACKAGE_NAME = "@archont561/bun-test-utils";
+/** npm folds the scope into the tarball name: `@scope/name` packs to `scope-name-<version>.tgz`. */
+const TARBALL_NAME = "archont561-bun-test-utils";
 
 interface RunResult {
   exitCode: number;
@@ -57,7 +59,7 @@ function run(cmd: string[], cwd?: string): string {
 
 describe("installed-consumer snapshot serializer preload", () => {
   test(
-    "a packed install applies a global serializer from bun-test-utils/snap to a root snapshot test",
+    "a packed install applies a global serializer from @archont561/bun-test-utils/snap to a root snapshot test",
     () => {
       const packDir = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-snap-"));
       const project = mkdtempSync(
@@ -65,7 +67,7 @@ describe("installed-consumer snapshot serializer preload", () => {
       );
       try {
         // Pack and install the publishable tarball — not the workspace source.
-        const tgz = join(packDir, `${PACKAGE_NAME}.tgz`);
+        const tgz = join(packDir, `${TARBALL_NAME}.tgz`);
         run(
           [BUN, "pm", "pack", "--quiet", "--ignore-scripts", "--filename", tgz],
           PACKAGE_DIR,
@@ -86,7 +88,7 @@ describe("installed-consumer snapshot serializer preload", () => {
         // serializer through the public subpath.
         writeFileSync(
           join(project, "test-serializers.ts"),
-          `import { createSnapshotSerializer } from "bun-test-utils/snap";\n` +
+          `import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";\n` +
             `\n` +
             `createSnapshotSerializer((value) =>\n` +
             `  value instanceof Date ? "<date>" : undefined,\n` +
@@ -103,7 +105,7 @@ describe("installed-consumer snapshot serializer preload", () => {
         // test context, and the Date sits nested inside the matched value.
         writeFileSync(
           join(project, "app.test.ts"),
-          `import { test } from "bun-test-utils";\n` +
+          `import { test } from "@archont561/bun-test-utils";\n` +
             `\n` +
             `test("renders the widget", ({ snapshot }) => {\n` +
             `  snapshot.match({ at: new Date(0), label: "widget" });\n` +

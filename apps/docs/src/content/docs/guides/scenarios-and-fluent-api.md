@@ -13,7 +13,7 @@ Scenarios are a readable wrapper around one fixture-aware test. Each `given` and
 The fluent scenario API is optional. Install the BDD peer only in projects that use it:
 
 ```bash
-bun add -d bun-test-utils @aboviq/bun-test-cucumber
+bun add -d @archont561/bun-test-utils @aboviq/bun-test-cucumber
 ```
 
 Property scenarios also require `fast-check`:
@@ -25,7 +25,7 @@ bun add -d fast-check
 ## A fluent scenario
 
 ```ts
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 
 test.scenario("creates a user")
   .given("a name", () => ({ name: "Ada" }))
@@ -57,7 +57,7 @@ test.scenario("uses a fixture")
 ## Sharing typed steps and sequences
 
 Put reusable steps in a shared module and wrap them with the phase-specific
-helpers from `bun-test-utils/bdd`. The generic arguments declare the incoming
+helpers from `@archont561/bun-test-utils/bdd`. The generic arguments declare the incoming
 scenario state and the state returned by `given`/`when`; `then` declares only
 its input state. The same subpath exports `GivenStep`, `WhenStep`, `ThenStep`,
 `ScenarioContext`, and `GivenChain` for explicit type annotations. A
@@ -65,8 +65,8 @@ consumer-owned function can still apply a reusable sequence to a `GivenChain`.
 
 ```ts
 // scenario-steps.ts
-import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
-import type { GivenChain } from "bun-test-utils/bdd";
+import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
+import type { GivenChain } from "@archont561/bun-test-utils/bdd";
 
 export const writeFile = givenStep<object, { filename: string }>(({ tmpdir }) => {
   const filename = "shared.txt";
@@ -90,7 +90,7 @@ Use the same sequence from separate scenario files:
 
 ```ts
 // first.test.ts (second.test.ts imports the same sequence)
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 import { assertSharedContents, withSharedFile } from "./scenario-steps";
 
 withSharedFile(test.scenario("reads a file from a shared sequence")).then(
@@ -110,7 +110,7 @@ compose project fixtures explicitly with `test.extend()`.
 `test.scenario.prop(...)` adds generated values as the initial context:
 
 ```ts
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 
 test.scenario
   .prop("calculates a total", (fc) => ({

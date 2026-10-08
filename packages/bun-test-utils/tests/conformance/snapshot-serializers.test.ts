@@ -1,14 +1,14 @@
 import { afterAll } from "bun:test";
 import { readFileSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
-import { expect, test } from "bun-test-utils";
-import * as snapApi from "bun-test-utils/snap";
+import { expect, test } from "@archont561/bun-test-utils";
+import * as snapApi from "@archont561/bun-test-utils/snap";
 import {
   createSnapshotSerializer,
   registerSnapshotSerializer,
   resetSnapshotSerializers,
   unregisterSnapshotSerializer,
-} from "bun-test-utils/snap";
+} from "@archont561/bun-test-utils/snap";
 
 class LifecycleToken {
   constructor(readonly value: string) {}

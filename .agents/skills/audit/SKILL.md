@@ -50,9 +50,9 @@ For each code-quality audit, read:
 Use the project's own architecture and conventions as the controlling context:
 - Scoped fixture dependency injection engine (`packages/core`) with LIFO teardown.
 - Explicit fixture composition via `test.extend` (ADR 0008, ADR 0021, ADR 0022).
-- Single published wrapper package (`bun-test-utils`) assembling internal capability workspaces
+- Single published wrapper package (`@archont561/bun-test-utils`) assembling internal capability workspaces
   (`@bun-test-utils/*`) (ADR 0013, ADR 0014).
-- Subpath-scoped typed helpers (`bun-test-utils/bdd`, `bun-test-utils/snap`, etc.) per ADR 0022.
+- Subpath-scoped typed helpers (`@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, etc.) per ADR 0022.
 - Minimal ambient configuration and frozen stability tiers (ADR 0018, ADR 0019).
 
 A principle is a lens, not proof: line count, a design-pattern opportunity, or a personal style

@@ -3,7 +3,7 @@ Feature: VCR fixtures
     Given a project with bun-test-utils preloaded
     And the file "vcr.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("records and replays callback output", async ({ cassette }) => {
         let calls = 0;

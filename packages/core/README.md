@@ -1,6 +1,6 @@
 # Core fixture engine (internal)
 
-`@bun-test-utils/core` is the private workspace that powers the published `bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed schema and scenario-step helpers are limited to `bun-test-utils/pbt` and `bun-test-utils/bdd`. Core helpers and fixture-pack helpers remain internal implementation details.
+`@bun-test-utils/core` is the private workspace that powers the published `@archont561/bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed schema and scenario-step helpers are limited to `@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd`. Core helpers and fixture-pack helpers remain internal implementation details.
 
 ## Explicit composition only
 
@@ -8,7 +8,7 @@ There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not 
 
 ```ts
 // test.ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
   db: {
@@ -24,7 +24,7 @@ export const test = base.extend({
 
 ```ts
 // users.test.ts
-import { expect } from "bun-test-utils";
+import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
 test("uses the explicit fixture", async ({ db }) => {

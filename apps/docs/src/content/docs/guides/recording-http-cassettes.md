@@ -18,13 +18,13 @@ Matcher DSLs, configurable redaction, and cassette migration tooling are deferre
 `cassette` is available on the root `test` context with no extra dependency:
 
 ```bash
-bun add -d bun-test-utils
+bun add -d @archont561/bun-test-utils
 ```
 
 ## Record and replay a callback
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("replays a user lookup", async ({ cassette }) => {
   let calls = 0;
@@ -45,8 +45,35 @@ test("replays a user lookup", async ({ cassette }) => {
 });
 ```
 
-Callback identity is derived without executing the callback during replay. A
-callback result must be serializable.
+A callback is identified by its function object once the test has recorded it, so
+replay the same function you recorded. A new function is matched by its source
+text only when every recording with that text holds the same result. Otherwise
+`replay` throws `CALLBACK_AMBIGUOUS` and does not run the callback. Two closures
+created by one factory are separate callbacks: each runs once and keeps its own
+result. A new closure with different captured values still matches agreeing
+recordings of the same code, so replay the closure you recorded when values differ.
+
+A callback result must be plain data: `null`, booleans, strings, finite numbers
+other than `-0`, arrays without holes, and plain objects. JSON cannot represent
+anything else exactly, so `record` throws a `CassetteError` with the code
+`CALLBACK_NOT_SERIALIZABLE`, names the path of the value, and stores nothing.
+Convert the value inside the callback first:
+
+```ts
+// Refused: a Date, a Map, and a BigInt do not survive JSON.
+const rawAccount = () => ({
+  createdAt: new Date(0),
+  roles: new Map([["admin", true]]),
+  balance: 10n,
+});
+
+// Accepted: convert inside the callback.
+const account = () => ({
+  createdAt: new Date(0).toISOString(),
+  roles: Object.fromEntries(new Map([["admin", true]])),
+  balance: String(10n),
+});
+```
 
 ## Record and replay HTTP traffic
 
@@ -58,7 +85,7 @@ VCR_MODE=replay bun test tests/user.test.ts
 ```
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("fetches user details", async ({ cassette }) => {
   // Requesting the fixture activates interception for this test.

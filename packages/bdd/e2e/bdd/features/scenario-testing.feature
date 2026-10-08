@@ -3,7 +3,7 @@ Feature: BDD-style fluent scenarios
     Given a project with bun-test-utils preloaded
     And the file "scenario.test.ts":
       """
-      import { test } from "bun-test-utils";
+      import { test } from "@archont561/bun-test-utils";
 
       test.scenario("chains state")
         .given("a base value", () => ({ value: 2 }))

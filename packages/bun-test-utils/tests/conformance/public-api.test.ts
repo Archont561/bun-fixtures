@@ -1,10 +1,10 @@
-import * as api from "bun-test-utils";
-import { expect, test } from "bun-test-utils";
-import type { ScenarioContext } from "bun-test-utils/bdd";
-import * as bddApi from "bun-test-utils/bdd";
-import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
-import * as pbtApi from "bun-test-utils/pbt";
-import { defineArbitraries } from "bun-test-utils/pbt";
+import * as api from "@archont561/bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
+import type { ScenarioContext } from "@archont561/bun-test-utils/bdd";
+import * as bddApi from "@archont561/bun-test-utils/bdd";
+import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
+import * as pbtApi from "@archont561/bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 import fc from "fast-check";
 
 test("public root exports only the approved runner values", () => {
@@ -55,13 +55,13 @@ test("phase-specific step wrappers return callbacks unchanged", () => {
 
 test("other capability subpaths remain private", async () => {
   const subpaths = [
-    "bun-test-utils/std",
-    "bun-test-utils/dom",
-    "bun-test-utils/browser",
-    "bun-test-utils/vcr",
-    "bun-test-utils/snapshot",
-    "bun-test-utils/pbt/runner",
-    "bun-test-utils/bdd/runner",
+    "@archont561/bun-test-utils/std",
+    "@archont561/bun-test-utils/dom",
+    "@archont561/bun-test-utils/browser",
+    "@archont561/bun-test-utils/vcr",
+    "@archont561/bun-test-utils/snapshot",
+    "@archont561/bun-test-utils/pbt/runner",
+    "@archont561/bun-test-utils/bdd/runner",
   ] as string[];
   for (const specifier of subpaths) {
     await expect(import(specifier)).rejects.toThrow();

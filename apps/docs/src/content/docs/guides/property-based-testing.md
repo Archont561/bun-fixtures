@@ -7,23 +7,23 @@ description: Generative tests with fast-check arbitraries over injected fixtures
 
 
 `test.prop(...)` combines `fast-check` arbitraries with fixture
-injection from the root `bun-test-utils` entrypoint: instead of hand-written examples, you state a property and the
+injection from the root `@archont561/bun-test-utils` entrypoint: instead of hand-written examples, you state a property and the
 runner generates hundreds of samples — and shrinks any failure down to a
 minimal counterexample.
 
 ## Installation
 
-`test.prop` ships inside `bun-test-utils`, but `fast-check` is an optional peer.
+`test.prop` ships inside `@archont561/bun-test-utils`, but `fast-check` is an optional peer.
 Install it only in projects that use property tests:
 
 ```bash
-bun add -d bun-test-utils fast-check
+bun add -d @archont561/bun-test-utils fast-check
 ```
 
 ## Writing a property test
 
 ```ts
-import { test, expect } from "bun-test-utils";
+import { test, expect } from "@archont561/bun-test-utils";
 
 test.prop(
   "encoding is reversible",
@@ -47,13 +47,13 @@ test.prop(
 An arbitrary definition is an ordinary record or factory. Export it from a
 shared module and import it explicitly wherever a property needs it; there is
 no registry or runtime definition-processing machinery. Wrap shared factories with
-`defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath to get
+`defineArbitraries` from the helper-only `@archont561/bun-test-utils/pbt` subpath to get
 contextual fast-check typing without importing `FastCheckApi` in each definition
 file:
 
 ```ts
 // arbitraries.ts
-import { defineArbitraries } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
@@ -72,7 +72,7 @@ arbitraries—no casts or per-test annotations are needed:
 
 ```ts
 // admin.test.ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 import { adminUserArbitraries } from "./arbitraries";
 
 test.prop("admin permissions are non-empty", adminUserArbitraries, async (_fixtures, {
@@ -115,7 +115,7 @@ connection or temporary directory opened for one sample can never leak into
 the next.
 
 ```ts
-import { test, expect } from "bun-test-utils";
+import { test, expect } from "@archont561/bun-test-utils";
 
 test.prop(
   "orders survive a round-trip through the store",

@@ -12,7 +12,8 @@ import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { parse, stringify } from "smol-toml";
 
-export const DEFAULT_ENTRY = "./node_modules/bun-test-utils/dist/plugin.js";
+export const DEFAULT_ENTRY =
+  "./node_modules/@archont561/bun-test-utils/dist/plugin.js";
 
 /**
  * Adds `entry` to `[test].preload`, preserving whatever is already there.
@@ -77,7 +78,7 @@ export async function init({
   console.log(
     "\nNext: compose project fixtures explicitly with test.extend():\n",
   );
-  console.log('  import { test as base } from "bun-test-utils";');
+  console.log('  import { test as base } from "@archont561/bun-test-utils";');
   console.log("  export const test = base.extend({});\n");
 }
 

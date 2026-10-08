@@ -8,9 +8,13 @@ and are consumed — and deleted — when versions are cut.
 
 ```bash
 bun run changeset          # describe a change; writes .changeset/<name>.md — commit it
-bun run release:version    # consume pending changesets: bump versions, write CHANGELOGs
-bun run release:publish    # publish the bumped packages to npm and create git tags
+bun run release:version    # consume pending changesets: bump the version (changelog is disabled)
 ```
+
+Publishing does not go through `changeset publish` (`bun run release:publish`); do not run it. A
+release is a `v<version>` tag on a commit on `main`. `release.yml` verifies the tag, publishes the
+package to npm (Trusted Publishing, environment `npm`) and to GitHub Packages, and then attaches the
+tarball to the GitHub Release. See [ADR 0029](../.backlog/docs/adr/0029-release-to-npm-and-github-packages.md).
 
 You add a changeset in the **same pull request** as the change it describes. The
 file is prose aimed at a user of the package, not a restatement of the commit
@@ -24,14 +28,14 @@ refactors, CI tweaks, and `.backlog/` edits do not.
 
 As of the `bun-test-utils` rebrand and single-package consolidation (see the ADR
 superseding ADR 0011, `task_018`/`task_020`), exactly **one** package ever publishes:
-`bun-test-utils`. The six capability packages it bundles (`std`, `pbt`, `dom`, `browser`,
+`@archont561/bun-test-utils`. The six capability packages it bundles (`std`, `pbt`, `dom`, `browser`,
 `vcr`, `snapshot`) are internal, unpublished (`private: true`) workspace packages nested
 inside it — changesets ignores them automatically, the same way it already ignored
 `@bun-test-utils/config` and `docs`.
 
 | Setting | Value | Why |
 |---------|-------|-----|
-| `access` | `public` | `bun-test-utils` publishes to the public npm registry |
+| `access` | `public` | `@archont561/bun-test-utils` publishes to the public npm registry |
 | `baseBranch` | `main` | changed-package detection diffs against `main` |
 | `privatePackages` | not versioned or tagged | every `private: true` workspace package (`@bun-test-utils/config` and the six bundled internal packages) is skipped |
 | `updateInternalDependencies` | `patch` | kept for workspace hygiene; with a single published package this mostly has nothing to do |

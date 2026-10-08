@@ -42,7 +42,7 @@ export function ensureBddIntegrationInstalled(): void {
 /**
  * Adds optional BDD-style scenario APIs to a core fixture-aware test runner.
  *
- * The wrapper keeps the public import surface rooted at `bun-test-utils` while
+ * The wrapper keeps the public import surface rooted at `@archont561/bun-test-utils` while
  * making `test.scenario(...)` opt-in: ordinary tests can import and run without
  * the BDD peer, and the first scenario declaration reports a clear install
  * command if `@aboviq/bun-test-cucumber` is absent.

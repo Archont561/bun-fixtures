@@ -3,7 +3,7 @@ Feature: Browser and web fixtures
     Given a project with bun-test-utils preloaded
     And the file "browser.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("uses webPage in DOM mode and httpMock", async ({ webPage, httpMock }) => {
         expect(webPage.mode).toBe("dom");

@@ -6,7 +6,7 @@
 
 ## Goal
 
-`bun add -d bun-test-utils && bunx test-utils init` works for a stranger. Exactly one npm
+`bun add -d @archont561/bun-test-utils && bunx test-utils init` works for a stranger. Exactly one npm
 package is published; private workspaces are assembled into Bunup-built ESM and declarations per
 [ADR 0014](../adr/0014-bunup-built-publication.md).
 
@@ -24,7 +24,7 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 - [x] Release stability tiers, flat fixture-key precedence, contractual error messages,
       and Linux/macOS support are defined (`task_041`, ADR 0018).
 - [ ] `v0.1.0` git tag.
-- [ ] Publish `bun-test-utils@0.1.0` (or configure trusted publishing).
+- [ ] Publish `@archont561/bun-test-utils@0.1.0` (or configure trusted publishing).
 - [ ] Re-run the installed-consumer harness against the registry package.
 
 ## Exit criteria
@@ -41,7 +41,7 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 
 | Risk | Mitigation |
 |------|------------|
-| Name `bun-test-utils` is unavailable on npm | Check before tagging; fallback to an owner scope |
+| Name `bun-test-utils` is unavailable on npm | Decided by ADR 0028: publish as `@archont561/bun-test-utils` (owner scope) |
 | Built wrapper output drifts from private workspace source | Build every code workspace before packing; inspect and install the actual tarball in tests |
 | Private package imports leak into public JavaScript or declarations | Bundle private workspaces and assert packed consumer imports/typechecks without workspace access |
 | Global/`bunx` installation makes the default preload path wrong | Verify through the installed CLI harness; retain `--entry` as an escape hatch |

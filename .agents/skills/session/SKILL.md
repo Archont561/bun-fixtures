@@ -72,10 +72,10 @@ new work, never fall. A baseline that does not match is the first thing worth sa
 — it means the install did not produce the tree the last session left.
 
 **Build before the root `bun test`, or read 50+ false failures.** The wrapper's e2e suites
-preload `node_modules/bun-test-utils/dist/plugin.js`, and `dist/` is gitignored, so a fresh
-clone has none. Turbo knows this (`test:e2e` and `test:bdd` depend on `bun-test-utils#build`),
+preload `node_modules/@archont561/bun-test-utils/dist/plugin.js`, and `dist/` is gitignored, so a fresh
+clone has none. Turbo knows this (`test:e2e` and `test:bdd` depend on `@archont561/bun-test-utils#build`),
 so `bun run test:all` builds for you; the bare `bun test` does not. `Cannot find package
-'bun-test-utils'` and `preload not found` mean a missing build, not a broken tree.
+'@archont561/bun-test-utils'` and `preload not found` mean a missing build, not a broken tree.
 
 Two traps in that one number, both of which have already caused a false alarm here:
 

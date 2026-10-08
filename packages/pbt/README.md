@@ -1,9 +1,9 @@
 # Property-based testing (internal)
 
-Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `bun-test-utils/pbt` subpath exposes `defineArbitraries` and PBT type aliases; it does not expose a runner or fixtures.
+Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `@archont561/bun-test-utils/pbt` subpath exposes `defineArbitraries` and PBT type aliases; it does not expose a runner or fixtures.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
   "reversing twice preserves a string",
@@ -15,15 +15,15 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `defineArbitraries` from `bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each definition module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
+The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `defineArbitraries` from `@archont561/bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each definition module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
 
 ## Shared arbitrary definitions
 
-Arbitrary records and factories are plain definitions that can live in shared modules and be imported by any property-test file. The `bun-test-utils/pbt` `defineArbitraries` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
+Arbitrary records and factories are plain definitions that can live in shared modules and be imported by any property-test file. The `@archont561/bun-test-utils/pbt` `defineArbitraries` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
 
 ```ts
 // arbitraries.ts
-import { defineArbitraries } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
@@ -38,7 +38,7 @@ export const adminArbitraries = defineArbitraries((fc) => ({
 
 ```ts
 // admin.test.ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 import { adminArbitraries } from "./arbitraries";
 
 test.prop("generates typed admin records", adminArbitraries, async (_fixtures, {
