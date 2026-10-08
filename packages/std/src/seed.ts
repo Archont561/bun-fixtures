@@ -1,4 +1,4 @@
-import { createFixture } from "@bun-test-utils/core";
+import { createFixture, fnv1a } from "@bun-test-utils/core";
 
 export interface SeedHelper {
   /** The seed currently driving Math.random. */
@@ -7,15 +7,6 @@ export interface SeedHelper {
   set(seed: number): void;
   /** Draws from the same deterministic sequence as Math.random. */
   random(): number;
-}
-
-function hashSeed(value: string): number {
-  let hash = 2166136261;
-  for (const char of value) {
-    hash ^= char.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
 }
 
 function generator(seed: number): () => number {
@@ -33,7 +24,7 @@ export const seedFixture = createFixture<SeedHelper>({
   scope: "test",
   setup: async (use, { testFile, testName }) => {
     const originalRandom = Math.random;
-    let value = hashSeed(`${testFile}:${testName ?? "session"}`);
+    let value = fnv1a(`${testFile}:${testName ?? "session"}`);
     let random = generator(value);
     const helper: SeedHelper = {
       get value() {

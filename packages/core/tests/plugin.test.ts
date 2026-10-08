@@ -6,10 +6,12 @@ import {
   describe,
   destructuredKeys,
   expect,
+  openFixtures,
   reportDiagnostic,
   resolveOrder,
   UnknownFixtureError,
 } from "@/plugin.ts";
+import type { FixtureMap } from "@/types.ts";
 import fixtures from "./fixtures.ts";
 
 const here = import.meta.path;
@@ -313,5 +315,61 @@ describe("engine internals", () => {
         details: { fixture: "db" },
       },
     ]);
+  });
+});
+
+describe("fixture teardown", () => {
+  test("a teardown error rejects close() with that error", async () => {
+    const map = {
+      flaky: {
+        scope: "test",
+        setup: async (use) => {
+          await use("value");
+          throw new Error("teardown exploded");
+        },
+      },
+    } satisfies FixtureMap;
+    const { close } = await openFixtures(map, ["flaky"], { testFile: here });
+    await expect(close()).rejects.toThrow("teardown exploded");
+  });
+
+  test("a setup that throws before use() surfaces its own error", async () => {
+    const map = {
+      broken: {
+        scope: "test",
+        setup: async () => {
+          throw new Error("setup exploded");
+        },
+      },
+    } satisfies FixtureMap;
+    await expect(
+      openFixtures(map, ["broken"], { testFile: here }),
+    ).rejects.toThrow("setup exploded");
+  });
+
+  test("teardowns run in reverse setup order and a failing one does not skip the rest", async () => {
+    const events: string[] = [];
+    const map = {
+      first: {
+        scope: "test",
+        setup: async (use) => {
+          await use("first");
+          events.push("first:teardown");
+        },
+      },
+      second: {
+        scope: "test",
+        setup: async (use) => {
+          await use("second");
+          events.push("second:teardown");
+          throw new Error("second teardown exploded");
+        },
+      },
+    } satisfies FixtureMap;
+    const { close } = await openFixtures(map, ["first", "second"], {
+      testFile: here,
+    });
+    await expect(close()).rejects.toThrow("second teardown exploded");
+    expect(events).toEqual(["second:teardown", "first:teardown"]);
   });
 });

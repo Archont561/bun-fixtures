@@ -27,8 +27,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createTest } from "@bun-test-utils/core";
+import { type BunTestUtilsErrorCode, createTest } from "@bun-test-utils/core";
 import snapshotFixtures, {
+  BunTestUtilsError,
   createSnapshotSerializer,
   describe,
   expect,
@@ -237,5 +238,51 @@ describe("@bun-test-utils/snapshot", () => {
     expect(stored.value.indexOf('"a"')).toBeLessThan(
       stored.value.indexOf('"b"'),
     );
+  });
+});
+
+const CIRCULAR_CODE =
+  "SNAPSHOT_CIRCULAR_REFERENCE" satisfies BunTestUtilsErrorCode;
+const SERIALIZER_CODE =
+  "SNAPSHOT_SERIALIZER_FAILED" satisfies BunTestUtilsErrorCode;
+
+/** Runs `action` and returns what it threw, so the test can inspect it. */
+function thrownBy(action: () => unknown): BunTestUtilsError {
+  try {
+    action();
+  } catch (caught) {
+    return caught as BunTestUtilsError;
+  }
+  throw new Error("expected the action to throw");
+}
+
+describe("@bun-test-utils/snapshot — errors", () => {
+  test("a circular value throws a BunTestUtilsError with SNAPSHOT_CIRCULAR_REFERENCE", async ({
+    snapshot,
+  }) => {
+    snapshot.setMode("match");
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+
+    const error = thrownBy(() => snapshot.match(cyclic));
+    expect(error).toBeInstanceOf(BunTestUtilsError);
+    expect(error.name).toBe("SnapshotSerializationError");
+    expect(error.code).toBe(CIRCULAR_CODE);
+  });
+
+  test("a throwing serializer throws a BunTestUtilsError with SNAPSHOT_SERIALIZER_FAILED and keeps the cause", async ({
+    snapshot,
+  }) => {
+    snapshot.setMode("match");
+    const boom = new Error("serializer exploded");
+    snapshot.addSerializer(() => {
+      throw boom;
+    });
+
+    const error = thrownBy(() => snapshot.match({ a: 1 }));
+    expect(error).toBeInstanceOf(BunTestUtilsError);
+    expect(error.name).toBe("SnapshotSerializationError");
+    expect(error.code).toBe(SERIALIZER_CODE);
+    expect(error.cause).toBe(boom);
   });
 });

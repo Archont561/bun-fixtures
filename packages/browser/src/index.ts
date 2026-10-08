@@ -365,9 +365,7 @@ interface HttpMockState {
   calls: HttpMockCall[];
 }
 
-function createHttpMock(): HttpMockHelper {
-  const state: HttpMockState = { handlers: [], calls: [] };
-
+function createHttpMock(state: HttpMockState): HttpMockHelper {
   const helper: HttpMockHelper = {
     use(method, matcher, responder) {
       state.handlers.unshift({
@@ -411,11 +409,6 @@ function createHttpMock(): HttpMockHelper {
       return installPlaywrightRoutes(target, state);
     },
   };
-
-  Object.defineProperty(helper, "__state", {
-    value: state,
-    enumerable: false,
-  });
 
   return helper;
 }
@@ -510,8 +503,8 @@ function headersObject(headers: Headers): Record<string, string> {
 export const httpMockFixture = createFixture<HttpMockHelper>({
   scope: "test",
   setup: async (use) => {
-    const httpMock = createHttpMock();
-    const state = (httpMock as any).__state as HttpMockState;
+    const state: HttpMockState = { handlers: [], calls: [] };
+    const httpMock = createHttpMock(state);
     const uninstall = installFetchInterceptor((request) =>
       resolveMock(request, state),
     );

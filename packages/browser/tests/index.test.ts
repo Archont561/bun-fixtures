@@ -184,4 +184,69 @@ describe("@bun-test-utils/browser", () => {
     await uninstall();
     expect(unrouted).toBe(true);
   });
+
+  test("httpMock.reset() removes handlers, so the same URL passes through", async ({
+    testServer,
+    httpMock,
+  }) => {
+    const server: TestServerHelper = testServer;
+    const mock: HttpMockHelper = httpMock;
+    server.handle(() => Response.json({ source: "server" }));
+    mock.get("/data", () => Response.json({ source: "mock" }));
+
+    expect(await (await fetch(`${server.url}/data`)).json()).toEqual({
+      source: "mock",
+    });
+
+    mock.reset();
+    expect(await (await fetch(`${server.url}/data`)).json()).toEqual({
+      source: "server",
+    });
+    expect(mock.calls().map((call) => call.handled)).toEqual([false]);
+  });
+
+  test("httpMock handlers registered in one test are not visible to the next", async ({
+    httpMock,
+  }) => {
+    const mock: HttpMockHelper = httpMock;
+    mock.get("/shared", () => Response.json({ source: "mock" }));
+
+    expect(await (await fetch("https://example.test/shared")).json()).toEqual({
+      source: "mock",
+    });
+  });
+
+  test("a fresh httpMock starts empty, with no inherited handlers or calls", async ({
+    testServer,
+    httpMock,
+  }) => {
+    const server: TestServerHelper = testServer;
+    const mock: HttpMockHelper = httpMock;
+    expect(mock.calls()).toHaveLength(0);
+
+    server.handle(() => Response.json({ source: "server" }));
+    expect(await (await fetch(`${server.url}/shared`)).json()).toEqual({
+      source: "server",
+    });
+    expect(mock.calls()[0]?.handled).toBe(false);
+  });
+
+  test("httpMock's own properties are exactly its documented API", ({
+    httpMock,
+  }) => {
+    expect(Object.getOwnPropertyNames(httpMock).sort()).toEqual([
+      "calls",
+      "delete",
+      "get",
+      "head",
+      "install",
+      "options",
+      "passthrough",
+      "patch",
+      "post",
+      "put",
+      "reset",
+      "use",
+    ]);
+  });
 });

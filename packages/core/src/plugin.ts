@@ -49,6 +49,8 @@ export {
   UnknownFixtureError,
 } from "./errors.ts";
 
+export { fnv1a } from "./hash.ts";
+
 export type {
   BunTestUtilsErrorCode,
   DiagnosticEvent,
@@ -335,16 +337,13 @@ async function build(
     scope: scopeOf(def),
   });
 
-  let finished = false;
   const run = Promise.resolve()
     .then(() => def.setup(use, fixtureCtx))
     .then(
       () => {
-        finished = true;
         if (!delivered) deliver();
       },
       (err) => {
-        finished = true;
         if (!delivered) deliver();
         throw err;
       },
@@ -365,8 +364,7 @@ async function build(
     value,
     teardown: async () => {
       release();
-      if (!finished) await run;
-      else await run;
+      await run;
     },
   };
 }
