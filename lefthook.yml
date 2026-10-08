@@ -31,4 +31,4 @@ pre-push:
       glob: "*.{js,ts,tsx,cjs,mjs,json,jsonc}"
       # Browser tests need the pixi browser environment's shared libraries on
       # the loader path; no global registration survives without sudo.
-      run: PATH="$HOME/.pixi/bin:$PATH" pixi run -e browser bunx turbo run test
+      run: if command -v pixi >/dev/null 2>&1; then PATH="$HOME/.pixi/bin:$PATH" pixi run -e browser bunx turbo run test; else bunx turbo run test; fi
