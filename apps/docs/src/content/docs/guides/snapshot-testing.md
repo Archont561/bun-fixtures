@@ -67,3 +67,47 @@ snapshot.addSerializer((value) =>
   value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
 );
 ```
+
+### Reusable global serializers
+
+For serializers shared by every test, register them from a preload module:
+
+```ts
+// test-serializers.ts
+import { createSnapshotSerializer } from "bun-test-utils/snap";
+
+createSnapshotSerializer((value) =>
+  value instanceof Date ? "<date>" : undefined,
+);
+```
+
+```toml
+[test]
+preload = ["./test-serializers.ts"]
+```
+
+Global serializers are automatically used by every `snapshot` fixture in the
+Bun process, including nested values. They run newest-first after serializers
+registered with `snapshot.addSerializer()` and before the built-in serializers.
+The serializer must return `undefined` for values it does not handle.
+
+`registerSnapshotSerializer` is also available when the serializer is already
+stored in a reusable variable:
+
+```ts
+import {
+  registerSnapshotSerializer,
+  type Serializer,
+} from "bun-test-utils/snap";
+
+const redactSecrets: Serializer = (value) =>
+  typeof value === "string" && value.startsWith("sk-")
+    ? "<secret>"
+    : undefined;
+
+registerSnapshotSerializer(redactSecrets);
+```
+
+Global registration is process-wide by design. Put it in a preload file rather
+than inside an individual test so test order cannot control registration.
+```

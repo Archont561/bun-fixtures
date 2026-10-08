@@ -426,20 +426,6 @@ export async function openFixtures(
   return { fixtures, close: () => unwind(stack) };
 }
 
-export async function withFixtures<T>(
-  map: FixtureMap,
-  names: string[],
-  context: Partial<FixtureContext> = {},
-  body: (fixtures: FixtureContext) => T | Promise<T>,
-): Promise<T> {
-  const scope = await openFixtures(map, names, context);
-  try {
-    return await body(scope.fixtures);
-  } finally {
-    await scope.close();
-  }
-}
-
 async function unwind(stack: Array<() => Promise<void>>): Promise<void> {
   const errors: unknown[] = [];
   while (stack.length) {
@@ -618,6 +604,21 @@ export function createTestWithFixtures(
   return makeAwareTest(fixtures, resolve(testFile), false);
 }
 
+export async function executeScenarioSteps(
+  steps: Array<{
+    phase: "given" | "when" | "then";
+    fn: (ctx: ScenarioContext<any>) => any;
+  }>,
+  context: ScenarioContext<any>,
+): Promise<void> {
+  for (const step of steps) {
+    const result = await step.fn(context);
+    if (step.phase !== "then" && result && typeof result === "object") {
+      Object.assign(context, result);
+    }
+  }
+}
+
 function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
   const create = <S extends object = Record<string, unknown>>(
     title: string,
@@ -655,15 +656,7 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
             title,
             async (fixtures) => {
               const context = Object.assign(fixtures, { expect: bunExpect });
-              for (const step of steps) {
-                const result = await step.fn(context);
-                if (
-                  step.phase !== "then" &&
-                  result &&
-                  typeof result === "object"
-                )
-                  Object.assign(context, result);
-              }
+              await executeScenarioSteps(steps, context);
             },
             {
               fixtures: [
@@ -868,6 +861,17 @@ export function installFetchInterceptor(
   return () => {
     globalThis.fetch = originalFetch;
   };
+}
+
+/** Creates a stable, filesystem-safe filename component. */
+export function slugifyFilename(name: string, fallback: string): string {
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 100) || fallback
+  );
 }
 
 export default { createTest, test, expect };

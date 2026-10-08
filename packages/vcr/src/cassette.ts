@@ -4,6 +4,7 @@ import {
   BunTestUtilsError,
   CassetteError,
   createFixture,
+  slugifyFilename,
 } from "@bun-test-utils/core";
 
 export type VcrMode = "record" | "replay" | "passthrough";
@@ -72,17 +73,6 @@ function normalizeHeaders(
   return result;
 }
 
-/** Turns a test name into a stable, filesystem-safe cassette filename base. */
-function slugify(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 100) || "cassette"
-  );
-}
-
 /** A deterministic identity for a callback without executing it. */
 function callbackIdentity(callback: (...args: never[]) => unknown): string {
   const source = Function.prototype.toString.call(callback);
@@ -126,7 +116,7 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     const cassettePath = join(
       dirname(ctx.testFile),
       "__cassettes__",
-      `${slugify(ctx.testName ?? "cassette")}.json`,
+      `${slugifyFilename(ctx.testName ?? "cassette", "cassette")}.json`,
     );
 
     if (mode === "replay") {

@@ -7,6 +7,7 @@ import {
   createTestWithFixtures,
   describe,
   detectFixtures,
+  executeScenarioSteps,
   expect,
   type FixtureAwareTest,
   type FixtureContext,
@@ -211,15 +212,7 @@ function makeScenarioProp(
             strategies,
             async (fixtures, values) => {
               const context = Object.assign(fixtures, values, { expect });
-              for (const step of steps) {
-                const result = await step.fn(context);
-                if (
-                  step.phase !== "then" &&
-                  result &&
-                  typeof result === "object"
-                )
-                  Object.assign(context, result);
-              }
+              await executeScenarioSteps(steps, context);
             },
             { fixtures: fixtureNames },
           );

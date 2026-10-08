@@ -28,7 +28,11 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createTest } from "@bun-test-utils/core";
-import snapshotFixtures, { describe, expect } from "@/index.ts";
+import snapshotFixtures, {
+  createSnapshotSerializer,
+  describe,
+  expect,
+} from "@/index.ts";
 
 const scratchDir = mkdtempSync(join(tmpdir(), "snapshot-scratch-"));
 const scratchFile = join(scratchDir, "widget.test.ts");
@@ -63,6 +67,7 @@ const REFRESHED = "gets refreshed";
 const NEVER_RECORDED = "never recorded yet";
 const AUTONUMBER = "takes three snapshots";
 const SERIALIZED = "serializes a custom type";
+const GLOBAL_SERIALIZED = "uses a globally registered serializer";
 const REPORT = "renders a report";
 const NESTED = "stable nested value";
 
@@ -95,6 +100,29 @@ describe("@bun-test-utils/snapshot — second run", () => {
 });
 
 describe("@bun-test-utils/snapshot", () => {
+  test(GLOBAL_SERIALIZED, async ({ snapshot }) => {
+    class GlobalPoint {
+      constructor(
+        public x: number,
+        public y: number,
+      ) {}
+    }
+
+    createSnapshotSerializer((value) =>
+      value instanceof GlobalPoint
+        ? `GlobalPoint(${value.x}, ${value.y})`
+        : undefined,
+    );
+    snapshot.setMode("match");
+    snapshot.match({ point: new GlobalPoint(3, 4) });
+  });
+
+  test("…and the global serializer applies recursively", async () => {
+    expect(read(GLOBAL_SERIALIZED).value).toBe(
+      '{\n  "point": "GlobalPoint(3, 4)"\n}',
+    );
+  });
+
   test(STALE, async ({ snapshot }) => {
     snapshot.setMode("match");
     let err: Error | undefined;
@@ -159,11 +187,11 @@ describe("@bun-test-utils/snapshot", () => {
     snapshot.addSerializer((value: unknown) =>
       value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
     );
-    snapshot.match(new Point(1, 2));
+    snapshot.match({ point: new Point(1, 2) });
   });
 
   test("…and the custom serializer ran before the built-ins", async () => {
-    expect(read(SERIALIZED).value).toBe("Point(1, 2)");
+    expect(read(SERIALIZED).value).toBe('{\n  "point": "Point(1, 2)"\n}');
   });
 
   test(REPORT, async ({ snapshot }) => {

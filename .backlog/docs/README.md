@@ -6,7 +6,7 @@ Working docs for the package and its internal capabilities. User-facing document
 | Area | What lives there |
 |------|------------------|
 | [`specs/`](./specs) | Numbered specifications — what each component must do and how it is verified |
-| [`milestones/`](./milestones) | M1–M5 delivery plan, status, and exit criteria |
+| [`milestones/`](./milestones) | M1–M10 delivery plan, status, and exit criteria |
 | [`adr/`](./adr) | Architecture decision records — why the design is the way it is |
 | [`audits/`](./audits) | Dated point-in-time reviews of the tree, with ranked findings |
 | [`workflow.md`](./workflow.md) | How backlog tasks, skills, and TDD fit together day to day |
@@ -21,6 +21,11 @@ Working docs for the package and its internal capabilities. User-facing document
 | [M3](./milestones/M3-cli-init.md) | CLI `init` (TOML edit) | ✅ done |
 | [M4](./milestones/M4-types-docs-dogfooding.md) | Types, docs, dogfooding tests | ✅ done |
 | [M5](./milestones/M5-publish.md) | Publish to npm | 🟡 in progress |
+| [M6](./milestones/M6-developer-workflow.md) | Developer workflow and monorepo coverage | planned |
+| [M7](./milestones/M7-contract-and-database.md) | API contract and database integration testing | planned |
+| [M8](./milestones/M8-ui-regression.md) | UI regression and browser diagnostics | planned |
+| [M9](./milestones/M9-local-observability.md) | Local test observability report | planned |
+| [M10](./milestones/M10-mcp.md) | Read-only local MCP test server | planned |
 
 Beyond the original M1–M5 plan, the internal capability packages ([ADR 0013](./adr/0013-published-wrapper-internal-workspaces.md)) are
 delivered but remain implementation details behind the root `test` API:

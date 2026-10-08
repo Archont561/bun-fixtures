@@ -10,10 +10,30 @@ import {
 } from "@bun-test-utils/core";
 import type { Server } from "bun";
 
+interface BrowserLike {
+  newContext(): Promise<BrowserContextLike>;
+  close(): Promise<void>;
+  isConnected(): boolean;
+}
+interface BrowserContextLike {
+  newPage(): Promise<PageLike>;
+  close(): Promise<void>;
+}
+interface PageLike {
+  close(): Promise<void>;
+  goto(url: string): Promise<unknown>;
+  setContent(html: string): Promise<unknown>;
+  click(selector: string): Promise<unknown>;
+  fill(selector: string, text: string): Promise<unknown>;
+  textContent(selector: string): Promise<string | null>;
+  content(): Promise<string>;
+  evaluate<T>(fn: () => T | Promise<T>): Promise<T>;
+}
+
 export interface TestServerHelper {
   url: string;
   port: number;
-  server: Server<any>;
+  server: Server<unknown>;
   /** Sets or updates the request handler function. */
   handle(fn: (req: Request) => Response | Promise<Response>): void;
 }
@@ -60,7 +80,10 @@ export const serverUrlFixture = createFixture<string>({
 const PLAYWRIGHT_MODULE = "playwright";
 const HAPPY_DOM_MODULE = "happy-dom";
 
-async function loadPlaywright(): Promise<any> {
+async function loadPlaywright(): Promise<{
+  chromium?: BrowserTypeLike;
+  default?: { chromium?: BrowserTypeLike };
+}> {
   try {
     return await import(PLAYWRIGHT_MODULE);
   } catch {
@@ -72,7 +95,13 @@ async function loadPlaywright(): Promise<any> {
   }
 }
 
-function chromiumFrom(playwright: any): any {
+interface BrowserTypeLike {
+  launch(options: { headless: boolean }): Promise<BrowserLike>;
+}
+
+function chromiumFrom(
+  playwright: Awaited<ReturnType<typeof loadPlaywright>>,
+): BrowserTypeLike {
   const chromium = playwright.chromium || playwright.default?.chromium;
   if (!chromium) {
     throw new MissingOptionalDependencyError(
@@ -84,7 +113,7 @@ function chromiumFrom(playwright: any): any {
   return chromium;
 }
 
-export const browserFixture = createFixture<any>({
+export const browserFixture = createFixture<BrowserLike>({
   scope: "session",
   setup: async (use) => {
     const chromium = chromiumFrom(await loadPlaywright());
@@ -99,7 +128,7 @@ export const browserFixture = createFixture<any>({
   },
 });
 
-export const browserContextFixture = createFixture<any>({
+export const browserContextFixture = createFixture<BrowserContextLike>({
   scope: "test",
   deps: ["browser"],
   setup: async (use, { browser }) => {
@@ -112,7 +141,7 @@ export const browserContextFixture = createFixture<any>({
   },
 });
 
-export const browserPageFixture = createFixture<any>({
+export const browserPageFixture = createFixture<PageLike>({
   scope: "test",
   deps: ["browserContext"],
   setup: async (use, { browserContext }) => {

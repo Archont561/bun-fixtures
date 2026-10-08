@@ -37,6 +37,11 @@
       "import": "./dist/bdd.js",
       "default": "./dist/bdd.js"
     },
+    "./snap": {
+      "types": "./dist/snap.d.ts",
+      "import": "./dist/snap.js",
+      "default": "./dist/snap.js"
+    },
     "./pbt": {
       "types": "./dist/pbt.d.ts",
       "import": "./dist/pbt.js",
