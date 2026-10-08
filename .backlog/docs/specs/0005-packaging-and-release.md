@@ -12,7 +12,7 @@
 | R1 | Every code workspace MUST build Bun-targeted ESM and TypeScript declarations into `dist/` with Bunup. |
 | R2 | Code workspaces MUST consume the typed shared `createBunupConfig()` factory through a local `bunup.config.ts`. |
 | R3 | The public tarball MUST contain built `dist/`, `README.md`, `LICENSE-MIT`, `LICENSE-APACHE`, and package metadata; it MUST NOT contain `src/` or private workspace trees. |
-| R4 | `exports` MUST expose exactly `.`, `./package.json`, `./pbt`, and `./bdd`; the root entrypoint contains all runners/fixtures while the two helper subpaths expose only their typed definition wrappers and related types. |
+| R4 | `exports` MUST expose exactly `.`, `./package.json`, `./pbt`, `./bdd`, and `./snap`; the root entrypoint contains all runners/fixtures, PBT/BDD subpaths expose typed definition helpers, and `/snap` exposes global snapshot serializer helpers. |
 | R5 | `bin.test-utils` MUST point at `./dist/cli.js`, which retains the `#!/usr/bin/env bun` shebang. |
 | R6 | `engines.bun` MUST state the minimum supported Bun. |
 | R7 | Publishing MUST be blocked unless frozen install, build, lint, typecheck, tests, docs build, and packed-consumer checks pass. |

@@ -134,4 +134,22 @@ createSnapshotSerializer((value) =>
 Both operations affect every snapshot fixture in this Bun process. Do not reset
 the registry between concurrently running tests; register preload-wide
 serializers once, or unregister only the serializer owned by a suite.
-```
+
+## Recursive values and diagnostics
+
+Custom serializers run at the root and recursively for object properties and
+array entries. At each value, fixture-local serializers take precedence over
+global serializers; the newest serializer in each group runs first. The built-in
+`Error` fallback is recursive too, so a nested error snapshots as
+`Error: <message>` unless a custom serializer handles it first. Reusing the same
+acyclic object in two places serializes it at both locations; only a reference
+back to an object on the current recursion path is a cycle.
+
+Cyclic values fail with an `Error` named `SnapshotSerializationError`, code
+`SNAPSHOT_CIRCULAR_REFERENCE`, and details containing the snapshot name/path,
+the value path (for example `$.user.items[0]`), and the path where the object was
+first seen. If a custom serializer throws, snapshotting fails with code
+`SNAPSHOT_SERIALIZER_FAILED`; the diagnostic identifies the snapshot and value
+path, and the original thrown value is preserved as `cause`. These stable codes
+and details make recursive failures actionable without silently replacing the
+value with `[object Object]`.

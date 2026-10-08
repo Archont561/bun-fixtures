@@ -19,6 +19,35 @@ export type SnapshotMode = "match" | "update" | "ci";
  */
 export type Serializer = (value: unknown) => string | undefined;
 
+interface SnapshotSerializationContext {
+  snapshotName: string;
+  snapshotPath: string;
+}
+
+class SnapshotSerializationError extends Error {
+  readonly details: Record<string, unknown>;
+
+  constructor(
+    readonly code: string,
+    message: string,
+    details: Record<string, unknown>,
+    cause?: unknown,
+  ) {
+    super(message, { cause });
+    this.name = "SnapshotSerializationError";
+    this.details = details;
+  }
+}
+
+function describeThrownValue(value: unknown): string {
+  try {
+    if (value instanceof Error) return value.message || value.name;
+    return String(value);
+  } catch {
+    return "<unprintable thrown value>";
+  }
+}
+
 const GLOBAL_SERIALIZERS = Symbol.for("bun-test-utils.snapshotSerializers");
 const globalSerializers = ((globalThis as Record<symbol, unknown>)[
   GLOBAL_SERIALIZERS
@@ -81,47 +110,73 @@ export interface SnapshotHelper {
 /** Recursively sorts object keys so serialization doesn't depend on insertion order. */
 function sortKeysDeep(
   value: unknown,
-  serializeCustom?: (value: unknown) => string | undefined,
+  serializeCustom: (value: unknown, path: string) => string | undefined,
+  path: string,
+  ancestors: Map<object, string>,
+  context: SnapshotSerializationContext,
+  applyCustom = true,
 ): unknown {
-  const custom = serializeCustom?.(value);
-  if (custom !== undefined) return custom;
-  if (Array.isArray(value))
-    return value.map((item) => sortKeysDeep(item, serializeCustom));
+  if (applyCustom) {
+    const custom = serializeCustom(value, path);
+    if (custom !== undefined) return custom;
+  }
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+
   if (
     value !== null &&
     typeof value === "object" &&
     !(value instanceof Date) &&
     !(value instanceof RegExp)
   ) {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(value).sort()) {
-      sorted[key] = sortKeysDeep(
-        (value as Record<string, unknown>)[key],
-        serializeCustom,
+    const firstSeenAt = ancestors.get(value);
+    if (firstSeenAt !== undefined) {
+      throw new SnapshotSerializationError(
+        "SNAPSHOT_CIRCULAR_REFERENCE",
+        `[bun-test-utils/snapshot] Circular reference at ${path} (first seen at ${firstSeenAt}) while serializing snapshot ${JSON.stringify(context.snapshotName)} in ${context.snapshotPath}.`,
+        {
+          snapshotName: context.snapshotName,
+          snapshotPath: context.snapshotPath,
+          valuePath: path,
+          firstSeenAt,
+        },
       );
     }
-    return sorted;
+
+    ancestors.set(value, path);
+    try {
+      if (Array.isArray(value)) {
+        return value.map((item, index) =>
+          sortKeysDeep(
+            item,
+            serializeCustom,
+            `${path}[${index}]`,
+            ancestors,
+            context,
+          ),
+        );
+      }
+
+      const sorted: Record<string, unknown> = {};
+      for (const key of Object.keys(value).sort()) {
+        const childPath = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)
+          ? `${path}.${key}`
+          : `${path}[${JSON.stringify(key)}]`;
+        sorted[key] = sortKeysDeep(
+          (value as Record<string, unknown>)[key],
+          serializeCustom,
+          childPath,
+          ancestors,
+          context,
+        );
+      }
+      return sorted;
+    } finally {
+      ancestors.delete(value);
+    }
   }
+
   return value;
 }
-
-const BUILTIN_SERIALIZERS: Serializer[] = [
-  (value) => (typeof value === "string" ? value : undefined),
-  (value) =>
-    value instanceof Error ? `${value.name}: ${value.message}` : undefined,
-  (value) => {
-    try {
-      return JSON.stringify(
-        sortKeysDeep(value),
-        (_key, v) => (typeof v === "bigint" ? `${v.toString()}n` : v),
-        2,
-      );
-    } catch {
-      return undefined;
-    }
-  },
-  (value) => String(value),
-];
 
 function resolveMode(): SnapshotMode {
   const env = process.env.SNAPSHOT_MODE;
@@ -150,39 +205,72 @@ export const snapshotFixture = createFixture<SnapshotHelper>({
       : {};
     let dirty = false;
 
-    function customSerialize(value: unknown): string | undefined {
+    function customSerialize(
+      value: unknown,
+      valuePath: string,
+      context: SnapshotSerializationContext,
+    ): string | undefined {
       for (const serializer of [...serializers, ...globalSerializers]) {
-        const result = serializer(value);
-        if (result !== undefined) return result;
+        try {
+          const result = serializer(value);
+          if (result !== undefined) return result;
+        } catch (cause) {
+          throw new SnapshotSerializationError(
+            "SNAPSHOT_SERIALIZER_FAILED",
+            `[bun-test-utils/snapshot] Serializer failed at ${valuePath} while serializing snapshot ${JSON.stringify(context.snapshotName)} in ${context.snapshotPath}: ${describeThrownValue(cause)}`,
+            {
+              snapshotName: context.snapshotName,
+              snapshotPath: context.snapshotPath,
+              valuePath,
+            },
+            cause,
+          );
+        }
       }
       return undefined;
     }
 
-    function serialize(value: unknown): string {
-      const custom = customSerialize(value);
+    function serialize(value: unknown, snapshotName: string): string {
+      const context = { snapshotName, snapshotPath };
+      const custom = customSerialize(value, "$", context);
       if (custom !== undefined) return custom;
+      if (typeof value === "string") return value;
+      if (value instanceof Error) return `${value.name}: ${value.message}`;
 
-      for (const serializer of BUILTIN_SERIALIZERS.slice(0, 2)) {
-        const result = serializer(value);
-        if (result !== undefined) return result;
-      }
+      const stringify = (input: unknown) =>
+        JSON.stringify(
+          input,
+          (_key, nested) =>
+            typeof nested === "bigint" ? `${nested.toString()}n` : nested,
+          2,
+        );
+
       if (typeof value === "object" && value !== null) {
         try {
-          return JSON.stringify(
-            sortKeysDeep(value, customSerialize),
-            (_key, nested) =>
-              typeof nested === "bigint" ? `${nested}n` : nested,
-            2,
+          return (
+            stringify(
+              sortKeysDeep(
+                value,
+                (nested, valuePath) =>
+                  customSerialize(nested, valuePath, context),
+                "$",
+                new Map(),
+                context,
+                false,
+              ),
+            ) ?? String(value)
           );
-        } catch {
+        } catch (error) {
+          if (error instanceof SnapshotSerializationError) throw error;
           return String(value);
         }
       }
-      for (const serializer of BUILTIN_SERIALIZERS.slice(2)) {
-        const result = serializer(value);
-        if (result !== undefined) return result;
+
+      try {
+        return stringify(value) ?? String(value);
+      } catch {
+        return String(value);
       }
-      return String(value);
     }
 
     function nextKey(name?: string): string {
@@ -234,7 +322,8 @@ export const snapshotFixture = createFixture<SnapshotHelper>({
         serializers.unshift(serializer);
       },
       match(value, name) {
-        compare(nextKey(name), serialize(value));
+        const key = nextKey(name);
+        compare(key, serialize(value, key));
       },
       matchFile(filePath, name) {
         if (!existsSync(filePath)) {
