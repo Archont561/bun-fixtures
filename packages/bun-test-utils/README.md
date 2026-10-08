@@ -1,9 +1,10 @@
 # bun-test-utils
 
 The single published package. The root runtime exports are `describe`, `expect`,
-and `test`. Typed arbitrary-definition and scenario-step helpers live on the narrow
-`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; they expose no runners or
-fixtures.
+and `test`. Typed arbitrary-definition and scenario-step helpers live on the
+`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; global snapshot serializer
+lifecycle helpers live on `bun-test-utils/snap`. These subpaths expose helpers,
+not runners or fixture packs.
 
 ```bash
 bun add -d bun-test-utils

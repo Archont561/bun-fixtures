@@ -32,6 +32,7 @@ import snapshotFixtures, {
   createSnapshotSerializer,
   describe,
   expect,
+  unregisterSnapshotSerializer,
 } from "@/index.ts";
 
 const scratchDir = mkdtempSync(join(tmpdir(), "snapshot-scratch-"));
@@ -108,13 +109,17 @@ describe("@bun-test-utils/snapshot", () => {
       ) {}
     }
 
-    createSnapshotSerializer((value) =>
+    const serializer = createSnapshotSerializer((value) =>
       value instanceof GlobalPoint
         ? `GlobalPoint(${value.x}, ${value.y})`
         : undefined,
     );
     snapshot.setMode("match");
-    snapshot.match({ point: new GlobalPoint(3, 4) });
+    try {
+      snapshot.match({ point: new GlobalPoint(3, 4) });
+    } finally {
+      unregisterSnapshotSerializer(serializer);
+    }
   });
 
   test("…and the global serializer applies recursively", async () => {

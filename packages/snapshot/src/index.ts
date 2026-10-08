@@ -7,10 +7,12 @@ export { BunTestUtilsError, describe, expect } from "@bun-test-utils/core";
 export {
   createSnapshotSerializer,
   registerSnapshotSerializer,
+  resetSnapshotSerializers,
   type Serializer,
   type SnapshotHelper,
   type SnapshotMode,
   snapshotFixture,
+  unregisterSnapshotSerializer,
 } from "./snapshot.ts";
 
 export const snapshotFixtures: FixtureMap = {

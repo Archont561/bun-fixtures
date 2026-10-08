@@ -30,6 +30,28 @@ export function registerSnapshotSerializer(serializer: Serializer): Serializer {
   return serializer;
 }
 
+/**
+ * Unregisters every registration of this exact serializer function.
+ * Returns `true` when at least one registration was removed.
+ */
+export function unregisterSnapshotSerializer(serializer: Serializer): boolean {
+  let removed = false;
+  for (let index = globalSerializers.length - 1; index >= 0; index -= 1) {
+    if (globalSerializers[index] === serializer) {
+      globalSerializers.splice(index, 1);
+      removed = true;
+    }
+  }
+  return removed;
+}
+
+/** Removes every globally registered serializer in this Bun process. */
+export function resetSnapshotSerializers(): void {
+  // Keep the shared array identity: the root entrypoint and `/snap` may each
+  // bundle this module, but both observe the same Symbol.for-backed registry.
+  globalSerializers.length = 0;
+}
+
 /** Creates and globally registers a reusable snapshot serializer. */
 export function createSnapshotSerializer(serializer: Serializer): Serializer {
   return registerSnapshotSerializer(serializer);

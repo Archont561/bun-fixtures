@@ -27,6 +27,7 @@ built-in equivalent.
 | R6 | Mode MUST be switchable via the `SNAPSHOT_MODE` environment variable (`match` \| `update` \| `ci`) or `setMode()`, and MUST default to `"ci"` when `process.env.CI` is set and `SNAPSHOT_MODE` is unset. |
 | R7 | Custom serializers MUST be pluggable via `addSerializer()`, running before the built-in string / `Error` / sorted-key-JSON / `String()` fallbacks. |
 | R8 | A mismatch in `"match"`/`"ci"` mode MUST throw an error that includes both the stored and received values. |
+| R9 | Global serializers MUST be removable by exact function identity (`unregisterSnapshotSerializer`, returning whether anything was removed) or cleared process-wide (`resetSnapshotSerializers`). Reset MUST mutate the shared registry in place so independently bundled root and `/snap` entrypoints observe the same lifecycle. |
 
 ## Verification
 
