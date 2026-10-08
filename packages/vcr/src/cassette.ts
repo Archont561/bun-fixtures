@@ -4,6 +4,7 @@ import {
   BunTestUtilsError,
   CassetteError,
   createFixture,
+  fnv1a,
   slugifyFilename,
 } from "@bun-test-utils/core";
 
@@ -76,12 +77,7 @@ function normalizeHeaders(
 /** A deterministic identity for a callback without executing it. */
 function callbackIdentity(callback: (...args: never[]) => unknown): string {
   const source = Function.prototype.toString.call(callback);
-  let hash = 2166136261;
-  for (let i = 0; i < source.length; i++) {
-    hash ^= source.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return `${hash >>> 0}:${source.length}`;
+  return `${fnv1a(source)}:${source.length}`;
 }
 
 function serializeOutput(value: unknown): string {

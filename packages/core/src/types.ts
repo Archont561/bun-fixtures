@@ -17,7 +17,9 @@ export type BunTestUtilsErrorCode =
   | "CASSETTE_NOT_FOUND"
   | "CASSETTE_MISMATCH"
   | "CALLBACK_NOT_RECORDED"
-  | "INVALID_API_USAGE";
+  | "INVALID_API_USAGE"
+  | "SNAPSHOT_CIRCULAR_REFERENCE"
+  | "SNAPSHOT_SERIALIZER_FAILED";
 
 /** Structured, opt-in diagnostics emitted by the fixture engine. */
 export interface DiagnosticEvent {

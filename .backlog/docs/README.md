@@ -34,11 +34,11 @@ delivered but remain implementation details behind the root `test` API:
 |---------|------|------|--------|
 | `@bun-test-utils/config` | [0008](./specs/0008-typescript-config-package.md) | `task_010` | ✅ done |
 | `apps/docs` (Starlight) | [0007](./specs/0007-apps-docs-starlight.md) | `task_009` | ✅ done |
-| `@bun-test-utils/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011` | ✅ done |
+| `@bun-test-utils/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011`, `task_058` | ✅ done |
 | `@bun-test-utils/pbt` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012`, `task_048` | ✅ done (`task_048` closed 2026-10-08 — its design-note-before-code criterion was waived, not met) |
 | `@bun-test-utils/bdd` | [0014](./specs/0014-bdd-fixture-bridge.md) | `task_021`, `task_048` | ✅ done (`task_048` sequencing waiver recorded 2026-10-08; experimental) |
-| `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013` | 🟡 Playwright path untested |
-| `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014` | ✅ done |
+| `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013`, `task_058` | 🟡 Playwright path untested |
+| `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014`, `task_058` | ✅ done |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
 Each 🟡 task carries the precise remaining gap in its description —

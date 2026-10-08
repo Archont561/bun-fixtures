@@ -1,6 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createFixture, slugifyFilename } from "@bun-test-utils/core";
+import {
+  BunTestUtilsError,
+  createFixture,
+  slugifyFilename,
+} from "@bun-test-utils/core";
 
 /**
  * - `"match"` (default outside CI): compare against the stored value; a
@@ -24,18 +28,15 @@ interface SnapshotSerializationContext {
   snapshotPath: string;
 }
 
-class SnapshotSerializationError extends Error {
-  readonly details: Record<string, unknown>;
-
+class SnapshotSerializationError extends BunTestUtilsError {
   constructor(
-    readonly code: string,
+    code: "SNAPSHOT_CIRCULAR_REFERENCE" | "SNAPSHOT_SERIALIZER_FAILED",
     message: string,
     details: Record<string, unknown>,
     cause?: unknown,
   ) {
-    super(message, { cause });
+    super(code, message, { cause, details });
     this.name = "SnapshotSerializationError";
-    this.details = details;
   }
 }
 

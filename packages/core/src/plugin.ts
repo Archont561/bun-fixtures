@@ -49,6 +49,8 @@ export {
   UnknownFixtureError,
 } from "./errors.ts";
 
+export { fnv1a } from "./hash.ts";
+
 export type {
   BunTestUtilsErrorCode,
   DiagnosticEvent,
@@ -335,16 +337,13 @@ async function build(
     scope: scopeOf(def),
   });
 
-  let finished = false;
   const run = Promise.resolve()
     .then(() => def.setup(use, fixtureCtx))
     .then(
       () => {
-        finished = true;
         if (!delivered) deliver();
       },
       (err) => {
-        finished = true;
         if (!delivered) deliver();
         throw err;
       },
@@ -365,8 +364,7 @@ async function build(
     value,
     teardown: async () => {
       release();
-      if (!finished) await run;
-      else await run;
+      await run;
     },
   };
 }
@@ -420,8 +418,16 @@ export async function openFixtures(
     testFile: file,
     scope: "test" as const,
   }) as FixtureContext;
-  for (const name of order) {
-    fixtures[name] = await instantiate(name, map, fixtures, file, stack);
+  try {
+    for (const name of order) {
+      fixtures[name] = await instantiate(name, map, fixtures, file, stack);
+    }
+  } catch (error) {
+    // A failed open never returns close(), so tear down what was built and
+    // rethrow the setup failure. A teardown error here is dropped on purpose:
+    // the setup error is the one the caller needs.
+    await unwind(stack).catch(() => undefined);
+    throw error;
   }
   return { fixtures, close: () => unwind(stack) };
 }
