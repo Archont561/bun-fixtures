@@ -200,6 +200,58 @@ describe("iteration protocol (opts.iterate)", () => {
     },
     { fixtures: ["events", "tmp"], iterate: true },
   );
+
+  // ADR 0025: a failing sample starts the failure, so it is what the runner
+  // sees; the teardown error is attached rather than replacing it.
+  const flaky = base.extend({
+    flaky: {
+      setup: async (use) => {
+        await use("value");
+        throw new Error("teardown of flaky failed");
+      },
+    },
+  } satisfies FixtureMap);
+
+  flaky(
+    "reports the sample failure and attaches the teardown error",
+    async (ctx) => {
+      let caught: any;
+      try {
+        await ctx.iterate!(() => {
+          throw new Error("sample failed");
+        });
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught?.message).toBe("sample failed");
+      expect(caught?.suppressed).toHaveLength(1);
+      expect(caught?.suppressed?.[0]?.message).toBe("teardown of flaky failed");
+    },
+    { fixtures: ["flaky"], iterate: true },
+  );
+
+  // The ADR 0025 carve-out: a thrown non-object has nowhere to put
+  // `suppressed`, and wrapping it would change what the caller catches. So it
+  // is rethrown unchanged and the teardown error is dropped — dropped, but not
+  // promoted over the failure that started.
+  flaky(
+    "rethrows a non-object sample failure unchanged",
+    async (ctx) => {
+      const failure: unknown = "sample failed with a string";
+      let caught: unknown;
+      try {
+        await ctx.iterate!(() => {
+          throw failure;
+        });
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught).toBe(failure);
+    },
+    { fixtures: ["flaky"], iterate: true },
+  );
 });
 
 describe("engine internals", () => {
@@ -468,5 +520,78 @@ describe("fixture teardown", () => {
       openFixtures(map, ["first", "second", "third"], { testFile: here }),
     ).rejects.toThrow("third failed");
     expect(events).toEqual(["first:teardown"]);
+  });
+
+  // ADR 0025: with nothing in flight, the first LIFO teardown error is still
+  // what close() rejects with — the rest are attached instead of dropped.
+  test("a teardown error attaches the other teardown errors instead of dropping them", async () => {
+    const events: string[] = [];
+    const map = {
+      first: {
+        scope: "test",
+        setup: async (use) => {
+          await use("first");
+          events.push("first:teardown");
+          throw new Error("first teardown failed");
+        },
+      },
+      second: {
+        scope: "test",
+        setup: async (use) => {
+          await use("second");
+          events.push("second:teardown");
+          throw new Error("second teardown failed");
+        },
+      },
+    } satisfies FixtureMap;
+
+    const { close } = await openFixtures(map, ["first", "second"], {
+      testFile: here,
+    });
+
+    let caught: any;
+    try {
+      await close();
+    } catch (error) {
+      caught = error;
+    }
+
+    // LIFO: `second` unwinds first, so its error is the one thrown…
+    expect(caught?.message).toBe("second teardown failed");
+    // …and `first`'s survives on suppressed rather than vanishing.
+    expect(caught?.suppressed).toHaveLength(1);
+    expect(caught?.suppressed?.[0]?.message).toBe("first teardown failed");
+    expect(events).toEqual(["second:teardown", "first:teardown"]);
+  });
+
+  // ADR 0025 reverses the PR #36 drop: the setup error still wins, but the
+  // cleanup failure it used to swallow is now attached to it.
+  test("a failed openFixtures attaches the cleanup error to the setup error", async () => {
+    const map = {
+      first: {
+        scope: "test",
+        setup: async (use) => {
+          await use("first");
+          throw new Error("first teardown failed");
+        },
+      },
+      second: {
+        scope: "test",
+        setup: async () => {
+          throw new Error("second setup failed");
+        },
+      },
+    } satisfies FixtureMap;
+
+    let caught: any;
+    try {
+      await openFixtures(map, ["first", "second"], { testFile: here });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught?.message).toBe("second setup failed");
+    expect(caught?.suppressed).toHaveLength(1);
+    expect(caught?.suppressed?.[0]?.message).toBe("first teardown failed");
   });
 });

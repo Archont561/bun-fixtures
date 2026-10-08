@@ -424,15 +424,27 @@ export async function openFixtures(
     }
   } catch (error) {
     // A failed open never returns close(), so tear down what was built and
-    // rethrow the setup failure. A teardown error here is dropped on purpose:
-    // the setup error is the one the caller needs.
-    await unwind(stack).catch(() => undefined);
+    // rethrow the setup failure. The setup error is the one the caller needs;
+    // ADR 0025 attaches the cleanup errors to it rather than dropping them,
+    // which reverses the drop merged in PR #36 (task_059).
+    attachSuppressed(error, await unwindErrors(stack));
     throw error;
   }
   return { fixtures, close: () => unwind(stack) };
 }
 
-async function unwind(stack: Array<() => Promise<void>>): Promise<void> {
+/* -------------------------------------------------------------------------- */
+/* Unwinding and error precedence (ADR 0025)                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Runs every teardown on `stack` (LIFO) and returns the errors they raised, in
+ * the order thrown. Never throws itself, so a caller with an error already in
+ * flight can decide what to do with these instead of having them replace it.
+ */
+async function unwindErrors(
+  stack: Array<() => Promise<void>>,
+): Promise<unknown[]> {
   const errors: unknown[] = [];
   while (stack.length) {
     const td = stack.pop()!;
@@ -442,7 +454,84 @@ async function unwind(stack: Array<() => Promise<void>>): Promise<void> {
       errors.push(err);
     }
   }
-  if (errors.length) throw errors[0];
+  return errors;
+}
+
+/**
+ * Attaches `errors` to `target` as an enumerable own `suppressed` property,
+ * appending to a list that is already there rather than overwriting it — an
+ * error can outlive more than one unwind.
+ *
+ * Enumerable on purpose: Bun prints an enumerable `suppressed` when it reports
+ * a failing async test, so this is how a losing teardown error reaches a user
+ * who never inspects the error object.
+ *
+ * A `target` that is not an object has nowhere to put the list, and wrapping it
+ * would change what the user catches, so it is left alone. That is the one case
+ * where teardown errors are still dropped, and ADR 0025 records it.
+ */
+function attachSuppressed(target: unknown, errors: unknown[]): void {
+  if (!errors.length) return;
+  if (typeof target !== "object" || target === null) return;
+  const existing = (target as { suppressed?: unknown }).suppressed;
+  Object.defineProperty(target, "suppressed", {
+    value: Array.isArray(existing) ? [...existing, ...errors] : errors,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
+}
+
+/**
+ * The error to propagate when nothing else went wrong: the first error thrown,
+ * carrying the rest as `suppressed`. Returns rather than throws so the call
+ * site reads as `throw firstWithSuppressed(errors)`.
+ */
+function firstWithSuppressed(errors: unknown[]): unknown {
+  const [first, ...rest] = errors;
+  attachSuppressed(first, rest);
+  return first;
+}
+
+/**
+ * Runs `body`, then tears `stack` down, resolving with `body`'s result.
+ *
+ * ADR 0025 — the error that started the failure is the one thrown. If `body`
+ * threw, that error propagates with every teardown error attached to it; if it
+ * did not, the first teardown error propagates with the rest attached. A
+ * `finally` block cannot express this: a throw from `finally` replaces the
+ * error already in flight, which is the defect this exists to fix.
+ */
+async function runWithUnwind<T>(
+  stack: Array<() => Promise<void>>,
+  body: () => Promise<T>,
+): Promise<T> {
+  let result!: T;
+  let failure: unknown;
+  let threw = false;
+
+  try {
+    result = await body();
+  } catch (error) {
+    threw = true;
+    failure = error;
+  }
+
+  const teardownErrors = await unwindErrors(stack);
+
+  if (threw) {
+    // `body` started the failure, so its error is the one a user needs.
+    attachSuppressed(failure, teardownErrors);
+    throw failure;
+  }
+  if (teardownErrors.length) throw firstWithSuppressed(teardownErrors);
+  return result;
+}
+
+/** Tears `stack` down and throws the first error, carrying the rest. */
+async function unwind(stack: Array<() => Promise<void>>): Promise<void> {
+  const errors = await unwindErrors(stack);
+  if (errors.length) throw firstWithSuppressed(errors);
 }
 
 /** Tears down every file-scoped fixture for `file` (LIFO). */
@@ -479,10 +568,20 @@ function hookProcessExit() {
     try {
       await teardownSession();
     } catch (err) {
+      // ADR 0025: this path is silent by default, so the suppressed errors
+      // have to ride along in the one line it prints — otherwise they vanish
+      // with no trace at all.
+      const message = (err as Error).message;
+      const suppressed = (err as { suppressed?: unknown[] }).suppressed;
+      const rest = Array.isArray(suppressed)
+        ? suppressed.map((e) => (e as Error)?.message ?? String(e))
+        : [];
       warn(
-        `session teardown failed: ${(err as Error).message}`,
+        `session teardown failed: ${message}${
+          rest.length ? ` (suppressed: ${rest.join(", ")})` : ""
+        }`,
         "SESSION_TEARDOWN",
-        { cause: (err as Error).message },
+        { cause: message },
       );
     } finally {
       running = false;
@@ -516,7 +615,9 @@ function makeTest(file: string, map: FixtureMap): TestFn {
         }
       };
 
-      try {
+      // ADR 0025 — runWithUnwind, not `finally`: a teardown error must be
+      // attached to the error in flight, never replace it.
+      await runWithUnwind(testStack, async () => {
         if (opts?.iterate) {
           // Defer test-scope fixtures to ctx.iterate: the wrapper context
           // holds only session/file values, and each iterate() call builds
@@ -526,16 +627,11 @@ function makeTest(file: string, map: FixtureMap): TestFn {
             fn2: (iterCtx: FixtureContext) => T | Promise<T>,
           ): Promise<T> => {
             const iterStack: Array<() => Promise<void>> = [];
-            const iterCtx: FixtureContext = {
-              testFile: abs,
-              testName,
-            };
-            try {
+            return runWithUnwind(iterStack, async () => {
+              const iterCtx: FixtureContext = { testFile: abs, testName };
               await buildAll(iterCtx, iterStack, order);
               return await fn2(iterCtx);
-            } finally {
-              await unwind(iterStack);
-            }
+            });
           }) satisfies IterateFn;
           await buildAll(
             ctx,
@@ -546,9 +642,7 @@ function makeTest(file: string, map: FixtureMap): TestFn {
           await buildAll(ctx, testStack, order);
         }
         await fn(ctx);
-      } finally {
-        await unwind(testStack);
-      }
+      });
     };
     if (opts?.timeout === undefined) bunTest(testName, body);
     else bunTest(testName, body, opts.timeout);
