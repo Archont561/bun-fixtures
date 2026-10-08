@@ -30,12 +30,16 @@ export interface CassetteEntry {
 
 export interface CassetteHelper {
   /**
-   * Execute and remember a callback result under its stable callback identity.
-   * The callback runs exactly once for this registry entry.
+   * Execute a callback and remember its result. A callback object the test has
+   * not recorded always runs, so closures from one factory each keep their own
+   * result. A callback object recorded earlier returns its stored result without
+   * running again.
    */
   record<T>(callback: () => T | Promise<T>): Promise<T>;
   /**
-   * Return a previously recorded callback result without invoking the callback.
+   * Return the result recorded for a callback without invoking it. A callback
+   * object the test has not recorded matches its source text only when every
+   * recording with that text agrees. Otherwise this throws `CALLBACK_AMBIGUOUS`.
    */
   replay<T>(callback: () => T | Promise<T>): Promise<T>;
   mode: VcrMode;
@@ -73,9 +77,13 @@ function normalizeHeaders(
   return result;
 }
 
-/** A deterministic identity for a callback without executing it. */
-function callbackIdentity(callback: (...args: never[]) => unknown): string {
-  const source = Function.prototype.toString.call(callback);
+/** A callback's source text. Reading it never executes the callback. */
+function sourceOf(callback: (...args: never[]) => unknown): string {
+  return Function.prototype.toString.call(callback);
+}
+
+/** A short label for a source text, for diagnostics only. It is never a lookup key. */
+function sourceLabel(source: string): string {
   return `${fnv1a(source)}:${source.length}`;
 }
 
@@ -207,13 +215,73 @@ function deserializeOutput<T>(value: string): T {
   return JSON.parse(value) as T;
 }
 
+/**
+ * The callback results one test records (ADR 0027). A callback object the test
+ * has recorded is identified by that object. An unrecorded object is matched by
+ * its source text, and only when every recording with that text holds the same
+ * result. Results stay in memory; the cassette file holds HTTP entries only.
+ */
+function createCallbackRegistry() {
+  /** The serialized result of each recorded callback object. */
+  const byObject = new WeakMap<object, string>();
+  /** The serialized result of every recording, keyed by the full source text. */
+  const bySource = new Map<string, string[]>();
+
+  return {
+    async record<T>(callback: () => T | Promise<T>): Promise<T> {
+      const known = byObject.get(callback);
+      if (known !== undefined) return deserializeOutput<T>(known);
+
+      const output = await callback();
+      const serialized = serializeOutput(output);
+      // A concurrent record of this object may have finished first. Keep its
+      // result, so the object has exactly one recording.
+      const settled = byObject.get(callback);
+      if (settled !== undefined) return deserializeOutput<T>(settled);
+
+      byObject.set(callback, serialized);
+      const source = sourceOf(callback);
+      const recordings = bySource.get(source);
+      if (recordings) recordings.push(serialized);
+      else bySource.set(source, [serialized]);
+      return output;
+    },
+
+    async replay<T>(callback: () => T | Promise<T>): Promise<T> {
+      const known = byObject.get(callback);
+      if (known !== undefined) return deserializeOutput<T>(known);
+
+      const source = sourceOf(callback);
+      const key = sourceLabel(source);
+      const recordings = bySource.get(source) ?? [];
+      if (recordings.length === 0) {
+        throw new CassetteError(
+          "CALLBACK_NOT_RECORDED",
+          `[bun-test-utils/vcr] No recorded callback output for ${key}. ` +
+            "Call cassette.record(callback) before cassette.replay(callback).",
+          { key },
+        );
+      }
+      if (recordings.some((serialized) => serialized !== recordings[0])) {
+        throw new CassetteError(
+          "CALLBACK_AMBIGUOUS",
+          `[bun-test-utils/vcr] ${recordings.length} recordings match this callback's source text (${key}) and hold different results. ` +
+            "Replay the same function object you recorded. A new closure with the same source text cannot be matched to one recording.",
+          { key, recordings: recordings.length },
+        );
+      }
+      return deserializeOutput<T>(recordings[0]);
+    },
+  };
+}
+
 export const cassetteFixture = createFixture<CassetteHelper>({
   scope: "test",
   setup: async (use, ctx) => {
     let mode: VcrMode = (process.env.VCR_MODE as VcrMode) || "record";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
-    const callbackRegistry = new Map<string, string>();
+    const callbacks = createCallbackRegistry();
     const origFetch = globalThis.fetch;
 
     // Convention: `<test dir>/__cassettes__/<test name>.json` — replay
@@ -238,25 +306,10 @@ export const cassetteFixture = createFixture<CassetteHelper>({
 
     const helper: CassetteHelper = {
       async record<T>(callback: () => T | Promise<T>): Promise<T> {
-        const key = callbackIdentity(callback);
-        if (callbackRegistry.has(key))
-          return deserializeOutput<T>(callbackRegistry.get(key)!);
-        const output = await callback();
-        callbackRegistry.set(key, serializeOutput(output));
-        return output;
+        return callbacks.record(callback);
       },
       async replay<T>(callback: () => T | Promise<T>): Promise<T> {
-        const key = callbackIdentity(callback);
-        const stored = callbackRegistry.get(key);
-        if (stored === undefined) {
-          throw new CassetteError(
-            "CALLBACK_NOT_RECORDED",
-            `[bun-test-utils/vcr] No recorded callback output for ${key}. ` +
-              "Call cassette.record(callback) before cassette.replay(callback).",
-            { key },
-          );
-        }
-        return deserializeOutput<T>(stored);
+        return callbacks.replay(callback);
       },
       get mode() {
         return mode;

@@ -110,9 +110,12 @@ The decision and its alternatives are in
 
 ## Implementation status
 
-The callback registry is implemented on `CassetteHelper`: callback source identity is
-hashed without executing the callback, `record()` serializes and stores one result, and
-`replay()` returns that result without invoking the callback, and `record()` refuses a result that is not plain data (R7). HTTP replay compares the
+The callback registry is implemented on `CassetteHelper`: a recorded callback object
+is identified by that object, and an unrecorded one matches its source text only when
+every recording with that text agrees (R8). `record()` runs any callback object it has
+not recorded, serializes and stores one result, and refuses a result that is not plain
+data (R7). `replay()` returns the stored result without invoking the callback, and
+refuses a disagreeing source match with `CALLBACK_AMBIGUOUS`. HTTP replay compares the
 uppercase method and full URL exactly. Coverage lives in the VCR unit suite and the
 public root `cassette` fixture conformance suite.
 

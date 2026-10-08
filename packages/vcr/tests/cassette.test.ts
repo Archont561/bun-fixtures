@@ -410,6 +410,140 @@ describe("callback results JSON cannot round-trip", () => {
   });
 });
 
+describe("callback identity (ADR 0027)", () => {
+  /**
+   * Closures from one factory share source text and differ only in captured
+   * values, which a function cannot expose without running. `runs` records
+   * which body actually executed, so a test can see a skipped callback.
+   */
+  function loaderFactory() {
+    const runs: string[] = [];
+    const makeLoader = (id: string) => () => {
+      runs.push(id);
+      return { id };
+    };
+    return { runs, makeLoader };
+  }
+
+  /** Replays a fresh closure that must be refused, and returns the refusal. */
+  async function replayRefusal(
+    cassette: CassetteHelper,
+    callback: () => unknown,
+  ): Promise<CassetteError> {
+    let refusal: unknown;
+    try {
+      await cassette.replay(callback);
+    } catch (caught) {
+      refusal = caught;
+    }
+    expect(refusal).toBeInstanceOf(CassetteError);
+    return refusal as CassetteError;
+  }
+
+  test("two closures from one factory each run and record their own result", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+
+    expect(await cassette.record(makeLoader("a"))).toEqual({ id: "a" });
+    expect(await cassette.record(makeLoader("b"))).toEqual({ id: "b" });
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("replay returns the result recorded for each closure, in any order", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    const a = makeLoader("a");
+    const b = makeLoader("b");
+
+    await cassette.record(a);
+    await cassette.record(b);
+    expect(await cassette.replay(b)).toEqual({ id: "b" });
+    expect(await cassette.replay(a)).toEqual({ id: "a" });
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("record of a recorded closure returns its stored result without running it again", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    const a = makeLoader("a");
+
+    expect(await cassette.record(a)).toEqual({ id: "a" });
+    expect(await cassette.record(a)).toEqual({ id: "a" });
+    expect(runs).toEqual(["a"]);
+  });
+
+  test("a fresh closure whose recordings disagree is refused and not run", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+    await cassette.record(makeLoader("b"));
+
+    const error = await replayRefusal(cassette, makeLoader("c"));
+    expect(error.code).toBe("CALLBACK_AMBIGUOUS");
+    expect(error.message.startsWith("[bun-test-utils/vcr] ")).toBe(true);
+    expect(error.message).toContain("same function object");
+    expect(error.details?.recordings).toBe(2);
+    expect(runs).toEqual(["a", "b"]);
+  });
+
+  test("a fresh closure whose recordings agree returns the agreed result, not run", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+    await cassette.record(makeLoader("a"));
+
+    expect(await cassette.replay(makeLoader("a"))).toEqual({ id: "a" });
+    expect(runs).toEqual(["a", "a"]);
+  });
+
+  test("a fresh closure matching one recording returns it: the documented limit (ADR 0027)", async ({
+    cassette,
+  }) => {
+    const { runs, makeLoader } = loaderFactory();
+    await cassette.record(makeLoader("a"));
+
+    // Captured values differ, but the source text matches the one recording.
+    expect(await cassette.replay(makeLoader("b"))).toEqual({ id: "a" });
+    expect(runs).toEqual(["a"]);
+  });
+
+  test("an inline closure written with the same code replays the recording", async ({
+    cassette,
+  }) => {
+    let runs = 0;
+    expect(await cassette.record(() => ({ id: `user-${++runs}` }))).toEqual({
+      id: "user-1",
+    });
+    expect(await cassette.replay(() => ({ id: `user-${++runs}` }))).toEqual({
+      id: "user-1",
+    });
+    expect(runs).toBe(1);
+  });
+
+  test("concurrent record calls for one closure keep the first recording", async ({
+    cassette,
+  }) => {
+    let started = 0;
+    const slow = async () => {
+      const n = ++started;
+      await Bun.sleep(n === 1 ? 10 : 1);
+      return { n };
+    };
+
+    const [first, second] = await Promise.all([
+      cassette.record(slow),
+      cassette.record(slow),
+    ]);
+    expect(second).toEqual(first);
+    expect(await cassette.replay(slow)).toEqual(first);
+  });
+});
+
 describe("__cassettes__/ convention", () => {
   test("record mode auto-saves under __cassettes__/<test name> on teardown", async ({
     cassette,

@@ -73,6 +73,7 @@ export class CassetteError extends BunTestUtilsError {
     code:
       | "CASSETTE_NOT_FOUND"
       | "CASSETTE_MISMATCH"
+      | "CALLBACK_AMBIGUOUS"
       | "CALLBACK_NOT_RECORDED"
       | "CALLBACK_NOT_SERIALIZABLE",
     message: string,
