@@ -7,8 +7,9 @@
 At the time of this decision, the package exposed only `describe`, `test`, and
 `expect` to end users. ADR 0021 later added `propTestSchema` at the root; ADR
 0022 moved it to `/pbt` and added narrowly scoped typed step helpers at `/bdd`.
-The BDD runner and capability fixtures remain on the root `test` context; no
-runner or fixture-pack subpath was added. A separate BDD runner subpath would
+ADR 0023 renamed the PBT helper to `defineArbitraries`. The BDD runner and
+capability fixtures remain on the root `test` context; no runner or fixture-pack
+subpath was added. A separate BDD runner subpath would
 violate the public-surface rule and make fixture availability depend on helper
 imports outside the test context.
 

@@ -267,7 +267,7 @@ describe("bun pm pack smoke test", () => {
           join(project, "quickstart.test.ts"),
           `import { describe, expect, test } from "bun-test-utils";
 import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
-import { propTestSchema } from "bun-test-utils/pbt";
+import { defineArbitraries } from "bun-test-utils/pbt";
 
 describe("packed public API", () => {
   test("built-in fixtures inject from the root test", async ({ tmpdir }) => {
@@ -287,7 +287,7 @@ describe("packed public API", () => {
     const when = (ctx: unknown) => ({ value: ctx });
     const then = (_ctx: unknown) => {};
 
-    expect(propTestSchema(schema)).toBe(schema);
+    expect(defineArbitraries(schema)).toBe(schema);
     expect(givenStep(given)).toBe(given);
     expect(whenStep(when)).toBe(when);
     expect(thenStep(then)).toBe(then);

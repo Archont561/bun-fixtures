@@ -1,7 +1,7 @@
 # bun-test-utils
 
 The single published package. The root runtime exports are `describe`, `expect`,
-and `test`. Typed schema and scenario-step helpers live on the narrow
+and `test`. Typed arbitrary-definition and scenario-step helpers live on the narrow
 `bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; they expose no runners or
 fixtures.
 
@@ -18,7 +18,7 @@ bun add -d @aboviq/bun-test-cucumber # test.scenario()
 ```
 
 `fast-check` is optional at runtime. Its declarations are referenced by the
-published root and `/pbt` `.d.ts` files to preserve typed property schemas, so
+published root and `/pbt` `.d.ts` files to preserve typed arbitrary definitions, so
 TypeScript consumers using `skipLibCheck: false` must install `fast-check` even
 if they only use non-property root APIs. With `skipLibCheck: true`, ordinary
 root imports typecheck without the peer; using property APIs still requires the
@@ -34,7 +34,7 @@ or fixture packs.
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
-- `propTestSchema(...)` from `bun-test-utils/pbt` to define reusable fast-check records or factories without importing the `FastCheckApi` type in each schema module.
+- `defineArbitraries(...)` from `bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
 - `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `bun-test-utils/bdd` to contextually type reusable scenario callbacks.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
@@ -170,21 +170,21 @@ test.scenario("chains every fluent phase")
   });
 ```
 
-## Shared property schemas
+## Shared arbitrary definitions
 
-Schema factories are ordinary functions, explicitly imported from shared modules. Wrap a factory with `propTestSchema` from `bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the schema unchanged, and schemas compose with ordinary object spread.
+A fast-check arbitrary record or factory can be explicitly imported from a shared module. Wrap a factory with `defineArbitraries` from `bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the definition unchanged, and arbitrary records compose with ordinary object spread.
 
 ```ts
-// schemas.ts
-import { propTestSchema } from "bun-test-utils/pbt";
+// arbitraries.ts
+import { defineArbitraries } from "bun-test-utils/pbt";
 
-export const baseSchema = propTestSchema((fc) => ({
+export const baseArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
   age: fc.nat(),
 }));
 
-export const adminSchema = propTestSchema((fc) => ({
-  ...baseSchema(fc),
+export const adminArbitraries = defineArbitraries((fc) => ({
+  ...baseArbitraries(fc),
   canManageUsers: fc.boolean(),
 }));
 ```
@@ -192,9 +192,9 @@ export const adminSchema = propTestSchema((fc) => ({
 ```ts
 // admin.test.ts
 import { expect, test } from "bun-test-utils";
-import { adminSchema } from "./schemas";
+import { adminArbitraries } from "./arbitraries";
 
-test.prop("generates typed admins", adminSchema, async (_fixtures, {
+test.prop("generates typed admins", adminArbitraries, async (_fixtures, {
   name,
   age,
   canManageUsers,

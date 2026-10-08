@@ -21,7 +21,7 @@
 | R9 | The root fixture context MUST use one flat namespace containing exactly `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`, `cassette`, and `snapshot`. |
 | R10 | Fixture composition MUST be last-definition-wins: a consumer `test.extend()` definition overrides a built-in key, and a later extension overrides an earlier one. Dependencies MUST resolve the winning definition by key. |
 | R11 | The exact human-readable templates for unknown fixtures, circular dependencies, a fixture finishing without `use(value)`, and a fetch blocked by `networkGuard` MUST remain contractual; other diagnostic wording MAY change while machine-readable codes and meaning remain compatible. |
-| R12 | `bun-test-utils/pbt` MUST export `propTestSchema`, accepting an arbitrary record or fast-check factory, contextually typing the factory API, preserving generated-value inference, and returning the supplied definition unchanged. |
+| R12 | `bun-test-utils/pbt` MUST export `defineArbitraries`, accepting an arbitrary record or fast-check factory, contextually typing the factory API, preserving generated-value inference, and returning the supplied definition unchanged. |
 | R13 | `bun-test-utils/bdd` MUST export `givenStep`, `whenStep`, and `thenStep` identity wrappers with contextual input/output-state typing, plus the related scenario type aliases; each wrapper returns its callback unchanged. |
 
 ## Design
@@ -44,9 +44,9 @@ The user first authorized `propTestSchema` as a top-level runtime identity wrapp
 
 ### Capability-scoped typed helpers (ADR 0022)
 
-`bun-test-utils/pbt` exports `propTestSchema` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. The root runtime surface is again exactly `describe`, `expect`, and `test`; the only package subpaths are the helper-only `/pbt` and `/bdd` exports plus `/package.json`. They expose no runners or fixtures, and no other root helper or `test.*` member is added.
+`bun-test-utils/pbt` exports `defineArbitraries` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. The root runtime surface is again exactly `describe`, `expect`, and `test`; the only package subpaths are the helper-only `/pbt` and `/bdd` exports plus `/package.json`. They expose no runners or fixtures, and no other root helper or `test.*` member is added. ADR 0023 records the pre-release rename from `propTestSchema` to `defineArbitraries`.
 
-The declarations still reference `fast-check` types for PBT inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` may need to install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking a missing optional peer declaration. Neither schema nor scenario helper loads an optional peer at runtime.
+The declarations still reference `fast-check` types for PBT inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` may need to install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking a missing optional peer declaration. Neither the PBT definition helper nor the BDD step wrappers load an optional peer at runtime.
 
 ### Fixture-key collisions
 

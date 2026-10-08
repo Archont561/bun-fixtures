@@ -17,7 +17,7 @@ import { describe, expect, test } from "bun-test-utils";
 Typed definition helpers live on two helper-only subpaths:
 
 ```ts
-import { propTestSchema } from "bun-test-utils/pbt";
+import { defineArbitraries } from "bun-test-utils/pbt";
 import type { ArbitraryInput, FastCheckApi, GeneratedValues } from "bun-test-utils/pbt";
 
 import { givenStep, whenStep, thenStep } from "bun-test-utils/bdd";
@@ -30,7 +30,7 @@ import type {
 } from "bun-test-utils/bdd";
 ```
 
-`propTestSchema` is an identity wrapper for an arbitrary record or factory; it
+`defineArbitraries` is an identity wrapper for an arbitrary record or factory; it
 contextually types a factory's `fc` parameter and preserves generated types for
 `test.prop` and `test.scenario.prop`. The phase-specific scenario wrappers
 contextually type each callback's input and returned state, then return the

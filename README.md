@@ -32,14 +32,14 @@ bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
 
-Use `propTestSchema` from the helper-only `bun-test-utils/pbt` subpath for
-reusable property schemas. It contextually types the fast-check API parameter
-and returns the schema unchanged:
+Use `defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath for
+reusable fast-check arbitrary records. It contextually types the factory API
+parameter and returns the definition unchanged:
 
 ```ts
-import { propTestSchema } from "bun-test-utils/pbt";
+import { defineArbitraries } from "bun-test-utils/pbt";
 
-export const userSchema = propTestSchema((fc) => ({
+export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
   age: fc.nat(),
 }));

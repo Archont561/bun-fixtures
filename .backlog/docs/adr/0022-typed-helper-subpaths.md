@@ -1,6 +1,6 @@
 # 0022 — Capability-scoped typed helper subpaths
 
-- **Status:** accepted
+- **Status:** accepted, amended by [0023](./0023-define-arbitraries-helper.md) for PBT helper naming
 - **Date:** 2026-10-08
 - **Supersedes:** [0021](./0021-prop-test-schema-root-wrapper.md) as to helper placement and the public runtime surface
 

@@ -25,6 +25,7 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0019](./0019-no-base-directory-override-in-0-1-x.md) | No base-directory override for the cassette and snapshot conventions in 0.1.x | accepted |
 | [0020](./0020-remove-parameterized-fixtures.md) | Remove parameterized fixtures; `test.prop` covers the axis | accepted |
 | [0021](./0021-prop-test-schema-root-wrapper.md) | Root `propTestSchema` identity wrapper | superseded by 0022 |
-| [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted |
+| [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted, amended by 0023 |
+| [0023](./0023-define-arbitraries-helper.md) | Name the PBT identity helper `defineArbitraries` | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

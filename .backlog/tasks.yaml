@@ -2589,8 +2589,8 @@ tasks:
     created_at: 2026-10-07T21:12:22.077Z
     updated_at: 2026-10-07T21:16:20.705Z
   - id: task_048
-    title: "Reusable definition libraries: composable fast-check schemas and shared
-      scenario steps"
+    title: "Reusable definition libraries: composable fast-check arbitraries and
+      shared scenario steps"
     description: >-
       Make definitions first-class reusable across files for the two expressive
       APIs. Both halves are additive; both already work at runtime today, so the
@@ -2690,9 +2690,17 @@ tasks:
       scenario type aliases belong at `bun-test-utils/bdd`. Remove the helper
       and scenario type aliases from the root, and keep both subpaths limited
       to their helper/type surfaces. ADR 0022 records this decision before
-      implementation. The original design-note-before-code criterion remains
-      unresolved; keep the task in_progress unless the user explicitly waives
-      or reframes it.
+      implementation.
+
+
+      FOLLOW-UP USER DECISION (2026-10-08, later): The user approved
+      `defineArbitraries` as the PBT identity helper name, replacing the
+      unreleased name `propTestSchema`. Do not retain a compatibility alias.
+      This is a naming-only change; the BDD wrappers, type surfaces, and root
+      API remain as recorded in ADR 0022. ADR 0023 records the naming decision
+      before implementation. The original design-note-before-code criterion
+      remains unresolved; keep the task in_progress unless the user explicitly
+      waives or reframes it.
     source_links: []
     status: in_progress
     priority: P2
@@ -2700,16 +2708,16 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - a schema defined once in a shared module is reused by property tests in
-        two different files, and the generated values are inferred at the call
-        site with no casts under bun run typecheck
-      - "schemas compose: a derived schema reuses a base one (spread/merge or
-        pick/omit) and is exercised by a property test; test.scenario.prop
-        strategies receive the same typed treatment"
+      - an arbitrary record defined once in a shared module is reused by
+        property tests in two different files, and generated values are inferred
+        at the call site with no casts under bun run typecheck
+      - "arbitrary records compose: a derived definition reuses a base one
+        (spread/merge or pick/omit) and is exercised by a property test;
+        test.scenario.prop strategies receive the same typed treatment"
       - >-
-        `bun-test-utils/pbt` exports the `propTestSchema` identity wrapper that
-        contextually types shared factories without per-schema type imports; PBT
-        type aliases are imported from that subpath
+        `bun-test-utils/pbt` exports the `defineArbitraries` identity wrapper
+        that contextually types shared arbitrary definitions without per-file
+        type imports; PBT type aliases are imported from that subpath
       - a scenario step defined in a shared module is reused by two scenarios
         and its fixtures resolve without either scenario listing them
       - >-
@@ -2743,4 +2751,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-07T21:21:00.895Z
-    updated_at: 2026-10-07T23:41:53.342Z
+    updated_at: 2026-10-08T00:20:34.029Z

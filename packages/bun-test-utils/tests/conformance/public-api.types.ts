@@ -12,7 +12,12 @@ import type {
 } from "bun-test-utils/pbt";
 import type { Arbitrary } from "fast-check";
 
-// Positive assertions pin the related types to their capability subpaths.
+// Positive assertions pin the runtime helper name and related types to the PBT subpath.
+type _DefineArbitrariesIsExported =
+  typeof import("bun-test-utils/pbt").defineArbitraries;
+// @ts-expect-error The pre-release propTestSchema name has been removed.
+type _OldPbtName = typeof import("bun-test-utils/pbt").propTestSchema;
+
 type _PbtAliasesAreExported = [
   FastCheckApi,
   ArbitraryInput<{ value: Arbitrary<string> }>,

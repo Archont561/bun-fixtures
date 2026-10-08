@@ -19,9 +19,10 @@ import { describe, expect, test } from "bun-test-utils";
 
 ADR 0021 later added the root runtime helper `propTestSchema`; ADR 0022 moved
 it to the narrow `./pbt` helper subpath and added typed step wrappers at
-`./bdd`. Those subpaths expose no runners or fixture packs. Property tests,
-fluent scenarios, and built-in fixtures remain available from `test.*` and the
-test context. Mocking belongs in fixtures composed with `test.extend()`.
+`./bdd`; ADR 0023 renamed the PBT helper to `defineArbitraries`. Those subpaths
+expose no runners or fixture packs. Property tests, fluent scenarios, and
+built-in fixtures remain available from `test.*` and the test context. Mocking
+belongs in fixtures composed with `test.extend()`.
 
 Every internal package uses parallel `src/` and `tests/` directories. A test file mirrors the source module it primarily verifies; cross-capability behavior is covered in the wrapper conformance and packed-consumer suites.
 

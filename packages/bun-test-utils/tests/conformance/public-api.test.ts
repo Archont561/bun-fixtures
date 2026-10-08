@@ -4,7 +4,7 @@ import type { ScenarioContext } from "bun-test-utils/bdd";
 import * as bddApi from "bun-test-utils/bdd";
 import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
 import * as pbtApi from "bun-test-utils/pbt";
-import { propTestSchema } from "bun-test-utils/pbt";
+import { defineArbitraries } from "bun-test-utils/pbt";
 import fc from "fast-check";
 
 test("public root exports only the approved runner values", () => {
@@ -12,7 +12,8 @@ test("public root exports only the approved runner values", () => {
 });
 
 test("typed helpers are scoped to their capability subpaths", () => {
-  expect(Object.keys(pbtApi).sort()).toEqual(["propTestSchema"]);
+  expect(Object.keys(pbtApi).sort()).toEqual(["defineArbitraries"]);
+  expect("propTestSchema" in pbtApi).toBe(false);
   expect(Object.keys(bddApi).sort()).toEqual([
     "givenStep",
     "thenStep",
@@ -20,17 +21,17 @@ test("typed helpers are scoped to their capability subpaths", () => {
   ]);
 });
 
-test("propTestSchema returns schema records and factories unchanged", () => {
+test("defineArbitraries returns arbitrary records and factories unchanged", () => {
   const record = { name: fc.string() };
   const factory = (fastCheck: typeof fc) => ({ name: fastCheck.string() });
 
-  expect(propTestSchema(record)).toBe(record);
-  expect(propTestSchema(factory)).toBe(factory);
+  expect(defineArbitraries(record)).toBe(record);
+  expect(defineArbitraries(factory)).toBe(factory);
 });
 
 test.prop(
-  "propTestSchema preserves record inference",
-  propTestSchema({ name: fc.string() }),
+  "defineArbitraries preserves record inference",
+  defineArbitraries({ name: fc.string() }),
   async (_fixtures, { name }) => {
     const typedName: string = name;
     expect(typeof typedName).toBe("string");

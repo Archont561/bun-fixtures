@@ -1,6 +1,6 @@
 # Property-based testing (internal)
 
-Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `bun-test-utils/pbt` subpath exposes `propTestSchema` and PBT type aliases; it does not expose a runner or fixtures.
+Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `bun-test-utils/pbt` subpath exposes `defineArbitraries` and PBT type aliases; it does not expose a runner or fixtures.
 
 ```ts
 import { expect, test } from "bun-test-utils";
@@ -15,23 +15,23 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `propTestSchema` from `bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each schema module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
+The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `defineArbitraries` from `bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each definition module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
 
-## Shared schemas
+## Shared arbitrary definitions
 
-Schema factories are plain functions that can live in shared modules and be imported by any property-test file. The `bun-test-utils/pbt` `propTestSchema` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
+Arbitrary records and factories are plain definitions that can live in shared modules and be imported by any property-test file. The `bun-test-utils/pbt` `defineArbitraries` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
 
 ```ts
-// schemas.ts
-import { propTestSchema } from "bun-test-utils/pbt";
+// arbitraries.ts
+import { defineArbitraries } from "bun-test-utils/pbt";
 
-export const userSchema = propTestSchema((fc) => ({
+export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
   age: fc.nat(),
 }));
 
-export const adminSchema = propTestSchema((fc) => ({
-  ...userSchema(fc),
+export const adminArbitraries = defineArbitraries((fc) => ({
+  ...userArbitraries(fc),
   permissions: fc.array(fc.constantFrom("read", "write")),
 }));
 ```
@@ -39,9 +39,9 @@ export const adminSchema = propTestSchema((fc) => ({
 ```ts
 // admin.test.ts
 import { expect, test } from "bun-test-utils";
-import { adminSchema } from "./schemas";
+import { adminArbitraries } from "./arbitraries";
 
-test.prop("generates typed admin records", adminSchema, async (_fixtures, {
+test.prop("generates typed admin records", adminArbitraries, async (_fixtures, {
   name,
   age,
   permissions,
@@ -53,7 +53,7 @@ test.prop("generates typed admin records", adminSchema, async (_fixtures, {
 });
 ```
 
-Use explicit imports and ordinary object spread for composition. `propTestSchema` is an identity wrapper only: it does not register, inspect, or alter definitions. `test.scenario.prop` accepts the same factory type and preserves the generated value types through the scenario chain.
+Use explicit imports and ordinary object spread for composition. `defineArbitraries` is an identity wrapper only: it does not register, inspect, or alter definitions. `test.scenario.prop` accepts the same factory type and preserves the generated value types through the scenario chain.
 
 The property API is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, including the per-iteration fixture lifecycle: a test-scoped fixture is rebuilt and torn down around every generated sample and every shrink step, while session- and file-scoped fixtures are shared across them.
 

@@ -1,7 +1,7 @@
-import { propTestSchema } from "bun-test-utils/pbt";
+import { defineArbitraries } from "bun-test-utils/pbt";
 
 /** Shared value schema used by property tests in separate files. */
-export const textFileSchema = propTestSchema((fc) => ({
+export const textFileSchema = defineArbitraries((fc) => ({
   segments: fc.array(fc.stringMatching(/^[a-z0-9]{1,8}$/), {
     minLength: 1,
     maxLength: 4,
@@ -10,7 +10,7 @@ export const textFileSchema = propTestSchema((fc) => ({
 }));
 
 /** A composed schema extends the shared base with a generated extension. */
-export const textFileWithExtensionSchema = propTestSchema((fc) => ({
+export const textFileWithExtensionSchema = defineArbitraries((fc) => ({
   ...textFileSchema(fc),
   extension: fc.constantFrom(".txt", ".log"),
 }));

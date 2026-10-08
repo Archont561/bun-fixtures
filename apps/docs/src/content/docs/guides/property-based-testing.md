@@ -42,39 +42,40 @@ test.prop(
 - **Every other `fast-check` parameter** (`numRuns`, `seed`, …) passes
   straight through to `fc.assert`.
 
-## Sharing and composing schemas
+## Sharing and composing arbitrary definitions
 
-A schema is an ordinary record or factory. Export it from a shared module and
-import it explicitly wherever a property needs it; there is no registry or
-schema-processing machinery. Wrap shared factories with `propTestSchema` from
-the helper-only `bun-test-utils/pbt` subpath to get contextual fast-check typing
-without importing `FastCheckApi` in each schema file:
+An arbitrary definition is an ordinary record or factory. Export it from a
+shared module and import it explicitly wherever a property needs it; there is
+no registry or runtime definition-processing machinery. Wrap shared factories with
+`defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath to get
+contextual fast-check typing without importing `FastCheckApi` in each definition
+file:
 
 ```ts
-// schemas.ts
-import { propTestSchema } from "bun-test-utils/pbt";
+// arbitraries.ts
+import { defineArbitraries } from "bun-test-utils/pbt";
 
-export const userSchema = propTestSchema((fc) => ({
+export const userArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
   age: fc.nat(),
 }));
 
-export const adminUserSchema = propTestSchema((fc) => ({
-  ...userSchema(fc),
+export const adminUserArbitraries = defineArbitraries((fc) => ({
+  ...userArbitraries(fc),
   permissions: fc.array(fc.constantFrom("read", "write")),
 }));
 ```
 
-The derived schema reuses the base factory with ordinary object spread. Every
+The derived record reuses the base factory with ordinary object spread. Every
 property test importing either factory infers generated values from its
 arbitraries—no casts or per-test annotations are needed:
 
 ```ts
 // admin.test.ts
 import { expect, test } from "bun-test-utils";
-import { adminUserSchema } from "./schemas";
+import { adminUserArbitraries } from "./arbitraries";
 
-test.prop("admin permissions are non-empty", adminUserSchema, async (_fixtures, {
+test.prop("admin permissions are non-empty", adminUserArbitraries, async (_fixtures, {
   name,
   age,
   permissions,
@@ -89,7 +90,7 @@ test.prop("admin permissions are non-empty", adminUserSchema, async (_fixtures, 
 });
 ```
 
-`test.scenario.prop` accepts the same schema type, so generated keys are
+`test.scenario.prop` accepts the same arbitrary record type, so generated keys are
 available in the first scenario step and continue through the fluent chain.
 The `fast-check` peer remains optional at runtime for projects that do not
 execute property or property-scenario tests. TypeScript's strict declaration
