@@ -184,9 +184,12 @@ The full loop is [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.m
 
 - **Claim the task.** `bunx backlog claim` — claims are enforced on commit
   (`enforce_on_commit = true` in `.backlog/config.toml`).
-- **Red before green.** User-visible behaviour goes in `packages/bun-test-utils/features/*.feature`
-  (`bun run test:bdd`); engine internals go in the matching `packages/core/tests/<source>.test.ts`
-  file (`bun run test:unit`), and every other internal package mirrors `src/` under `tests/`.
+- **Red before green.** User-visible behaviour goes in the owning package's
+  `packages/<pkg>/e2e/bdd/features/*.feature` (`bun run test:bdd`), each run by that package's
+  one-line `packages/<pkg>/e2e/bdd/features.test.ts` — a new `.feature` file needs no wiring,
+  because the runner globs the whole directory. Engine internals go in the matching
+  `packages/core/tests/<source>.test.ts` file (`bun run test:unit`), and every other internal
+  package mirrors `src/` under `tests/`.
   Cross-package composition and installed-consumer behavior belong in the public wrapper's
   `tests/{conformance,e2e}/`. Write the failing test first — the `tdd` skill is installed for
   exactly this.
