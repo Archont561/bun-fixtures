@@ -33,6 +33,7 @@ import { createTest, type FixtureContext } from "@bun-test-utils/core";
 import {
   type CassetteEntry,
   CassetteError,
+  type CassetteHelper,
   cassetteFixture,
   describe,
   expect,
@@ -201,6 +202,211 @@ describe("@bun-test-utils/vcr", () => {
     expect(cassette.entries[0]!.request.headers.authorization).toBe(
       "[REDACTED]",
     );
+  });
+});
+
+/** A class instance: its data is real, but its prototype is not plain. */
+class Point {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+/**
+ * Records a callback whose result JSON cannot round-trip. The first `record`
+ * must throw the coded diagnostic. Nothing is registered, so `replay` must then
+ * report the unrecorded callback instead of returning a corrupted value.
+ */
+async function expectRefused(
+  cassette: CassetteHelper,
+  callback: () => unknown,
+): Promise<CassetteError> {
+  let refusal: unknown;
+  try {
+    await cassette.record(callback);
+  } catch (caught) {
+    refusal = caught;
+  }
+  expect(refusal).toBeInstanceOf(CassetteError);
+  const error = refusal as CassetteError;
+  expect(error.code).toBe("CALLBACK_NOT_SERIALIZABLE");
+  expect(error.message.startsWith("[bun-test-utils/vcr] ")).toBe(true);
+
+  let replayed: unknown;
+  try {
+    await cassette.replay(callback);
+  } catch (caught) {
+    replayed = caught;
+  }
+  expect(replayed).toBeInstanceOf(CassetteError);
+  expect((replayed as CassetteError).code).toBe("CALLBACK_NOT_RECORDED");
+  return error;
+}
+
+describe("callback results JSON cannot round-trip", () => {
+  test("refuses a Date instead of replaying a string", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Date(0));
+  });
+
+  test("refuses a BigInt instead of replaying a string", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => 123n);
+  });
+
+  test("refuses NaN instead of replaying null", async ({ cassette }) => {
+    await expectRefused(cassette, () => Number.NaN);
+  });
+
+  test("refuses Infinity instead of replaying null", async ({ cassette }) => {
+    await expectRefused(cassette, () => Number.POSITIVE_INFINITY);
+  });
+
+  test("refuses -0 instead of replaying 0", async ({ cassette }) => {
+    await expectRefused(cassette, () => -0);
+  });
+
+  test("refuses a class instance instead of replaying a plain object", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => new Point(1, 2));
+  });
+
+  test("refuses a Map instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Map([["id", "user-1"]]));
+  });
+
+  test("refuses a Set instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Set(["admin"]));
+  });
+
+  test("refuses an Error instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => new Error("boom"));
+  });
+
+  test("refuses a RegExp instead of replaying {}", async ({ cassette }) => {
+    await expectRefused(cassette, () => /user-\d+/g);
+  });
+
+  test("refuses a typed array instead of replaying an index-keyed object", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => new Uint8Array([1, 2]));
+  });
+
+  test("names the path of a nested undefined, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => ({
+      id: "user-1",
+      nickname: undefined,
+    }));
+    expect(error.message).toContain("$.nickname");
+    expect(error.details).toMatchObject({
+      path: "$.nickname",
+      valueType: "undefined",
+    });
+  });
+
+  test("names the path of a nested function, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => ({
+      id: "user-1",
+      format: () => "ada",
+    }));
+    expect(error.message).toContain("$.format");
+  });
+
+  test("refuses a symbol-keyed property, which JSON would drop", async ({
+    cassette,
+  }) => {
+    const secret = Symbol("secret");
+    await expectRefused(cassette, () => ({ id: "user-1", [secret]: "hidden" }));
+  });
+
+  test("refuses a sparse array, which JSON would turn into nulls", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => {
+      const items: unknown[] = [];
+      items[0] = "first";
+      items[2] = "third";
+      return items;
+    });
+  });
+
+  test("refuses a top-level function with the coded diagnostic", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => () => "not data");
+  });
+
+  test("refuses a top-level symbol with the coded diagnostic", async ({
+    cassette,
+  }) => {
+    await expectRefused(cassette, () => Symbol("token"));
+  });
+
+  test("wraps a circular structure in a coded diagnostic, not a raw TypeError", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => {
+      const node: { self?: unknown } = {};
+      node.self = node;
+      return node;
+    });
+    expect(error).not.toBeInstanceOf(TypeError);
+    expect(error.message).toContain("circular");
+    expect(error.message).toContain("$.self");
+  });
+
+  test("still records and replays a top-level undefined", async ({
+    cassette,
+  }) => {
+    const nothing = () => undefined;
+    expect(await cassette.record(nothing)).toBeUndefined();
+    expect(await cassette.replay(nothing)).toBeUndefined();
+  });
+
+  test("still records and replays nested plain data exactly", async ({
+    cassette,
+  }) => {
+    const payload = () => ({
+      id: "user-1",
+      tags: ["admin", "ops"],
+      count: 0,
+      ratio: 0.5,
+      active: true,
+      owner: null,
+      meta: { empty: [], nothing: {} },
+    });
+    expect(await cassette.record(payload)).toEqual(payload());
+    expect(await cassette.replay(payload)).toEqual(payload());
+  });
+
+  test("still records and replays a null-prototype object as plain data", async ({
+    cassette,
+  }) => {
+    const dictionary = () =>
+      Object.assign(Object.create(null), { id: "user-1" }) as { id: string };
+    expect((await cassette.record(dictionary)).id).toBe("user-1");
+    expect((await cassette.replay(dictionary)).id).toBe("user-1");
+  });
+
+  test("still records and replays repeated references that are not cycles", async ({
+    cassette,
+  }) => {
+    const shared = () => {
+      const tag = { name: "admin" };
+      return { first: tag, second: tag };
+    };
+    const expected = { first: { name: "admin" }, second: { name: "admin" } };
+    expect(await cassette.record(shared)).toEqual(expected);
+    expect(await cassette.replay(shared)).toEqual(expected);
   });
 });
 

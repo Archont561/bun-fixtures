@@ -51,7 +51,10 @@ describe("@bun-test-utils/vcr callback invariants", () => {
   test.prop(
     "record then replay returns the serialized callback output without rerunning",
     (fc) => ({
-      value: fc.jsonValue({ maxDepth: 3 }),
+      // JSON has no -0 (it is written as 0), so generate only canonical JSON.
+      value: fc
+        .jsonValue({ maxDepth: 3 })
+        .map((value) => JSON.parse(JSON.stringify(value)) as typeof value),
     }),
     async ({ cassette }, { value }) => {
       let calls = 0;

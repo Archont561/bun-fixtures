@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
-  BunTestUtilsError,
   CassetteError,
   createFixture,
   fnv1a,
@@ -80,17 +79,127 @@ function callbackIdentity(callback: (...args: never[]) => unknown): string {
   return `${fnv1a(source)}:${source.length}`;
 }
 
+const PLAIN_DATA_HINT =
+  "Return plain data instead: null, booleans, strings, finite numbers, arrays, and plain objects.";
+
+/** Extends a diagnostic path, quoting keys that are not plain identifiers. */
+function childPath(parent: string, key: string | number): string {
+  if (typeof key === "number") return `${parent}[${key}]`;
+  return /^[A-Za-z_$][\w$]*$/.test(key)
+    ? `${parent}.${key}`
+    : `${parent}[${JSON.stringify(key)}]`;
+}
+
+/** Names a non-plain object for a diagnostic. */
+function describeObject(value: object): string {
+  const name = (value as { constructor?: { name?: unknown } }).constructor
+    ?.name;
+  return typeof name === "string" && name !== "" && name !== "Object"
+    ? `an instance of ${name}`
+    : "an object with a non-plain prototype";
+}
+
+/** Throws the coded refusal for a value at `path` that JSON cannot round-trip. */
+function refuse(
+  path: string,
+  valueType: string,
+  hint = PLAIN_DATA_HINT,
+  details: Record<string, unknown> = {},
+): never {
+  const where = path === "$" ? "" : ` at ${path}`;
+  throw new CassetteError(
+    "CALLBACK_NOT_SERIALIZABLE",
+    `[bun-test-utils/vcr] cassette callback returned ${valueType}${where}, which cannot round-trip through JSON. ${hint}`,
+    { path, valueType, ...details },
+  );
+}
+
+/**
+ * Throws unless `value` is plain data, the only shape JSON represents exactly.
+ * `ancestors` maps each object on the current path to where it was first seen,
+ * so a cycle is refused where it closes. A repeated reference that is not a
+ * cycle is plain data and passes.
+ */
+function assertPlainData(
+  value: unknown,
+  path: string,
+  ancestors: Map<object, string>,
+): void {
+  if (value === null || typeof value === "string" || typeof value === "boolean")
+    return;
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) refuse(path, "NaN", "Return null instead.");
+    if (!Number.isFinite(value))
+      refuse(
+        path,
+        value > 0 ? "Infinity" : "-Infinity",
+        "Return null instead.",
+      );
+    if (Object.is(value, -0)) refuse(path, "-0", "Return 0 instead.");
+    return;
+  }
+  if (value === undefined)
+    refuse(path, "undefined", "Remove it, or return null instead.");
+  if (typeof value === "bigint") refuse(path, "a BigInt");
+  if (typeof value === "function") refuse(path, "a function");
+  if (typeof value === "symbol") refuse(path, "a symbol");
+
+  const object = value as object;
+  const firstSeenAt = ancestors.get(object);
+  if (firstSeenAt !== undefined)
+    refuse(
+      path,
+      "a circular structure",
+      `The same object is already at ${firstSeenAt}. Return a tree without cycles.`,
+      { firstSeenAt },
+    );
+
+  if (Array.isArray(object)) {
+    if (Object.getPrototypeOf(object) !== Array.prototype)
+      refuse(path, describeObject(object));
+    // Exactly the indices and `length`: a hole or an extra property fails this.
+    if (Reflect.ownKeys(object).length !== object.length + 1)
+      refuse(path, "a sparse array or an array with extra properties");
+    ancestors.set(object, path);
+    for (let index = 0; index < object.length; index++)
+      assertPlainData(object[index], childPath(path, index), ancestors);
+    ancestors.delete(object);
+    return;
+  }
+
+  const prototype = Object.getPrototypeOf(object);
+  if (prototype !== Object.prototype && prototype !== null)
+    refuse(path, describeObject(object));
+  const keys = Object.keys(object);
+  if (Reflect.ownKeys(object).length !== keys.length)
+    refuse(path, "an object with symbol-keyed or non-enumerable properties");
+  ancestors.set(object, path);
+  for (const key of keys)
+    assertPlainData(
+      (object as Record<string, unknown>)[key],
+      childPath(path, key),
+      ancestors,
+    );
+  ancestors.delete(object);
+}
+
 function serializeOutput(value: unknown): string {
   if (value === undefined) return "__undefined__";
-  const serialized = JSON.stringify(value, (_key, item) =>
-    typeof item === "bigint" ? `${item}n` : item,
-  );
-  if (serialized === undefined)
-    throw new BunTestUtilsError(
-      "INVALID_API_USAGE",
-      "[bun-test-utils/vcr] cassette callback returned a value that cannot be serialized",
+  assertPlainData(value, "$", new Map());
+  try {
+    return JSON.stringify(value);
+  } catch (cause) {
+    // Unreachable for plain data. Kept so an unexpected JSON failure still
+    // carries the code and the prefix instead of a raw error.
+    throw new CassetteError(
+      "CALLBACK_NOT_SERIALIZABLE",
+      `[bun-test-utils/vcr] cassette callback returned a value that cannot be serialized: ${
+        cause instanceof Error ? cause.message : String(cause)
+      }`,
+      { path: "$" },
+      cause,
     );
-  return serialized;
+  }
 }
 
 function deserializeOutput<T>(value: string): T {

@@ -70,11 +70,16 @@ export class MissingOptionalDependencyError extends BunTestUtilsError {
 /** A cassette or callback registry operation could not be fulfilled. */
 export class CassetteError extends BunTestUtilsError {
   constructor(
-    code: "CASSETTE_NOT_FOUND" | "CASSETTE_MISMATCH" | "CALLBACK_NOT_RECORDED",
+    code:
+      | "CASSETTE_NOT_FOUND"
+      | "CASSETTE_MISMATCH"
+      | "CALLBACK_NOT_RECORDED"
+      | "CALLBACK_NOT_SERIALIZABLE",
     message: string,
     details?: Record<string, unknown>,
+    cause?: unknown,
   ) {
-    super(code, message, { details });
+    super(code, message, { details, cause });
     this.name = "CassetteError";
   }
 }
