@@ -3502,3 +3502,48 @@ tasks:
       push_comments: false
     created_at: 2026-10-08T19:56:39.272Z
     updated_at: 2026-10-08T20:53:39.353Z
+  - id: task_064
+    title: Two stale references to the pre-ADR-0016 behaviour-feature path remain
+    description: |-
+      Found on 2026-10-08 while fixing the same defect in .agents/skills/session/SKILL.md (committed as "docs(skill): point the session skill at the package-owned behaviour features"). Behaviour features moved to packages/<pkg>/e2e/bdd/features/ under ADR 0016 and task_035. Two references to the old path survive:
+
+      - .backlog/docs/specs/0014-bdd-fixture-bridge.md line 6 lists its tests as "packages/bun-test-utils/features/capability-packs.feature"; the file is at packages/bun-test-utils/e2e/bdd/features/capability-packs.feature.
+      - apps/docs/src/content/docs/guides/scenarios-and-fluent-api.md line 130 links to https://github.com/Archont561/bun-test-utils/tree/main/packages/bun-test-utils/features — a GitHub 404. It should point at .../tree/main/packages/bun-test-utils/e2e/bdd/features.
+
+      Both are one-line corrections. They were out of scope for task_063, which is why they are a task rather than part of that commit.
+
+      Note for whoever picks this up: apps/docs/** triggers the path-filtered docs workflow, and .backlog/docs/specs/** sits outside the adr/** claim paths, so plan the claim accordingly.
+    source_links: []
+    status: ready
+    priority: P3
+    labels:
+      - docs
+      - testing
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - .backlog/docs/specs/0014-bdd-fixture-bridge.md names an existing feature
+        file
+      - the docs-site link in guides/scenarios-and-fluent-api.md resolves to a
+        real GitHub directory
+      - grep -rn "bun-test-utils/features" finds nothing anywhere in the
+        repository
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T20:56:07.927Z
+    updated_at: 2026-10-08T20:56:07.927Z
