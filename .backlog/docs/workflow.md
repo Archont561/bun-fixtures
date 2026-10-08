@@ -56,4 +56,4 @@ cross-cutting conformance and end-to-end tests. Backlog, skills, and docs are at
 - `bun test` green from the repository root, including the behavioural suite.
 - `bun run typecheck` clean in every workspace package.
 - Public API change → README updated **and** the matching spec in `.backlog/docs/specs/`.
-- Design change → a new ADR in `.backlog/docs/adr/`, with the superseded one marked.
+- Design change → a new ADR in `.backlog/docs/adr/`, recorded **before** implementation, with the superseded one marked.

@@ -36,7 +36,7 @@ Stack-trace detection compares frames against both `import.meta.path` and its `r
 
 The task initially selected **types-only plus convention**. In that initial implementation, shared scenario steps were plain functions in consumer-owned modules, explicitly imported and optionally composed by a consumer-owned function that accepts and returns a `GivenChain`; the root declaration exposed the schema and step type aliases. That root placement is historical and was superseded by ADR 0021 and then ADR 0022. The step types do not change fixture autodetection, scenario reporting, or runtime behavior.
 
-**Sequencing deviation (task_048):** The initial types-only direction was selected before implementation, but this spec note was written after source/test edits had begun. The task criterion requiring a spec/ADR note before code was therefore not met in repository chronology. This is recorded rather than represented as compliant; the task remains `in_progress` until the user explicitly waives or reframes that requirement.
+**Sequencing deviation (task_048) — waived, not met:** The initial types-only direction was selected before implementation, but this spec note was written after source/test edits had begun. The task criterion requiring a spec/ADR note before code was therefore not met in repository chronology. This is recorded rather than represented as compliant: on 2026-10-08 the user granted a one-time, task-scoped waiver, and `task_048` was closed `done` with that criterion unmet. The standing rule that a design decision is recorded in a spec note or ADR before implementation is unchanged (`.backlog/docs/workflow.md`, "Definition of done").
 
 ### Earlier root-helper decision (ADR 0021; superseded by ADR 0022)
 

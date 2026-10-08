@@ -2591,7 +2591,7 @@ tasks:
   - id: task_048
     title: "Reusable definition libraries: composable fast-check arbitraries and
       shared scenario steps"
-    description: >-
+    description: >
       Make definitions first-class reusable across files for the two expressive
       APIs. Both halves are additive; both already work at runtime today, so the
       deliverable is typing, composition ergonomics, documentation, and tests —
@@ -2669,27 +2669,27 @@ tasks:
       culture of ADR 0005/0008).
 
 
-      IMPLEMENTATION HANDOFF (2026-10-07): The initial types-only version of
-      the source, tests, guides, and package READMEs was implemented and
-      validated. The user-approved direction was settled before implementation,
-      but the spec note itself was added after source/test edits began. The
-      acceptance criterion requiring the design note to predate code was not
-      met in repository chronology.
+      IMPLEMENTATION HANDOFF (2026-10-07): The initial types-only version of the
+      source, tests, guides, and package READMEs was implemented and validated.
+      The user-approved direction was settled before implementation, but the
+      spec note itself was added after source/test edits began. The acceptance
+      criterion requiring the design note to predate code was not met in
+      repository chronology.
 
 
-      FOLLOW-UP USER DECISION (2026-10-08): The user first authorized one top-level
-      runtime identity wrapper, `propTestSchema`, so shared schema factories
-      receive contextual fast-check typing without importing the type in each
-      schema file. ADR 0021 records that intermediate revision before its source
-      edits.
+      FOLLOW-UP USER DECISION (2026-10-08): The user first authorized one
+      top-level runtime identity wrapper, `propTestSchema`, so shared schema
+      factories receive contextual fast-check typing without importing the type
+      in each schema file. ADR 0021 records that intermediate revision before
+      its source edits.
 
 
       FOLLOW-UP USER DECISION (2026-10-08, later): The user requested a strict
       move to capability-scoped typed helper subpaths. `propTestSchema` belongs
       at `bun-test-utils/pbt`; `givenStep`, `whenStep`, and `thenStep` plus the
       scenario type aliases belong at `bun-test-utils/bdd`. Remove the helper
-      and scenario type aliases from the root, and keep both subpaths limited
-      to their helper/type surfaces. ADR 0022 records this decision before
+      and scenario type aliases from the root, and keep both subpaths limited to
+      their helper/type surfaces. ADR 0022 records this decision before
       implementation.
 
 
@@ -2701,8 +2701,64 @@ tasks:
       before implementation. The original design-note-before-code criterion
       remains unresolved; keep the task in_progress unless the user explicitly
       waives or reframes it.
+
+
+      SEQUENCING WAIVER (2026-10-08, user-authorized): The user explicitly
+      granted a one-time, task_048-scoped waiver of the criterion requiring the
+      definition-surface decision to be recorded in a spec note or ADR *before
+      implementation*. The criterion was NOT met and is not claimed as met: the
+      initial types-only decision was implemented before its spec note existed,
+      and the capability-scoped revisions (ADR 0021, ADR 0022, ADR 0023)
+      post-date that initial implementation. This entry is a recorded waiver,
+      not a completion claim, and it is not a precedent for later tasks: the
+      standing rule remains that a design decision is recorded in a spec note or
+      ADR before implementation (workflow.md, "Definition of done").
+
+
+      CLOSURE — verified against the merged tree at f21850a (PR #30) after ADR
+      0022/0023:
+
+
+      - Shared schema reuse and inference (criteria 1-2):
+      `packages/bun-test-utils/tests/conformance/shared/property-schemas.ts` is
+      imported by `shared-definitions.test.ts` and `style-matrix.test.ts`;
+      generated values bind to typed locals (`string[]`, `string`, `".txt" |
+      ".log"`) with no casts; `textFileWithExtensionSchema` spreads
+      `textFileSchema(fc)` and a property test exercises it;
+      `test.scenario.prop` receives the same `ArbitraryInput<T>` typing.
+
+      - PBT subpath (criterion 3): `bun-test-utils/pbt` exports
+      `defineArbitraries` plus the `FastCheckApi`, `ArbitraryInput`, and
+      `GeneratedValues` aliases; conformance pins the subpath runtime keys to
+      exactly `["defineArbitraries"]`, asserts `propTestSchema` is absent, and
+      the type assertions import the aliases from that subpath only.
+
+      - Shared scenario steps (criterion 4):
+      `packages/bun-test-utils/tests/conformance/shared/scenario-steps.ts` is
+      reused by `shared-scenario-a.test.ts` and `shared-scenario-b.test.ts`; the
+      `tmpdir` fixtures resolve through per-step autodetection without either
+      scenario listing them.
+
+      - BDD subpath (criterion 5): `bun-test-utils/bdd` exports `givenStep`,
+      `whenStep`, and `thenStep` plus the scenario type aliases; the shared
+      steps and the `withSharedFile` sequence import them from the subpath and
+      are covered by tests.
+
+      - Documentation and surface pins (criterion 6): the property-based-testing
+      and scenarios guides gained sharing/composition sections, and the root,
+      `bun-test-utils`, `pbt`, and `bdd` READMEs follow; `public-api.test.ts`
+      pins the root runtime values to `describe`/`expect`/`test` and only the
+      authorized helper subpaths.
+
+      - Gate (criterion 7, non-sequencing half): `bun test` 335 pass / 8 skip /
+      0 fail across 45 files from the repository root, including the behavioural
+      suite; `bun run typecheck` 19/19 Turbo tasks clean.
+
+
+      Release scope is unchanged: this work stays out of 0.1.0 as recorded in
+      ADR 0022/0023; no tag, publish, or release action was taken.
     source_links: []
-    status: in_progress
+    status: done
     priority: P2
     labels: []
     repo_targets:
@@ -2714,22 +2770,21 @@ tasks:
       - "arbitrary records compose: a derived definition reuses a base one
         (spread/merge or pick/omit) and is exercised by a property test;
         test.scenario.prop strategies receive the same typed treatment"
-      - >-
-        `bun-test-utils/pbt` exports the `defineArbitraries` identity wrapper
+      - "`bun-test-utils/pbt` exports the `defineArbitraries` identity wrapper
         that contextually types shared arbitrary definitions without per-file
-        type imports; PBT type aliases are imported from that subpath
+        type imports; PBT type aliases are imported from that subpath"
       - a scenario step defined in a shared module is reused by two scenarios
         and its fixtures resolve without either scenario listing them
-      - >-
-        `bun-test-utils/bdd` exports `givenStep`, `whenStep`, and `thenStep` typed
-        identity wrappers plus scenario type aliases; shared steps and reusable
-        sequences import these from the subpath and are covered by tests
+      - "`bun-test-utils/bdd` exports `givenStep`, `whenStep`, and `thenStep`
+        typed identity wrappers plus scenario type aliases; shared steps and
+        reusable sequences import these from the subpath and are covered by
+        tests"
       - "documentation: property-based-testing and scenarios guides gain
         sharing/composition sections, and package READMEs follow; conformance
         pins the three root runtime values and only the authorized helper
         subpaths"
-      - the definition-surface decision (types-only, test.* member, root helper, or
-        capability-scoped helper subpath) is recorded in a spec note or ADR
+      - the definition-surface decision (types-only, test.* member, root helper,
+        or capability-scoped helper subpath) is recorded in a spec note or ADR
         before implementation; bun test and bun run typecheck green from the
         repository root. Keep the task in_progress until the user waives or
         reframes the original sequencing criterion.
@@ -2751,4 +2806,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-07T21:21:00.895Z
-    updated_at: 2026-10-08T00:20:34.029Z
+    updated_at: 2026-10-08T07:42:53.876Z

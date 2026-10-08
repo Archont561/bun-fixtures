@@ -197,7 +197,8 @@ The full loop is [`.backlog/docs/workflow.md`](../../../.backlog/docs/workflow.m
 - **Definition of done** (from `workflow.md`, both halves required): `bun test` green from the
   repository root *including* the behavioural suite, and `bun run typecheck` clean in every
   package. A public API change also needs the README **and** the matching spec in
-  `.backlog/docs/specs/`. A design change needs a new ADR, with the superseded one marked.
+  `.backlog/docs/specs/`. A design change needs a new ADR, recorded before implementation, with
+  the superseded one marked.
 - **Move the task** when it is actually done: `bunx backlog task move <id> done`. If a criterion
   is unmet, move it to `in_progress` and put the *specific* remaining gap in the description
   (`bunx backlog task update <id> --description "…"`). "Mostly done" is not a status.
