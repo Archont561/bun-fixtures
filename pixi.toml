@@ -1,0 +1,72 @@
+[workspace]
+name = "bun-test-utils"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+# Default-environment tooling used by the pre-commit hooks.
+[dependencies]
+actionlint = ">=1.7.12,<2"
+
+# Every shared library Playwright's chromium and firefox builds link against on
+# linux-64 (playwright nativeDeps, ubuntu22.04 lists), mapped to conda-forge
+# names. WebKit is deliberately absent: its gtk4/gstreamer stack pulls system
+# packages that cannot be installed on the offline sandbox (no sudo), and the
+# repo's browser tests only exercise chromium anyway.
+[feature.browser.dependencies]
+# --- chromium ---
+alsa-lib = "*"
+at-spi2-atk = "*"
+at-spi2-core = "*"
+atk = "*"
+cairo = "*"
+dbus = "*"
+libcups = "*"
+libdrm = "*"
+libgbm = "*"
+glib = "*"
+libxcb = "*"
+libxkbcommon = "*"
+nspr = "*"
+nss = "*"
+pango = "*"
+wayland = "*"
+xorg-libx11 = "*"
+xorg-libxcomposite = "*"
+xorg-libxdamage = "*"
+xorg-libxext = "*"
+xorg-libxfixes = "*"
+xorg-libxrandr = "*"
+# --- firefox ---
+ffmpeg = "*"
+fontconfig = "*"
+freetype = "*"
+gdk-pixbuf = "*"
+gtk3 = "*"
+xorg-libxcursor = "*"
+xorg-libxi = "*"
+xorg-libxrender = "*"
+xorg-libxtst = "*"
+# --- GL dispatch: chromium dlopens libEGL/libGLESv2 for its GPU stack ---
+libgl = "*"
+libegl = "*"
+libglx = "*"
+libopengl = "*"
+libgles = "*"
+# --- runtime glue ---
+libgcc = "*"
+# --- fonts for headless rendering ---
+font-ttf-dejavu = "*"
+font-ttf-inconsolata = "*"
+
+# Playwright's browser binaries live outside the prefix; point the loader at
+# this environment's lib/ first (system defaults stay in the search path).
+[feature.browser.activation]
+scripts = ["scripts/browser-activate.sh"]
+
+[environments.browser]
+features = ["browser"]
+solve-group = "browser"
+
+[environments.browser.dependencies]
+xorg-libxinerama = ">=1.1.6,<2"

@@ -13,10 +13,22 @@ pre-commit:
       glob: "*.{js,ts,cjs,mjs,json,jsonc}"
       run: bunx biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
+    actionlint:
+      glob: ".github/workflows/*.{yml,yaml}"
+      # actionlint lives in the pixi default environment. Run the compiled
+      # binary directly (not via `pixi run`): pixi 0.81's `run`/`install`
+      # wipes the tiny default prefix to empty when invoked from inside a hook.
+      # Requires `pixi install` from a normal shell, which the sandbox workflow
+      # and CI both perform.
+      run: .pixi/envs/default/bin/actionlint {staged_files}
     typecheck:
+      glob: "*.{ts,tsx,cts,mts,cjs,mjs}"
       run: bunx turbo run typecheck
 
 pre-push:
   commands:
     test:
-      run: bunx turbo run test
+      glob: "*.{js,ts,tsx,cjs,mjs,json,jsonc}"
+      # Browser tests need the pixi browser environment's shared libraries on
+      # the loader path; no global registration survives without sudo.
+      run: PATH="$HOME/.pixi/bin:$PATH" pixi run -e browser bunx turbo run test
