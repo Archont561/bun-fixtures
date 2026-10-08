@@ -118,14 +118,31 @@ export interface TestOptions {
 export type ScenarioContext<S extends object = Record<string, unknown>> =
   FixtureContext & S & { expect: typeof import("bun:test").expect };
 
+/** A `given` step that may add named state for later scenario steps. */
+export type GivenStep<
+  Context extends object = Record<string, unknown>,
+  Added extends object = object,
+> = (ctx: ScenarioContext<Context>) => Added | Promise<Added>;
+
+/** A `when` step that may add named state for later scenario steps. */
+export type WhenStep<
+  Context extends object = Record<string, unknown>,
+  Added extends object = object,
+> = (ctx: ScenarioContext<Context>) => Added | Promise<Added>;
+
+/** A `then` step makes assertions and does not add scenario state. */
+export type ThenStep<Context extends object = Record<string, unknown>> = (
+  ctx: ScenarioContext<Context>,
+) => void | Promise<void>;
+
 export type GivenChain<S extends object = Record<string, unknown>> = {
   given: <N extends object>(
     name: string,
-    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+    fn: GivenStep<S, N>,
   ) => GivenChain<S & N>;
   when: <N extends object>(
     name: string,
-    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+    fn: WhenStep<S, N>,
   ) => WhenChain<S & N>;
   then: never;
 };
@@ -134,22 +151,16 @@ export type ThenChain<S extends object = Record<string, unknown>> = {
   given: never;
   when: never;
   // Multiple assertions are valid in one scenario: then(...).then(...).
-  then: (
-    name: string,
-    fn: (ctx: ScenarioContext<S>) => void | Promise<void>,
-  ) => ThenChain<S>;
+  then: (name: string, fn: ThenStep<S>) => ThenChain<S>;
 };
 
 export type WhenChain<S extends object = Record<string, unknown>> = {
   given: never;
   when: <N extends object>(
     name: string,
-    fn: (ctx: ScenarioContext<S>) => N | Promise<N>,
+    fn: WhenStep<S, N>,
   ) => WhenChain<S & N>;
-  then: (
-    name: string,
-    fn: (ctx: ScenarioContext<S>) => void | Promise<void>,
-  ) => ThenChain<S>;
+  then: (name: string, fn: ThenStep<S>) => ThenChain<S>;
 };
 
 export type ScenarioChain<S extends object = Record<string, unknown>> =
@@ -159,12 +170,12 @@ export type ScenarioChain<S extends object = Record<string, unknown>> =
 
 export type ScenarioFactory = {
   <S extends object = Record<string, unknown>>(name: string): GivenChain<S>;
-  prop: <S extends object = Record<string, unknown>>(
-    name: string,
-    strategies:
-      | Record<string, unknown>
-      | ((tools: any) => Record<string, unknown>),
-  ) => GivenChain<S>;
+  /**
+   * Property scenarios are supplied by the PBT integration. The core-only
+   * declaration accepts an already-built strategies record; the integration
+   * replaces this with its fast-check-aware type.
+   */
+  prop: (name: string, strategies: Record<string, unknown>) => GivenChain;
 };
 
 export type FixtureAwareTest = TestFn & {

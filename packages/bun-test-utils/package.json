@@ -32,6 +32,16 @@
       "import": "./dist/plugin.js",
       "default": "./dist/plugin.js"
     },
+    "./bdd": {
+      "types": "./dist/bdd.d.ts",
+      "import": "./dist/bdd.js",
+      "default": "./dist/bdd.js"
+    },
+    "./pbt": {
+      "types": "./dist/pbt.d.ts",
+      "import": "./dist/pbt.js",
+      "default": "./dist/pbt.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

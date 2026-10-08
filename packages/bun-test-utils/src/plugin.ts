@@ -1,4 +1,4 @@
-/** Public entrypoint: the only user-facing API is describe, test, and expect. */
+/** Public root entrypoint: named runtime values are describe, expect, and test. */
 
 import { withBDDTesting } from "@bun-test-utils/bdd";
 import { browserFixtures } from "@bun-test-utils/browser";

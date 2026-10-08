@@ -42,6 +42,60 @@ test.prop(
 - **Every other `fast-check` parameter** (`numRuns`, `seed`, …) passes
   straight through to `fc.assert`.
 
+## Sharing and composing arbitrary definitions
+
+An arbitrary definition is an ordinary record or factory. Export it from a
+shared module and import it explicitly wherever a property needs it; there is
+no registry or runtime definition-processing machinery. Wrap shared factories with
+`defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath to get
+contextual fast-check typing without importing `FastCheckApi` in each definition
+file:
+
+```ts
+// arbitraries.ts
+import { defineArbitraries } from "bun-test-utils/pbt";
+
+export const userArbitraries = defineArbitraries((fc) => ({
+  name: fc.string(),
+  age: fc.nat(),
+}));
+
+export const adminUserArbitraries = defineArbitraries((fc) => ({
+  ...userArbitraries(fc),
+  permissions: fc.array(fc.constantFrom("read", "write")),
+}));
+```
+
+The derived record reuses the base factory with ordinary object spread. Every
+property test importing either factory infers generated values from its
+arbitraries—no casts or per-test annotations are needed:
+
+```ts
+// admin.test.ts
+import { expect, test } from "bun-test-utils";
+import { adminUserArbitraries } from "./arbitraries";
+
+test.prop("admin permissions are non-empty", adminUserArbitraries, async (_fixtures, {
+  name,
+  age,
+  permissions,
+}) => {
+  const displayName: string = name;
+  const years: number = age;
+  const grants: ("read" | "write")[] = permissions;
+
+  expect(displayName.length).toBeGreaterThan(0);
+  expect(years).toBeGreaterThanOrEqual(0);
+  expect(grants.every((grant) => grant === "read" || grant === "write")).toBe(true);
+});
+```
+
+`test.scenario.prop` accepts the same arbitrary record type, so generated keys are
+available in the first scenario step and continue through the fluent chain.
+The `fast-check` peer remains optional at runtime for projects that do not
+execute property or property-scenario tests. TypeScript's strict declaration
+checking requirement is noted in the [package README](https://github.com/Archont561/bun-test-utils/blob/main/packages/bun-test-utils/README.md).
+
 ## The fixture lifecycle per sample
 
 A property test is one `bun test` case whose body re-executes hundreds of

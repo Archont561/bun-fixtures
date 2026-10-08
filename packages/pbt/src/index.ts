@@ -14,7 +14,6 @@ import {
   type GivenChain,
   MissingOptionalDependencyError,
   type ScenarioContext,
-  type ScenarioFactory,
   type TestFn,
 } from "@bun-test-utils/core";
 
@@ -67,11 +66,21 @@ export interface PropertyTestingOptions {
   scenarioGuard?: ScenarioGuard;
 }
 
+export type PbtScenarioPropFn = <T extends ArbitraryRecord>(
+  title: string,
+  strategies: ArbitraryInput<T>,
+) => GivenChain<GeneratedValues<T>>;
+
+export type PbtScenarioFactory = {
+  <S extends object = Record<string, unknown>>(title: string): GivenChain<S>;
+  prop: PbtScenarioPropFn;
+};
+
 export type PbtFixtureAwareTest = TestFn &
   Omit<FixtureAwareTest, "extend" | "scenario"> & {
     prop: PropFn;
     extend: (fixtures: FixtureMap) => PbtFixtureAwareTest;
-    scenario: ScenarioFactory;
+    scenario: PbtScenarioFactory;
   };
 
 function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
@@ -92,14 +101,9 @@ export interface PropTestOptions {
   [option: string]: unknown;
 }
 
-export interface Arbitrary<T = unknown> {
-  generate(mrng: any, biasFactor: number | undefined): { value: T };
-  canShrinkWithoutContext(value: unknown): value is T;
-  shrink(value: T, context?: unknown): unknown;
-}
-
-export type ArbitraryRecord = Record<string, Arbitrary<any>>;
-export type FastCheckApi = Record<string, any>;
+export type Arbitrary<T = unknown> = import("fast-check").Arbitrary<T>;
+export type ArbitraryRecord = Record<string, Arbitrary<unknown>>;
+export type FastCheckApi = typeof import("fast-check").default;
 export type ArbitraryInput<T extends ArbitraryRecord> =
   | T
   | ((fc: FastCheckApi) => T);
@@ -165,8 +169,11 @@ function makeScenarioProp(
   map: FixtureMap,
   propFn: PropFn,
   scenarioGuard?: ScenarioGuard,
-): ScenarioFactory["prop"] {
-  return ((title: string, strategies: ArbitraryInput<ArbitraryRecord>) => {
+): PbtScenarioPropFn {
+  return function prop<T extends ArbitraryRecord>(
+    title: string,
+    strategies: ArbitraryInput<T>,
+  ): GivenChain<GeneratedValues<T>> {
     scenarioGuard?.();
     const steps: Array<{
       phase: "given" | "when" | "then";
@@ -219,10 +226,10 @@ function makeScenarioProp(
         }
         return chain;
       },
-    } as unknown as GivenChain;
+    } as unknown as GivenChain<GeneratedValues<T>>;
 
     return chain;
-  }) as ScenarioFactory["prop"];
+  };
 }
 
 /**
@@ -313,7 +320,7 @@ function makePbtTest(
     ((title: string) => {
       scenarioGuard?.();
       return runner().scenario(title);
-    }) as ScenarioFactory,
+    }) as PbtScenarioFactory,
     { prop: makeScenarioProp(map, prop, scenarioGuard) },
   );
   Object.defineProperty(pbtTest, FIXTURE_MAP_SYMBOL, {

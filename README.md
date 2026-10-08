@@ -32,6 +32,22 @@ bun add -d happy-dom  # for DOM fixtures in the test context
 bun add -d playwright # for browser fixtures in the test context
 ```
 
+Use `defineArbitraries` from the helper-only `bun-test-utils/pbt` subpath for
+reusable fast-check arbitrary records. It contextually types the factory API
+parameter and returns the definition unchanged:
+
+```ts
+import { defineArbitraries } from "bun-test-utils/pbt";
+
+export const userArbitraries = defineArbitraries((fc) => ({
+  name: fc.string(),
+  age: fc.nat(),
+}));
+```
+
+For reusable scenario callbacks, import `givenStep`, `whenStep`, and `thenStep`
+from `bun-test-utils/bdd`. Scenario execution itself remains on root `test.scenario(...)`.
+
 ## Quick start
 
 ```ts
@@ -104,7 +120,7 @@ Parked as decisions rather than omissions, each with the condition that would st
 | Browser capability (Playwright fixtures) | the Playwright peer and its CI path prove stable across releases |
 | BDD capability (`test.scenario`) | `@aboviq/bun-test-cucumber` reaches 1.0, **or** the Gherkin integration is vendored |
 
-The non-goals that are *not* coming back at all — implicit fixture discovery, public capability subpaths, shipping a runner — are in [caveats](./.backlog/docs/caveats.md).
+The non-goals that are *not* coming back at all — implicit fixture discovery, public capability runner/fixture subpaths, shipping a runner — are in [caveats](./.backlog/docs/caveats.md).
 
 ## Development
 

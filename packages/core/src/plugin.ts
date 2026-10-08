@@ -58,6 +58,7 @@ export type {
   FixtureDef,
   FixtureMap,
   GivenChain,
+  GivenStep,
   IterateFn,
   ScenarioChain,
   ScenarioContext,
@@ -66,8 +67,10 @@ export type {
   TestFn,
   TestOptions,
   ThenChain,
+  ThenStep,
   UseFn,
   WhenChain,
+  WhenStep,
 } from "./types.ts";
 
 /* -------------------------------------------------------------------------- */

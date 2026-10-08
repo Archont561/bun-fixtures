@@ -1,7 +1,9 @@
 # bun-test-utils
 
-The single published package. It exposes only three named exports to end users:
-`describe`, `test`, and `expect`.
+The single published package. The root runtime exports are `describe`, `expect`,
+and `test`. Typed arbitrary-definition and scenario-step helpers live on the narrow
+`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; they expose no runners or
+fixtures.
 
 ```bash
 bun add -d bun-test-utils
@@ -15,14 +17,25 @@ bun add -d fast-check # test.prop() / test.scenario.prop()
 bun add -d @aboviq/bun-test-cucumber # test.scenario()
 ```
 
+`fast-check` is optional at runtime. Its declarations are referenced by the
+published root and `/pbt` `.d.ts` files to preserve typed arbitrary definitions, so
+TypeScript consumers using `skipLibCheck: false` must install `fast-check` even
+if they only use non-property root APIs. With `skipLibCheck: true`, ordinary
+root imports typecheck without the peer; using property APIs still requires the
+runtime peer.
+
 ## Public API shape
 
-There are no public capability subpaths. Built-in capabilities are fixtures on
-the root `test` context, and advanced runners hang off `test.*`:
+Built-in capabilities are fixtures on the root `test` context, and the test
+runners hang off `test.*`. The only helper subpaths are `bun-test-utils/pbt`
+and `bun-test-utils/bdd`; they expose typed definitions, not capability runners
+or fixture packs.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
+- `defineArbitraries(...)` from `bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
+- `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `bun-test-utils/bdd` to contextually type reusable scenario callbacks.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
 
@@ -156,6 +169,46 @@ test.scenario("chains every fluent phase")
     expect(result).toBe(3);
   });
 ```
+
+## Shared arbitrary definitions
+
+A fast-check arbitrary record or factory can be explicitly imported from a shared module. Wrap a factory with `defineArbitraries` from `bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the definition unchanged, and arbitrary records compose with ordinary object spread.
+
+```ts
+// arbitraries.ts
+import { defineArbitraries } from "bun-test-utils/pbt";
+
+export const baseArbitraries = defineArbitraries((fc) => ({
+  name: fc.string(),
+  age: fc.nat(),
+}));
+
+export const adminArbitraries = defineArbitraries((fc) => ({
+  ...baseArbitraries(fc),
+  canManageUsers: fc.boolean(),
+}));
+```
+
+```ts
+// admin.test.ts
+import { expect, test } from "bun-test-utils";
+import { adminArbitraries } from "./arbitraries";
+
+test.prop("generates typed admins", adminArbitraries, async (_fixtures, {
+  name,
+  age,
+  canManageUsers,
+}) => {
+  const typedName: string = name;
+  const typedAge: number = age;
+  const canManage: boolean = canManageUsers;
+  expect(typedName.length + typedAge + Number(canManage)).toBeGreaterThan(0);
+});
+```
+
+## Shared scenario steps
+
+Import `givenStep`, `whenStep`, and `thenStep` from `bun-test-utils/bdd` to contextually type shared scenario callbacks; the same subpath exports `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` for explicit annotations. A consumer-owned sequence function can be imported into as many scenario files as needed. Imported step fixtures are auto-detected just like inline steps; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
 
 ## Error compatibility
 

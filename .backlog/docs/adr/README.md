@@ -15,8 +15,8 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0009](./0009-citty-for-the-cli.md) | citty for the CLI | accepted |
 | [0010](./0010-monorepo-layout.md) | Monorepo layout | accepted |
 | [0011](./0011-brand-identity-and-modular-ecosystem.md) | Brand identity and modular ecosystem architecture | superseded by 0013 |
-| [0012](./0012-bdd-fixture-bridge.md) | BDD fixture bridge: narrow the Gherkin non-goal | accepted |
-| [0013](./0013-published-wrapper-internal-workspaces.md) | Published wrapper over internal workspaces | partially superseded by 0014 |
+| [0012](./0012-bdd-fixture-bridge.md) | BDD fixture bridge: narrow the Gherkin non-goal | accepted, amended by 0021 and 0022 |
+| [0013](./0013-published-wrapper-internal-workspaces.md) | Published wrapper over internal workspaces | partially superseded by 0014, amended by 0021 and 0022 |
 | [0014](./0014-bunup-built-publication.md) | Publish Bunup-built ESM and declarations | accepted |
 | [0015](./0015-per-package-readmes-concise-root.md) | Per-package READMEs with a concise canonical root | accepted |
 | [0016](./0016-package-test-layout-and-e2e-bdd.md) | Package test layout and E2E BDD | accepted, amended by 0017 |
@@ -24,5 +24,8 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0018](./0018-release-compatibility-contract.md) | Release stability, fixture-key collisions, error messages, and platforms | accepted, amended by 0020 |
 | [0019](./0019-no-base-directory-override-in-0-1-x.md) | No base-directory override for the cassette and snapshot conventions in 0.1.x | accepted |
 | [0020](./0020-remove-parameterized-fixtures.md) | Remove parameterized fixtures; `test.prop` covers the axis | accepted |
+| [0021](./0021-prop-test-schema-root-wrapper.md) | Root `propTestSchema` identity wrapper | superseded by 0022 |
+| [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted, amended by 0023 |
+| [0023](./0023-define-arbitraries-helper.md) | Name the PBT identity helper `defineArbitraries` | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).
