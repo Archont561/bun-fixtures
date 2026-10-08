@@ -16,7 +16,7 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0010](./0010-monorepo-layout.md) | Monorepo layout | accepted |
 | [0011](./0011-brand-identity-and-modular-ecosystem.md) | Brand identity and modular ecosystem architecture | superseded by 0013 |
 | [0012](./0012-bdd-fixture-bridge.md) | BDD fixture bridge: narrow the Gherkin non-goal | accepted, amended by 0021 and 0022 |
-| [0013](./0013-published-wrapper-internal-workspaces.md) | Published wrapper over internal workspaces | partially superseded by 0014, amended by 0021 and 0022 |
+| [0013](./0013-published-wrapper-internal-workspaces.md) | Published wrapper over internal workspaces | partially superseded by 0014, amended by 0021, 0022, and 0028 |
 | [0014](./0014-bunup-built-publication.md) | Publish Bunup-built ESM and declarations | accepted |
 | [0015](./0015-per-package-readmes-concise-root.md) | Per-package READMEs with a concise canonical root | accepted |
 | [0016](./0016-package-test-layout-and-e2e-bdd.md) | Package test layout and E2E BDD | accepted, amended by 0017 |
@@ -31,5 +31,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0025](./0025-report-the-first-failure-when-a-teardown-also-fails.md) | Report the first failure when a teardown also fails | accepted |
 | [0026](./0026-refuse-callback-results-that-cannot-round-trip.md) | Refuse callback results that JSON cannot round-trip | accepted |
 | [0027](./0027-identify-callbacks-by-object-then-source.md) | Identify callbacks by object, then by source text | accepted |
+| [0028](./0028-scoped-npm-package-name.md) | Publish the wrapper as `@archont561/bun-test-utils` | accepted, amends 0013 |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).
