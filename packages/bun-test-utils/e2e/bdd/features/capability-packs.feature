@@ -8,7 +8,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "std.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("uses the temporary directory and restores the environment", async ({ tmpdir, env }) => {
         env.set("PACK_MODE", "test");
@@ -26,7 +26,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "pbt.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test.prop("array concatenation preserves length", (fc) => ({ left: fc.array(fc.integer(), { maxLength: 5 }), right: fc.array(fc.integer(), { maxLength: 5 }) }), async (_ctx, { left, right }) => {
         expect([...left, ...right]).toHaveLength(left.length + right.length);
@@ -40,7 +40,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "dom.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("mounts markup and dispatches clicks", async ({ page }) => {
         page.mount(`<button id="add">add</button><span id="count">0</span>`);
@@ -59,7 +59,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "browser.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("serves through the ephemeral test server", async ({ testServer, serverUrl }) => {
         testServer.handle(() => Response.json({ status: "ok" }));
@@ -75,7 +75,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "vcr.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("records and replays callback results", async ({ cassette }) => {
         let calls = 0;
@@ -96,7 +96,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "snapshot.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("records a stable value", async ({ snapshot }) => {
         snapshot.setMode("match");
@@ -112,7 +112,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "bdd.test.ts":
       """
-      import { test } from "bun-test-utils";
+      import { test } from "@archont561/bun-test-utils";
 
       test.scenario("fixtures flow through a fluent scenario")
         .given("a file", async ({ tmpdir }) => {
@@ -132,7 +132,7 @@ Feature: Built-in capability behaviour
     Given a project with bun-test-utils preloaded
     And the file "scenario.test.ts":
       """
-      import { test } from "bun-test-utils";
+      import { test } from "@archont561/bun-test-utils";
 
       test.scenario("chains every fluent phase")
         .given("a base value", () => ({ value: 2 }))

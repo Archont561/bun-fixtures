@@ -3,7 +3,7 @@
  * `e2e/style-matrix.test.ts` for the cells whose fixtures follow the
  * file-based conventions (`__snapshots__/`, `__cassettes__/`).
  *
- * Every scenario gets a real, throwaway Bun project with `bun-test-utils`
+ * Every scenario gets a real, throwaway Bun project with `@archont561/bun-test-utils`
  * installed, so the behaviour under test is what an actual user sees:
  * explicit fixture composition, `bun test` output, exit codes — no internals poked.
  */
@@ -41,14 +41,18 @@ export interface Project {
 export function createProject(): Project {
   const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-bdd-"));
   mkdirSync(join(dir, "node_modules"), { recursive: true });
-  symlinkSync(PACKAGE_ROOT, join(dir, "node_modules", "bun-test-utils"));
+  mkdirSync(join(dir, "node_modules", "@archont561"), { recursive: true });
+  symlinkSync(
+    PACKAGE_ROOT,
+    join(dir, "node_modules", "@archont561", "bun-test-utils"),
+  );
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "scratch", type: "module" }, null, 2),
   );
   writeFileSync(
     join(dir, "bunfig.toml"),
-    '[test]\npreload = ["./node_modules/bun-test-utils/dist/plugin.js"]\n',
+    '[test]\npreload = ["./node_modules/@archont561/bun-test-utils/dist/plugin.js"]\n',
   );
   return { dir };
 }
@@ -57,7 +61,11 @@ export function createProject(): Project {
 export function createBareProject(): Project {
   const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-bdd-"));
   mkdirSync(join(dir, "node_modules"), { recursive: true });
-  symlinkSync(PACKAGE_ROOT, join(dir, "node_modules", "bun-test-utils"));
+  mkdirSync(join(dir, "node_modules", "@archont561"), { recursive: true });
+  symlinkSync(
+    PACKAGE_ROOT,
+    join(dir, "node_modules", "@archont561", "bun-test-utils"),
+  );
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "scratch", type: "module" }, null, 2),

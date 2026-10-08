@@ -2,12 +2,12 @@
 
 The single published package. The root runtime exports are `describe`, `expect`,
 and `test`. Typed arbitrary-definition and scenario-step helpers live on the
-`bun-test-utils/pbt` and `bun-test-utils/bdd` subpaths; global snapshot serializer
-lifecycle helpers live on `bun-test-utils/snap`. These subpaths expose helpers,
+`@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd` subpaths; global snapshot serializer
+lifecycle helpers live on `@archont561/bun-test-utils/snap`. These subpaths expose helpers,
 not runners or fixture packs.
 
 ```bash
-bun add -d bun-test-utils
+bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
@@ -28,16 +28,16 @@ runtime peer.
 ## Public API shape
 
 Built-in capabilities are fixtures on the root `test` context, and the test
-runners hang off `test.*`. The helper subpaths are `bun-test-utils/pbt`,
-`bun-test-utils/bdd`, and `bun-test-utils/snap`: PBT/BDD expose typed definitions,
+runners hang off `test.*`. The helper subpaths are `@archont561/bun-test-utils/pbt`,
+`@archont561/bun-test-utils/bdd`, and `@archont561/bun-test-utils/snap`: PBT/BDD expose typed definitions,
 while `/snap` exposes global snapshot serializer helpers. None exports a runner
 or fixture pack.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
-- `defineArbitraries(...)` from `bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
-- `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `bun-test-utils/bdd` to contextually type reusable scenario callbacks.
+- `defineArbitraries(...)` from `@archont561/bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
+- `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `@archont561/bun-test-utils/bdd` to contextually type reusable scenario callbacks.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
 
@@ -86,7 +86,7 @@ therefore receive the override too.
 
 ```ts
 // test.ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
   db: {
@@ -102,7 +102,7 @@ export const test = base.extend({
 
 ```ts
 // users.test.ts
-import { expect } from "bun-test-utils";
+import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
 test("uses the explicit fixture", async ({ db }) => {
@@ -116,7 +116,7 @@ The root `test` includes standard, DOM, browser/server, web mocking, VCR, and sn
 fixtures in its context:
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("serves and snapshots a response", async ({
   testServer,
@@ -155,7 +155,7 @@ test("loads mocked data", async ({ webPage, httpMock }) => {
 These APIs are present on `test`, but using them checks their optional peers and throws an actionable install message if the peer is missing.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
   "calculates a total",
@@ -176,11 +176,11 @@ test.scenario("chains every fluent phase")
 
 ## Shared arbitrary definitions
 
-A fast-check arbitrary record or factory can be explicitly imported from a shared module. Wrap a factory with `defineArbitraries` from `bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the definition unchanged, and arbitrary records compose with ordinary object spread.
+A fast-check arbitrary record or factory can be explicitly imported from a shared module. Wrap a factory with `defineArbitraries` from `@archont561/bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the definition unchanged, and arbitrary records compose with ordinary object spread.
 
 ```ts
 // arbitraries.ts
-import { defineArbitraries } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 export const baseArbitraries = defineArbitraries((fc) => ({
   name: fc.string(),
@@ -195,7 +195,7 @@ export const adminArbitraries = defineArbitraries((fc) => ({
 
 ```ts
 // admin.test.ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 import { adminArbitraries } from "./arbitraries";
 
 test.prop("generates typed admins", adminArbitraries, async (_fixtures, {
@@ -212,7 +212,7 @@ test.prop("generates typed admins", adminArbitraries, async (_fixtures, {
 
 ## Shared scenario steps
 
-Import `givenStep`, `whenStep`, and `thenStep` from `bun-test-utils/bdd` to contextually type shared scenario callbacks; the same subpath exports `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` for explicit annotations. A consumer-owned sequence function can be imported into as many scenario files as needed. Imported step fixtures are auto-detected just like inline steps; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
+Import `givenStep`, `whenStep`, and `thenStep` from `@archont561/bun-test-utils/bdd` to contextually type shared scenario callbacks; the same subpath exports `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` for explicit annotations. A consumer-owned sequence function can be imported into as many scenario files as needed. Imported step fixtures are auto-detected just like inline steps; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
 
 ## Error compatibility
 
@@ -225,7 +225,7 @@ codes for circular values and custom serializer failures; see the
 [snapshot guide](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/)
 and [snapshot spec](../../.backlog/docs/specs/0013-snapshot-testing.md).
 
-All workspace packages are implementation boundaries; only `bun-test-utils` is published.
+All workspace packages are implementation boundaries; only `@archont561/bun-test-utils` is published.
 
 ## Development
 

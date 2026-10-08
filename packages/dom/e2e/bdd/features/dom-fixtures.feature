@@ -3,7 +3,7 @@ Feature: DOM fixtures
     Given a project with bun-test-utils preloaded
     And the file "dom.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("uses the DOM page fixture", async ({ page }) => {
         page.mount(`<button id="add">add</button><span id="count">0</span>`);

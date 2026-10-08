@@ -24,6 +24,7 @@
 | R13 | The engine plus standard, DOM, snapshot, property-testing, and minimal VCR capabilities MUST be labeled stable and follow semantic versioning. |
 | R14 | Browser and BDD MUST be labeled experimental, with the public policy that experimental capabilities MAY change in minor versions. |
 | R15 | The `0.1.x` support declaration MUST name Linux and macOS; Windows MUST remain post-release until POSIX path assumptions are removed and a Windows CI lane exists. |
+| R16 | The one published package MUST be named `@archont561/bun-test-utils` (ADR 0028), so its npm tarball is `archont561-bun-test-utils-<version>.tgz`. |
 
 ### Why the licence files are listed in `files`
 

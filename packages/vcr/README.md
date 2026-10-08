@@ -1,6 +1,6 @@
 # HTTP cassette fixtures (internal)
 
-The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/vcr` subpath.
+The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/vcr` subpath.
 
 The stable release surface is intentionally small: `record(callback)`,
 `replay(callback)`, and HTTP replay matching by uppercase method plus exact full
@@ -13,7 +13,7 @@ not part of the stable release contract.
 `CassetteError` (ADR 0026). A value JSON cannot round-trip never reaches replay.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("records and replays a callback", async ({ cassette }) => {
   let calls = 0;

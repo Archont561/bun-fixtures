@@ -3,7 +3,7 @@ Feature: Standard fixtures
     Given a project with bun-test-utils preloaded
     And the file "std.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test("uses tmpdir env and stdio", async ({ tmpdir, env, stdio }) => {
         env.set("STD_FEATURE", "ok");

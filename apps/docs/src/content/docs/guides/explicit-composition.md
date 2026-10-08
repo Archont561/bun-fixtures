@@ -17,7 +17,7 @@ Define fixtures in a module and export a test runner created with
 `test.extend()`:
 
 ```ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 export const test = base.extend({
   database: {
     scope: "file",

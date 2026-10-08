@@ -18,13 +18,15 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 
 const BUN = process.execPath;
 const PACKAGE_DIR = join(import.meta.dir, "..");
 
 /** The one publishable package — everything else it bundles is `private: true`. */
-const PACKAGE_NAME = "bun-test-utils";
+const PACKAGE_NAME = "@archont561/bun-test-utils";
+/** npm folds the scope into the tarball name: `@scope/name` packs to `scope-name-<version>.tgz`. */
+const TARBALL_NAME = "archont561-bun-test-utils";
 
 /** Internal workspace packages that must stay private. */
 const INTERNAL_WORKSPACES = [
@@ -68,7 +70,7 @@ function run(cmd: string[], cwd?: string): string {
 
 /** Packs the package and reads back its tarball. */
 function pack(scratch: string): Packed {
-  const tgz = join(scratch, `${PACKAGE_NAME}.tgz`);
+  const tgz = join(scratch, `${TARBALL_NAME}.tgz`);
   run(
     [BUN, "pm", "pack", "--quiet", "--ignore-scripts", "--filename", tgz],
     PACKAGE_DIR,
@@ -102,6 +104,10 @@ describe("bun pm pack smoke test", () => {
     expect(
       readFileSync(join(PACKAGE_DIR, "src", "plugin.ts"), "utf8"),
     ).toContain("@bun-test-utils/core");
+  });
+
+  test("the tarball name is the one npm gives the scoped package", () => {
+    expect(TARBALL_NAME).toBe(PACKAGE_NAME.replace(/^@/, "").replace("/", "-"));
   });
 
   test(
@@ -234,7 +240,7 @@ describe("bun pm pack smoke test", () => {
           join(project, "package.json"),
           JSON.stringify({ name: "quickstart-smoke", type: "module" }),
         );
-        run([BUN, "add", join(packDir, `${PACKAGE_NAME}.tgz`)], project);
+        run([BUN, "add", join(packDir, `${TARBALL_NAME}.tgz`)], project);
         expect(
           existsSync(
             join(project, "node_modules", PACKAGE_NAME, "dist", "plugin.js"),
@@ -261,15 +267,15 @@ describe("bun pm pack smoke test", () => {
           project,
         );
         expect(readFileSync(join(project, "bunfig.toml"), "utf8")).toContain(
-          "node_modules/bun-test-utils/dist/plugin.js",
+          "node_modules/@archont561/bun-test-utils/dist/plugin.js",
         );
         expect(existsSync(join(project, "test.ts"))).toBe(false);
 
         writeFileSync(
           join(project, "quickstart.test.ts"),
-          `import { describe, expect, test } from "bun-test-utils";
-import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
-import { defineArbitraries } from "bun-test-utils/pbt";
+          `import { describe, expect, test } from "@archont561/bun-test-utils";
+import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 describe("packed public API", () => {
   test("built-in fixtures inject from the root test", async ({ tmpdir }) => {
@@ -279,7 +285,7 @@ describe("packed public API", () => {
 
   test("only root runner and helper subpaths are exposed", async () => {
     expect(typeof test.prop).toBe("function");
-    const specifier = "bun-test-utils/std";
+    const specifier = "@archont561/bun-test-utils/std";
     await expect(import(specifier)).rejects.toThrow();
   });
 

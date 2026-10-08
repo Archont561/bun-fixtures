@@ -10,7 +10,7 @@ description: Deep dive into setting up bun-test-utils in your project.
 Import the base test and compose the fixtures your project needs:
 
 ```ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 export const test = base.extend({
   database: {
     scope: "file",
@@ -26,7 +26,7 @@ export const test = base.extend({
 A test imports that composed runner:
 
 ```ts
-import { expect } from "bun-test-utils";
+import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
 test("uses the database", async ({ database }) => {

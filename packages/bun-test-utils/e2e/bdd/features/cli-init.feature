@@ -8,7 +8,7 @@ Feature: Project setup with the CLI
 
   Scenario: Initializing a fresh project
     When I run "init"
-    Then the file "bunfig.toml" contains "./node_modules/bun-test-utils/dist/plugin.js"
+    Then the file "bunfig.toml" contains "./node_modules/@archont561/bun-test-utils/dist/plugin.js"
     And the file "bunfig.toml" exists
     And the command succeeds
 
@@ -30,7 +30,7 @@ Feature: Project setup with the CLI
     When I run "init"
     Then the file "bunfig.toml" contains "./other-preload.ts"
     And the file "bunfig.toml" contains "registry"
-    And the file "bunfig.toml" contains "./node_modules/bun-test-utils/dist/plugin.js"
+    And the file "bunfig.toml" contains "./node_modules/@archont561/bun-test-utils/dist/plugin.js"
 
   Scenario: An existing test.ts is never clobbered by accident
     Given the file "test.ts":
@@ -45,7 +45,7 @@ Feature: Project setup with the CLI
     When I run "init"
     And the file "a.test.ts":
       """
-      import { test as base, expect } from "bun-test-utils";
+      import { test as base, expect } from "@archont561/bun-test-utils";
       const test = base.extend({ config: { setup: async (use) => { await use({ env: "test" }); } } });
       test("the explicit fixture works", async ({ config }) => {
         expect(config.env).toBe("test");

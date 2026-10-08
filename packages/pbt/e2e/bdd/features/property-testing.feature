@@ -3,7 +3,7 @@ Feature: Property testing
     Given a project with bun-test-utils preloaded
     And the file "pbt.test.ts":
       """
-      import { expect, test } from "bun-test-utils";
+      import { expect, test } from "@archont561/bun-test-utils";
 
       test.prop(
         "addition is commutative",
@@ -21,7 +21,7 @@ Feature: Property testing
     Given a project with bun-test-utils preloaded
     And the file "teardown.test.ts":
       """
-      import { expect, test as base } from "bun-test-utils";
+      import { expect, test as base } from "@archont561/bun-test-utils";
 
       export const test = base.extend({
         flaky: {

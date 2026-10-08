@@ -24,14 +24,14 @@ refactors, CI tweaks, and `.backlog/` edits do not.
 
 As of the `bun-test-utils` rebrand and single-package consolidation (see the ADR
 superseding ADR 0011, `task_018`/`task_020`), exactly **one** package ever publishes:
-`bun-test-utils`. The six capability packages it bundles (`std`, `pbt`, `dom`, `browser`,
+`@archont561/bun-test-utils`. The six capability packages it bundles (`std`, `pbt`, `dom`, `browser`,
 `vcr`, `snapshot`) are internal, unpublished (`private: true`) workspace packages nested
 inside it — changesets ignores them automatically, the same way it already ignored
 `@bun-test-utils/config` and `docs`.
 
 | Setting | Value | Why |
 |---------|-------|-----|
-| `access` | `public` | `bun-test-utils` publishes to the public npm registry |
+| `access` | `public` | `@archont561/bun-test-utils` publishes to the public npm registry |
 | `baseBranch` | `main` | changed-package detection diffs against `main` |
 | `privatePackages` | not versioned or tagged | every `private: true` workspace package (`@bun-test-utils/config` and the six bundled internal packages) is skipped |
 | `updateInternalDependencies` | `patch` | kept for workspace hygiene; with a single published package this mostly has nothing to do |

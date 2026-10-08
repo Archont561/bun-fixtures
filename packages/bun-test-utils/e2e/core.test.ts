@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 
 describe("end to end", () => {
   test(
@@ -10,7 +10,11 @@ describe("end to end", () => {
       const dir = mkdtempSync(join(tmpdir(), "bun-test-utils-e2e-"));
       const repo = join(import.meta.dir, "..");
       mkdirSync(join(dir, "node_modules"), { recursive: true });
-      symlinkSync(repo, join(dir, "node_modules", "bun-test-utils"));
+      mkdirSync(join(dir, "node_modules", "@archont561"), { recursive: true });
+      symlinkSync(
+        repo,
+        join(dir, "node_modules", "@archont561", "bun-test-utils"),
+      );
       mkdirSync(join(dir, "sub"), { recursive: true });
       writeFileSync(
         join(dir, "package.json"),
@@ -31,7 +35,7 @@ describe("end to end", () => {
 
       writeFileSync(
         join(dir, "test.ts"),
-        `import { test as base } from "bun-test-utils";
+        `import { test as base } from "@archont561/bun-test-utils";
 export const test = base.extend({
   server: {
     scope: "session",
@@ -44,7 +48,7 @@ export const test = base.extend({
       );
       writeFileSync(
         join(dir, "sub", "e2e.test.ts"),
-        `import { expect } from "bun-test-utils";
+        `import { expect } from "@archont561/bun-test-utils";
 import { test } from "../test";
 test("injects across directories", async ({ user }) => {
   expect(user).toEqual({ name: "ada", port: 1234 });
@@ -63,7 +67,7 @@ test("injects across directories", async ({ user }) => {
       // silently running with an incomplete context.
       writeFileSync(
         join(dir, "missing-dependency.test.ts"),
-        `import { test as base } from "bun-test-utils";
+        `import { test as base } from "@archont561/bun-test-utils";
 const test = base.extend({
   dependent: {
     setup: async (use, { database }) => { await use(database); },

@@ -19,7 +19,7 @@ case identity and failure output, was one too many.
 property with one value per axis:
 
 ```ts
-import { test, expect } from "bun-test-utils";
+import { test, expect } from "@archont561/bun-test-utils";
 
 test.prop(
   "renders the navigation bar",

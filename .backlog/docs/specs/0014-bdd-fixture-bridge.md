@@ -10,13 +10,13 @@
 BDD-style tests are expressed through root `test.scenario(...)` and
 `test.scenario.prop(...)`; fixtures are available in the scenario context
 exactly like ordinary tests. ADR 0022 later adds a helper-only
-`bun-test-utils/bdd` subpath for typed step callbacks and aliases. It does not
+`@archont561/bun-test-utils/bdd` subpath for typed step callbacks and aliases. It does not
 expose the scenario runner, fixtures, or `withBDDTesting(coreTest)`, which
 remains internal and gates scenario declarations behind the optional
 `@aboviq/bun-test-cucumber` peer.
 
 ```ts
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 
 test.scenario("checks a file")
   .given("a file", async ({ tmpdir }) => {

@@ -3,7 +3,7 @@
  *
  * This single module is both the optional preload script (`bunfig.toml` →
  * `[test].preload`) that installs run-global teardown hooks and the package
- * entrypoint (`import { test, expect } from "bun-test-utils"`).
+ * entrypoint (`import { test, expect } from "@archont561/bun-test-utils"`).
  *
  * Loading it twice is harmless: all lifecycle state lives on a global singleton.
  */
@@ -850,10 +850,11 @@ export function callerFile(extraSelf?: string | string[]): string {
         ]);
   const stack = new Error().stack ?? "";
   const re = /((?:\/|[A-Za-z]:\\)[^\s()]+?\.(?:[cm]?[tj]sx?)):\d+(?::\d+)?/g;
+  const installedPackage = `${sep}node_modules${sep}@archont561${sep}bun-test-utils${sep}`;
   for (const match of stack.matchAll(re)) {
     const file = match[1]!;
     if (skip.has(file)) continue;
-    if (file.includes(`${sep}node_modules${sep}bun-test-utils${sep}`)) continue;
+    if (file.includes(installedPackage)) continue;
     if (file.startsWith("bun:") || file.includes("node:internal")) continue;
     return file;
   }
@@ -913,7 +914,7 @@ function warn(
  * `afterAll`, while one first imported by a test file gets an `afterAll` that
  * fires at that file's end. Bundled builds make that distinction bite: the
  * published `dist/` copies carry their own engine instance, which shares this
- * global singleton — so a test file importing `"bun-test-utils"` would hook a
+ * global singleton — so a test file importing `"@archont561/bun-test-utils"` would hook a
  * mid-run session teardown and every later file would silently rebuild its
  * session fixtures. Only the first-loaded copy registers the hook; with the
  * preload in place that is the preload copy, whose hook stays run-global.

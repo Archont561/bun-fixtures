@@ -9,7 +9,7 @@ Feature: Fixture graph validation
   Scenario: Requesting a fixture that does not exist
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
       export const test = base.extend({
         real: { setup: async (use) => { await use(1); } },
       });
@@ -27,7 +27,7 @@ Feature: Fixture graph validation
   Scenario: A longer-lived fixture depending on a shorter-lived one
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
       export const test = base.extend({
         perTest: { scope: "test", setup: async (use) => { await use(1); } },
         perSession: { scope: "session", deps: ["perTest"], setup: async (use) => { await use(2); } },
@@ -45,7 +45,7 @@ Feature: Fixture graph validation
   Scenario: A dependency cycle
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
       export const test = base.extend({
         a: { deps: ["b"], setup: async (use) => { await use(1); } },
         b: { deps: ["a"], setup: async (use) => { await use(2); } },
@@ -63,7 +63,7 @@ Feature: Fixture graph validation
   Scenario: A fixture that never calls use
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
       export const test = base.extend({
         forgetful: { setup: async () => { /* never calls use */ } },
       });

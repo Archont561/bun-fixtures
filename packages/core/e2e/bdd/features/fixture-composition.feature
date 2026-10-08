@@ -10,8 +10,8 @@ Feature: Explicit fixture composition
   Scenario: test.extend makes fixtures available through an imported chain
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       export const test = base.extend({
         config: { scope: "session", setup: async (use) => { await use({ env: "test" }); } },
       });
@@ -35,14 +35,14 @@ Feature: Explicit fixture composition
       """
     And the file "left/test.ts":
       """
-      import { test as base } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
       export const test = base.extend({
         leftOnly: { setup: async (use) => { await use("left"); } },
       });
       """
     And the file "right/a.test.ts":
       """
-      import { test } from "bun-test-utils";
+      import { test } from "@archont561/bun-test-utils";
       test("cannot see parent or sibling fixtures", async ({ parentOnly, leftOnly }) => {});
       """
     When I run the test suite
@@ -52,8 +52,8 @@ Feature: Explicit fixture composition
   Scenario: Nested extend chains preserve dependency ordering
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       const events = [];
       export const test = base.extend({
         events: { setup: async (use) => { await use(events); } },

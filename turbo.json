@@ -9,23 +9,23 @@
       "dependsOn": ["^typecheck"],
       "outputs": []
     },
-    "bun-test-utils#typecheck": {
+    "@archont561/bun-test-utils#typecheck": {
       "dependsOn": ["build", "^typecheck"],
       "outputs": []
     },
     "test": {
       "outputs": []
     },
-    "bun-test-utils#test": {
+    "@archont561/bun-test-utils#test": {
       "dependsOn": ["build"],
       "outputs": []
     },
     "test:bdd": {
-      "dependsOn": ["bun-test-utils#build"],
+      "dependsOn": ["@archont561/bun-test-utils#build"],
       "outputs": []
     },
     "test:e2e": {
-      "dependsOn": ["bun-test-utils#build"],
+      "dependsOn": ["@archont561/bun-test-utils#build"],
       "outputs": []
     },
     "dev": {

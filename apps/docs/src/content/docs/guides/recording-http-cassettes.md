@@ -18,13 +18,13 @@ Matcher DSLs, configurable redaction, and cassette migration tooling are deferre
 `cassette` is available on the root `test` context with no extra dependency:
 
 ```bash
-bun add -d bun-test-utils
+bun add -d @archont561/bun-test-utils
 ```
 
 ## Record and replay a callback
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("replays a user lookup", async ({ cassette }) => {
   let calls = 0;
@@ -85,7 +85,7 @@ VCR_MODE=replay bun test tests/user.test.ts
 ```
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("fetches user details", async ({ cassette }) => {
   // Requesting the fixture activates interception for this test.

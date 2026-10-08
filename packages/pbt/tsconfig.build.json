@@ -3,7 +3,7 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "bun-test-utils": ["../bun-test-utils/src/plugin.ts"]
+      "@archont561/bun-test-utils": ["../bun-test-utils/src/plugin.ts"]
     }
   },
   "include": ["src"]

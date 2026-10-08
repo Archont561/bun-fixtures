@@ -9,8 +9,8 @@ Feature: Fixture scopes
   Scenario: A session fixture is built once for one explicit test chain
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       export const test = base.extend({
         server: {
           scope: "session",
@@ -44,8 +44,8 @@ Feature: Fixture scopes
   Scenario: A file fixture is rebuilt for each test file
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       let n = 0;
       export const test = base.extend({
         db: {
@@ -78,8 +78,8 @@ Feature: Fixture scopes
   Scenario: A test fixture is rebuilt for every test
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       export const test = base.extend({
         tmp: {
           setup: async (use) => {
@@ -104,8 +104,8 @@ Feature: Fixture scopes
   Scenario: Teardown runs last-in-first-out
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       export const test = base.extend({
         outer: {
           setup: async (use) => {
@@ -138,8 +138,8 @@ Feature: Fixture scopes
   Scenario: A failing test still tears its fixtures down
     Given the file "test.ts":
       """
-      import { test as base } from "bun-test-utils";
-      export { expect } from "bun-test-utils";
+      import { test as base } from "@archont561/bun-test-utils";
+      export { expect } from "@archont561/bun-test-utils";
       export const test = base.extend({
         resource: {
           setup: async (use) => {

@@ -8,10 +8,10 @@ The BDD workspace mirrors the PBT package shape for fluent scenario support. It 
 Scenario execution remains on the public root `test.scenario(...)` API:
 
 ```ts
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 ```
 
-The helper-only `bun-test-utils/bdd` subpath exports the `givenStep`, `whenStep`,
+The helper-only `@archont561/bun-test-utils/bdd` subpath exports the `givenStep`, `whenStep`,
 and `thenStep` identity wrappers plus scenario type aliases. It does not expose
 the runner, fixture packs, or `withBDDTesting`. Projects that execute fluent
 scenarios install the optional peer:
@@ -36,12 +36,12 @@ test.scenario("checks a file")
 
 ## Reusing typed steps
 
-Steps can be exported from a shared module and imported by multiple scenarios. Wrap callbacks with `givenStep`, `whenStep`, and `thenStep` from `bun-test-utils/bdd`; their generic arguments contextually type each phase's input state and (for `given`/`when`) returned state. `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` are also available as type-only exports from the same subpath. A small consumer-owned function can apply a reusable sequence to a `GivenChain`:
+Steps can be exported from a shared module and imported by multiple scenarios. Wrap callbacks with `givenStep`, `whenStep`, and `thenStep` from `@archont561/bun-test-utils/bdd`; their generic arguments contextually type each phase's input state and (for `given`/`when`) returned state. `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` are also available as type-only exports from the same subpath. A small consumer-owned function can apply a reusable sequence to a `GivenChain`:
 
 ```ts
 // scenario-steps.ts
-import { givenStep, thenStep, whenStep } from "bun-test-utils/bdd";
-import type { GivenChain } from "bun-test-utils/bdd";
+import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
+import type { GivenChain } from "@archont561/bun-test-utils/bdd";
 
 export const writeFile = givenStep<object, { filename: string }>(({ tmpdir }) => {
   const filename = "shared.txt";
@@ -63,7 +63,7 @@ export const withSharedFile = (chain: GivenChain) =>
 
 ```ts
 // first.test.ts and second.test.ts can both use this sequence
-import { test } from "bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 import { assertContents, withSharedFile } from "./scenario-steps";
 
 withSharedFile(test.scenario("reads a shared file")).then(

@@ -1,5 +1,5 @@
 {
-  "name": "bun-test-utils",
+  "name": "@archont561/bun-test-utils",
   "version": "0.1.0",
   "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 explicit test.extend() composition with describe, test, and expect as the public API",
   "type": "module",

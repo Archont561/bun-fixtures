@@ -72,4 +72,4 @@ turbo.json           Turborepo monorepo pipeline configuration
 
 > Explicit composition only: `fixtures.ts` and `conftest.ts` are ordinary
 > module names and are not automatically loaded. Tests import the runner from
-> the root `bun-test-utils` package and typed definition helpers from `/pbt` or `/bdd`.
+> the root `@archont561/bun-test-utils` package and typed definition helpers from `/pbt` or `/bdd`.

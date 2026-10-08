@@ -15,13 +15,13 @@ time a test runs.
 `snapshot` is available on the root `test` context — zero extra dependencies:
 
 ```bash
-bun add -d bun-test-utils
+bun add -d @archont561/bun-test-utils
 ```
 
 ## Using the snapshot fixture
 
 ```ts
-import { test, expect } from "bun-test-utils";
+import { test, expect } from "@archont561/bun-test-utils";
 
 test("renders the widget", async ({ snapshot }) => {
   const widget = render({ name: "widget", count: 3 });
@@ -74,7 +74,7 @@ For serializers shared by every test, register them from a preload module:
 
 ```ts
 // test-serializers.ts
-import { createSnapshotSerializer } from "bun-test-utils/snap";
+import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";
 
 createSnapshotSerializer((value) =>
   value instanceof Date ? "<date>" : undefined,
@@ -101,7 +101,7 @@ import {
   createSnapshotSerializer,
   unregisterSnapshotSerializer,
   type Serializer,
-} from "bun-test-utils/snap";
+} from "@archont561/bun-test-utils/snap";
 
 const redactSecrets: Serializer = (value) =>
   typeof value === "string" && value.startsWith("sk-")
@@ -123,7 +123,7 @@ reload boundary before registering the current set again:
 import {
   createSnapshotSerializer,
   resetSnapshotSerializers,
-} from "bun-test-utils/snap";
+} from "@archont561/bun-test-utils/snap";
 
 resetSnapshotSerializers();
 createSnapshotSerializer((value) =>

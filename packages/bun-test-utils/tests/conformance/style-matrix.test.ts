@@ -14,7 +14,7 @@
  * one seeded scratch-project scenario in `e2e/bdd/features/property.feature`.
  */
 import { existsSync } from "node:fs";
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 import { textFileSchema } from "./shared/property-schemas.ts";
 
 const SEED = 20261007;

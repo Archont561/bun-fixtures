@@ -1,4 +1,4 @@
-import { defineArbitraries } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 
 /** Shared value schema used by property tests in separate files. */
 export const textFileSchema = defineArbitraries((fc) => ({

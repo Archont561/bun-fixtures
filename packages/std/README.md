@@ -1,9 +1,9 @@
 # Standard fixtures (internal)
 
-The standard fixtures (`tmpdir`, `env`, `stdio`, `clock`, `seed`, and `networkGuard`) are internal workspace fixtures bundled into the public root `test` from `bun-test-utils`. There is no public `bun-test-utils/std` subpath.
+The standard fixtures (`tmpdir`, `env`, `stdio`, `clock`, `seed`, and `networkGuard`) are internal workspace fixtures bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/std` subpath.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("runs with isolated deterministic state", async ({
   tmpdir,

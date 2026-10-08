@@ -8,10 +8,10 @@ description: Root test-context fixtures for standard, DOM, browser, VCR, snapsho
 
 ## Public surface
 
-The root `bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The only public helper subpaths are `bun-test-utils/pbt` for reusable typed fast-check schemas and `bun-test-utils/bdd` for typed scenario-step callbacks; neither subpath exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
+The root `@archont561/bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The only public helper subpaths are `@archont561/bun-test-utils/pbt` for reusable typed fast-check schemas and `@archont561/bun-test-utils/bdd` for typed scenario-step callbacks; neither subpath exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
   env.set("APP_MODE", "test");
@@ -91,7 +91,7 @@ tooling are deferred.
 
 
 ```ts
-import { expect, test } from "bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("mocks fetch through a fixture", async ({ httpMock }) => {
   httpMock.get("/api/user", () => Response.json({ name: "Ada" }));

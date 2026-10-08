@@ -11,23 +11,23 @@ description: Public TypeScript API reference for bun-test-utils.
 The root package exposes the runner values `describe`, `expect`, and `test`:
 
 ```ts
-import { describe, expect, test } from "bun-test-utils";
+import { describe, expect, test } from "@archont561/bun-test-utils";
 ```
 
 Typed definition helpers live on two helper-only subpaths:
 
 ```ts
-import { defineArbitraries } from "bun-test-utils/pbt";
-import type { ArbitraryInput, FastCheckApi, GeneratedValues } from "bun-test-utils/pbt";
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
+import type { ArbitraryInput, FastCheckApi, GeneratedValues } from "@archont561/bun-test-utils/pbt";
 
-import { givenStep, whenStep, thenStep } from "bun-test-utils/bdd";
+import { givenStep, whenStep, thenStep } from "@archont561/bun-test-utils/bdd";
 import type {
   GivenChain,
   GivenStep,
   ScenarioContext,
   ThenStep,
   WhenStep,
-} from "bun-test-utils/bdd";
+} from "@archont561/bun-test-utils/bdd";
 ```
 
 `defineArbitraries` is an identity wrapper for an arbitrary record or factory; it
@@ -38,7 +38,7 @@ callback unchanged. See the [property-testing guide](/bun-test-utils/guides/prop
 and [scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/).
 
 These subpaths expose only typed definition helpers and aliases—not runners or
-fixtures. Do not import `bun-test-utils/std`, `bun-test-utils/vcr`, or other
+fixtures. Do not import `@archont561/bun-test-utils/std`, `@archont561/bun-test-utils/vcr`, or other
 capability paths; fixtures and execution APIs remain on the root `test` object.
 
 ## Stability and platforms
@@ -80,7 +80,7 @@ test("uses fixtures", async ({ tmpdir, env }) => {
 Composes project fixtures and mocks explicitly:
 
 ```ts
-import { test as base } from "bun-test-utils";
+import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
   db: {
