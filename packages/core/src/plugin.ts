@@ -418,8 +418,16 @@ export async function openFixtures(
     testFile: file,
     scope: "test" as const,
   }) as FixtureContext;
-  for (const name of order) {
-    fixtures[name] = await instantiate(name, map, fixtures, file, stack);
+  try {
+    for (const name of order) {
+      fixtures[name] = await instantiate(name, map, fixtures, file, stack);
+    }
+  } catch (error) {
+    // A failed open never returns close(), so tear down what was built and
+    // rethrow the setup failure. A teardown error here is dropped on purpose:
+    // the setup error is the one the caller needs.
+    await unwind(stack).catch(() => undefined);
+    throw error;
   }
   return { fixtures, close: () => unwind(stack) };
 }

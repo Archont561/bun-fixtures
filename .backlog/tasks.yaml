@@ -3201,9 +3201,24 @@ tasks:
       message, and the teardown characterization added in task_058
       (packages/core/tests/plugin.test.ts) does not exercise this path, so no
       test covers the leak. Fix: unwind what was built before rethrowing the
-      original setup error."
+      original setup error. Done: openFixtures unwinds the test-scoped fixtures
+      it built before rethrowing a setup failure. Red first: three tests in
+      packages/core/tests/plugin.test.ts (fixture teardown block) failed on the
+      old code: the two-fixture probe case (a:teardown missing), LIFO across
+      three fixtures (both teardowns missing), and a cleanup case where the
+      remaining teardowns did not run. Green: plugin.test.ts 31 of 31,
+      error-messages.test.ts 3 of 3, core package 132 of 132. Decision: a
+      teardown error during failure cleanup is dropped, so the setup error stays
+      the rejection; the setup error is the first failure, so it wins. The
+      regular test path does the opposite, recorded as task_063. Unchanged:
+      file- and session-scoped fixtures stay engine-owned and are torn down at
+      teardownFile or teardownSession; a probe confirmed the file-scoped
+      teardown runs at teardownFile, not at the failed open. Suite: bun test 370
+      pass, 8 skip (Playwright not provisioned), 0 fail across 378 tests in 48
+      files (was 367/8/0, 375 tests); lint 138 files clean; typecheck 19 of 19;
+      build 10 of 10."
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - fixtures
@@ -3216,6 +3231,8 @@ tasks:
       - openFixtures rejects with the original setup error after unwinding
       - a red regression test reproduces the two-fixture probe case in
         packages/core/tests/plugin.test.ts
+      - a teardown error during that failure cleanup does not replace the setup
+        error
     dependencies: []
     planning:
       split_status: pending
@@ -3234,7 +3251,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T19:47:42.974Z
-    updated_at: 2026-10-08T19:47:42.974Z
+    updated_at: 2026-10-08T19:56:39.679Z
   - id: task_060
     title: Replace broad any at optional-dependency and adapter boundaries with
       package-local interfaces (audit finding 2)
@@ -3373,3 +3390,51 @@ tasks:
       push_comments: false
     created_at: 2026-10-08T19:47:48.859Z
     updated_at: 2026-10-08T19:47:48.859Z
+  - id: task_063
+    title: "Regular test path: a teardown error in the finally unwind replaces the
+      setup error"
+    description: "Found while fixing task_059, by probe; not fixed here. The regular
+      fixture-aware test path in packages/core/src/plugin.ts runs
+      unwind(testStack) in a finally block. When a later fixture's setup fails
+      and an earlier fixture's teardown also throws, the teardown error replaces
+      the setup error, so the test reports the teardown failure and hides the
+      root cause. Probe (kept outside the repo): the first fixture calls use()
+      and then its teardown throws first teardown failed; the second fixture's
+      setup throws second setup failed. The test fails with first teardown
+      failed. openFixtures (task_059) keeps the setup error instead, so the two
+      paths now disagree. Proposal: the setup error wins on both paths. Write
+      the precedence rule once, next to unwind, and add a red test in
+      packages/core/tests/plugin.test.ts."
+    source_links: []
+    status: ready
+    priority: P3
+    labels:
+      - fixtures
+      - testing
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - a red test shows a setup failure is reported even when an earlier
+        fixture teardown also throws
+      - the regular test path and openFixtures apply the same error precedence
+      - the precedence rule is written in one place, next to unwind in
+        packages/core/src/plugin.ts
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T19:56:39.272Z
+    updated_at: 2026-10-08T19:56:39.272Z
