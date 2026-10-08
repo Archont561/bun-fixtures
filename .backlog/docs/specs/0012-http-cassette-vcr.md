@@ -20,12 +20,14 @@ Integration tests hitting 3rd-party HTTP APIs (Stripe, GitHub, OpenAI) are slow,
 | R5 | Original `globalThis.fetch` MUST be restored upon fixture teardown. |
 | R6 | Matcher DSLs, configurable redaction, and cassette migration tooling MUST remain explicitly deferred from the stable `0.1.x` contract. |
 | R7 | `record(callback)` MUST refuse a callback result that is not plain data, as defined in [ADR 0026](../adr/0026-refuse-callback-results-that-cannot-round-trip.md). The refusal MUST be a `CassetteError` with code `CALLBACK_NOT_SERIALIZABLE`, the `[bun-test-utils/vcr]` prefix, and the offending path, and MUST register nothing. A circular structure MUST be refused with the same code. |
+| R8 | A callback object that the test has recorded MUST be identified by that object. A callback object the test has not recorded MUST be matched by its exact source text only when every recording with that text holds the same result; otherwise `replay` MUST refuse with `CALLBACK_AMBIGUOUS` and MUST NOT run the callback. `record(callback)` MUST run any callback object it has not recorded, as defined in [ADR 0027](../adr/0027-identify-callbacks-by-object-then-source.md). |
 
 ## Verification
 
 - Tests verifying record then replay sequence against an ephemeral Bun HTTP server.
 - Tests verifying that unmatched requests in replay mode throw informative mismatch errors.
 - Tests verifying that each callback result JSON cannot round-trip is refused with `CALLBACK_NOT_SERIALIZABLE`, and that replay then reports `CALLBACK_NOT_RECORDED` (`packages/vcr/tests/cassette.test.ts`).
+- Tests verifying that two closures from one factory each run and record their own result, that each replays its own result in any order, and that a fresh closure whose recordings disagree is refused with `CALLBACK_AMBIGUOUS` without running (`packages/vcr/tests/cassette.test.ts`).
 
 ## 2026-10-06 API revision — explicit callback registry
 
@@ -61,12 +63,12 @@ A direct API call is live and does not need a `live()` wrapper:
 const health = await api.health.check();
 ```
 
-`record(callback)` executes the callback, hashes its stable callback identity,
-stores the callback output in the cassette registry, and returns that output.
-`replay(callback)` resolves the same registry entry, returns the stored output,
-and MUST NOT execute the live callback. The output is serialized and integrity-
-hashed in the registry entry, but output hashes are not used as the lookup key
-because replay must find the output before executing the callback.
+`record(callback)` executes the callback, resolves its callback identity, stores
+the serialized output in the cassette registry, and returns that output.
+`replay(callback)` resolves the same identity, returns the stored output, and
+MUST NOT execute the live callback. Replay must find the output before executing
+the callback, so the lookup never uses the output. How a callback resolves to a
+registry entry is defined in the 2026-10-09 section below and in ADR 0027.
 
 The same fixture is available in normal tests, `test.prop`,
 `test.scenario`, and `test.scenario.prop`. Property tests should normally use
@@ -91,6 +93,20 @@ is stored, so `replay` reports `CALLBACK_NOT_RECORDED` and never returns a rejec
 value. The on-disk schema does not change. Supporting these values is deferred to
 task_050. The decision and its alternatives are in
 [ADR 0026](../adr/0026-refuse-callback-results-that-cannot-round-trip.md).
+
+## 2026-10-09 — identify callbacks by object, then by source
+
+A callback is identified by its object once the test has recorded it. Only an
+unrecorded callback is matched by its exact source text (R8), and only when every
+recording with that text holds the same result. `record(callback)` runs any
+callback object it has not recorded, even when its source text matches a
+recording. A source match with disagreeing recordings is refused with
+`CALLBACK_AMBIGUOUS`, and the callback does not run. Two closures from one factory
+therefore keep their own results. A fresh closure whose source text matches
+agreeing recordings still returns the agreed result, because captured values
+cannot be read without running the callback. Explicit callback keys are deferred.
+The decision and its alternatives are in
+[ADR 0027](../adr/0027-identify-callbacks-by-object-then-source.md).
 
 ## Implementation status
 

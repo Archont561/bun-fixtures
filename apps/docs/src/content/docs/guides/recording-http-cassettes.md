@@ -45,8 +45,15 @@ test("replays a user lookup", async ({ cassette }) => {
 });
 ```
 
-Callback identity is derived without executing the callback during replay. A
-callback result must be plain data: `null`, booleans, strings, finite numbers
+A callback is identified by its function object once the test has recorded it, so
+replay the same function you recorded. A new function is matched by its source
+text only when every recording with that text holds the same result. Otherwise
+`replay` throws `CALLBACK_AMBIGUOUS` and does not run the callback. Two closures
+created by one factory are separate callbacks: each runs once and keeps its own
+result. A new closure with different captured values still matches agreeing
+recordings of the same code, so replay the closure you recorded when values differ.
+
+A callback result must be plain data: `null`, booleans, strings, finite numbers
 other than `-0`, arrays without holes, and plain objects. JSON cannot represent
 anything else exactly, so `record` throws a `CassetteError` with the code
 `CALLBACK_NOT_SERIALIZABLE`, names the path of the value, and stores nothing.
