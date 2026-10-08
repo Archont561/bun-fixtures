@@ -8,9 +8,13 @@ and are consumed — and deleted — when versions are cut.
 
 ```bash
 bun run changeset          # describe a change; writes .changeset/<name>.md — commit it
-bun run release:version    # consume pending changesets: bump versions, write CHANGELOGs
-bun run release:publish    # publish the bumped packages to npm and create git tags
+bun run release:version    # consume pending changesets: bump the version (changelog is disabled)
 ```
+
+Publishing does not go through `changeset publish` (`bun run release:publish`); do not run it. A
+release is a `v<version>` tag on a commit on `main`. `release.yml` verifies the tag, publishes the
+package to npm (Trusted Publishing, environment `npm`) and to GitHub Packages, and then attaches the
+tarball to the GitHub Release. See [ADR 0029](../.backlog/docs/adr/0029-release-to-npm-and-github-packages.md).
 
 You add a changeset in the **same pull request** as the change it describes. The
 file is prose aimed at a user of the package, not a restatement of the commit

@@ -1,12 +1,20 @@
 name: release
 
-# Publish the single public package through npm Trusted Publishing.
-# Configure npmjs.org's trusted publisher for:
+# Publish the single public package from a version tag on main. See ADR 0029.
+#
+# npm: Trusted Publishing. Configure npmjs.org's trusted publisher for:
 #   repository: Archont561/bun-test-utils
 #   workflow: .github/workflows/release.yml
-#   environment: (none)
+#   environment: npm
+#   allowed actions: npm publish (direct publishing enabled)
 # The workflow intentionally has no npm token: npm exchanges GitHub's short-lived
 # OIDC identity for a publish authorization at release time.
+#
+# GitHub Packages: the same version goes to npm.pkg.github.com under the @archont561
+# scope, authenticated with the job's GITHUB_TOKEN (packages: write).
+#
+# GitHub Release: the tarball packed for npm is attached once both registries have
+# accepted the version.
 
 on:
   push:
@@ -57,6 +65,14 @@ jobs:
         run: |
           test "${RELEASE_TAG#v}" = "$(bun -e 'console.log(require("./packages/bun-test-utils/package.json").version)')"
 
+      - name: Verify the tag is on main
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::The release tag must point at a commit already on main."
+            exit 1
+          fi
+
       - name: Run release gates
         run: |
           bun run lint
@@ -70,7 +86,7 @@ jobs:
         working-directory: packages/bun-test-utils
         run: bun pm pack --dry-run
 
-  publish:
+  publish-npm:
     name: Publish to npm
     needs: verify
     runs-on: ubuntu-24.04
@@ -102,6 +118,14 @@ jobs:
         working-directory: packages/bun-test-utils
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
+      - name: Upload release tarball
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-tarball
+          path: ${{ runner.temp }}/archont561-bun-test-utils-*.tgz
+          if-no-files-found: error
+          retention-days: 30
+
       # npm 11.5.1+ obtains an ephemeral publish credential from GitHub's OIDC
       # token when this job has id-token: write and the matching npm trusted
       # publisher is configured. Do not add NODE_AUTH_TOKEN here.
@@ -109,10 +133,59 @@ jobs:
         working-directory: packages/bun-test-utils
         run: npm publish --provenance --access public
 
+  publish-github-packages:
+    name: Publish to GitHub Packages
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node for GitHub Packages
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v6.2.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://npm.pkg.github.com
+          scope: "@archont561"
+
+      - name: Install dependencies and rebuild package
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Publish to GitHub Packages
+        working-directory: packages/bun-test-utils
+        run: npm publish --registry=https://npm.pkg.github.com
+
+  github-release:
+    name: Create GitHub Release
+    needs: [publish-npm, publish-github-packages]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download release tarball
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-tarball
+          path: ${{ runner.temp }}/release
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           generate_release_notes: true
           fail_on_unmatched_files: true
-          files: ${{ runner.temp }}/bun-test-utils-*.tgz
+          files: ${{ runner.temp }}/release/archont561-bun-test-utils-*.tgz
