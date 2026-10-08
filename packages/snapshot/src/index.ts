@@ -5,6 +5,8 @@ import { snapshotFixture } from "./snapshot.ts";
 /** Re-exported so a suite can compose from a single import. */
 export { BunTestUtilsError, describe, expect } from "@bun-test-utils/core";
 export {
+  createSnapshotSerializer,
+  registerSnapshotSerializer,
   type Serializer,
   type SnapshotHelper,
   type SnapshotMode,

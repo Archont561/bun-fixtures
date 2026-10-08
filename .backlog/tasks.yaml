@@ -2807,3 +2807,269 @@ tasks:
       push_comments: false
     created_at: 2026-10-07T21:21:00.895Z
     updated_at: 2026-10-08T07:42:53.876Z
+  - id: task_049
+    title: Global snapshot serializer lifecycle and isolation
+    description: Define unregister/reset semantics for globally registered snapshot
+      serializers and add isolation guarantees for watch mode and in-process
+      test suites.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Global serializers can be unregistered or reset explicitly
+      - Tests prove no serializer leakage between isolated runs
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T10:11:18.637Z
+    updated_at: 2026-10-08T10:11:18.637Z
+  - id: task_050
+    title: Cassette serializers for callback values
+    description: Design and implement reversible, versionable serializers for
+      cassette.record callback values without changing raw HTTP request/response
+      replay semantics.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Serializer API is reversible
+      - Missing serializer produces an actionable error
+      - Raw HTTP cassette replay remains byte-compatible
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T10:11:19.393Z
+    updated_at: 2026-10-08T10:11:19.393Z
+  - id: task_051
+    title: Snapshot serializer diagnostics and recursive edge cases
+    description: Improve diagnostics and coverage for recursive snapshot
+      serializers, cyclic values, arrays, serializer failures, and precedence.
+    source_links: []
+    status: ready
+    priority: P3
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Nested serializer precedence is documented and tested
+      - Cycles and serializer exceptions have stable diagnostics
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T10:11:19.858Z
+    updated_at: 2026-10-08T10:11:19.858Z
+  - id: task_052
+    title: M6 — Developer workflow and monorepo coverage
+    description: Add interactive Clack scaffold for single and multi-test suites
+      plus thin monorepo coverage orchestration delegating execution to Bun and
+      Turbo.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Scaffold supports multiple tests per file
+      - Coverage produces a root LCOV report
+      - Bun remains the test and coverage runner
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T11:06:28.395Z
+    updated_at: 2026-10-08T11:06:28.395Z
+  - id: task_053
+    title: M7 — API contract and database integration testing
+    description: Add OpenAPI-backed local mock/validation server and adapter-based
+      database lifecycle fixtures with consumer-owned factories.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - OpenAPI requests and responses can be validated
+      - Database fixture guarantees isolation and teardown
+      - Factories compose through test.extend
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T11:06:28.847Z
+    updated_at: 2026-10-08T11:06:28.847Z
+  - id: task_054
+    title: M8 — UI regression and browser diagnostics
+    description: Add accessibility snapshots, visual screenshot matching, and
+      Playwright failure artifacts.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Accessibility snapshots are deterministic
+      - Visual diffs and update/CI modes are supported
+      - Browser failures expose screenshots and traces
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T11:06:29.277Z
+    updated_at: 2026-10-08T11:06:29.277Z
+  - id: task_055
+    title: M9 — Local test observability report
+    description: Write versioned local test-run artifacts and serve a browser report
+      for tests, fixtures, coverage, snapshots, network history, and browser
+      artifacts.
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - Report works offline from local artifacts
+      - Run schema is versioned
+      - Failures link to diagnostics and artifacts
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T11:06:29.704Z
+    updated_at: 2026-10-08T11:06:29.704Z
+  - id: task_056
+    title: M10 — Read-only local MCP test server
+    description: Expose local test runs, failures, coverage, fixtures, snapshots,
+      and artifacts through a read-only stdio MCP server.
+    source_links: []
+    status: ready
+    priority: P3
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - MCP discovery and result resources work over stdio
+      - Read-only mode is safe by default
+      - No hosted service is required
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-08T11:06:30.133Z
+    updated_at: 2026-10-08T11:06:30.133Z

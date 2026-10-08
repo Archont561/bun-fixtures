@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createFixture } from "@bun-test-utils/core";
+import { createFixture, slugifyFilename } from "@bun-test-utils/core";
 
 /**
  * - `"match"` (default outside CI): compare against the stored value; a
@@ -18,6 +18,22 @@ export type SnapshotMode = "match" | "update" | "ci";
  * fall through to the next serializer (built-ins run last).
  */
 export type Serializer = (value: unknown) => string | undefined;
+
+const GLOBAL_SERIALIZERS = Symbol.for("bun-test-utils.snapshotSerializers");
+const globalSerializers = ((globalThis as Record<symbol, unknown>)[
+  GLOBAL_SERIALIZERS
+] ??= []) as Serializer[];
+
+/** Registers a serializer for every snapshot fixture in this process. */
+export function registerSnapshotSerializer(serializer: Serializer): Serializer {
+  globalSerializers.unshift(serializer);
+  return serializer;
+}
+
+/** Creates and globally registers a reusable snapshot serializer. */
+export function createSnapshotSerializer(serializer: Serializer): Serializer {
+  return registerSnapshotSerializer(serializer);
+}
 
 export interface SnapshotHelper {
   mode: SnapshotMode;
@@ -40,20 +56,15 @@ export interface SnapshotHelper {
   matchFile(filePath: string, name?: string): void;
 }
 
-/** Turns a test name into a stable, filesystem-safe snapshot filename base. */
-function slugify(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 100) || "snapshot"
-  );
-}
-
 /** Recursively sorts object keys so serialization doesn't depend on insertion order. */
-function sortKeysDeep(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortKeysDeep);
+function sortKeysDeep(
+  value: unknown,
+  serializeCustom?: (value: unknown) => string | undefined,
+): unknown {
+  const custom = serializeCustom?.(value);
+  if (custom !== undefined) return custom;
+  if (Array.isArray(value))
+    return value.map((item) => sortKeysDeep(item, serializeCustom));
   if (
     value !== null &&
     typeof value === "object" &&
@@ -62,7 +73,10 @@ function sortKeysDeep(value: unknown): unknown {
   ) {
     const sorted: Record<string, unknown> = {};
     for (const key of Object.keys(value).sort()) {
-      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
+      sorted[key] = sortKeysDeep(
+        (value as Record<string, unknown>)[key],
+        serializeCustom,
+      );
     }
     return sorted;
   }
@@ -106,7 +120,7 @@ export const snapshotFixture = createFixture<SnapshotHelper>({
     const snapshotPath = join(
       dirname(ctx.testFile),
       "__snapshots__",
-      `${slugify(ctx.testName ?? "snapshot")}.snap.json`,
+      `${slugifyFilename(ctx.testName ?? "snapshot", "snapshot")}.snap.json`,
     );
 
     const stored: Record<string, string> = existsSync(snapshotPath)
@@ -114,8 +128,35 @@ export const snapshotFixture = createFixture<SnapshotHelper>({
       : {};
     let dirty = false;
 
+    function customSerialize(value: unknown): string | undefined {
+      for (const serializer of [...serializers, ...globalSerializers]) {
+        const result = serializer(value);
+        if (result !== undefined) return result;
+      }
+      return undefined;
+    }
+
     function serialize(value: unknown): string {
-      for (const serializer of [...serializers, ...BUILTIN_SERIALIZERS]) {
+      const custom = customSerialize(value);
+      if (custom !== undefined) return custom;
+
+      for (const serializer of BUILTIN_SERIALIZERS.slice(0, 2)) {
+        const result = serializer(value);
+        if (result !== undefined) return result;
+      }
+      if (typeof value === "object" && value !== null) {
+        try {
+          return JSON.stringify(
+            sortKeysDeep(value, customSerialize),
+            (_key, nested) =>
+              typeof nested === "bigint" ? `${nested}n` : nested,
+            2,
+          );
+        } catch {
+          return String(value);
+        }
+      }
+      for (const serializer of BUILTIN_SERIALIZERS.slice(2)) {
         const result = serializer(value);
         if (result !== undefined) return result;
       }

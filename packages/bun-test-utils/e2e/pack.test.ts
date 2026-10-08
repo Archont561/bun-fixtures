@@ -123,6 +123,7 @@ describe("bun pm pack smoke test", () => {
           "./bdd",
           "./package.json",
           "./pbt",
+          "./snap",
         ]);
 
         for (const peer of [
@@ -176,6 +177,7 @@ describe("bun pm pack smoke test", () => {
       "./bdd",
       "./package.json",
       "./pbt",
+      "./snap",
     ]);
 
     for (const peer of [

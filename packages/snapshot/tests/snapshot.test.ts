@@ -159,11 +159,11 @@ describe("@bun-test-utils/snapshot", () => {
     snapshot.addSerializer((value: unknown) =>
       value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
     );
-    snapshot.match(new Point(1, 2));
+    snapshot.match({ point: new Point(1, 2) });
   });
 
   test("…and the custom serializer ran before the built-ins", async () => {
-    expect(read(SERIALIZED).value).toBe("Point(1, 2)");
+    expect(read(SERIALIZED).value).toBe('{\n  "point": "Point(1, 2)"\n}');
   });
 
   test(REPORT, async ({ snapshot }) => {

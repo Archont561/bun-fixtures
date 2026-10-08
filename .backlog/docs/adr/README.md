@@ -27,5 +27,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0021](./0021-prop-test-schema-root-wrapper.md) | Root `propTestSchema` identity wrapper | superseded by 0022 |
 | [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted, amended by 0023 |
 | [0023](./0023-define-arbitraries-helper.md) | Name the PBT identity helper `defineArbitraries` | accepted |
+| [0024](./0024-self-dogfooding-at-public-boundaries.md) | Self-dogfooding at public boundaries | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

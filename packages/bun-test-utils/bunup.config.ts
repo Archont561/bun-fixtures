@@ -1,6 +1,12 @@
 import { createBunupConfig } from "@bun-test-utils/config/bunup";
 
-const entries = ["src/plugin.ts", "src/cli.ts", "src/pbt.ts", "src/bdd.ts"];
+const entries = [
+  "src/plugin.ts",
+  "src/cli.ts",
+  "src/pbt.ts",
+  "src/bdd.ts",
+  "src/snap.ts",
+];
 
 const bundledWorkspaces = [
   "@bun-test-utils/core",
