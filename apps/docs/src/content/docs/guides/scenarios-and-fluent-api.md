@@ -127,4 +127,4 @@ test.scenario
 
 Every generated example receives a fresh scenario context. Test-scoped fixtures are rebuilt for each example and shrink candidate; session and file fixtures are shared.
 
-See the [property testing guide](/bun-test-utils/guides/property-based-testing/) and the [package examples on GitHub](https://github.com/Archont561/bun-test-utils/tree/main/packages/bun-test-utils/features).
+See the [property testing guide](/bun-test-utils/guides/property-based-testing/) and the [package examples on GitHub](https://github.com/Archont561/bun-test-utils/tree/main/packages/bun-test-utils/e2e/bdd/features).
