@@ -3668,48 +3668,129 @@ tasks:
     created_at: 2026-10-08T21:21:53.450Z
     updated_at: 2026-10-08T22:11:16.004Z
   - id: task_066
-    title: "release.yml publishes through an `environment: npm` the repository does
-      not define"
+    title: v0.1.0 npm Trusted Publishing failed; trusted publisher registered with
+      environment none
     description: >-
-      Found on 2026-10-08 while surveying what blocks v0.1.0.
-      .github/workflows/release.yml declares `environment: npm` on its publish
-      job. The repository's environments (gh api
-      repos/Archont561/bun-test-utils/environments) are `github-pages` and
-      `release` — there is no `npm`.
+      Rewritten 2026-10-09 after the v0.1.0 release was attempted and failed.
+      The
+
+      original finding is kept below with each claim marked, because part of it
+      was
+
+      right and part is now disproved.
 
 
-      Two possible outcomes, and neither was confirmed:
+      WHAT HAPPENED (verified through `gh api` on 2026-10-09):
 
-      - GitHub auto-creates a referenced environment on first use, in which case
-      the publish works but is NOT gated by anything.
+      - Run 37860324252, event push, tag v0.1.0, created 2026-10-08T23:35:57Z,
+        conclusion failure:
+        https://github.com/Archont561/bun-test-utils/actions/runs/37860324252
+      - Job 113594388340 "Publish to npm" failed at the step "Publish with npm
+        Trusted Publishing" (23:36:35Z-23:37:05Z). Every earlier step succeeded,
+        including "Create release tarball" and "Upload release tarball", so the
+        release-tarball artifact exists (30-day retention).
+      - "Publish to GitHub Packages" succeeded; "Create GitHub Release"
+        (job 113594562927) was skipped, so there is no GitHub Release.
+      - `git ls-remote --tags origin` returns no tags: the v0.1.0 tag has been
+        deleted. npm's dist-tags.latest is 0.0.0 and the only published versions are
+        0.0.0-stage and 0.0.0, so 0.1.0 never reached npm.
 
-      - It does not, in which case the very first publish job fails to start.
+      LEADING CAUSE (sourced from this task's own earlier note, not yet
+      confirmed
+
+      against npmjs.org): the trusted publisher was registered with
+      `environment:
+
+      none` while release.yml declares `environment: npm` on the publish job.
+      npm
+
+      matches the OIDC claim's environment, so a mismatch is rejected at exactly
+      the
+
+      step that failed. Fix either side: register the publisher with environment
+
+      `npm`, or drop `environment: npm` from the job.
 
 
-      Either way there is a decision to make, because `release` exists precisely
-      to gate releases and currently has no protection rules. If the intent was
-      "a human approves every npm publish", the workflow as written walks around
-      the gate that was built for it.
+      RULED OUT by reading .github/workflows/release.yml: `id-token: write` is
+
+      granted at workflow level (line 36) and publish-npm declares no job-level
+
+      `permissions:` block narrowing it, so the OIDC token was available;
+
+      NODE_VERSION is 24.x, so npm is >= 11.5.1 and supports trusted publishing.
 
 
-      This cannot be resolved by the auto-release dry run: that workflow only
-      runs its own verify job, and `gh workflow run release.yml` publishes for
-      real. Note that `publish sandbox` (.github/workflows/publish-sandbox.yml)
-      is pixi-sandbox generated and unrelated to the npm release path — do not
-      confuse the two when reading the Actions tab.
+      STILL OPEN FROM THE ORIGINAL FINDING: the gating decision. `gh api
+      .../environments/npm`
+
+      and `.../environments/release` both return `"protection_rules": []`. The
+
+      original text is right that if the intent was "a human approves every npm
+
+      publish", the workflow as written walks around the gate built for it.
 
 
-      Resolve BEFORE the first real publish, not during it.
+      UNBLOCKED SINCE: the upload glob is already
+      `archont561-bun-test-utils-*.tgz`
+
+      with `if-no-files-found: error`, and that step succeeded in the failed
+      run, so
+
+      the rename worry in the original note is done.
 
 
-      Related: task_005 (M5) remains in_progress pending the npm Trusted
-      Publisher registration on npmjs.org (repository Archont561/bun-test-utils,
-      workflow .github/workflows/release.yml, environment: none), the v0.1.0
-      tag, and the post-publish rerun of the installed-consumer harness. The
-      package is published as `@archont561/bun-test-utils` (ADR 0028), so the
-      trusted publisher is registered for that name. The release.yml upload glob
-      `bun-test-utils-*.tgz` must change to `archont561-bun-test-utils-*.tgz` in
-      the same change, or the upload step fails on fail_on_unmatched_files.
+      NOT YET CAPTURED: the failing step's error text. `gh run view
+      --log-failed` is
+
+      unreachable from the agent sandbox
+
+      (results-receiver.actions.githubusercontent.com is not allowlisted) and
+      the
+
+      job's annotations carry only Node 20 deprecation warnings. Read it in the
+
+      Actions UI and quote it here.
+
+
+      Re-running needs a tag: release.yml triggers on `v*.*.*` tags or
+
+      workflow_dispatch with an existing tag, and per .changeset/README.md a
+      release
+
+      is a `v<version>` tag on a commit on `main`. `publish sandbox`
+
+      (.github/workflows/publish-sandbox.yml) is pixi-sandbox generated and
+      unrelated
+
+      to the npm release path.
+
+
+      ORIGINAL FINDING (2026-10-08), claim by claim:
+
+      - "the repository's environments are `github-pages` and `release` - there
+      is no
+        `npm`" -> DISPROVED. `gh api repos/Archont561/bun-test-utils/environments`
+        now returns `github-pages`, `npm`, `release`. The `npm` environment's
+        created_at is 2026-10-08T23:36:31Z, four seconds before the publish job
+        started (23:36:35Z), so its existence is GitHub's implicit creation on first
+        reference and says nothing about npm's side.
+      - "GitHub auto-creates a referenced environment on first use, in which
+      case the
+        publish works but is NOT gated by anything" -> half CONFIRMED: it was
+        auto-created and nothing gates it, but the publish did not work.
+      - "It does not, in which case the very first publish job fails to start"
+      ->
+        DISPROVED; the job started and ran to the publish step.
+      - ".changeset/README.md must agree with the mechanism" -> satisfied: it
+      already
+        says "Trusted Publishing, environment `npm`".
+      - "Resolve BEFORE the first real publish, not during it" -> overtaken; the
+        first publish was attempted on 2026-10-08 and failed.
+
+      Related: task_005 (M5) stays in_progress until npm carries 0.1.0, the tag
+
+      exists again, and the installed-consumer harness is rerun.
     source_links: []
     status: ready
     priority: P1
@@ -3719,12 +3800,18 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - release.yml's publish job references an environment that resolves at run
-        time, verified before the first real publish
-      - the chosen environment carries the protection rules intended to gate a
-        public npm publish, or the decision to leave it ungated is recorded
-      - the workflow header comment and .changeset/README.md agree with the
-        mechanism actually used
+      - the failing step's error text is quoted in this task, taken from the
+        Actions UI, since the agent sandbox cannot fetch run logs
+      - "npmjs.org's trusted publisher for @archont561/bun-test-utils matches
+        the OIDC claims release.yml sends - repository
+        Archont561/bun-test-utils, workflow .github/workflows/release.yml,
+        environment npm - or release.yml drops environment: npm to match the
+        registration"
+      - a re-run publishes 0.1.0 to npm (registry dist-tags.latest == 0.1.0) and
+        the Create GitHub Release job completes
+      - the npm and release environments either carry protection rules gating a
+        public publish, or the decision to leave them ungated is recorded in the
+        release.yml header comment and .changeset/README.md
     dependencies: []
     planning:
       split_status: pending
@@ -3743,7 +3830,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T21:22:10.539Z
-    updated_at: 2026-10-08T21:22:10.539Z
+    updated_at: 2026-10-09T08:32:40.714Z
   - id: task_067
     title: cassette.record keys callbacks by source text, so closures from one
       factory share a registry entry
