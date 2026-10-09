@@ -57,11 +57,18 @@ libglx = "*"
 libopengl = "*"
 libgles = "*"
 # --- headed browsers: an X display for non-headless runs ---
-# Native conda-forge package; its recipe asserts ${PREFIX}/bin/Xvfb, so Xvfb
-# lands on PATH inside the environment. The CDT package
-# xorg-x11-server-xvfb-cos7-x86_64 is deliberately not used: it installs
-# xvfb-run into x86_64-conda-linux-gnu/sysroot/usr/bin, which is off PATH and
-# is meant for recipe build sections rather than runtime use.
+# conda-forge's xorg-xvfb-server provides Xvfb; its recipe asserts
+# ${PREFIX}/bin/Xvfb, so Xvfb lands on PATH inside the environment. The CDT
+# package xorg-x11-server-xvfb-cos7-x86_64 is deliberately not used: it installs
+# xvfb-run into x86_64-conda-linux-gnu/sysroot/usr/bin, which is off PATH and is
+# meant for recipe build sections rather than runtime use.
+# Restored bundles need two repairs before Xvfb starts, applied by
+# scripts/browser-activate.sh: the keymap data links, and the staging-prefix
+# link that Xvfb's binary expects. Without them it exits with "Failed to compile
+# keymap". With them, headed Chromium rendered on a private display in this
+# sandbox (packages/browser/tests/headed-chromium.test.ts). Unverified: whether a
+# fresh conda-forge install needs the repairs, because conda.anaconda.org is
+# unreachable from the sandbox.
 xorg-xvfb-server = "*"
 # --- runtime glue ---
 libgcc = "*"
@@ -70,9 +77,14 @@ font-ttf-dejavu = "*"
 font-ttf-inconsolata = "*"
 
 # Playwright's browser binaries live outside the prefix; point the loader at
-# this environment's lib/ first (system defaults stay in the search path).
+# this environment's lib/ first (system defaults stay in the search path). The
+# same script applies the Xvfb repairs for restored bundles (see above).
 [feature.browser.activation]
 scripts = ["scripts/browser-activate.sh"]
+
+# Start the X server for headed browsers: `pixi run -e browser xvfb &`.
+[feature.browser.tasks]
+xvfb = "sh scripts/xvfb.sh"
 
 [environments.browser]
 features = ["browser"]

@@ -16,10 +16,10 @@ pre-commit:
     actionlint:
       glob: ".github/workflows/*.{yml,yaml}"
       # actionlint lives in the pixi default environment. Run the compiled
-      # binary directly (not via `pixi run`): pixi 0.81's `run`/`install`
-      # wipes the tiny default prefix to empty when invoked from inside a hook.
-      # Requires `pixi install` from a normal shell, which the sandbox workflow
-      # and CI both perform.
+      # binary directly rather than through `pixi run`: that needs no solve, no
+      # network, and a manifest that agrees with pixi.lock. Requires `pixi
+      # install` from a normal shell, which the sandbox workflow and CI both
+      # perform.
       run: .pixi/envs/default/bin/actionlint {staged_files}
     typecheck:
       glob: "*.{ts,tsx,cts,mts,cjs,mjs}"
@@ -30,5 +30,15 @@ pre-push:
     test:
       glob: "*.{js,ts,tsx,cjs,mjs,json,jsonc}"
       # Browser tests need the pixi browser environment's shared libraries on
-      # the loader path; no global registration survives without sudo.
-      run: if command -v pixi >/dev/null 2>&1; then PATH="$HOME/.pixi/bin:$PATH" pixi run -e browser bunx turbo run test; else bunx turbo run test; fi
+      # the loader path; no global registration survives without sudo. Probe the
+      # environment first, with --frozen so pixi never re-solves: a pixi.toml
+      # change not yet relocked would otherwise need the network. Degrade only
+      # when the probe fails, so a test failure under pixi still blocks the push.
+      run: |
+        PATH="$HOME/.pixi/bin:$PATH"
+        if command -v pixi >/dev/null 2>&1 && pixi run --frozen -e browser true >/dev/null 2>&1; then
+          pixi run --frozen -e browser bunx turbo run test
+        else
+          echo "pre-push: pixi browser environment unavailable (run 'pixi run --frozen -e browser true' to see why); running tests without it" >&2
+          bunx turbo run test
+        fi
