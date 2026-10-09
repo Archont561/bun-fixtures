@@ -16,7 +16,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 | [0008](./0008-typescript-config-package.md) | Monorepo-wide TypeScript Configuration Package | implemented | `packages/config/`, `tsconfig.json` |
 | [0009](./0009-standard-fixtures-std.md) | Standard Built-in Fixtures (tmpdir, env, stdio, clock, seed, network guard) | implemented | `packages/std/` |
 | [0010](./0010-property-based-testing-fastcheck.md) | Property-Based Testing Integration with fast-check | implemented | `packages/pbt/`, `packages/core/src/types.ts`, `packages/bun-test-utils/src/plugin.ts` |
-| [0011](./0011-dom-and-browser-fixtures.md) | DOM and Browser Testing Support (happy-dom & Playwright) | in progress | `packages/dom/`, `packages/browser/`, `packages/server/` |
+| [0011](./0011-dom-and-browser-fixtures.md) | DOM and Browser Testing Support (happy-dom & Playwright) | implemented | `packages/dom/`, `packages/browser/`, `packages/server/` |
 | [0012](./0012-http-cassette-vcr.md) | HTTP Cassette / VCR Testing Fixture | implemented | `packages/vcr/` |
 | [0013](./0013-snapshot-testing.md) | Snapshot Testing Fixture | implemented | `packages/snapshot/` |
 | [0014](./0014-bdd-fixture-bridge.md) | BDD-style scenarios on `test.*` | implemented | `packages/core/`, `packages/bdd/` |
