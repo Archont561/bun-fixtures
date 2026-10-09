@@ -75,7 +75,10 @@ export class CassetteError extends BunTestUtilsError {
       | "CASSETTE_MISMATCH"
       | "CALLBACK_AMBIGUOUS"
       | "CALLBACK_NOT_RECORDED"
-      | "CALLBACK_NOT_SERIALIZABLE",
+      | "CALLBACK_NOT_SERIALIZABLE"
+      | "CALLBACK_SERIALIZER_NOT_FOUND"
+      | "CALLBACK_SERIALIZER_FAILED"
+      | "INVALID_API_USAGE",
     message: string,
     details?: Record<string, unknown>,
     cause?: unknown,

@@ -49,7 +49,10 @@ data or is refused as in ADR 0026. Callback results stay in memory in
    `serialize(value)` returns data the encoder re-encodes recursively (a
    `Map` of `Date`s needs no special handling); `deserialize(data)`
    reconstructs the value. A serializer must not claim its own output; the
-   encoder guards this and wraps the violation.
+   encoder guards this and wraps the violation. The encode walk is also
+   bounded (512 levels), so a serializer that re-claims values *nested
+   inside* its output is refused with the coded depth diagnostic instead of
+   overflowing the stack.
 
 2. **Envelope.** A serialized position holds
    `{ "__bunTestUtils": { "name", "version", "data" } }` inside the otherwise
@@ -76,7 +79,7 @@ data or is refused as in ADR 0026. Callback results stay in memory in
    | `map` | `Map` | insertion-ordered pairs | — |
    | `set` | `Set` | insertion-ordered items | — |
    | `regexp` | `RegExp` | `{ source, flags }` | `lastIndex` |
-   | `error` | `Error` | `{ name, message, stack? }` | subclass identity, extra own properties |
+   | `error` | `Error` | `{ ctor?, message, stack?, own enumerable properties }`; reconstructed through the whitelisted global constructors (`Error`, `TypeError`, `RangeError`, `SyntaxError`, `ReferenceError`, `EvalError`, `URIError`) | unknown subclass constructors (reconstructed as `Error`), non-enumerable own properties such as `cause`, symbol-keyed properties |
    | `typed-array` | every `TypedArray` constructor | `{ constructor, base64 }` of the raw bytes | cross-endian portability |
    | `array-buffer` | `ArrayBuffer` | base64 | cross-endian portability |
 
@@ -164,9 +167,11 @@ data or is refused as in ADR 0026. Callback results stay in memory in
 
 - The encoder walks the result and re-encodes serializer output; the small
   API-result cost stance of ADR 0026 is accepted unchanged.
-- Documented losses ship with the built-ins: `Error` subclass identity and
-  extra own properties, `RegExp.lastIndex`, cross-endian typed-array
-  portability, shared-reference identity.
+- Documented losses ship with the built-ins: unknown `Error` subclass
+  constructors and non-enumerable own properties (measured against
+  `bun:test`'s `toEqual`, which compares the error class and own enumerable
+  properties), `RegExp.lastIndex`, cross-endian typed-array portability,
+  shared-reference identity.
 - `CALLBACK_SERIALIZER_NOT_FOUND` is a forward-compatibility guard: with no
   removal API and no persistence it is unreachable through the public
   fixture surface in `0.1.x` and is exercised at the internal test boundary.

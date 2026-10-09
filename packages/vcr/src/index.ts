@@ -17,6 +17,13 @@ export {
   type RecordedResponse,
   type VcrMode,
 } from "./cassette.ts";
+export {
+  type CallbackSerializer,
+  createSerializerCodec,
+  defineCallbackSerializer,
+  ENVELOPE_KEY,
+  type SerializerCodec,
+} from "./serializers.ts";
 
 export const vcrFixtures: FixtureMap = {
   cassette: cassetteFixture,
