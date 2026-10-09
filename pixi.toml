@@ -17,14 +17,15 @@ actionlint = ">=1.7.12,<2"
 # Pruned 2026-10-09 (task_072) with per-removal evidence, after headed runs
 # were retired (ADR 0030). Removed packages: xorg-xvfb-server (only the headed
 # path used Xvfb), ffmpeg (no test records video; task_054 re-adds it for
-# Playwright video wiring), xorg-libxtst (nothing links it: not the chromium
-# or firefox binaries, not libmozgtk, not libgtk-3; its consumer was Xvfb), and
-# the GL dispatch group libgl/libegl/libglx/libopengl/libgles (deleting those
-# .so files from the environment left ldd at zero not-found for chrome,
-# chrome-wrapper, firefox and libmozgtk — chromium ships and loads its own
-# libEGL/libGLESv2). Removed redundant entries kept in the environment by
-# gtk3's own conda depends: gdk-pixbuf, xorg-libxcursor, xorg-libxinerama
-# (the environment-level pin went with it), xorg-libxrender (also linked by
+# Playwright video wiring), and the GL dispatch group libgl/libegl/libglx/
+# libopengl/libgles (deleting those .so files from the environment left ldd at
+# zero not-found for chrome, chrome-wrapper, firefox and libmozgtk — chromium
+# ships and loads its own libEGL/libGLESv2). The xorg-libxtst entry was also
+# dropped as Xvfb-only, but the package stays in the environment via
+# at-spi2-core's own depends (verified in the relocked lock), so that removal
+# is manifest hygiene, not a size win. Same for the redundant entries kept by
+# gtk3's conda depends: gdk-pixbuf, xorg-libxcursor, xorg-libxinerama (the
+# environment-level pin went with it), xorg-libxrender (also linked by
 # chromium itself, so its entry stays for that reason).
 [feature.browser.dependencies]
 # --- chromium ---
