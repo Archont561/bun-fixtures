@@ -23,3 +23,4 @@
 
 - Component rendering and event dispatch tests using `@bun-test-utils/dom`.
 - Headless browser navigation and assertion tests using `@bun-test-utils/browser`.
+- Headless Firefox launch proof at the Playwright level (`packages/browser/tests/firefox-headless.test.ts`, task_073): no `browser` fixture involvement — the fixture is Chromium-only per R3 and ADR 0030.
