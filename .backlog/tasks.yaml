@@ -540,9 +540,14 @@ tasks:
       all 21 typecheck tasks and actionlint pass; 436 tests across the 51 files
       not requiring browser binaries pass. Root bun test: 437 pass / 2 skip / 7
       missing-browser failures across 53 files, matching the sandbox CDN
-      restriction with two added regression tests. Remaining gap: obtain a
+      restriction with two added regression tests. Implementation pushed on
+      arena/a94c3815-bun-test-utils at 929d436. Remaining gap: obtain a
       successful browser-present CI run, including the isolated full-Chromium
-      step, before closing task_013."
+      step. Attempted gh workflow run ci.yml --ref arena/a94c3815-bun-test-utils
+      on 2026-10-09; GitHub returned HTTP 403 Resource not accessible by
+      integration. The connection can push but cannot dispatch Actions.
+      Maintainer must run CI on this branch or reconnect GitHub in Arena with
+      Actions access. Keep task_013 in_progress until that proof is green."
     source_links: []
     status: in_progress
     priority: P1
@@ -579,7 +584,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:46.794Z
-    updated_at: 2026-10-09T21:23:19.499Z
+    updated_at: 2026-10-09T21:24:51.441Z
   - id: task_014
     title: Implement HTTP Cassette / VCR network record & replay fixture
       (@bun-fixture/vcr)
