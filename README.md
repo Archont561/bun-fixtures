@@ -136,7 +136,7 @@ bun run test:all  # everything CI runs
 bun run docs:dev
 ```
 
-Headed browsers need an X display. The pixi `browser` environment ships one: `pixi run -e browser xvfb &` starts Xvfb on `:99`, and a test can launch Chromium with `headless: false` and `env: { ...process.env, DISPLAY: ":99" }`. `pixi run` also applies the repairs a restored sandbox bundle needs before Xvfb starts. [`packages/browser/tests/headed-chromium.test.ts`](packages/browser/tests/headed-chromium.test.ts) is a working example that starts its own display, and it skips outside the environment.
+Browser tests run headless only ([ADR 0030](.backlog/docs/adr/0030-headless-only-browser-testing.md)). The pixi `browser` environment supplies the shared libraries Playwright's Chromium and Firefox binaries need on linux-64: `scripts/browser-activate.sh` puts them on the loader path under `pixi run`, and `packages/browser/tests/support/browser-libs.ts` does the same for a plain `bun test`. Where neither is available the browser suites skip rather than fail.
 
 The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight. See the [development documentation](https://archont561.github.io/bun-test-utils/guides/getting-started/) before changing public APIs.
 

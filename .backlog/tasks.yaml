@@ -529,19 +529,18 @@ tasks:
     description: "Support browser-side JS testing through in-memory DOM fixtures
       (happy-dom) for UI components and session-scoped Playwright browser/page
       fixtures for real E2E testing. Spec:
-      docs/specs/0011-dom-and-browser-fixtures.md. STATUS: @bun-test-utils/dom
-      (window, document, page), the ephemeral Bun.serve testServer fixture, and
-      the Playwright browser/context/page fixtures are implemented. Real browser
-      verification remains in progress:
+      .backlog/docs/specs/0011-dom-and-browser-fixtures.md. STATUS:
+      @bun-test-utils/dom (window, document, page), the ephemeral Bun.serve
+      testServer fixture, and the Playwright browser/context/page fixtures are
+      implemented. Real browser verification remains in progress:
       packages/browser/tests/playwright.test.ts skips when browser binaries are
       unavailable, while CI currently installs only the Chromium headless shell.
       Confirm regular Chromium/Chrome coverage and the supported browser-binary
       installation path. The tests/playwright-missing-peer.test.ts probe still
-      pins the actionable uninstalled-peer error. Regular (full build) Chromium
-      now runs headed in the pixi browser environment:
-      packages/browser/tests/headed-chromium.test.ts, on a private Xvfb display
-      started by scripts/xvfb.sh. CI still installs only the headless shell, so
-      the CI half of the coverage question stays open."
+      pins the actionable uninstalled-peer error. Per ADR 0030 (task_072)
+      browser testing is headless-only: full-build Chromium runs headless
+      through the launchHeadlessChromium fallback, the headed Xvfb path and its
+      test are retired."
     source_links: []
     status: in_progress
     priority: P2
@@ -578,7 +577,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:46.794Z
-    updated_at: 2026-10-09T12:18:23.097Z
+    updated_at: 2026-10-09T18:35:46.935Z
   - id: task_014
     title: Implement HTTP Cassette / VCR network record & replay fixture
       (@bun-fixture/vcr)
@@ -2984,14 +2983,17 @@ tasks:
     updated_at: 2026-10-08T11:06:28.847Z
   - id: task_054
     title: M8 — UI regression and browser diagnostics
-    description: "Add accessibility snapshots, visual screenshot matching, and
+    description: 'Add accessibility snapshots, visual screenshot matching, and
       Playwright failure artifacts. Video starting point (checked 2026-10-09):
       Playwright video resolves ffmpeg through its browser registry
-      (registry.findExecutable(\"ffmpeg\")), not PATH, and the sandbox used a
-      manual link to ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux. The pixi
-      browser environment's ffmpeg 7.1 writes .webm through libvpx (a 160x120
-      test clip encodes with exit 0), with or without the restore staging link.
-      Wiring it into the registry belongs to this task."
+      (registry.findExecutable("ffmpeg")), not PATH, and the sandbox used a
+      manual link to ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux. Update
+      (task_072, 2026-10-09): the pixi browser environment no longer ships
+      ffmpeg - it was pruned as unused with the Xvfb retirement, no test records
+      video today. Video work must re-add ffmpeg >=7 to
+      [feature.browser.dependencies] (conda-forge 7+ builds against libvpx so
+      .webm records; the 4.3.2 build previously locked had no VP8/VP9 encoder).
+      Wiring it into the registry belongs to this task.'
     source_links: []
     status: ready
     priority: P2
@@ -3020,7 +3022,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T11:06:29.277Z
-    updated_at: 2026-10-09T12:18:23.615Z
+    updated_at: 2026-10-09T18:35:47.409Z
   - id: task_055
     title: M9 — Local test observability report
     description: Write versioned local test-run artifacts and serve a browser report
@@ -3943,21 +3945,16 @@ tasks:
     updated_at: 2026-10-08T23:07:53.288Z
   - id: task_069
     title: "Restored browser bundle: binaries keep the restore staging prefix, so
-      Xvfb needs a repair"
-    description: "pixi-sandbox restore rewrites text files only. Binaries keep the
-      path they were built under, .pixi/.restore-work/stage-browser/browser, and
-      Xvfb needs that path to resolve (its keymap compiler and xkb data live
-      there). About 250 binaries in the bundle carry the staging prefix. Without
-      the repair in scripts/browser-activate.sh, Xvfb exits with \"Failed to
-      compile keymap\"; with it, headed Chromium renders
-      (packages/browser/tests/headed-chromium.test.ts). Upstream: pixi-sandbox
-      v0.6.0 is the latest release. Issue #18 (closed 2026-09-28) covered text
-      files only and skipped binaries, and its maintainer comment calls ELF
-      prefixes not load-bearing, which the Xvfb evidence contradicts. Next: file
-      an upstream issue with the Xvfb reproduction (needs the user's approval),
-      then drop the staging repair once restore relocates binaries."
+      Xvfb needs a repair (superseded by task_072)"
+    description: "Closed as moot by task_072: browser testing is headless-only per
+      ADR 0030, so Xvfb no longer needs the staging-prefix repair and the repair
+      was removed from scripts/browser-activate.sh along with scripts/xvfb.sh.
+      The upstream finding stands (pixi-sandbox v0.6.0 relocates text files
+      only; ~250 binaries kept the staging prefix; the Xvfb evidence contradicts
+      the maintainer note that ELF prefixes are not load-bearing). If headed
+      runs are ever revived, file the upstream issue first."
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels: []
     repo_targets:
@@ -3981,22 +3978,18 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-09T12:18:07.146Z
-    updated_at: 2026-10-09T12:18:07.146Z
+    updated_at: 2026-10-09T18:36:33.504Z
   - id: task_070
     title: conda-forge xorg-xvfb-server displaces the xkeyboard-config share/X11/xkb
-      link (rattler clobbering)
-    description: "xkeyboard-config 2.48 installs its data under
-      share/xkeyboard-config-2 and links share/X11/xkb to it. xorg-xvfb-server
-      21.1.25 ships share/X11/xkb/compiled/, so rattler's rename-on-clobber
-      moves the link to __clobbers__/xkeyboard-config/share/X11/xkb, and Xvfb
-      finds no keymap rules. Verified in the restored bundle only. A fresh
-      conda-forge install of this lock is unchecked, because conda.anaconda.org
-      is unreachable from the sandbox. The six data links in
-      scripts/browser-activate.sh repair it. Next: check a fresh install, then
-      file upstream (conda-forge feedstock or rattler clobber handling). Filing
-      needs the user's approval."
+      link (rattler clobbering) (superseded by task_072)
+    description: "Closed as moot by task_072: xorg-xvfb-server is removed from the
+      pixi browser environment, so the clobber has nothing to displace and the
+      data links are gone from scripts/browser-activate.sh. The analysis stands
+      for any future consumer of xorg-xvfb-server in a restored bundle; a fresh
+      conda-forge install was never verifiable here (conda.anaconda.org
+      blocked)."
     source_links: []
-    status: ready
+    status: done
     priority: P3
     labels: []
     repo_targets:
@@ -4020,20 +4013,17 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-09T12:18:07.652Z
-    updated_at: 2026-10-09T12:18:07.652Z
+    updated_at: 2026-10-09T18:36:34.452Z
   - id: task_071
     title: Headed mode for the browser fixtures (BUN_TEST_UTILS_BROWSER_HEADLESS)
-    description: "The browser fixtures hardcode headless: true
-      (packages/browser/src/index.ts, launchHeadlessChromium). Headed Chromium
-      is verified at the Playwright level by
-      packages/browser/tests/headed-chromium.test.ts, so a knob that matches
-      BUN_TEST_UTILS_WEB_ENV and BUN_TEST_UTILS_DEBUG (for example
-      BUN_TEST_UTILS_BROWSER_HEADLESS=0) could let the fixtures open headed
-      windows. It is a public API change: update the README and the matching
-      spec in .backlog/docs/specs/ in the same change. Optional follow-up from
-      the Xvfb work."
+      (superseded by task_072)
+    description: "Closed as moot by task_072: ADR 0030 decides browser testing is
+      headless-only, so a knob to a retired mode is dead API. The evidence
+      gathered for it (Xvfb worked on a restored bundle after the repairs;
+      headed Chromium rendered) stays in the PR history. Re-open only by
+      superseding ADR 0030."
     source_links: []
-    status: ready
+    status: done
     priority: P3
     labels: []
     repo_targets:
@@ -4057,4 +4047,168 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-09T12:18:08.143Z
-    updated_at: 2026-10-09T12:18:08.143Z
+    updated_at: 2026-10-09T18:36:35.394Z
+  - id: task_072
+    title: Retire the headed Xvfb path; browser tests headless-only; prune unused
+      pixi deps
+    description: "Browser tests run headless only, per the maintainer decision.
+      Remove: scripts/xvfb.sh, the pixi xvfb task, xorg-xvfb-server,
+      packages/browser/tests/headed-chromium.test.ts, the Xvfb repairs in
+      scripts/browser-activate.sh (keep only the LD_LIBRARY_PATH export while
+      the pixi env stays), the headed recipe in README.md, and the Xvfb mention
+      in .backlog/docs/README.md. Prune pixi deps with per-removal evidence (ldd
+      on Chromium and Firefox binaries with the pruned env at zero not-found;
+      runtime launch proofs); the session measurements pin the keep-list:
+      xorg-libxi and xorg-libxrender are linked by Chromium itself, gtk3 is
+      loaded by Firefox via libmozgtk, gdk-pixbuf/libXcursor/libXinerama live in
+      the gtk3 closure. Drop xorg-xvfb-server, ffmpeg, xorg-libxtst and the GL
+      dispatch group (libgl, libegl, libglx, libopengl, libgles). Keep the
+      headless-shell-then-full-build fallback in launchHeadlessChromium. npm:
+      run an unused-dependency check over every workspace; @playwright/cli and
+      skills are agent tooling (skills-lock.json, .agents/skills/playwright-cli)
+      - decide explicitly. ADR 0030 records the design change. This commit also
+      lands the three drafted session task entries (72-74) whose appendix was
+      lost."
+    source_links: []
+    status: done
+    priority: P1
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "Headed Xvfb infrastructure is gone: scripts/xvfb.sh, the pixi xvfb
+        task, xorg-xvfb-server, and
+        packages/browser/tests/headed-chromium.test.ts no longer exist"
+      - scripts/browser-activate.sh keeps only the LD_LIBRARY_PATH wiring; no
+        Xvfb repairs remain
+      - No headed launch remains outside .agents/skills/; README.md has no
+        headed recipe; .backlog/docs/README.md has no Xvfb mention
+      - launchHeadlessChromium keeps the headless-shell-then-full-build
+        fallback, unchanged
+      - "Every pixi removal carries evidence in the PR: ldd with the pruned env
+        shows no not-found for chrome, chrome-wrapper, firefox and libmozgtk;
+        both headless suites launch on the pruned env"
+      - The npm audit ran over all workspaces and every kept or removed dep has
+        a one-line verdict in the PR
+      - task_054 description notes the ffmpeg re-add; task_013 no longer cites
+        the retired test; task_069, task_070 and task_071 are archived as moot
+        with a pointer here
+      - bun test and bun run typecheck green; mirror tables updated in the same
+        commit; pixi.lock refreshed by the CI relock bot
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-09T18:32:48.590Z
+    updated_at: 2026-10-09T18:36:56.181Z
+  - id: task_073
+    title: "Firefox provisioning: restore from the browsers branch and prove a
+      headless launch"
+    description: "Source decision (maintainer, 2026-10-09): the browsers orphan
+      branch is the Firefox source. It already ships firefox-1543.tar.gz, which
+      is exactly the revision the pinned playwright@1.63 declares in
+      browsers.json, and scripts/install-browsers.sh restores and
+      checksum-verifies it; firefox --version runs under the pixi browser env.
+      Rejected alternatives: the Playwright CDN (cdn.playwright.dev unreachable
+      from the sandbox, so locally unprovable) and archive.mozilla.org
+      (unreachable; a new packaging path). npm firefox-binary@60.7.0 is a 2019
+      Firefox 60.7.0 build with no source repository - rejected on provenance.
+      Deliverable: a launch proof at the Playwright level (no fixture plumbing;
+      the browser fixture stays Chromium per the R3 narrowing in task_074).
+      Measured: Firefox 155 headless launches on the pruned env (title + body
+      asserted against a Bun.serve page); libmozgtk.so loads via gtk3, which
+      task_072 keeps."
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - A new test in packages/browser/tests launches headless Firefox through
+        the pinned Playwright, navigates a Bun.served page, asserts title and
+        body, and skips cleanly when no Firefox binary is installed
+      - The restored Firefox revision equals the one the pinned playwright-core
+        browsers.json declares (1543 for playwright 1.63)
+      - ldd on the Firefox binary and libmozgtk.so with the pruned pixi env
+        lists no not-found entry
+      - bun test and bun run typecheck green; the hand-off records the
+        re-counted suite total
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-09T18:33:00.995Z
+    updated_at: 2026-10-09T18:33:06.855Z
+  - id: task_074
+    title: Narrow spec 0011 R3 to the Chromium fixture; defer Firefox and WebKit
+    description: "Spec 0011 R3 requires a session-scoped browser fixture for
+      Playwright Chromium, Firefox and WebKit, but the browser fixture launches
+      Chromium only and no WebKit binary can be restored here (pixi.toml
+      excludes its gtk4/gstreamer stack on purpose). Maintainer decision: narrow
+      R3 to Chromium rather than grow the fixture now. Firefox keeps a
+      Playwright-level launch proof (task_073); WebKit has no install path. ADR
+      0030 (recorded with task_072) is the design-change record; supersede
+      nothing - no existing ADR covers the browser choice. Update the
+      Verification section of the spec so it matches what the suite proves, and
+      keep the specs mirror table honest."
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - R3 text in .backlog/docs/specs/0011-dom-and-browser-fixtures.md requires
+        the session-scoped Chromium fixture launched once per run and names
+        Firefox and WebKit as deferred
+      - The spec links the design record ADR 0030 and the launch proof from
+        task_073
+      - The Verification section matches the shipped suite exactly
+      - Mirror tables in .backlog/docs updated in the same commit; bun test and
+        typecheck green
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-09T18:33:01.455Z
+    updated_at: 2026-10-09T18:33:07.292Z

@@ -12,7 +12,20 @@ actionlint = ">=1.7.12,<2"
 # linux-64 (playwright nativeDeps, ubuntu22.04 lists), mapped to conda-forge
 # names. WebKit is deliberately absent: its gtk4/gstreamer stack pulls system
 # packages that cannot be installed on the offline sandbox (no sudo), and the
-# repo's browser tests only exercise chromium anyway.
+# repo's browser tests only exercise chromium and firefox anyway.
+#
+# Pruned 2026-10-09 (task_072) with per-removal evidence, after headed runs
+# were retired (ADR 0030). Removed packages: xorg-xvfb-server (only the headed
+# path used Xvfb), ffmpeg (no test records video; task_054 re-adds it for
+# Playwright video wiring), xorg-libxtst (nothing links it: not the chromium
+# or firefox binaries, not libmozgtk, not libgtk-3; its consumer was Xvfb), and
+# the GL dispatch group libgl/libegl/libglx/libopengl/libgles (deleting those
+# .so files from the environment left ldd at zero not-found for chrome,
+# chrome-wrapper, firefox and libmozgtk — chromium ships and loads its own
+# libEGL/libGLESv2). Removed redundant entries kept in the environment by
+# gtk3's own conda depends: gdk-pixbuf, xorg-libxcursor, xorg-libxinerama
+# (the environment-level pin went with it), xorg-libxrender (also linked by
+# chromium itself, so its entry stays for that reason).
 [feature.browser.dependencies]
 # --- chromium ---
 alsa-lib = "*"
@@ -36,40 +49,18 @@ xorg-libxcomposite = "*"
 xorg-libxdamage = "*"
 xorg-libxext = "*"
 xorg-libxfixes = "*"
+xorg-libxi = "*"
 xorg-libxrandr = "*"
+xorg-libxrender = "*"
 # --- firefox ---
-# Floor at 7 for libvpx: Playwright's video recorder only writes .webm, and the
-# 4.3.2 build this lockfile carried has no VP8/VP9 encoder at all, so video
-# recording failed silently. 7+ on conda-forge builds against libvpx.
-ffmpeg = ">=7,<10"
+# The firefox binary dlopens libmozgtk.so, which links libgtk-3.so.0; a
+# headless launch fails with "XPCOMGlueLoad error ... libgtk-3.so.0" when gtk3
+# is absent (measured 2026-10-09 with the environment pruned). gtk3's conda
+# depends pull gdk-pixbuf, xorg-libxcursor and xorg-libxinerama into the
+# environment, so no separate entries for them are needed.
 fontconfig = "*"
 freetype = "*"
-gdk-pixbuf = "*"
 gtk3 = "*"
-xorg-libxcursor = "*"
-xorg-libxi = "*"
-xorg-libxrender = "*"
-xorg-libxtst = "*"
-# --- GL dispatch: chromium dlopens libEGL/libGLESv2 for its GPU stack ---
-libgl = "*"
-libegl = "*"
-libglx = "*"
-libopengl = "*"
-libgles = "*"
-# --- headed browsers: an X display for non-headless runs ---
-# conda-forge's xorg-xvfb-server provides Xvfb; its recipe asserts
-# ${PREFIX}/bin/Xvfb, so Xvfb lands on PATH inside the environment. The CDT
-# package xorg-x11-server-xvfb-cos7-x86_64 is deliberately not used: it installs
-# xvfb-run into x86_64-conda-linux-gnu/sysroot/usr/bin, which is off PATH and is
-# meant for recipe build sections rather than runtime use.
-# Restored bundles need two repairs before Xvfb starts, applied by
-# scripts/browser-activate.sh: the keymap data links, and the staging-prefix
-# link that Xvfb's binary expects. Without them it exits with "Failed to compile
-# keymap". With them, headed Chromium rendered on a private display in this
-# sandbox (packages/browser/tests/headed-chromium.test.ts). Unverified: whether a
-# fresh conda-forge install needs the repairs, because conda.anaconda.org is
-# unreachable from the sandbox.
-xorg-xvfb-server = "*"
 # --- runtime glue ---
 libgcc = "*"
 # --- fonts for headless rendering ---
@@ -77,18 +68,10 @@ font-ttf-dejavu = "*"
 font-ttf-inconsolata = "*"
 
 # Playwright's browser binaries live outside the prefix; point the loader at
-# this environment's lib/ first (system defaults stay in the search path). The
-# same script applies the Xvfb repairs for restored bundles (see above).
+# this environment's lib/ first (system defaults stay in the search path).
 [feature.browser.activation]
 scripts = ["scripts/browser-activate.sh"]
-
-# Start the X server for headed browsers: `pixi run -e browser xvfb &`.
-[feature.browser.tasks]
-xvfb = "sh scripts/xvfb.sh"
 
 [environments.browser]
 features = ["browser"]
 solve-group = "browser"
-
-[environments.browser.dependencies]
-xorg-libxinerama = ">=1.1.6,<2"
