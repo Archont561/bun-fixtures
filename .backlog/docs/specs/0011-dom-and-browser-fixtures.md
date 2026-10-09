@@ -1,8 +1,8 @@
 # 0011 — DOM and Browser Testing Support
 
 - **Status:** in progress
-- **Implementation:** `packages/dom/`, `packages/browser/`
-- **Tests:** `packages/dom/tests/`, `packages/browser/tests/`
+- **Implementation:** `packages/dom/`, `packages/browser/`, `packages/server/`
+- **Tests:** `packages/dom/tests/`, `packages/browser/tests/`, `packages/server/tests/`
 - **Stability:** DOM is stable; browser is experimental and may change in minor releases ([ADR 0018](../adr/0018-release-compatibility-contract.md))
 
 ## Problem

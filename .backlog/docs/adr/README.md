@@ -34,5 +34,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0028](./0028-scoped-npm-package-name.md) | Publish the wrapper as `@archont561/bun-test-utils` | accepted, amends 0013 |
 | [0029](./0029-release-to-npm-and-github-packages.md) | Release from a tag on main to npm and GitHub Packages | accepted |
 | [0030](./0030-headless-only-browser-testing.md) | Browser testing is headless-only; the browser fixture is Chromium-only | accepted |
+| [0031](./0031-server-fixtures-pack.md) | Server fixtures pack: testServer, serverUrl, httpMock leave browser | accepted, amends 0013 |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

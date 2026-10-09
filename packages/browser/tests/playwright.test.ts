@@ -23,19 +23,27 @@
  */
 
 import { test as bunTest } from "bun:test";
+import { testServerFixture } from "@bun-test-utils/server";
 import { chromium } from "playwright";
 import {
   browserContextFixture,
   browserFixture,
   browserPageFixture,
+  test as browserTest,
   describe,
   expect,
-  test,
 } from "@/index.ts";
 import { usePixiBrowserLibraries } from "./support/browser-libs.ts";
 
 // Must happen before any fixture spawns a browser; see support/browser-libs.ts.
 usePixiBrowserLibraries();
+
+/**
+ * These tests serve real pages to a real browser, so the suite composes the
+ * server pack's ephemeral `testServer` (ADR 0031) — composition in the test
+ * file, not a re-export from the browser pack.
+ */
+const test = browserTest.extend({ testServer: testServerFixture });
 
 /**
  * Can a browser actually be launched here?

@@ -1,6 +1,6 @@
 # 0013 — Published wrapper over internal workspaces
 
-- **Status:** revised, amended by [0021](./0021-prop-test-schema-root-wrapper.md), [0022](./0022-typed-helper-subpaths.md), and [0028](./0028-scoped-npm-package-name.md) (the published package name is now `@archont561/bun-test-utils`)
+- **Status:** revised, amended by [0021](./0021-prop-test-schema-root-wrapper.md), [0022](./0022-typed-helper-subpaths.md), and [0028](./0028-scoped-npm-package-name.md) (the published package name is now `@archont561/bun-test-utils`), and by [0031](./0031-server-fixtures-pack.md) (the server fixtures moved to their own pack)
 - **Supersedes:** [0011](./0011-brand-identity-and-modular-ecosystem.md)
 
 ## Context

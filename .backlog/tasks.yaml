@@ -4251,3 +4251,75 @@ tasks:
       push_comments: false
     created_at: 2026-10-09T18:49:24.798Z
     updated_at: 2026-10-09T18:49:29.680Z
+  - id: task_076
+    title: Extract internal @bun-test-utils/server pack (testServer, serverUrl,
+      httpMock); browser composes it via root
+    description: "Internal restructure, decided 2026-10-09: packages/browser mixes
+      two concepts. Move testServerFixture, serverUrlFixture, httpMockFixture
+      and their types (TestServerHelper, HttpMockHelper) into a new private
+      workspace packages/server (@bun-test-utils/server). Siblings on core, not
+      parent-child: installFetchInterceptor and matchesFetch already live in
+      @bun-test-utils/core, so neither package imports the other; browser keeps
+      browserHttpMock (Playwright-route adapter) and webPage (its seam is
+      dom-vs-browser, not http). Root plugin.ts adds ...serverFixtures to the
+      flat namespace; the nineteen public fixture names and root exports are
+      UNCHANGED, no new public subpath, no changeset (pre-0.1.0 policy). Split
+      packages/browser/e2e/bdd/features/browser-fixtures.feature: the httpMock
+      scenario moves to packages/server/e2e/bdd/features/ (runner is the
+      standard one-line glob), webPage scenarios stay. Port the server-side unit
+      tests out of packages/browser/tests/index.test.ts. Add the standard
+      package scaffold (package.json private, tsconfig extends
+      @bun-test-utils/config/lib, bunup config, scripts mirroring the other
+      packs). Record the pack-boundary change in a NEW ADR that amends 0013
+      (like 0021/0022/0028 amended it) - motivation: API tests never load
+      Playwright as structure, not convention; spec 0011 keeps R5 but its
+      Implementation line gains packages/server/. Considered and rejected:
+      folding httpMock into vcr (different lifecycle - cassettes vs handler
+      stubs)."
+    source_links: []
+    status: in_progress
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "Root bun test: the suite that ran 440 pre-split runs 444 post-split
+        (amended 2026-10-09 after the split: the original line predicted 440,
+        but browser-fixtures.feature held one combined scenario and the split
+        makes two, and bun counts each Given/And/When/Then step, hence +4) —
+        every test moved 1:1, none copied — across one more package (10 to 11)
+        and two more test files (50 to 52)"
+      - "No new public surface: root package.json exports are exactly ., ./bdd,
+        ./snap, ./pbt, ./package.json; @bun-test-utils/server is private and
+        composed only in packages/bun-test-utils/src/plugin.ts"
+      - packages/browser re-exports none of the moved fixtures (composition
+        only; no facade)
+      - "packages/server tests pass with playwright absent from its tree
+        (browser fixtures were never needed): prove with bun test
+        packages/server"
+      - "browser-fixtures.feature split: httpMock scenario runs from the server
+        pack's suite and both packages' bun run test:bdd stay green"
+      - New ADR recorded (amends 0013); spec 0011 Implementation line updated;
+        mirror tables moved in the same commit
+      - bun run lint, bun run typecheck (now 21-ish tasks) and bun test all
+        green; task_013 description untouched (its gap is CI coverage,
+        unaffected)
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-09T19:36:33.802Z
+    updated_at: 2026-10-09T20:09:01.836Z

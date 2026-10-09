@@ -1,0 +1,10 @@
+{
+  "extends": "@bun-test-utils/config/lib.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@archont561/bun-test-utils": ["../bun-test-utils/src/plugin.ts"]
+    }
+  },
+  "include": ["src", "tests", "e2e", "bunup.config.ts"]
+}
