@@ -16,10 +16,10 @@ pre-commit:
     actionlint:
       glob: ".github/workflows/*.{yml,yaml}"
       # actionlint lives in the pixi default environment. Run the compiled
-      # binary directly (not via `pixi run`): pixi 0.81's `run`/`install`
-      # wipes the tiny default prefix to empty when invoked from inside a hook.
-      # Requires `pixi install` from a normal shell, which the sandbox workflow
-      # and CI both perform.
+      # binary directly rather than through `pixi run`: that needs no solve, no
+      # network, and a manifest that agrees with pixi.lock. Requires `pixi
+      # install` from a normal shell, which the sandbox workflow and CI both
+      # perform.
       run: .pixi/envs/default/bin/actionlint {staged_files}
     typecheck:
       glob: "*.{ts,tsx,cts,mts,cjs,mjs}"
