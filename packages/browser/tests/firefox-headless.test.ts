@@ -17,10 +17,10 @@
  * runtime edge is why gtk3 survives the task_072 prune even though no binary
  * links it directly.
  *
- * This suite keeps its launch-probe skip: CI installs no firefox (only
- * chromium-headless-shell), so firefox coverage is opt-in for contributors
- * and this sandbox. No launchable firefox (no binary, or no libraries) skips;
- * everything else is a failure.
+ * CI installs Firefox through the shared command with --with-deps, so this
+ * proof is required under CI=true (ADR 0033). Locally the launch-probe skip
+ * remains: no launchable Firefox (no binary, or no libraries) skips; once
+ * launchable, every assertion is required.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -31,17 +31,21 @@ import { usePixiBrowserLibraries } from "./support/browser-libs.ts";
 // Must happen before any browser is spawned; see support/browser-libs.ts.
 usePixiBrowserLibraries();
 
-const firefoxLaunchable = await (async () => {
-  try {
-    const browser = await firefox.launch({ headless: true });
-    await browser.close();
-    return true;
-  } catch {
-    return false;
-  }
-})();
+// Do not turn a broken CI install into a green skipped suite. The subprocess
+// tests in firefox-availability.test.ts pin CI failure and the local opt-in.
+const shouldRunFirefox =
+  process.env.CI === "true" ||
+  (await (async () => {
+    try {
+      const browser = await firefox.launch({ headless: true });
+      await browser.close();
+      return true;
+    } catch {
+      return false;
+    }
+  })());
 
-describe.skipIf(!firefoxLaunchable)(
+describe.skipIf(!shouldRunFirefox)(
   "@bun-test-utils/browser — headless firefox",
   () => {
     test("launches headless and renders a page served by Bun.serve", async () => {
@@ -59,17 +63,21 @@ describe.skipIf(!firefoxLaunchable)(
         server.stop(true);
         throw new Error("Bun.serve did not bind a port");
       }
-      const browser = await firefox.launch({ headless: true });
       try {
-        const page = await browser.newPage();
-        const response = await page.goto(`http://127.0.0.1:${port}/`, {
-          waitUntil: "load",
-        });
-        expect(response?.status()).toBe(200);
-        expect(await page.title()).toBe("firefox launch proof");
-        expect(await page.locator("#v").textContent()).toBe("7");
+        const browser = await firefox.launch({ headless: true });
+        try {
+          const page = await browser.newPage();
+          const response = await page.goto(`http://127.0.0.1:${port}/`, {
+            waitUntil: "load",
+          });
+          expect(response?.status()).toBe(200);
+          expect(await page.title()).toBe("firefox launch proof");
+          expect(await page.locator("#v").textContent()).toBe("7");
+        } finally {
+          await browser.close();
+        }
       } finally {
-        await browser.close();
+        // Also stop the server when Firefox itself fails to launch in CI.
         server.stop(true);
       }
     });
@@ -78,7 +86,7 @@ describe.skipIf(!firefoxLaunchable)(
       // executablePath() is computed from Playwright's own registry — the
       // browsers.json revision — so the file existing at that exact path is
       // the equality check between the restored build and the pinned one.
-      // The skip condition proves the browser launches; this proves from where.
+      // The rendering test proves the browser launches; this proves from where.
       expect(existsSync(firefox.executablePath())).toBe(true);
       expect(firefox.executablePath()).toMatch(
         /firefox-\d+[/\\]firefox[/\\]firefox$/,

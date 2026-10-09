@@ -46,14 +46,10 @@ usePixiBrowserLibraries();
 const test = browserTest.extend({ testServer: testServerFixture });
 
 /**
- * Can a browser actually be launched here?
- *
- * The probe is removed (task_075): a missing browser must surface as the
- * fixture's loud error (naming `bun run install-browsers`), not skip silently.
- * CI installs chromium-headless-shell via the standard Playwright installer,
- * so CI stays green. Locally, the full build or headless shell must be
- * installed via `bun run install-browsers`; without either, the fixture
- * throws an actionable error and the test fails loudly.
+ * There is no launch-probe skip: missing browsers must fail loudly. CI runs
+ * this suite first with the standard installation (headless shell), then
+ * against a fresh PLAYWRIGHT_BROWSERS_PATH installed with --no-shell to prove
+ * the real full-build Chromium fallback (ADR 0033). Neither run is a stub.
  */
 
 const PAGE_HTML = `<!doctype html><html><body>

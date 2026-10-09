@@ -1,6 +1,6 @@
 # 0011 — DOM and Browser Testing Support
 
-- **Status:** in progress
+- **Status:** implemented (task_013; browser-present CI verified in [PR #47](https://github.com/Archont561/bun-test-utils/pull/47))
 - **Implementation:** `packages/dom/`, `packages/browser/`, `packages/server/`
 - **Tests:** `packages/dom/tests/`, `packages/browser/tests/`, `packages/server/tests/`
 - **Stability:** DOM is stable; browser is experimental and may change in minor releases ([ADR 0018](../adr/0018-release-compatibility-contract.md))
@@ -22,5 +22,8 @@
 ## Verification
 
 - Component rendering and event dispatch tests using `@bun-test-utils/dom`.
-- Headless browser navigation and assertion tests using `@bun-test-utils/browser`.
-- Headless Firefox launch proof at the Playwright level (`packages/browser/tests/firefox-headless.test.ts`, task_073): no `browser` fixture involvement — the fixture is Chromium-only per R3 and ADR 0030.
+- Headless browser navigation, interaction, session reuse, cross-test cookie/storage isolation and teardown tests in `packages/browser/tests/playwright.test.ts`.
+- CI uses `bun run install-browsers --with-deps` for the standard Chromium (full build plus headless shell) and Firefox installation. It reruns the real Chromium fixture suite directly with Bun against a fresh `PLAYWRIGHT_BROWSERS_PATH` populated by `bun run install-browsers --no-shell`, asserting that the headless shell is absent. Both launch paths are required; see [ADR 0033](../adr/0033-browser-ci-verification.md).
+- Headless Firefox launch proof at the Playwright level (`packages/browser/tests/firefox-headless.test.ts`, task_073): no `browser` fixture involvement — the fixture is Chromium-only per R3 and ADR 0030. The proof fails instead of skipping under `CI=true`; local runs retain the launch-probe skip. `firefox-availability.test.ts` pins both policies using subprocesses with an empty browser cache.
+- Ephemeral server binding, dependency resolution and shutdown tests in `packages/server/tests/index.test.ts`.
+- Public-root component and real-browser examples in `packages/dom/README.md` and `packages/browser/README.md`.

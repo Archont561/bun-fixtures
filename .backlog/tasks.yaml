@@ -174,7 +174,7 @@ tasks:
       public artifacts."
     source_links: []
     status: in_progress
-    priority: P1
+    priority: P3
     labels:
       - milestone
       - M5
@@ -211,7 +211,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T15:18:09.031Z
-    updated_at: 2026-10-08T12:28:13.810Z
+    updated_at: 2026-10-09T21:44:19.615Z
   - id: task_006
     title: Behavioural (Gherkin) test suite
     description: "User-level BDD suite running each scenario against a real scratch
@@ -526,24 +526,32 @@ tasks:
   - id: task_013
     title: Add DOM and Browser testing support (@bun-test-utils/dom and Playwright
       fixtures)
-    description: "Support browser-side JS testing through in-memory DOM fixtures
-      (happy-dom) for UI components and session-scoped Playwright browser/page
-      fixtures for real E2E testing. Spec:
-      .backlog/docs/specs/0011-dom-and-browser-fixtures.md. STATUS:
-      @bun-test-utils/dom (window, document, page), the ephemeral Bun.serve
-      testServer fixture, and the Playwright browser/context/page fixtures are
-      implemented. Real browser verification remains in progress:
-      packages/browser/tests/playwright.test.ts skips when browser binaries are
-      unavailable, while CI currently installs only the Chromium headless shell.
-      Confirm regular Chromium/Chrome coverage and the supported browser-binary
-      installation path. The tests/playwright-missing-peer.test.ts probe still
-      pins the actionable uninstalled-peer error. Per ADR 0030 (task_072)
-      browser testing is headless-only: full-build Chromium runs headless
-      through the launchHeadlessChromium fallback, the headed Xvfb path and its
-      test are retired."
+    description: "Completed and verified in PR #47 on 2026-10-09. Spec:
+      .backlog/docs/specs/0011-dom-and-browser-fixtures.md. All four acceptance
+      criteria are covered: happy-dom window/document/page with cleanup
+      (packages/dom/tests/index.test.ts); session-scoped Chromium plus isolated
+      test-scoped contexts/pages and teardown
+      (packages/browser/tests/playwright.test.ts); ephemeral Bun.serve binding
+      and shutdown (packages/server/tests/index.test.ts); public-root component
+      and real-browser examples in the DOM and browser READMEs. CI uses bun run
+      install-browsers --with-deps, retains normal headless-shell coverage, then
+      reruns the real Chromium fixture suite in a fresh --no-shell cache.
+      Firefox remains a Playwright-level proof, required under CI=true with
+      regression-tested local skipping. No public API or fixture capability
+      changed; browser fixtures remain headless and Chromium-only (ADR 0033,
+      amending 0032). Browser-present proof:
+      https://github.com/Archont561/bun-test-utils/actions/runs/37994965762
+      succeeded, including Install browsers, Run tests, Verify full Chromium
+      fallback without the headless shell, Generate LCOV coverage, lint and
+      typecheck. Manual workflow dispatch is denied to the integration, but PR
+      events successfully trigger CI, so that is no longer a completion blocker.
+      Local build, lint, 21 typecheck tasks and actionlint pass; 436 non-browser
+      tests pass. The wiped sandbox still reports 437 pass / 2 skip / 7
+      missing-browser failures across 53 files because the Playwright CDN is
+      blocked; this is an environment limitation, not unfinished task work."
     source_links: []
-    status: in_progress
-    priority: P2
+    status: done
+    priority: P1
     labels:
       - browser
       - dom
@@ -577,7 +585,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-05T16:25:46.794Z
-    updated_at: 2026-10-09T18:35:46.935Z
+    updated_at: 2026-10-09T21:44:17.128Z
   - id: task_014
     title: Implement HTTP Cassette / VCR network record & replay fixture
       (@bun-fixture/vcr)
@@ -2855,7 +2863,7 @@ tasks:
       replay semantics.
     source_links: []
     status: ready
-    priority: P2
+    priority: P1
     labels: []
     repo_targets:
       - bun-test-utils
@@ -2881,7 +2889,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T10:11:19.393Z
-    updated_at: 2026-10-08T10:11:19.393Z
+    updated_at: 2026-10-09T21:44:17.622Z
   - id: task_051
     title: Snapshot serializer diagnostics and recursive edge cases
     description: Improve diagnostics and coverage for recursive snapshot
@@ -2921,7 +2929,7 @@ tasks:
       Turbo.
     source_links: []
     status: ready
-    priority: P2
+    priority: P3
     labels: []
     repo_targets:
       - bun-test-utils
@@ -2947,14 +2955,14 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T11:06:28.395Z
-    updated_at: 2026-10-08T11:06:28.395Z
+    updated_at: 2026-10-09T21:44:20.104Z
   - id: task_053
     title: M7 — API contract and database integration testing
     description: Add OpenAPI-backed local mock/validation server and adapter-based
       database lifecycle fixtures with consumer-owned factories.
     source_links: []
     status: ready
-    priority: P2
+    priority: P3
     labels: []
     repo_targets:
       - bun-test-utils
@@ -2980,7 +2988,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T11:06:28.847Z
-    updated_at: 2026-10-08T11:06:28.847Z
+    updated_at: 2026-10-09T21:44:20.572Z
   - id: task_054
     title: M8 — UI regression and browser diagnostics
     description: 'Add accessibility snapshots, visual screenshot matching, and
@@ -2996,7 +3004,7 @@ tasks:
       Wiring it into the registry belongs to this task.'
     source_links: []
     status: ready
-    priority: P2
+    priority: P3
     labels: []
     repo_targets:
       - bun-test-utils
@@ -3022,7 +3030,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T11:06:29.277Z
-    updated_at: 2026-10-09T18:35:47.409Z
+    updated_at: 2026-10-09T21:44:21.051Z
   - id: task_055
     title: M9 — Local test observability report
     description: Write versioned local test-run artifacts and serve a browser report
@@ -3030,7 +3038,7 @@ tasks:
       artifacts.
     source_links: []
     status: ready
-    priority: P2
+    priority: P3
     labels: []
     repo_targets:
       - bun-test-utils
@@ -3056,7 +3064,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T11:06:29.704Z
-    updated_at: 2026-10-08T11:06:29.704Z
+    updated_at: 2026-10-09T21:44:21.537Z
   - id: task_056
     title: M10 — Read-only local MCP test server
     description: Expose local test runs, failures, coverage, fixtures, snapshots,
@@ -3280,7 +3288,7 @@ tasks:
       tracked with audit findings 4 and 5 in a separate task."
     source_links: []
     status: ready
-    priority: P3
+    priority: P1
     labels:
       - typescript
       - types
@@ -3312,7 +3320,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T19:47:48.021Z
-    updated_at: 2026-10-08T19:47:48.021Z
+    updated_at: 2026-10-09T21:44:18.138Z
   - id: task_061
     title: Split core/plugin.ts along stable internal boundaries (audit finding 3,
       deferred items)
@@ -3326,7 +3334,7 @@ tasks:
       characterization for the fixture lifecycle and BDD integration paths."
     source_links: []
     status: ready
-    priority: P3
+    priority: P1
     labels:
       - refactor
       - architecture
@@ -3356,7 +3364,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T19:47:48.436Z
-    updated_at: 2026-10-08T19:47:48.436Z
+    updated_at: 2026-10-09T21:44:18.669Z
   - id: task_062
     title: Characterize global env and DOM fixture state, extract shared test
       doubles, and add a CI audit check (audit findings 4 and 5)
@@ -3371,7 +3379,7 @@ tasks:
       changes."
     source_links: []
     status: ready
-    priority: P3
+    priority: P1
     labels:
       - testing
       - infra
@@ -3402,7 +3410,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T19:47:48.859Z
-    updated_at: 2026-10-08T19:47:48.859Z
+    updated_at: 2026-10-09T21:44:19.135Z
   - id: task_063
     title: "Regular test path: a teardown error in the finally unwind replaces the
       setup error"

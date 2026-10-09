@@ -17,10 +17,10 @@ import { join } from "node:path";
  * Playwright resolves a default `chromium.launch({ headless: true })` to the
  * separate `chromium-headless-shell` build, while `chromium.executablePath()`
  * reports the full `chromium` build. An installation carrying only the full
- * build — `playwright install chromium` via `bun run install-browsers`
- * (task_075) — therefore looks complete and then fails at
- * launch. The fixtures retry once against the full build via
- * `channel: "chromium"`; installs that do have the shell keep using it.
+ * build — `bun run install-browsers --no-shell` — therefore looks complete
+ * and then fails at the default launch. The fixtures retry once against the
+ * full build via `channel: "chromium"`; installs that do have the shell keep
+ * using it.
  *
  * As in playwright-missing-peer.test.ts, this drives the BUILT public root
  * artifact from a temp directory outside the workspace with a stub `playwright`
