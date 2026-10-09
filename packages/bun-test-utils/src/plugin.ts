@@ -10,6 +10,7 @@ import {
 } from "@bun-test-utils/core";
 import { domFixtures } from "@bun-test-utils/dom";
 import { withPropertyTesting } from "@bun-test-utils/pbt";
+import { serverFixtures } from "@bun-test-utils/server";
 import { snapshotFixtures } from "@bun-test-utils/snapshot";
 import { stdFixtures } from "@bun-test-utils/std";
 import { vcrFixtures } from "@bun-test-utils/vcr";
@@ -17,6 +18,7 @@ import { vcrFixtures } from "@bun-test-utils/vcr";
 const builtInFixtures: FixtureMap = {
   ...stdFixtures,
   ...domFixtures,
+  ...serverFixtures,
   ...browserFixtures,
   ...vcrFixtures,
   ...snapshotFixtures,

@@ -101,6 +101,7 @@
     "@bun-test-utils/core": "workspace:*",
     "@bun-test-utils/dom": "workspace:*",
     "@bun-test-utils/pbt": "workspace:*",
+    "@bun-test-utils/server": "workspace:*",
     "@bun-test-utils/snapshot": "workspace:*",
     "@bun-test-utils/std": "workspace:*",
     "@bun-test-utils/vcr": "workspace:*"

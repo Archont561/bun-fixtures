@@ -1,8 +1,8 @@
 {
-  "name": "@bun-test-utils/browser",
+  "name": "@bun-test-utils/server",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal workspace package \u2014 headless browser and ephemeral web server fixtures bundled into the public root test context.",
+  "description": "Internal workspace package — ephemeral HTTP server and httpMock fixtures bundled into the public root test context.",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "main": "./src/index.ts",
@@ -18,13 +18,8 @@
   "engines": {
     "bun": ">=1.1.0"
   },
-  "optionalDependencies": {
-    "playwright": "^1.40.0"
-  },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*",
-    "@bun-test-utils/core": "workspace:*",
-    "@bun-test-utils/server": "workspace:*",
-    "happy-dom": "^20.14.5"
+    "@bun-test-utils/core": "workspace:*"
   }
 }

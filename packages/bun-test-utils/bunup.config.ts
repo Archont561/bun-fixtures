@@ -16,6 +16,7 @@ const bundledWorkspaces = [
   "@bun-test-utils/pbt",
   "@bun-test-utils/dom",
   "@bun-test-utils/browser",
+  "@bun-test-utils/server",
   "@bun-test-utils/vcr",
   "@bun-test-utils/snapshot",
   "@bun-test-utils/bdd",

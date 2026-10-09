@@ -1,16 +1,12 @@
 Feature: Browser and web fixtures
-  Scenario: Root test exposes selectable webPage and MSW-like HTTP mocks
+  Scenario: Root test exposes a selectable webPage
     Given a project with bun-test-utils preloaded
     And the file "browser.test.ts":
       """
       import { expect, test } from "@archont561/bun-test-utils";
 
-      test("uses webPage in DOM mode and httpMock", async ({ webPage, httpMock }) => {
+      test("uses webPage in DOM mode", async ({ webPage }) => {
         expect(webPage.mode).toBe("dom");
-        httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
-        const response = await fetch("https://example.test/api/user");
-        expect(await response.json()).toEqual({ name: "Ada" });
-        expect(httpMock.calls()[0].handled).toBe(true);
 
         await webPage.setContent(`<button id="save">save</button><span id="state">idle</span>`);
         webPage.raw.document.querySelector("#save")!.addEventListener("click", () => {
