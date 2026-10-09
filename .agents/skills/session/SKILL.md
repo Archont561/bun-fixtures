@@ -29,6 +29,22 @@ bun --version          # must print 1.4.2
 bun install --frozen-lockfile
 ```
 
+**Browser binaries come from the standard Playwright installer**, not from the
+repository's `browsers` orphan branch (retired — ADR 0032):
+
+```bash
+bun run install-browsers   # bunx playwright install chromium firefox
+```
+
+This downloads the revision-pinned chromium and firefox builds into the standard
+global cache (`~/.cache/ms-playwright`). The pixi `browser` environment (restored
+by `sh scripts/restore.sh`) supplies the system libraries; no `--with-deps` is
+needed. **Sandbox caveat:** `cdn.playwright.dev` is blocked in this sandbox, so
+the install cannot run here. After a cache wipe the browser fixtures fail loudly
+by design — a red root suite whose only failures are browser-fixture errors
+(naming `bun run install-browsers`) is the expected sandbox state, not a
+regression; record the count and the reason, do not trust memory.
+
 **Assume the toolchain is gone and reinstall it — nothing outside the git tree survives.**
 `bun` and `node_modules/` are both pruned between sessions, and have disappeared *mid*-session
 here; the install prefix makes no difference (`/usr/local` and a workspace-local

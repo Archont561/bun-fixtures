@@ -21,6 +21,7 @@
     "docs:dev": "bun --filter docs dev",
     "docs:build": "bun --filter docs build",
     "docs:preview": "bun --filter docs preview",
+    "install-browsers": "cd packages/browser && bunx playwright install chromium firefox",
     "changeset": "changeset",
     "release:version": "changeset version",
     "release:publish": "changeset publish",

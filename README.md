@@ -144,6 +144,21 @@ The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight.
 
 Pull requests are welcome. Add or update the relevant package README and documentation when changing a public API. Run `bun run lint && bun run typecheck && bun run test:all` before opening a PR. Commit messages use Conventional Commits.
 
+### Browser testing
+
+Browser fixtures require Playwright's chromium and firefox builds. Install them with:
+
+```bash
+bun run install-browsers
+```
+
+This runs `bunx playwright install chromium firefox` pinned to the workspace's
+playwright version (1.63.0), downloading the revision-pinned builds into the
+standard global cache (`~/.cache/ms-playwright` or `PLAYWRIGHT_BROWSERS_PATH`).
+The system libraries (gtk3, xorg-libxi, xorg-libxrender for Chromium; libmozgtk
+for Firefox) come from the pixi `browser` environment — run `sh scripts/restore.sh`
+first to provision it.
+
 ## License
 
 Licensed under either the [MIT License](LICENSE-MIT) or the [Apache License 2.0](LICENSE-APACHE).
