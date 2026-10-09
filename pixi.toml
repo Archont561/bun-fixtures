@@ -38,7 +38,10 @@ xorg-libxext = "*"
 xorg-libxfixes = "*"
 xorg-libxrandr = "*"
 # --- firefox ---
-ffmpeg = "*"
+# Floor at 7 for libvpx: Playwright's video recorder only writes .webm, and the
+# 4.3.2 build this lockfile carried has no VP8/VP9 encoder at all, so video
+# recording failed silently. 7+ on conda-forge builds against libvpx.
+ffmpeg = ">=7,<10"
 fontconfig = "*"
 freetype = "*"
 gdk-pixbuf = "*"
@@ -53,6 +56,13 @@ libegl = "*"
 libglx = "*"
 libopengl = "*"
 libgles = "*"
+# --- headed browsers: an X display for non-headless runs ---
+# Native conda-forge package; its recipe asserts ${PREFIX}/bin/Xvfb, so Xvfb
+# lands on PATH inside the environment. The CDT package
+# xorg-x11-server-xvfb-cos7-x86_64 is deliberately not used: it installs
+# xvfb-run into x86_64-conda-linux-gnu/sysroot/usr/bin, which is off PATH and
+# is meant for recipe build sections rather than runtime use.
+xorg-xvfb-server = "*"
 # --- runtime glue ---
 libgcc = "*"
 # --- fonts for headless rendering ---
