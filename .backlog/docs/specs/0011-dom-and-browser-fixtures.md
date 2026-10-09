@@ -15,7 +15,7 @@
 |---|-------------|
 | R1 | `@bun-test-utils/dom` MUST provide `window`, `document`, and `page` fixtures backed by `happy-dom`. |
 | R2 | DOM fixtures MUST clean up global pollution (`globalThis.window`, `globalThis.document`) upon teardown. |
-| R3 | `@bun-test-utils/browser` MUST provide a session-scoped `browser` fixture (Playwright Chromium/Firefox/WebKit) launched once per test run. |
+| R3 | `@bun-test-utils/browser` MUST provide a session-scoped `browser` fixture launching Playwright **Chromium** (headless) once per test run. Firefox and WebKit fixtures are deferred per [ADR 0030](../adr/0030-headless-only-browser-testing.md); Firefox keeps a Playwright-level launch proof (task_073) and WebKit has no install path in the sandbox. |
 | R4 | `@bun-test-utils/browser` MUST provide a test-scoped `page` / `context` fixture with isolated cookies and storage. |
 | R5 | An ephemeral `serverUrl` fixture MUST be provided using `Bun.serve` on random free ports (`port: 0`) with automatic server shutdown on teardown. |
 
