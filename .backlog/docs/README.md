@@ -38,7 +38,7 @@ delivered but remain implementation details behind the root `test` API:
 | `@bun-test-utils/pbt` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012`, `task_048` | ✅ done (`task_048` closed 2026-10-08 — its design-note-before-code criterion was waived, not met) |
 | `@bun-test-utils/bdd` | [0014](./specs/0014-bdd-fixture-bridge.md) | `task_021`, `task_048` | ✅ done (`task_048` sequencing waiver recorded 2026-10-08; experimental) |
 | `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013`, `task_058`, `task_072`, `task_073`, `task_075` | ✅ done — [PR #47 CI](https://github.com/Archont561/bun-test-utils/actions/runs/37994965762) verifies the shared installer, headless shell, isolated full-build Chromium fallback, and required Firefox launch proof (ADR 0033). Browser remains experimental, headless and Chromium-only |
-| `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014`, `task_058`, `task_065`, `task_067` | ✅ done |
+| `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014`, `task_058`, `task_065`, `task_067`, `task_050` | ✅ done — callback serializers per [ADR 0034](./adr/0034-cassette-callback-serializers.md) |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
 Each 🟡 task carries the precise remaining gap in its description —

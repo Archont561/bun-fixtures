@@ -53,27 +53,68 @@ created by one factory are separate callbacks: each runs once and keeps its own
 result. A new closure with different captured values still matches agreeing
 recordings of the same code, so replay the closure you recorded when values differ.
 
-A callback result must be plain data: `null`, booleans, strings, finite numbers
-other than `-0`, arrays without holes, and plain objects. JSON cannot represent
-anything else exactly, so `record` throws a `CassetteError` with the code
-`CALLBACK_NOT_SERIALIZABLE`, names the path of the value, and stores nothing.
-Convert the value inside the callback first:
+Callback results round-trip through reversible, versioned serializers. The
+built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`, `Error`, typed
+arrays, `ArrayBuffer`, and the numbers JSON cannot represent (`NaN`,
+`±Infinity`, `-0`):
 
 ```ts
-// Refused: a Date, a Map, and a BigInt do not survive JSON.
-const rawAccount = () => ({
-  createdAt: new Date(0),
-  roles: new Map([["admin", true]]),
-  balance: 10n,
-});
-
-// Accepted: convert inside the callback.
-const account = () => ({
-  createdAt: new Date(0).toISOString(),
-  roles: Object.fromEntries(new Map([["admin", true]])),
-  balance: String(10n),
+test("replays an account", async ({ cassette }) => {
+  const account = () => ({
+    createdAt: new Date(0),
+    roles: new Map([["admin", true]]),
+    balance: 10n,
+  });
+  expect(await cassette.record(account)).toEqual(account());
+  expect(await cassette.replay(account)).toEqual(account());
 });
 ```
+
+Everything else must be plain data: `null`, booleans, strings, finite numbers,
+arrays without holes, and plain objects. A value no serializer claims and that
+is not plain data — a class instance, nested `undefined`, a function, a
+symbol, a sparse array, a circular structure — makes `record` throw a
+`CassetteError` with the code `CALLBACK_NOT_SERIALIZABLE` that names the path
+of the value and stores nothing. Convert the value inside the callback, or
+teach the cassette the type:
+
+```ts
+import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+
+class Point {
+  constructor(
+    readonly x: number,
+    readonly y: number,
+  ) {}
+}
+
+const pointSerializer = defineCallbackSerializer<Point>({
+  name: "point",
+  version: 1,
+  test: (value) => value instanceof Point,
+  serialize: (point) => ({ x: point.x, y: point.y }),
+  deserialize: (data) => {
+    const { x, y } = data as { x: number; y: number };
+    return new Point(x, y);
+  },
+});
+
+test("replays a point", async ({ cassette }) => {
+  cassette.addSerializer(pointSerializer);
+  const load = () => new Point(1, 2);
+  expect(await cassette.record(load)).toEqual(load());
+  expect(await cassette.replay(load)).toEqual(load());
+});
+```
+
+Serializers are named and versioned, and encoded payloads record both: a
+serializer needed to decode a recording but not registered fails replay with
+`CALLBACK_SERIALIZER_NOT_FOUND` instead of returning a wrong value, and a
+serializer that throws is wrapped as `CALLBACK_SERIALIZER_FAILED` with the
+original cause. Documented losses: unknown `Error` subclass constructors and
+non-enumerable error properties (such as `cause`), `RegExp.lastIndex`, and
+shared-reference identity. Callback results stay in memory per test — the
+cassette file holds HTTP entries only.
 
 ## Record and replay HTTP traffic
 

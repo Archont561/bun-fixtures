@@ -3,8 +3,9 @@
 The single published package. The root runtime exports are `describe`, `expect`,
 and `test`. Typed arbitrary-definition and scenario-step helpers live on the
 `@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd` subpaths; global snapshot serializer
-lifecycle helpers live on `@archont561/bun-test-utils/snap`. These subpaths expose helpers,
-not runners or fixture packs.
+lifecycle helpers live on `@archont561/bun-test-utils/snap`; cassette callback
+serializer helpers live on `@archont561/bun-test-utils/vcr`. These subpaths
+expose helpers, not runners or fixture packs.
 
 ```bash
 bun add -d @archont561/bun-test-utils
@@ -29,15 +30,17 @@ runtime peer.
 
 Built-in capabilities are fixtures on the root `test` context, and the test
 runners hang off `test.*`. The helper subpaths are `@archont561/bun-test-utils/pbt`,
-`@archont561/bun-test-utils/bdd`, and `@archont561/bun-test-utils/snap`: PBT/BDD expose typed definitions,
-while `/snap` exposes global snapshot serializer helpers. None exports a runner
-or fixture pack.
+`@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and
+`@archont561/bun-test-utils/vcr`: PBT/BDD expose typed definitions, `/snap`
+exposes global snapshot serializer helpers, and `/vcr` exposes the cassette
+callback serializer contract. None exports a runner or fixture pack.
 
 - `test(...)` for ordinary fixture-aware tests.
 - `test.extend(...)` for project fixtures and mocks.
 - `test.prop(...)` for property tests when `fast-check` is installed.
 - `defineArbitraries(...)` from `@archont561/bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
 - `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `@archont561/bun-test-utils/bdd` to contextually type reusable scenario callbacks.
+- `defineCallbackSerializer(...)` from `@archont561/bun-test-utils/vcr` to define reusable cassette callback serializers for `cassette.addSerializer(...)`.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
 

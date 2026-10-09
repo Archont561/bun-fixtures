@@ -2862,7 +2862,7 @@ tasks:
       cassette.record callback values without changing raw HTTP request/response
       replay semantics.
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels: []
     repo_targets:
@@ -2889,7 +2889,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T10:11:19.393Z
-    updated_at: 2026-10-09T21:44:17.622Z
+    updated_at: 2026-10-09T22:41:19.464Z
   - id: task_051
     title: Snapshot serializer diagnostics and recursive edge cases
     description: Improve diagnostics and coverage for recursive snapshot
@@ -4342,3 +4342,40 @@ tasks:
       push_comments: false
     created_at: 2026-10-09T19:36:33.802Z
     updated_at: 2026-10-09T20:13:25.574Z
+  - id: task_077
+    title: Installed-consumer cassette serializer preload proof (ADR 0024 boundary 3)
+    description: "task_050 shipped the /vcr typed-helper subpath and
+      cassette.addSerializer with conformance at the public API boundary and a
+      BDD scratch-project scenario, but not the installed-consumer boundary:
+      pack the publishable tarball, install it into a scratch project, preload a
+      module that registers a serializer via defineCallbackSerializer from
+      @archont561/bun-test-utils/vcr, and verify record/replay round-trips
+      (built-ins plus the custom type) through the built package — the task_057
+      pattern for snapshot serializers. Also rerun through the registry flow as
+      part of task_005 criterion 5."
+    source_links: []
+    status: ready
+    priority: P2
+    labels: []
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria: []
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-09T22:41:31.414Z
+    updated_at: 2026-10-09T22:41:31.414Z

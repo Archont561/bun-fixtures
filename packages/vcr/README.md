@@ -3,14 +3,52 @@
 The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/vcr` subpath.
 
 The stable release surface is intentionally small: `record(callback)`,
-`replay(callback)`, and HTTP replay matching by uppercase method plus exact full
-URL. Matcher DSLs, configurable redaction, and cassette migration tooling are
-deferred. Other helpers currently used inside the workspace are provisional,
-not part of the stable release contract.
+`replay(callback)`, `addSerializer(serializer)`, and HTTP replay matching by
+uppercase method plus exact full URL. Matcher DSLs, configurable redaction,
+and cassette migration tooling are deferred. Other helpers currently used
+inside the workspace are provisional, not part of the stable release
+contract.
 
-`record` refuses a callback result that is not plain data, such as a `Date`,
-`Map`, `BigInt`, class instance, or `NaN`, with a `CALLBACK_NOT_SERIALIZABLE`
-`CassetteError` (ADR 0026). A value JSON cannot round-trip never reaches replay.
+`record` encodes callback results through reversible, versioned serializers
+(ADR 0034). Built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`,
+`Error`, typed arrays, `ArrayBuffer`, and the numbers JSON cannot represent
+(`NaN`, `±Infinity`, `-0`); anything else must be plain data — `null`,
+booleans, strings, finite numbers, arrays without holes, plain objects — or
+is refused with a `CALLBACK_NOT_SERIALIZABLE` `CassetteError` naming the path
+and the fix (ADR 0026). Teach the cassette your own types with
+`cassette.addSerializer(...)`, defining reusable serializers with
+`defineCallbackSerializer` from the public
+`@archont561/bun-test-utils/vcr` subpath:
+
+```ts
+import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+
+class Point {
+  constructor(readonly x: number, readonly y: number) {}
+}
+
+const pointSerializer = defineCallbackSerializer<Point>({
+  name: "point",
+  version: 1,
+  test: (value) => value instanceof Point,
+  serialize: (point) => ({ x: point.x, y: point.y }),
+  deserialize: (data) => new Point(data.x, data.y),
+});
+
+test("round-trips a class instance", async ({ cassette }) => {
+  cassette.addSerializer(pointSerializer);
+  const load = () => ({ home: new Point(1, 2) });
+  expect(await cassette.record(load)).toEqual(load());
+  expect(await cassette.replay(load)).toEqual(load());
+});
+```
+
+Serializer payloads carry `{ name, version }` envelopes, so encoded values
+are self-describing; a missing serializer at decode time is a coded
+`CALLBACK_SERIALIZER_NOT_FOUND`, and a throwing serializer is wrapped as
+`CALLBACK_SERIALIZER_FAILED` with the cause. Callback results stay in memory
+per test — the cassette file holds HTTP entries only, byte-compatible with
+cassettes recorded before serializers existed.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
