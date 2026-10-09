@@ -99,7 +99,16 @@ export const browserFixture = createFixture<BrowserLike>({
   scope: "session",
   setup: async (use) => {
     const chromium = chromiumFrom(await loadPlaywright());
-    const browser = await launchHeadlessChromium(chromium);
+    let browser: BrowserLike;
+    try {
+      browser = await launchHeadlessChromium(chromium);
+    } catch (cause) {
+      const message =
+        "[@bun-test-utils/browser] No browser is available — both the headless shell and the full chromium build failed to launch. " +
+        "Run 'bun run install-browsers' to install chromium and firefox via the standard Playwright installer.";
+      console.error(message);
+      throw new BunTestUtilsError("FIXTURE_SETUP_FAILED", message, { cause });
+    }
     try {
       await use(browser);
     } finally {
@@ -225,7 +234,16 @@ async function createBrowserWebPage(): Promise<{
   close: () => Promise<void>;
 }> {
   const chromium = chromiumFrom(await loadPlaywright());
-  const browser = await launchHeadlessChromium(chromium);
+  let browser: BrowserLike;
+  try {
+    browser = await launchHeadlessChromium(chromium);
+  } catch (cause) {
+    const message =
+      "[@bun-test-utils/browser] No browser is available — both the headless shell and the full chromium build failed to launch. " +
+      "Run 'bun run install-browsers' to install chromium and firefox via the standard Playwright installer.";
+    console.error(message);
+    throw new BunTestUtilsError("FIXTURE_SETUP_FAILED", message, { cause });
+  }
   const context = await browser.newContext();
   const page = await context.newPage();
 

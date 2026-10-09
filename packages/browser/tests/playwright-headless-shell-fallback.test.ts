@@ -17,8 +17,8 @@ import { join } from "node:path";
  * Playwright resolves a default `chromium.launch({ headless: true })` to the
  * separate `chromium-headless-shell` build, while `chromium.executablePath()`
  * reports the full `chromium` build. An installation carrying only the full
- * build — `playwright install chromium`, or the sharded tarballs on this
- * repository's `browsers` branch — therefore looks complete and then fails at
+ * build — `playwright install chromium` via `bun run install-browsers`
+ * (task_075) — therefore looks complete and then fails at
  * launch. The fixtures retry once against the full build via
  * `channel: "chromium"`; installs that do have the shell keep using it.
  *

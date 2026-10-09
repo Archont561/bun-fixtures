@@ -1,6 +1,6 @@
 # 0030 — Browser testing is headless-only, and the browser fixture is Chromium-only
 
-- **Status:** accepted
+- **Status:** accepted, amended by [0032](./0032-standard-playwright-install.md)
 - **Date:** 2026-10-09
 
 ## Context

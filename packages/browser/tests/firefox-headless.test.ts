@@ -7,17 +7,20 @@
  * decision rests on, so it lives beside the chromium suite, not in the
  * fixture.
  *
- * The binary comes from the `browsers` orphan branch via
- * scripts/install-browsers.sh: the branch ships the firefox build whose
- * revision the checked-in Playwright pins in its browsers.json, and the
- * installer verifies a SHA256 over the concatenated shards. Nothing reaches
- * for the download hosts here, and the system libraries come from the pixi
- * `browser` environment — Firefox dlopens libmozgtk.so, which links
- * libgtk-3.so.0; that runtime edge is why gtk3 survives the task_072 prune
- * even though no binary links it directly.
+ * The binary comes from `bun run install-browsers` (task_075), which runs the
+ * standard Playwright installer (`bunx playwright install chromium firefox`)
+ * pinned to the workspace's playwright version. The installer downloads the
+ * firefox build whose revision the checked-in Playwright pins in its
+ * browsers.json, into the standard global cache (~/.cache/ms-playwright or
+ * PLAYWRIGHT_BROWSERS_PATH). The system libraries come from the pixi `browser`
+ * environment — Firefox dlopens libmozgtk.so, which links libgtk-3.so.0; that
+ * runtime edge is why gtk3 survives the task_072 prune even though no binary
+ * links it directly.
  *
- * Like the chromium suite: no launchable browser (no binary, or no
- * libraries) skips, everything else is a failure.
+ * This suite keeps its launch-probe skip: CI installs no firefox (only
+ * chromium-headless-shell), so firefox coverage is opt-in for contributors
+ * and this sandbox. No launchable firefox (no binary, or no libraries) skips;
+ * everything else is a failure.
  */
 
 import { describe, expect, test } from "bun:test";
