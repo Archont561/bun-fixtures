@@ -96,7 +96,39 @@ async function loadPlaywright(): Promise<{
 }
 
 interface BrowserTypeLike {
-  launch(options: { headless: boolean }): Promise<BrowserLike>;
+  launch(options: {
+    headless: boolean;
+    channel?: string;
+  }): Promise<BrowserLike>;
+}
+
+/**
+ * Playwright resolves a default headless chromium launch to the separate
+ * `chromium-headless-shell` build, not to the full `chromium` build that
+ * `chromium.executablePath()` reports. An environment that installed only the
+ * full build therefore passes an availability check and then fails at launch.
+ */
+const MISSING_EXECUTABLE = /executable doesn't exist/i;
+
+/**
+ * Launches headless chromium, falling back to the full `chromium` build (driven
+ * in its new headless mode via `channel: "chromium"`) when the headless shell is
+ * not installed. Installations that do have the shell keep using it unchanged;
+ * any other launch failure is rethrown untouched.
+ */
+async function launchHeadlessChromium(
+  chromium: BrowserTypeLike,
+): Promise<BrowserLike> {
+  try {
+    return await chromium.launch({ headless: true });
+  } catch (error) {
+    if (
+      !MISSING_EXECUTABLE.test(String((error as Error | undefined)?.message))
+    ) {
+      throw error;
+    }
+    return chromium.launch({ headless: true, channel: "chromium" });
+  }
 }
 
 function chromiumFrom(
@@ -117,9 +149,7 @@ export const browserFixture = createFixture<BrowserLike>({
   scope: "session",
   setup: async (use) => {
     const chromium = chromiumFrom(await loadPlaywright());
-    const browser = await chromium.launch({
-      headless: true,
-    });
+    const browser = await launchHeadlessChromium(chromium);
     try {
       await use(browser);
     } finally {
@@ -245,7 +275,7 @@ async function createBrowserWebPage(): Promise<{
   close: () => Promise<void>;
 }> {
   const chromium = chromiumFrom(await loadPlaywright());
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchHeadlessChromium(chromium);
   const context = await browser.newContext();
   const page = await context.newPage();
 

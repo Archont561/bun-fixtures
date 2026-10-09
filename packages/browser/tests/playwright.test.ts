@@ -8,6 +8,12 @@
  * Error-path behaviour for a missing `playwright` package is pinned by
  * tests/playwright-missing-peer.test.ts, which runs unconditionally.
  *
+ * Having the binary is not the whole story: it also needs its system shared
+ * libraries, which this repository sources from the pixi `browser` environment.
+ * `usePixiBrowserLibraries()` puts them on the loader path so a plain
+ * `bun test` behaves like `pixi run -e browser bun test`; see
+ * tests/support/browser-libs.ts.
+ *
  * Scope is the subject here, and the engine is what makes it visible:
  * `browser` is session-scoped, so consecutive tests receive the *same*
  * instance, while `browserContext` and `browserPage` are test-scoped and are
@@ -17,7 +23,6 @@
  */
 
 import { test as bunTest } from "bun:test";
-import { existsSync } from "node:fs";
 import { chromium } from "playwright";
 import {
   browserContextFixture,
@@ -27,13 +32,41 @@ import {
   expect,
   test,
 } from "@/index.ts";
+import { usePixiBrowserLibraries } from "./support/browser-libs.ts";
 
-const chromiumAvailable = (() => {
-  try {
-    return existsSync(chromium.executablePath());
-  } catch {
-    return false;
+// Must happen before any fixture spawns a browser; see support/browser-libs.ts.
+usePixiBrowserLibraries();
+
+/**
+ * Can a browser actually be launched here?
+ *
+ * `existsSync(chromium.executablePath())` — the previous check — is not a safe
+ * proxy, because Playwright ≥ 1.49 reports the *full* chromium build from
+ * `executablePath()` while a default `launch()` resolves to the separate
+ * `chromium-headless-shell` build. The two disagree in both directions: the
+ * check passes for a build that is never launched (and the launch then fails on
+ * the missing shell), and it fails for an installation carrying only the
+ * headless shell — which is exactly what CI installs, so the suite silently
+ * skipped the coverage CI claims to run.
+ *
+ * Launching once answers the real question, including the case the binaries
+ * exist but their system libraries do not. Mirrors `launchHeadlessChromium` in
+ * src/index.ts: default build first, then the full build.
+ */
+const chromiumLaunchable = await (async () => {
+  for (const options of [
+    { headless: true },
+    { headless: true, channel: "chromium" },
+  ]) {
+    try {
+      const browser = await chromium.launch(options);
+      await browser.close();
+      return true;
+    } catch {
+      // Not this build; the next one may be installed.
+    }
   }
+  return false;
 })();
 
 const PAGE_HTML = `<!doctype html><html><body>
@@ -49,7 +82,7 @@ const breadcrumbs: {
   page?: any;
 } = {};
 
-describe.skipIf(!chromiumAvailable)(
+describe.skipIf(!chromiumLaunchable)(
   "@bun-test-utils/browser — playwright fixtures",
   () => {
     test("declares the scopes the fixtures are documented with", async () => {
@@ -168,7 +201,7 @@ describe.skipIf(!chromiumAvailable)(
  * fixture directly — the only way to bring its teardown forward — while
  * every behaviour above goes through the engine.
  */
-describe.skipIf(!chromiumAvailable)(
+describe.skipIf(!chromiumLaunchable)(
   "@bun-test-utils/browser — session teardown",
   () => {
     bunTest("session-scoped browser closes when its scope ends", async () => {
