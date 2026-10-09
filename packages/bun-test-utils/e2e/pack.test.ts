@@ -130,6 +130,7 @@ describe("bun pm pack smoke test", () => {
           "./package.json",
           "./pbt",
           "./snap",
+          "./vcr",
         ]);
 
         for (const peer of [
@@ -155,6 +156,8 @@ describe("bun pm pack smoke test", () => {
           "dist/bdd.d.ts",
           "dist/cli.js",
           "dist/cli.d.ts",
+          "dist/vcr.js",
+          "dist/vcr.d.ts",
         ]) {
           expect(entries).toContain(required);
         }
@@ -184,6 +187,7 @@ describe("bun pm pack smoke test", () => {
       "./package.json",
       "./pbt",
       "./snap",
+      "./vcr",
     ]);
 
     for (const peer of [

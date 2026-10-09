@@ -51,10 +51,9 @@ describe("@bun-test-utils/vcr callback invariants", () => {
   test.prop(
     "record then replay returns the serialized callback output without rerunning",
     (fc) => ({
-      // JSON has no -0 (it is written as 0), so generate only canonical JSON.
-      value: fc
-        .jsonValue({ maxDepth: 3 })
-        .map((value) => JSON.parse(JSON.stringify(value)) as typeof value),
+      // ADR 0034: the built-in number serializer round-trips -0 exactly, so
+      // generated JSON values no longer need canonicalization.
+      value: fc.jsonValue({ maxDepth: 3 }),
     }),
     async ({ cassette }, { value }) => {
       let calls = 0;
@@ -67,7 +66,44 @@ describe("@bun-test-utils/vcr callback invariants", () => {
       expect(calls).toBe(1);
 
       const replayed = await cassette.replay(load);
-      expect(replayed).toEqual(JSON.parse(JSON.stringify(value)));
+      expect(replayed).toEqual(value);
+      expect(calls).toBe(1);
+    },
+    { numRuns: 40, seed: 20261007 },
+  );
+
+  test.prop(
+    "record then replay round-trips serializer-backed values exactly",
+    (fc) => ({
+      value: fc.oneof(
+        fc.date({ noInvalidDate: true }),
+        fc.bigInt(),
+        fc.map(fc.string(), fc.date({ noInvalidDate: true })),
+        fc.set(fc.string()),
+        fc.constantFrom(
+          Number.NaN,
+          Number.POSITIVE_INFINITY,
+          Number.NEGATIVE_INFINITY,
+          -0,
+        ),
+        fc.record({
+          at: fc.date({ noInvalidDate: true }),
+          tags: fc.set(fc.string()),
+          amount: fc.bigInt(),
+          pattern: fc.constant(/^[a-z]+$/g),
+        }),
+      ),
+    }),
+    async ({ cassette }, { value }) => {
+      let calls = 0;
+      const load = () => {
+        calls++;
+        return value;
+      };
+
+      expect(await cassette.record(load)).toEqual(value);
+      expect(calls).toBe(1);
+      expect(await cassette.replay(load)).toEqual(value);
       expect(calls).toBe(1);
     },
     { numRuns: 40, seed: 20261007 },

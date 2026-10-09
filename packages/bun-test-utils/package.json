@@ -42,6 +42,11 @@
       "import": "./dist/snap.js",
       "default": "./dist/snap.js"
     },
+    "./vcr": {
+      "types": "./dist/vcr.d.ts",
+      "import": "./dist/vcr.js",
+      "default": "./dist/vcr.js"
+    },
     "./pbt": {
       "types": "./dist/pbt.d.ts",
       "import": "./dist/pbt.js",
