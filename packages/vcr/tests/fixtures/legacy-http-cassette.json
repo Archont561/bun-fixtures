@@ -1,0 +1,36 @@
+[
+  {
+    "request": {
+      "method": "GET",
+      "url": "https://api.example.invalid/v1/users/user-1",
+      "headers": {
+        "accept": "application/json"
+      }
+    },
+    "response": {
+      "status": 200,
+      "statusText": "OK",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "{\"id\":\"user-1\",\"name\":\"Ada\"}"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "url": "https://api.example.invalid/v1/users",
+      "headers": {
+        "content-type": "application/json",
+        "authorization": "[REDACTED]"
+      },
+      "body": "{\"name\":\"Grace\"}"
+    },
+    "response": {
+      "status": 201,
+      "statusText": "Created",
+      "headers": {},
+      "body": "{\"id\":\"user-2\",\"name\":\"Grace\",\"notes\":\"héllo ✓ — ünicode\"}"
+    }
+  }
+]
