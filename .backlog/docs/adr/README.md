@@ -25,11 +25,11 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0019](./0019-no-base-directory-override-in-0-1-x.md) | No base-directory override for the cassette and snapshot conventions in 0.1.x | accepted |
 | [0020](./0020-remove-parameterized-fixtures.md) | Remove parameterized fixtures; `test.prop` covers the axis | accepted |
 | [0021](./0021-prop-test-schema-root-wrapper.md) | Root `propTestSchema` identity wrapper | superseded by 0022 |
-| [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted, amended by 0023 |
+| [0022](./0022-typed-helper-subpaths.md) | Capability-scoped typed helper subpaths | accepted, amended by 0023 and 0034 |
 | [0023](./0023-define-arbitraries-helper.md) | Name the PBT identity helper `defineArbitraries` | accepted |
 | [0024](./0024-self-dogfooding-at-public-boundaries.md) | Self-dogfooding at public boundaries | accepted |
 | [0025](./0025-report-the-first-failure-when-a-teardown-also-fails.md) | Report the first failure when a teardown also fails | accepted |
-| [0026](./0026-refuse-callback-results-that-cannot-round-trip.md) | Refuse callback results that JSON cannot round-trip | accepted |
+| [0026](./0026-refuse-callback-results-that-cannot-round-trip.md) | Refuse callback results that JSON cannot round-trip | accepted, amended by 0034 |
 | [0027](./0027-identify-callbacks-by-object-then-source.md) | Identify callbacks by object, then by source text | accepted |
 | [0028](./0028-scoped-npm-package-name.md) | Publish the wrapper as `@archont561/bun-test-utils` | accepted, amends 0013 |
 | [0029](./0029-release-to-npm-and-github-packages.md) | Release from a tag on main to npm and GitHub Packages | accepted |
@@ -37,5 +37,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0031](./0031-server-fixtures-pack.md) | Server fixtures pack: testServer, serverUrl, httpMock leave browser | accepted, amends 0013 |
 | [0032](./0032-standard-playwright-install.md) | Browser binaries come from the standard Playwright install; retire the browsers branch | accepted, amends 0030, amended by 0033 |
 | [0033](./0033-browser-ci-verification.md) | CI uses the shared browser installer and verifies both Chromium launch paths | accepted, amends 0032 |
+| [0034](./0034-cassette-callback-serializers.md) | Cassette callback serializers: reversible, versioned, fixture-local | accepted, amends 0022 and 0026 |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

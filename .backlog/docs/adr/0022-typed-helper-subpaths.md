@@ -1,6 +1,6 @@
 # 0022 — Capability-scoped typed helper subpaths
 
-- **Status:** accepted; PBT helper naming amended by [0023](./0023-define-arbitraries-helper.md); snapshot serializer subpath added separately under [0024](./0024-self-dogfooding-at-public-boundaries.md) and task_057
+- **Status:** accepted; PBT helper naming amended by [0023](./0023-define-arbitraries-helper.md); snapshot serializer subpath added separately under [0024](./0024-self-dogfooding-at-public-boundaries.md) and task_057; VCR callback-serializer subpath added under [0034](./0034-cassette-callback-serializers.md)
 - **Date:** 2026-10-08
 - **Supersedes:** [0021](./0021-prop-test-schema-root-wrapper.md) as to helper placement and the public runtime surface
 

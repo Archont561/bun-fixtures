@@ -1,7 +1,14 @@
 # 0026 — Refuse callback results that JSON cannot round-trip
 
-- **Status:** accepted
+- **Status:** accepted, amended by 0034
 - **Date:** 2026-10-09
+
+> Amended by [ADR-0034](./0034-cassette-callback-serializers.md): values a
+> built-in or user-registered serializer claims now round-trip through
+> record→replay instead of being refused. The refusal with
+> `CALLBACK_NOT_SERIALIZABLE` survives as the fallback for values no
+> serializer claims, and points 2–8 stand; point 1's "every other value is
+> refused" now reads "every other value no serializer claims is refused".
 
 ## Context
 
