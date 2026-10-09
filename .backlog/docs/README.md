@@ -37,7 +37,7 @@ delivered but remain implementation details behind the root `test` API:
 | `@bun-test-utils/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011`, `task_058` | ✅ done |
 | `@bun-test-utils/pbt` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012`, `task_048` | ✅ done (`task_048` closed 2026-10-08 — its design-note-before-code criterion was waived, not met) |
 | `@bun-test-utils/bdd` | [0014](./specs/0014-bdd-fixture-bridge.md) | `task_021`, `task_048` | ✅ done (`task_048` sequencing waiver recorded 2026-10-08; experimental) |
-| `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013`, `task_058`, `task_072`, `task_073`, `task_075` | 🟡 headless-only per ADR 0030 (amended by ADR 0032); fixture is Chromium-only, Firefox has a Playwright-level launch proof (task_073); browsers come from the standard Playwright installer (`bun run install-browsers`); CI installs only the Chromium headless shell |
+| `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013`, `task_058`, `task_072`, `task_073`, `task_075` | 🟡 fixtures implemented; CI verification pending. ADR 0033 uses `bun run install-browsers --with-deps`, verifies headless-shell and isolated full-build Chromium paths, and requires the Firefox Playwright-level proof. Fixtures remain headless and Chromium-only |
 | `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014`, `task_058`, `task_065`, `task_067` | ✅ done |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.

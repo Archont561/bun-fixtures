@@ -170,16 +170,29 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      # The browser fixture E2E tests (packages/browser/tests/playwright.test.ts)
-      # skip gracefully without binaries; CI installs the headless shell so the
-      # Playwright path is genuinely exercised on every push. Run from
-      # packages/browser so bunx uses the pinned workspace playwright.
-      - name: Install Chromium headless shell
-        run: bunx playwright install --with-deps chromium-headless-shell
-        working-directory: packages/browser
+      # Use the contributor command and its workspace-pinned Playwright. CI
+      # needs --with-deps because it does not restore the local pixi libraries.
+      # The normal suite exercises the headless shell and requires Firefox.
+      - name: Install browsers
+        run: bun run install-browsers --with-deps
 
       - name: Run tests (Turborepo + Bun Test)
         run: bun run test:all
+
+      # --no-shell does not remove a cached shell. A fresh cache is essential:
+      # otherwise the suite could pass without ever exercising the fallback.
+      # System dependencies are already installed above; no second apt run.
+      - name: Verify full Chromium fallback without the headless shell
+        run: |
+          export PLAYWRIGHT_BROWSERS_PATH
+          PLAYWRIGHT_BROWSERS_PATH="$(mktemp -d "$RUNNER_TEMP/playwright-full-chromium.XXXXXX")"
+          trap 'rm -rf "$PLAYWRIGHT_BROWSERS_PATH"' EXIT
+          bun run install-browsers --no-shell
+          if compgen -G "$PLAYWRIGHT_BROWSERS_PATH/chromium_headless_shell-*" > /dev/null; then
+            echo "::error::Headless shell must be absent to verify the full Chromium fallback"
+            exit 1
+          fi
+          bun test packages/browser/tests/playwright.test.ts
 
       - name: Generate LCOV coverage
         run: bun run coverage

@@ -136,7 +136,7 @@ bun run test:all  # everything CI runs
 bun run docs:dev
 ```
 
-Browser tests run headless only ([ADR 0030](.backlog/docs/adr/0030-headless-only-browser-testing.md)). The pixi `browser` environment supplies the shared libraries Playwright's Chromium and Firefox binaries need on linux-64: `scripts/browser-activate.sh` puts them on the loader path under `pixi run`, and `packages/browser/tests/support/browser-libs.ts` does the same for a plain `bun test`. Where neither is available the browser suites skip rather than fail.
+Browser tests run headless only ([ADR 0030](.backlog/docs/adr/0030-headless-only-browser-testing.md)). The pixi `browser` environment supplies the shared libraries Playwright's Chromium and Firefox binaries need on linux-64: `scripts/browser-activate.sh` puts them on the loader path under `pixi run`, and `packages/browser/tests/support/browser-libs.ts` does the same for a plain `bun test`. Missing Chromium binaries or libraries fail the fixture suite rather than silently skipping it. Firefox's Playwright-level proof may skip locally when unavailable, but is required under `CI=true`.
 
 The monorepo uses Bun, Turborepo, Bunup, Biome, Changesets, and Astro Starlight. See the [development documentation](https://archont561.github.io/bun-test-utils/guides/getting-started/) before changing public APIs.
 
@@ -146,7 +146,8 @@ Pull requests are welcome. Add or update the relevant package README and documen
 
 ### Browser testing
 
-Browser fixtures require Playwright's chromium and firefox builds. Install them with:
+The `browser` fixture uses Playwright's Chromium; Firefox has a separate launch
+proof, not a fixture. Install the repository's browser builds with:
 
 ```bash
 bun run install-browsers
@@ -158,6 +159,19 @@ standard global cache (`~/.cache/ms-playwright` or `PLAYWRIGHT_BROWSERS_PATH`).
 The system libraries (gtk3, xorg-libxi, xorg-libxrender for Chromium; libmozgtk
 for Firefox) come from the pixi `browser` environment — run `sh scripts/restore.sh`
 first to provision it.
+
+CI calls the same command with system-library installation enabled:
+
+```bash
+bun run install-browsers --with-deps
+```
+
+The regular suite exercises the headless shell and the Firefox launch proof.
+CI then reruns the real Chromium fixture suite in a fresh browser cache using
+`bun run install-browsers --no-shell`, which proves the full-build fallback
+without an old cached shell masking it ([ADR 0033](.backlog/docs/adr/0033-browser-ci-verification.md)).
+See the [browser package examples](packages/browser/README.md) for real page
+interaction and fixture lifetimes.
 
 ## License
 

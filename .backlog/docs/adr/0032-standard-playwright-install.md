@@ -1,6 +1,6 @@
 # 0032 — Browser binaries come from the standard Playwright install; retire the browsers branch
 
-- **Status:** accepted, amends [0030](./0030-headless-only-browser-testing.md)
+- **Status:** accepted, amends [0030](./0030-headless-only-browser-testing.md), amended by [0033](./0033-browser-ci-verification.md)
 - **Date:** 2026-10-09
 
 ## Context
