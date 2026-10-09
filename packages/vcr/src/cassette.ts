@@ -6,6 +6,11 @@ import {
   fnv1a,
   slugifyFilename,
 } from "@bun-test-utils/core";
+import {
+  type CallbackSerializer,
+  createSerializerCodec,
+  type SerializerCodec,
+} from "./serializers.ts";
 
 export type VcrMode = "record" | "replay" | "passthrough";
 
@@ -42,6 +47,13 @@ export interface CassetteHelper {
    * recording with that text agrees. Otherwise this throws `CALLBACK_AMBIGUOUS`.
    */
   replay<T>(callback: () => T | Promise<T>): Promise<T>;
+  /**
+   * Register a reversible, versioned serializer for callback values
+   * (ADR 0034). User serializers run before the built-ins, newest first, and
+   * live exactly as long as this test-scoped cassette. A malformed serializer
+   * throws a `CassetteError` with code `INVALID_API_USAGE`.
+   */
+  addSerializer<T>(serializer: CallbackSerializer<T>): void;
   mode: VcrMode;
   setMode(mode: VcrMode): void;
   redactHeader(name: string): void;
@@ -87,141 +99,17 @@ function sourceLabel(source: string): string {
   return `${fnv1a(source)}:${source.length}`;
 }
 
-const PLAIN_DATA_HINT =
-  "Return plain data instead: null, booleans, strings, finite numbers, arrays, and plain objects.";
-
-/** Extends a diagnostic path, quoting keys that are not plain identifiers. */
-function childPath(parent: string, key: string | number): string {
-  if (typeof key === "number") return `${parent}[${key}]`;
-  return /^[A-Za-z_$][\w$]*$/.test(key)
-    ? `${parent}.${key}`
-    : `${parent}[${JSON.stringify(key)}]`;
-}
-
-/** Names a non-plain object for a diagnostic. */
-function describeObject(value: object): string {
-  const name = (value as { constructor?: { name?: unknown } }).constructor
-    ?.name;
-  return typeof name === "string" && name !== "" && name !== "Object"
-    ? `an instance of ${name}`
-    : "an object with a non-plain prototype";
-}
-
-/** Throws the coded refusal for a value at `path` that JSON cannot round-trip. */
-function refuse(
-  path: string,
-  valueType: string,
-  hint = PLAIN_DATA_HINT,
-  details: Record<string, unknown> = {},
-): never {
-  const where = path === "$" ? "" : ` at ${path}`;
-  throw new CassetteError(
-    "CALLBACK_NOT_SERIALIZABLE",
-    `[bun-test-utils/vcr] cassette callback returned ${valueType}${where}, which cannot round-trip through JSON. ${hint}`,
-    { path, valueType, ...details },
-  );
-}
-
-/**
- * Throws unless `value` is plain data, the only shape JSON represents exactly.
- * `ancestors` maps each object on the current path to where it was first seen,
- * so a cycle is refused where it closes. A repeated reference that is not a
- * cycle is plain data and passes.
- */
-function assertPlainData(
-  value: unknown,
-  path: string,
-  ancestors: Map<object, string>,
-): void {
-  if (value === null || typeof value === "string" || typeof value === "boolean")
-    return;
-  if (typeof value === "number") {
-    if (Number.isNaN(value)) refuse(path, "NaN", "Return null instead.");
-    if (!Number.isFinite(value))
-      refuse(
-        path,
-        value > 0 ? "Infinity" : "-Infinity",
-        "Return null instead.",
-      );
-    if (Object.is(value, -0)) refuse(path, "-0", "Return 0 instead.");
-    return;
-  }
-  if (value === undefined)
-    refuse(path, "undefined", "Remove it, or return null instead.");
-  if (typeof value === "bigint") refuse(path, "a BigInt");
-  if (typeof value === "function") refuse(path, "a function");
-  if (typeof value === "symbol") refuse(path, "a symbol");
-
-  const object = value as object;
-  const firstSeenAt = ancestors.get(object);
-  if (firstSeenAt !== undefined)
-    refuse(
-      path,
-      "a circular structure",
-      `The same object is already at ${firstSeenAt}. Return a tree without cycles.`,
-      { firstSeenAt },
-    );
-
-  if (Array.isArray(object)) {
-    if (Object.getPrototypeOf(object) !== Array.prototype)
-      refuse(path, describeObject(object));
-    // Exactly the indices and `length`: a hole or an extra property fails this.
-    if (Reflect.ownKeys(object).length !== object.length + 1)
-      refuse(path, "a sparse array or an array with extra properties");
-    ancestors.set(object, path);
-    for (let index = 0; index < object.length; index++)
-      assertPlainData(object[index], childPath(path, index), ancestors);
-    ancestors.delete(object);
-    return;
-  }
-
-  const prototype = Object.getPrototypeOf(object);
-  if (prototype !== Object.prototype && prototype !== null)
-    refuse(path, describeObject(object));
-  const keys = Object.keys(object);
-  if (Reflect.ownKeys(object).length !== keys.length)
-    refuse(path, "an object with symbol-keyed or non-enumerable properties");
-  ancestors.set(object, path);
-  for (const key of keys)
-    assertPlainData(
-      (object as Record<string, unknown>)[key],
-      childPath(path, key),
-      ancestors,
-    );
-  ancestors.delete(object);
-}
-
-function serializeOutput(value: unknown): string {
-  if (value === undefined) return "__undefined__";
-  assertPlainData(value, "$", new Map());
-  try {
-    return JSON.stringify(value);
-  } catch (cause) {
-    // Unreachable for plain data. Kept so an unexpected JSON failure still
-    // carries the code and the prefix instead of a raw error.
-    throw new CassetteError(
-      "CALLBACK_NOT_SERIALIZABLE",
-      `[bun-test-utils/vcr] cassette callback returned a value that cannot be serialized: ${
-        cause instanceof Error ? cause.message : String(cause)
-      }`,
-      { path: "$" },
-      cause,
-    );
-  }
-}
-
-function deserializeOutput<T>(value: string): T {
-  if (value === "__undefined__") return undefined as T;
-  return JSON.parse(value) as T;
-}
-
 /**
  * The callback results one test records (ADR 0027). A callback object the test
  * has recorded is identified by that object. An unrecorded object is matched by
  * its source text, and only when every recording with that text holds the same
  * result. Results stay in memory; the cassette file holds HTTP entries only.
+ *
+ * Values are stored as encoded text from the serializer codec (ADR 0034):
+ * plain data encodes exactly as before, serializer-backed values round-trip
+ * through `__bunTestUtils` envelopes, and anything else is refused.
  */
-function createCallbackRegistry() {
+function createCallbackRegistry(codec: SerializerCodec) {
   /** The serialized result of each recorded callback object. */
   const byObject = new WeakMap<object, string>();
   /** The serialized result of every recording, keyed by the full source text. */
@@ -230,14 +118,14 @@ function createCallbackRegistry() {
   return {
     async record<T>(callback: () => T | Promise<T>): Promise<T> {
       const known = byObject.get(callback);
-      if (known !== undefined) return deserializeOutput<T>(known);
+      if (known !== undefined) return codec.decode<T>(known);
 
       const output = await callback();
-      const serialized = serializeOutput(output);
+      const serialized = codec.encode(output);
       // A concurrent record of this object may have finished first. Keep its
       // result, so the object has exactly one recording.
       const settled = byObject.get(callback);
-      if (settled !== undefined) return deserializeOutput<T>(settled);
+      if (settled !== undefined) return codec.decode<T>(settled);
 
       byObject.set(callback, serialized);
       const source = sourceOf(callback);
@@ -249,7 +137,7 @@ function createCallbackRegistry() {
 
     async replay<T>(callback: () => T | Promise<T>): Promise<T> {
       const known = byObject.get(callback);
-      if (known !== undefined) return deserializeOutput<T>(known);
+      if (known !== undefined) return codec.decode<T>(known);
 
       const source = sourceOf(callback);
       const key = sourceLabel(source);
@@ -270,7 +158,7 @@ function createCallbackRegistry() {
           { key, recordings: recordings.length },
         );
       }
-      return deserializeOutput<T>(recordings[0]);
+      return codec.decode<T>(recordings[0]);
     },
   };
 }
@@ -281,7 +169,8 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     let mode: VcrMode = (process.env.VCR_MODE as VcrMode) || "record";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
-    const callbacks = createCallbackRegistry();
+    const codec = createSerializerCodec();
+    const callbacks = createCallbackRegistry(codec);
     const origFetch = globalThis.fetch;
 
     // Convention: `<test dir>/__cassettes__/<test name>.json` — replay
@@ -310,6 +199,9 @@ export const cassetteFixture = createFixture<CassetteHelper>({
       },
       async replay<T>(callback: () => T | Promise<T>): Promise<T> {
         return callbacks.replay(callback);
+      },
+      addSerializer<T>(serializer: CallbackSerializer<T>): void {
+        codec.add(serializer);
       },
       get mode() {
         return mode;

@@ -14,7 +14,8 @@
       "!node_modules",
       "!**/dist",
       "!**/build",
-      "!**/.astro"
+      "!**/.astro",
+      "!**/tests/fixtures"
     ]
   },
   "formatter": {

@@ -6,6 +6,7 @@ const entries = [
   "src/pbt.ts",
   "src/bdd.ts",
   "src/snap.ts",
+  "src/vcr.ts",
 ];
 
 const bundledWorkspaces = [

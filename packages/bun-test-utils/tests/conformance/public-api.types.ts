@@ -75,3 +75,16 @@ type _RootWhenStepMustBeUnavailable = RootWhenStep;
 import type { ThenStep as RootThenStep } from "@archont561/bun-test-utils";
 
 type _RootThenStepMustBeUnavailable = RootThenStep;
+
+// Positive assertion pins the cassette serializer contract to the VCR subpath.
+import type { CallbackSerializer } from "@archont561/bun-test-utils/vcr";
+
+type _DefineCallbackSerializerIsExported =
+  typeof import("@archont561/bun-test-utils/vcr").defineCallbackSerializer;
+
+type _CallbackSerializerIsUsable = CallbackSerializer<Date>;
+
+// @ts-expect-error Cassette serializer types are available only from @archont561/bun-test-utils/vcr.
+import type { CallbackSerializer as RootCallbackSerializer } from "@archont561/bun-test-utils";
+
+type _RootCallbackSerializerMustBeUnavailable = RootCallbackSerializer;

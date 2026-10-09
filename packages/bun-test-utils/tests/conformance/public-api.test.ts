@@ -5,6 +5,8 @@ import * as bddApi from "@archont561/bun-test-utils/bdd";
 import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
 import * as pbtApi from "@archont561/bun-test-utils/pbt";
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
+import * as vcrApi from "@archont561/bun-test-utils/vcr";
+import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
 import fc from "fast-check";
 
 test("public root exports only the approved runner values", () => {
@@ -19,6 +21,7 @@ test("typed helpers are scoped to their capability subpaths", () => {
     "thenStep",
     "whenStep",
   ]);
+  expect(Object.keys(vcrApi).sort()).toEqual(["defineCallbackSerializer"]);
 });
 
 test("defineArbitraries returns arbitrary records and factories unchanged", () => {
@@ -27,6 +30,17 @@ test("defineArbitraries returns arbitrary records and factories unchanged", () =
 
   expect(defineArbitraries(record)).toBe(record);
   expect(defineArbitraries(factory)).toBe(factory);
+});
+
+test("defineCallbackSerializer returns serializer definitions unchanged", () => {
+  const serializer = defineCallbackSerializer<Date>({
+    name: "date",
+    version: 2,
+    test: (value) => value instanceof Date,
+    serialize: (value) => value.getTime(),
+    deserialize: (data) => new Date(data as number),
+  });
+  expect(defineCallbackSerializer(serializer)).toBe(serializer);
 });
 
 test.prop(
@@ -58,7 +72,6 @@ test("other capability subpaths remain private", async () => {
     "@archont561/bun-test-utils/std",
     "@archont561/bun-test-utils/dom",
     "@archont561/bun-test-utils/browser",
-    "@archont561/bun-test-utils/vcr",
     "@archont561/bun-test-utils/snapshot",
     "@archont561/bun-test-utils/pbt/runner",
     "@archont561/bun-test-utils/bdd/runner",

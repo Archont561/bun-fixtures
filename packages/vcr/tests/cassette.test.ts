@@ -35,6 +35,7 @@ import {
   CassetteError,
   type CassetteHelper,
   cassetteFixture,
+  defineCallbackSerializer,
   describe,
   expect,
 } from "@/index.ts";
@@ -246,55 +247,181 @@ async function expectRefused(
   return error;
 }
 
-describe("callback results JSON cannot round-trip", () => {
-  test("refuses a Date instead of replaying a string", async ({ cassette }) => {
-    await expectRefused(cassette, () => new Date(0));
-  });
-
-  test("refuses a BigInt instead of replaying a string", async ({
+describe("built-in serializers round-trip (ADR 0034)", () => {
+  test("round-trips a Date instead of replaying a string", async ({
     cassette,
   }) => {
-    await expectRefused(cassette, () => 123n);
+    let calls = 0;
+    const loadDate = () => {
+      calls++;
+      return new Date("2026-10-09T12:00:00.000Z");
+    };
+    const recorded = await cassette.record(loadDate);
+    expect(recorded).toEqual(new Date("2026-10-09T12:00:00.000Z"));
+    expect(calls).toBe(1);
+
+    const replayed = await cassette.replay(loadDate);
+    expect(replayed).toEqual(recorded);
+    expect(replayed).toBeInstanceOf(Date);
+    expect(replayed).not.toBe(recorded);
+    expect(calls).toBe(1);
   });
 
-  test("refuses NaN instead of replaying null", async ({ cassette }) => {
-    await expectRefused(cassette, () => Number.NaN);
+  test("round-trips a BigInt exactly", async ({ cassette }) => {
+    const load = () => 123n;
+    expect(await cassette.record(load)).toBe(123n);
+    expect(await cassette.replay(load)).toBe(123n);
   });
 
-  test("refuses Infinity instead of replaying null", async ({ cassette }) => {
-    await expectRefused(cassette, () => Number.POSITIVE_INFINITY);
+  test("round-trips NaN instead of replaying null", async ({ cassette }) => {
+    const load = () => Number.NaN;
+    expect(Number.isNaN(await cassette.record(load))).toBe(true);
+    expect(Number.isNaN(await cassette.replay(load))).toBe(true);
   });
 
-  test("refuses -0 instead of replaying 0", async ({ cassette }) => {
-    await expectRefused(cassette, () => -0);
-  });
-
-  test("refuses a class instance instead of replaying a plain object", async ({
+  test("round-trips Infinity instead of replaying null", async ({
     cassette,
   }) => {
-    await expectRefused(cassette, () => new Point(1, 2));
+    const load = () => Number.POSITIVE_INFINITY;
+    expect(await cassette.record(load)).toBe(Number.POSITIVE_INFINITY);
+    expect(await cassette.replay(load)).toBe(Number.POSITIVE_INFINITY);
   });
 
-  test("refuses a Map instead of replaying {}", async ({ cassette }) => {
-    await expectRefused(cassette, () => new Map([["id", "user-1"]]));
+  test("round-trips -0 instead of replaying 0", async ({ cassette }) => {
+    const load = () => -0;
+    expect(Object.is(await cassette.record(load), -0)).toBe(true);
+    expect(Object.is(await cassette.replay(load), -0)).toBe(true);
   });
 
-  test("refuses a Set instead of replaying {}", async ({ cassette }) => {
-    await expectRefused(cassette, () => new Set(["admin"]));
+  test("round-trips a Map instead of replaying {}", async ({ cassette }) => {
+    const load = () => new Map([["id", "user-1"]]);
+    expect(await cassette.record(load)).toEqual(new Map([["id", "user-1"]]));
+    const replayed = await cassette.replay(load);
+    expect(replayed).toBeInstanceOf(Map);
+    expect(replayed.get("id")).toBe("user-1");
   });
 
-  test("refuses an Error instead of replaying {}", async ({ cassette }) => {
-    await expectRefused(cassette, () => new Error("boom"));
+  test("round-trips a Set instead of replaying {}", async ({ cassette }) => {
+    const load = () => new Set(["admin"]);
+    expect(await cassette.record(load)).toEqual(new Set(["admin"]));
+    expect(await cassette.replay(load)).toEqual(new Set(["admin"]));
   });
 
-  test("refuses a RegExp instead of replaying {}", async ({ cassette }) => {
-    await expectRefused(cassette, () => /user-\d+/g);
+  test("round-trips an Error instead of replaying {}", async ({ cassette }) => {
+    const load = () => new TypeError("boom");
+    const recorded = await cassette.record(load);
+    const replayed = await cassette.replay(load);
+    expect(replayed).toEqual(recorded);
+    expect(replayed).toBeInstanceOf(TypeError);
+    expect(replayed.message).toBe("boom");
   });
 
-  test("refuses a typed array instead of replaying an index-keyed object", async ({
+  test("round-trips a RegExp instead of replaying {}", async ({ cassette }) => {
+    const load = () => /user-\d+/g;
+    expect(await cassette.record(load)).toEqual(/user-\d+/g);
+    expect(await cassette.replay(load)).toEqual(/user-\d+/g);
+  });
+
+  test("round-trips a typed array instead of replaying an index-keyed object", async ({
     cassette,
   }) => {
-    await expectRefused(cassette, () => new Uint8Array([1, 2]));
+    const load = () => new Uint8Array([1, 2]);
+    expect(await cassette.record(load)).toEqual(new Uint8Array([1, 2]));
+    expect(await cassette.replay(load)).toEqual(new Uint8Array([1, 2]));
+  });
+
+  test("round-trips a composite of serializer-backed values", async ({
+    cassette,
+  }) => {
+    const account = () => ({
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      roles: new Map([["admin", true]]),
+      tags: new Set(["a", "b"]),
+      balance: 10n,
+      pattern: /^user-\d+$/,
+      checksum: new Uint8Array([1, 2, 3]),
+      ratio: Number.NaN,
+    });
+    expect(await cassette.record(account)).toEqual(account());
+    expect(await cassette.replay(account)).toEqual(account());
+  });
+});
+
+describe("custom serializers (ADR 0034)", () => {
+  const pointSerializer = defineCallbackSerializer<Point>({
+    name: "point",
+    version: 1,
+    test: (value) => value instanceof Point,
+    serialize: (value) => ({ x: value.x, y: value.y }),
+    deserialize: (data) => {
+      const { x, y } = data as { x: number; y: number };
+      return new Point(x, y);
+    },
+  });
+
+  test("round-trips a class instance through a registered serializer", async ({
+    cassette,
+  }) => {
+    cassette.addSerializer(pointSerializer);
+    const load = () => ({ home: new Point(1, 2) });
+
+    expect(await cassette.record(load)).toEqual(load());
+    const replayed = await cassette.replay(load);
+    expect(replayed).toEqual(load());
+    expect(replayed.home).toBeInstanceOf(Point);
+  });
+
+  test("refuses the class instance when no serializer is registered, naming addSerializer", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => new Point(1, 2));
+    expect(error.message).toContain("addSerializer");
+  });
+
+  test("refuses a malformed serializer with INVALID_API_USAGE", async ({
+    cassette,
+  }) => {
+    let caught: unknown;
+    try {
+      cassette.addSerializer({ name: "", version: 1 } as never);
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(CassetteError);
+    expect((caught as CassetteError).code).toBe("INVALID_API_USAGE");
+    expect((caught as CassetteError).message).toContain("addSerializer");
+  });
+
+  test("factory closures keep their own serializer-backed results", async ({
+    cassette,
+  }) => {
+    const makeLoader = (day: number) => () => new Date(day * 86_400_000);
+    const a = makeLoader(1);
+    const b = makeLoader(2);
+
+    expect(await cassette.record(a)).toEqual(new Date(86_400_000));
+    expect(await cassette.record(b)).toEqual(new Date(172_800_000));
+    expect(await cassette.replay(b)).toEqual(new Date(172_800_000));
+    expect(await cassette.replay(a)).toEqual(new Date(86_400_000));
+  });
+
+  test("a fresh closure with the same source replays the agreed serialized result", async ({
+    cassette,
+  }) => {
+    const makeLoader = (day: number) => () => new Map([["day", day]]);
+    await cassette.record(makeLoader(7));
+    await cassette.record(makeLoader(7));
+
+    expect(await cassette.replay(makeLoader(9))).toEqual(new Map([["day", 7]]));
+  });
+});
+
+describe("callback results no serializer claims (ADR 0026 fallback)", () => {
+  test("refuses an invalid Date instead of encoding one", async ({
+    cassette,
+  }) => {
+    const error = await expectRefused(cassette, () => new Date(Number.NaN));
+    expect(error.message).toContain("an instance of Date");
   });
 
   test("names the path of a nested undefined, which JSON would drop", async ({
