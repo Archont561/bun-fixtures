@@ -23,6 +23,10 @@ Fixtures and mocks are available through the root `test` object and explicit `te
 
 If a project keeps a module named `fixtures.ts`, tests must import it explicitly and pass its map to `test.extend()`.
 
+## Global-state fixtures are single-flight
+
+The `env`, `window`/DOM, clock, seed, stdio and tmpdir fixtures restore process and global state by replaying the snapshot their setup captured. That contract is only correct for one fixture instance in flight at a time, or for strictly LIFO overlap: closing out of order resurrects the value a still-open inner snapshot captured instead of the host value (characterized in `packages/std/tests/env-restoration.test.ts` and `packages/dom/tests/window-globals.test.ts`). Bun runs the tests of a file sequentially, so test-scoped usage — the documented shape — satisfies this by default; an integration that opens several global fixtures concurrently and unwinds them out of order owns the leak.
+
 ## Experimental capabilities
 
 Browser and BDD are experimental and may change in minor releases. Browser carries

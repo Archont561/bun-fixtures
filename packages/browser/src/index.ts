@@ -30,6 +30,24 @@ interface PageLike {
 const PLAYWRIGHT_MODULE = "playwright";
 const HAPPY_DOM_MODULE = "happy-dom";
 
+/**
+ * Structural surface of a happy-dom `GlobalWindow` the DOM web-page backend
+ * uses — the package-local adapter interface standing in for the optional
+ * peer's types (audit finding 2). Members beyond this surface are off the
+ * supported path on purpose.
+ */
+interface DomWindowLike {
+  document: Document;
+  MouseEvent: new (type: string, init?: MouseEventInit) => MouseEvent;
+  Event: new (type: string, init?: EventInit) => Event;
+  happyDOM: { abort(): Promise<void>; close(): Promise<void> };
+}
+
+/** Constructor shape `import("happy-dom")` must supply, structurally. */
+interface DomWindowCtorLike {
+  new (options?: { url?: string }): DomWindowLike;
+}
+
 async function loadPlaywright(): Promise<{
   chromium?: BrowserTypeLike;
   default?: { chromium?: BrowserTypeLike };
@@ -148,8 +166,8 @@ export type WebEnvironment = "dom" | "browser";
 export interface WebPageHelper {
   /** The concrete backend chosen for this test. */
   mode: WebEnvironment;
-  /** The underlying happy-dom window or Playwright Page. */
-  raw: any;
+  /** The underlying happy-dom window (DOM mode) or Playwright Page (browser mode). */
+  raw: DomWindowLike | PageLike;
   goto(url: string): Promise<void>;
   setContent(html: string): Promise<void>;
   mount(html: string): Promise<void>;
@@ -170,7 +188,7 @@ async function createDomWebPage(): Promise<{
   helper: WebPageHelper;
   close: () => Promise<void>;
 }> {
-  let GlobalWindowCtor: any;
+  let GlobalWindowCtor: DomWindowCtorLike;
   try {
     ({ GlobalWindow: GlobalWindowCtor } = await import(HAPPY_DOM_MODULE));
   } catch {
@@ -182,7 +200,7 @@ async function createDomWebPage(): Promise<{
   }
 
   const win = new GlobalWindowCtor({ url: "http://localhost" });
-  const doc = win.document as Document;
+  const doc = win.document;
 
   const helper: WebPageHelper = {
     mode: "dom",

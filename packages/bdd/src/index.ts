@@ -1,17 +1,32 @@
 import { createRequire } from "node:module";
 import {
   type FixtureAwareTest,
+  type FixtureContext,
   type FixtureMap,
   MissingOptionalDependencyError,
   type ScenarioFactory,
   type TestFn,
+  type TestOptions,
 } from "@bun-test-utils/core";
 
-const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
-const SCENARIO_GUARD_SYMBOL = Symbol.for("bun-test-utils.scenarioGuard");
+const FIXTURE_MAP_SYMBOL: unique symbol = Symbol.for(
+  "bun-test-utils.fixtureMap",
+);
+const SCENARIO_GUARD_SYMBOL: unique symbol = Symbol.for(
+  "bun-test-utils.scenarioGuard",
+);
 
 const requireFromHere = createRequire(import.meta.url);
 let bddIntegrationAvailable: boolean | undefined;
+
+/**
+ * Structural view of the internal symbol tag core puts on fixture-aware test
+ * functions — the narrow alternative to an `any` cast at the adapter boundary
+ * (audit finding 2).
+ */
+interface FixtureMapCarrier {
+  [FIXTURE_MAP_SYMBOL]?: FixtureMap;
+}
 
 export type BddFixtureAwareTest = TestFn &
   Omit<FixtureAwareTest, "extend" | "scenario"> & {
@@ -50,8 +65,11 @@ export function ensureBddIntegrationInstalled(): void {
 export function withBDDTesting(
   coreTest: FixtureAwareTest,
 ): BddFixtureAwareTest {
-  const bddTest = ((name: string, fn: any, opts?: any) =>
-    coreTest(name, fn, opts)) as unknown as BddFixtureAwareTest;
+  const bddTest = ((
+    name: string,
+    fn: (ctx: FixtureContext) => void | Promise<void>,
+    opts?: TestOptions,
+  ) => coreTest(name, fn, opts)) as unknown as BddFixtureAwareTest;
 
   bddTest.extend = (fixtures) => withBDDTesting(coreTest.extend(fixtures));
   bddTest.scenario = Object.assign(
@@ -72,7 +90,7 @@ export function withBDDTesting(
     enumerable: false,
   });
 
-  const fixtureMap = (coreTest as any)[FIXTURE_MAP_SYMBOL];
+  const fixtureMap = (coreTest as FixtureMapCarrier)[FIXTURE_MAP_SYMBOL];
   if (fixtureMap) {
     Object.defineProperty(bddTest, FIXTURE_MAP_SYMBOL, {
       value: fixtureMap,

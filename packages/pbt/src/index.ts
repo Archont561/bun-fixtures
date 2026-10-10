@@ -16,6 +16,7 @@ import {
   MissingOptionalDependencyError,
   type ScenarioContext,
   type TestFn,
+  type TestOptions,
 } from "@bun-test-utils/core";
 
 // `fast-check` is an optional peer of the published `@archont561/bun-test-utils`
@@ -23,7 +24,7 @@ import {
 // tests can import the root package without installing the generator library.
 const requireFromHere = createRequire(import.meta.url);
 let fastCheckAvailable: boolean | undefined;
-let fcPromise: Promise<any> | undefined;
+let fcPromise: Promise<FastCheckApi> | undefined;
 
 function missingFastCheck(): MissingOptionalDependencyError {
   return new MissingOptionalDependencyError(
@@ -45,10 +46,15 @@ function ensureFastCheckInstalled(): void {
   }
 }
 
-async function loadFastCheck(): Promise<any> {
+/**
+ * Loads fast-check and hands back the default API object — typed through the
+ * workspace's fast-check types (the runtime peer is optional, the type
+ * dependency is not, so the adapter surface stays narrow without `any`).
+ */
+async function loadFastCheck(): Promise<FastCheckApi> {
   ensureFastCheckInstalled();
   fcPromise ??= import("fast-check")
-    .then((mod) => (mod as any).default ?? mod)
+    .then((mod) => mod.default ?? (mod as unknown as FastCheckApi))
     .catch(() => {
       fastCheckAvailable = false;
       throw missingFastCheck();
@@ -58,10 +64,24 @@ async function loadFastCheck(): Promise<any> {
 
 export { describe, expect };
 
-const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
-const SCENARIO_GUARD_SYMBOL = Symbol.for("bun-test-utils.scenarioGuard");
+const FIXTURE_MAP_SYMBOL: unique symbol = Symbol.for(
+  "bun-test-utils.fixtureMap",
+);
+const SCENARIO_GUARD_SYMBOL: unique symbol = Symbol.for(
+  "bun-test-utils.scenarioGuard",
+);
 
 type ScenarioGuard = () => void;
+
+/**
+ * Structural view of the internal symbol tags core and the pbt runner put on
+ * fixture-aware test functions — the narrow alternative to an `any` cast at
+ * the adapter boundary (audit finding 2).
+ */
+interface PbtCarrier {
+  [FIXTURE_MAP_SYMBOL]?: FixtureMap;
+  [SCENARIO_GUARD_SYMBOL]?: ScenarioGuard;
+}
 
 export interface PropertyTestingOptions {
   scenarioGuard?: ScenarioGuard;
@@ -85,11 +105,11 @@ export type PbtFixtureAwareTest = TestFn &
   };
 
 function fixtureMapOf(test: FixtureAwareTest): FixtureMap {
-  return ((test as any)[FIXTURE_MAP_SYMBOL] ?? {}) as FixtureMap;
+  return (test as PbtCarrier)[FIXTURE_MAP_SYMBOL] ?? {};
 }
 
 function scenarioGuardOf(test: FixtureAwareTest): ScenarioGuard | undefined {
-  return (test as any)[SCENARIO_GUARD_SYMBOL] as ScenarioGuard | undefined;
+  return (test as PbtCarrier)[SCENARIO_GUARD_SYMBOL];
 }
 
 function explicitTestFor(file: string, map: FixtureMap): FixtureAwareTest {
@@ -159,7 +179,13 @@ function makeProp(runnerTest: TestFn): PropFn {
             await ctx.iterate!((iterCtx) => testFn(iterCtx, generated));
           },
         );
-        await fc.assert(property as any, fcOpts as any);
+        // `PropTestOptions` forwards arbitrary fast-check run parameters via
+        // its index signature; the cast names the expected parameter type
+        // (assert sees the property's tuple-parameterized form).
+        await fc.assert(
+          property,
+          fcOpts as import("fast-check").Parameters<[GeneratedValues<T>]>,
+        );
       },
       { fixtures: requested, timeout, iterate: true },
     );
@@ -179,21 +205,21 @@ function makeScenarioProp(
     const steps: Array<{
       phase: "given" | "when" | "then";
       name: string;
-      fn: (ctx: ScenarioContext<any>) => any;
+      fn: (ctx: ScenarioContext<any>) => unknown;
     }> = [];
     let registered = false;
 
     const chain = {
-      given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      given(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         steps.push({ phase: "given", name, fn });
         return chain;
       },
-      when(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      when(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         steps.push({ phase: "when", name, fn });
         return chain;
       },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the fluent scenario phase.
-      then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      then(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         steps.push({ phase: "then", name, fn });
         const generatedNames = new Set(
           typeof strategies === "function" ? [] : Object.keys(strategies),
@@ -304,8 +330,11 @@ function makePbtTest(
   };
   const runner = () => runnerFor(resolveFile());
   const prop = makeExplicitProp(map, fixedFile, runnerFor);
-  const pbtTest = ((name: string, fn: any, opts?: any) =>
-    runner()(name, fn, opts)) as unknown as PbtFixtureAwareTest;
+  const pbtTest = ((
+    name: string,
+    fn: (ctx: FixtureContext) => void | Promise<void>,
+    opts?: TestOptions,
+  ) => runner()(name, fn, opts)) as unknown as PbtFixtureAwareTest;
   pbtTest.extend = (more) =>
     makePbtTest({ ...map, ...more }, fixedFile, options);
   pbtTest.prop = prop;

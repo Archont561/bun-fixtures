@@ -13,6 +13,11 @@ import {
 } from "@/plugin.ts";
 import type { FixtureMap } from "@/types.ts";
 import fixtures from "./fixtures.ts";
+import {
+  brokenFixture,
+  recordingFixture,
+  teardownFailsFixture,
+} from "./support.ts";
 
 const here = import.meta.path;
 const test = base.extend(fixtures);
@@ -373,27 +378,16 @@ describe("engine internals", () => {
 describe("fixture teardown", () => {
   test("a teardown error rejects close() with that error", async () => {
     const map = {
-      flaky: {
-        scope: "test",
-        setup: async (use) => {
-          await use("value");
-          throw new Error("teardown exploded");
-        },
-      },
-    } satisfies FixtureMap;
+      flaky: teardownFailsFixture("flaky", "teardown exploded"),
+    };
     const { close } = await openFixtures(map, ["flaky"], { testFile: here });
     await expect(close()).rejects.toThrow("teardown exploded");
   });
 
   test("a setup that throws before use() surfaces its own error", async () => {
     const map = {
-      broken: {
-        scope: "test",
-        setup: async () => {
-          throw new Error("setup exploded");
-        },
-      },
-    } satisfies FixtureMap;
+      broken: brokenFixture("broken", "setup exploded"),
+    };
     await expect(
       openFixtures(map, ["broken"], { testFile: here }),
     ).rejects.toThrow("setup exploded");
@@ -402,48 +396,30 @@ describe("fixture teardown", () => {
   test("teardowns run in reverse setup order and a failing one does not skip the rest", async () => {
     const events: string[] = [];
     const map = {
-      first: {
-        scope: "test",
-        setup: async (use) => {
-          await use("first");
-          events.push("first:teardown");
-        },
-      },
-      second: {
-        scope: "test",
-        setup: async (use) => {
-          await use("second");
-          events.push("second:teardown");
-          throw new Error("second teardown exploded");
-        },
-      },
-    } satisfies FixtureMap;
+      first: recordingFixture("first", events),
+      second: teardownFailsFixture(
+        "second",
+        "second teardown exploded",
+        events,
+      ),
+    };
     const { close } = await openFixtures(map, ["first", "second"], {
       testFile: here,
     });
     await expect(close()).rejects.toThrow("second teardown exploded");
-    expect(events).toEqual(["second:teardown", "first:teardown"]);
+    expect(events).toEqual([
+      "first:setup",
+      "second:teardown",
+      "first:teardown",
+    ]);
   });
 
   test("a later setup failure tears down fixtures already built and rejects with that failure", async () => {
     const events: string[] = [];
     const map = {
-      a: {
-        scope: "test",
-        setup: async (use) => {
-          events.push("a:setup");
-          await use("a");
-          events.push("a:teardown");
-        },
-      },
-      b: {
-        scope: "test",
-        setup: async () => {
-          events.push("b:setup-throws");
-          throw new Error("b failed");
-        },
-      },
-    } satisfies FixtureMap;
+      a: recordingFixture("a", events),
+      b: brokenFixture("b", "b failed", events),
+    };
 
     await expect(
       openFixtures(map, ["a", "b"], { testFile: here }),
@@ -454,30 +430,10 @@ describe("fixture teardown", () => {
   test("fixtures built before a later setup failure tear down in LIFO order", async () => {
     const events: string[] = [];
     const map = {
-      first: {
-        scope: "test",
-        setup: async (use) => {
-          events.push("first:setup");
-          await use("first");
-          events.push("first:teardown");
-        },
-      },
-      second: {
-        scope: "test",
-        setup: async (use) => {
-          events.push("second:setup");
-          await use("second");
-          events.push("second:teardown");
-        },
-      },
-      third: {
-        scope: "test",
-        setup: async () => {
-          events.push("third:setup-throws");
-          throw new Error("third failed");
-        },
-      },
-    } satisfies FixtureMap;
+      first: recordingFixture("first", events),
+      second: recordingFixture("second", events),
+      third: brokenFixture("third", "third failed", events),
+    };
 
     await expect(
       openFixtures(map, ["first", "second", "third"], { testFile: here }),
@@ -494,32 +450,19 @@ describe("fixture teardown", () => {
   test("a teardown failure during that cleanup does not replace the setup error, and the rest still run", async () => {
     const events: string[] = [];
     const map = {
-      first: {
-        scope: "test",
-        setup: async (use) => {
-          await use("first");
-          events.push("first:teardown");
-        },
-      },
-      second: {
-        scope: "test",
-        setup: async (use) => {
-          await use("second");
-          throw new Error("second teardown failed");
-        },
-      },
-      third: {
-        scope: "test",
-        setup: async () => {
-          throw new Error("third failed");
-        },
-      },
-    } satisfies FixtureMap;
+      first: recordingFixture("first", events),
+      second: teardownFailsFixture("second", "second teardown failed", events),
+      third: brokenFixture("third", "third failed"),
+    };
 
     await expect(
       openFixtures(map, ["first", "second", "third"], { testFile: here }),
     ).rejects.toThrow("third failed");
-    expect(events).toEqual(["first:teardown"]);
+    expect(events).toEqual([
+      "first:setup",
+      "second:teardown",
+      "first:teardown",
+    ]);
   });
 
   // ADR 0025: with nothing in flight, the first LIFO teardown error is still
@@ -527,23 +470,9 @@ describe("fixture teardown", () => {
   test("a teardown error attaches the other teardown errors instead of dropping them", async () => {
     const events: string[] = [];
     const map = {
-      first: {
-        scope: "test",
-        setup: async (use) => {
-          await use("first");
-          events.push("first:teardown");
-          throw new Error("first teardown failed");
-        },
-      },
-      second: {
-        scope: "test",
-        setup: async (use) => {
-          await use("second");
-          events.push("second:teardown");
-          throw new Error("second teardown failed");
-        },
-      },
-    } satisfies FixtureMap;
+      first: teardownFailsFixture("first", "first teardown failed", events),
+      second: teardownFailsFixture("second", "second teardown failed", events),
+    };
 
     const { close } = await openFixtures(map, ["first", "second"], {
       testFile: here,
@@ -568,20 +497,9 @@ describe("fixture teardown", () => {
   // cleanup failure it used to swallow is now attached to it.
   test("a failed openFixtures attaches the cleanup error to the setup error", async () => {
     const map = {
-      first: {
-        scope: "test",
-        setup: async (use) => {
-          await use("first");
-          throw new Error("first teardown failed");
-        },
-      },
-      second: {
-        scope: "test",
-        setup: async () => {
-          throw new Error("second setup failed");
-        },
-      },
-    } satisfies FixtureMap;
+      first: teardownFailsFixture("first", "first teardown failed"),
+      second: brokenFixture("second", "second setup failed"),
+    };
 
     let caught: any;
     try {
