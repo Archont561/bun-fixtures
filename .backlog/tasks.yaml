@@ -4694,33 +4694,34 @@ tasks:
   - id: task_082
     title: Decide whether lefthook's actionlint step should warn-and-pass in the
       sandbox
-    description: "STATUS 2026-10-10: the failure below is no longer reproducible after
-      `sh scripts/restore.sh` (session skill step 1b). Pixi restores from origin branch
-      sandbox/bun-test-utils-linux-64; .pixi/envs/default/bin/actionlint (1.7.12) and the
-      pixi browser env both work. The decision below is still open, but option (b) is now
-      cheap in this sandbox. lefthook.yml runs .pixi/envs/default/bin/actionlint on staged
-      .github/workflows/*.{yml,yaml}. Before the restore, this sandbox had no pixi at all,
-      so that command dies with exit 127 and the whole pre-commit hook FAILS:
-      the commit does not happen, while lefthook's summary still shows
-      checkmarks for the passing steps. The comments in lefthook.yml and the
-      session skill both describe it as degrading gracefully; it does not.
-      CHOICE TO MAKE (maintainer's, not an agent's): (a) add `warn: true` to
-      that one command, so a missing binary is a notice while a present one
-      still blocks — smallest change, restores the documented behavior, and
-      actionlint stays a hard gate in CI; (b) install the pixi default env in
-      the dev container so the real actionlint runs locally — truer, but
-      heavier, and it does not help a sandbox where pixi cannot be fetched; (c)
-      leave it and keep `git commit --no-verify` for workflow-touching commits —
-      what task_079 and task_080 actually did, now documented in
-      .agents/skills/session/SKILL.md. RISK OF (a): a real actionlint finding
-      becomes a warning locally, so it reaches CI before a human sees it —
-      acceptable only because CI runs actionlint as its own job; check
-      .github/workflows for that job before choosing. Note every pre-commit
-      command is glob-restricted (a docs-only commit runs Biome over zero files
-      and skips the rest), so whatever is decided should be written as 'what
-      runs for which staged paths', not as a general promise. WHY IT IS PARKED:
-      it edits CI-adjacent config for developer ergonomics and was explicitly
-      out of scope for task_079 ('do not fix the shim')."
+    description: "STATUS 2026-10-10: the failure below is no longer reproducible
+      after `sh scripts/restore.sh` (session skill step 1b). Pixi restores from
+      origin branch sandbox/bun-test-utils-linux-64;
+      .pixi/envs/default/bin/actionlint (1.7.12) and the pixi browser env both
+      work. The decision below is still open, but option (b) is now cheap in
+      this sandbox. lefthook.yml runs .pixi/envs/default/bin/actionlint on
+      staged .github/workflows/*.{yml,yaml}. Before the restore, this sandbox
+      had no pixi at all, so that command dies with exit 127 and the whole
+      pre-commit hook FAILS: the commit does not happen, while lefthook's
+      summary still shows checkmarks for the passing steps. The comments in
+      lefthook.yml and the session skill both describe it as degrading
+      gracefully; it does not. CHOICE TO MAKE (maintainer's, not an agent's):
+      (a) add `warn: true` to that one command, so a missing binary is a notice
+      while a present one still blocks — smallest change, restores the
+      documented behavior, and actionlint stays a hard gate in CI; (b) install
+      the pixi default env in the dev container so the real actionlint runs
+      locally — truer, but heavier, and it does not help a sandbox where pixi
+      cannot be fetched; (c) leave it and keep `git commit --no-verify` for
+      workflow-touching commits — what task_079 and task_080 actually did, now
+      documented in .agents/skills/session/SKILL.md. RISK OF (a): a real
+      actionlint finding becomes a warning locally, so it reaches CI before a
+      human sees it — acceptable only because CI runs actionlint as its own job;
+      check .github/workflows for that job before choosing. Note every
+      pre-commit command is glob-restricted (a docs-only commit runs Biome over
+      zero files and skips the rest), so whatever is decided should be written
+      as 'what runs for which staged paths', not as a general promise. WHY IT IS
+      PARKED: it edits CI-adjacent config for developer ergonomics and was
+      explicitly out of scope for task_079 ('do not fix the shim')."
     source_links: []
     status: backlog
     priority: P3
@@ -4841,3 +4842,96 @@ tasks:
       push_comments: false
     created_at: 2026-10-10T10:25:00.697Z
     updated_at: 2026-10-10T10:26:19.306Z
+  - id: task_085
+    title: "Persist cassette callback results across runs (ADR 0035): per-test
+      sidecar, exact-source staleness, factory refusal"
+    description: Implements ADR 0035. Callback results persist to
+      __cassettes__/<test>.callbacks.json; only replay reads them; a changed
+      body is CALLBACK_NOT_RECORDED; a source recorded by more than one closure
+      is CALLBACK_AMBIGUOUS across runs; corrupt sidecar is
+      CALLBACK_STORE_INVALID. Cassette bytes unchanged (golden test). Spec 0012
+      R2/R8 amended. Depends on nothing; prerequisite for ADR 0036.
+    source_links: []
+    status: done
+    priority: P1
+    labels:
+      - vcr
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - sidecar written in record mode with this run's recordings only
+      - replay reads the sidecar only in replay mode
+      - a changed callback body throws CALLBACK_NOT_RECORDED and names the
+        sidecar
+      - a source recorded by more than one closure is refused across runs with
+        CALLBACK_AMBIGUOUS
+      - a corrupt or unknown-format sidecar throws CALLBACK_STORE_INVALID
+      - a refused unencodable result writes no file
+      - cassette bytes unchanged (http-compat golden test passes)
+      - spec 0012 R2 and R8 amended; ADR 0035 status accepted
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T13:16:36.145Z
+    updated_at: 2026-10-10T13:22:44.567Z
+  - id: task_086
+    title: Auto cassette mode (record on first use, replay after) and cache clear
+      for cassettes and snapshots (ADR 0036)
+    description: "Implements ADR 0036. VCR_MODE=auto is the default: cassette absent
+      -> record and write on a complete run; present -> replay with
+      CASSETTE_MISMATCH and a clear hint on a miss; CI with no cassette ->
+      CASSETTE_NOT_FOUND. bun-test-utils cache clear --file <f> [--test <name>]
+      | --all [--dry-run] removes cassettes, sidecars, and snapshots. Depends on
+      task for ADR 0035."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - vcr
+      - cli
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - default mode is auto; first run records, second run replays with no
+        network
+      - a failed test body writes no cache
+      - CI never records; missing cassette fails with CASSETTE_NOT_FOUND
+      - a miss in a present cassette throws CASSETTE_MISMATCH naming the clear
+        command
+      - cache clear --file scopes to one test file; --test scopes to one test;
+        --all covers every __cassettes__ and __snapshots__ dir; --dry-run
+        deletes nothing; no scope is a usage error
+      - spec 0012 and 0013 amended; README and docs guides updated
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T13:16:36.924Z
+    updated_at: 2026-10-10T13:16:36.924Z

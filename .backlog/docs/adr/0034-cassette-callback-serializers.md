@@ -1,6 +1,6 @@
 # 0034 — Cassette callback serializers: reversible, versioned, fixture-local
 
-- **Status:** accepted
+- **Status:** accepted, amended by 0035 (point 8: persistence)
 - **Date:** 2026-10-09
 
 ## Context

@@ -106,9 +106,16 @@ function run(
   return { stdout, stderr, output: stdout + stderr, exitCode: proc.exitCode };
 }
 
-/** Runs `bun test` inside the scratch project. */
-export function runTests(project: Project): RunResult {
-  return run(project, [BUN, "test"]);
+/**
+ * Runs `bun test` inside the scratch project. `env` overlays the inherited
+ * environment for this run only, so a scenario can run the same project twice
+ * in different modes.
+ */
+export function runTests(
+  project: Project,
+  env: Record<string, string> = {},
+): RunResult {
+  return run(project, [BUN, "test"], env);
 }
 
 /** Runs the bun-test-utils CLI inside the scratch project. */

@@ -113,8 +113,17 @@ serializer needed to decode a recording but not registered fails replay with
 serializer that throws is wrapped as `CALLBACK_SERIALIZER_FAILED` with the
 original cause. Documented losses: unknown `Error` subclass constructors and
 non-enumerable error properties (such as `cause`), `RegExp.lastIndex`, and
-shared-reference identity. Callback results stay in memory per test — the
-cassette file holds HTTP entries only.
+shared-reference identity.
+
+Callback results persist per test in `__cassettes__/<test>.callbacks.json`, next
+to the cassette (ADR 0035). `record` writes this run's results when the test
+ends. `replay` reads them in replay mode only, so a later run replays a callback
+an earlier run recorded, without running it. A callback whose body changed has
+different source text, so replay refuses it with `CALLBACK_NOT_RECORDED` and names
+the file to re-record. A source text recorded from more than one closure is
+refused with `CALLBACK_AMBIGUOUS`, because the closures' captured values cannot
+be told apart across runs. A corrupt sidecar fails at setup with
+`CALLBACK_STORE_INVALID`. The cassette file still holds HTTP entries only.
 
 ## Record and replay HTTP traffic
 
@@ -143,7 +152,8 @@ An unmatched replay request fails instead of reaching the network.
 ## Files and secrets
 
 The current implementation writes deterministic JSON under `__cassettes__/`
-next to the test. The exact file schema is not yet a stable public format, and
+next to the test: the HTTP cassette, and the callback sidecar when a test records
+callbacks. The exact file schema is not yet a stable public format, and
 migration tooling is deferred; treat cassette files as generated test artifacts
 owned by the version that recorded them.
 

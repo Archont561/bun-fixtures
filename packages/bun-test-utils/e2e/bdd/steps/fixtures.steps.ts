@@ -82,6 +82,16 @@ When("I run the test suite", (state) => ({
   lastRun: runTests(theProject(state)),
 }));
 
+When("I run the test suite with VCR_MODE set to {string}", (state, [mode]) => ({
+  ...state,
+  lastRun: runTests(theProject(state), { VCR_MODE: mode }),
+}));
+
+When("I rewrite the file {string}:", (state, [path], argument) => {
+  writeProjectFile(theProject(state), path, docString(argument));
+  return state;
+});
+
 When("I run {string}", (state, [args]) => ({
   ...state,
   lastRun: runCli(theProject(state), args.split(/\s+/).filter(Boolean)),

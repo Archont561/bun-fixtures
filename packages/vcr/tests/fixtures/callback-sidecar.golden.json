@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "recordings": [
+    {
+      "source": "function anonymous(\n) {\nreturn { id: 'u1' }\n}",
+      "sourceLabel": "2927667798:45",
+      "closures": 1,
+      "encoded": "{\"id\":\"u1\"}"
+    }
+  ]
+}
