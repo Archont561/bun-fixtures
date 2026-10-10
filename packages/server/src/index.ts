@@ -96,7 +96,7 @@ export interface HttpMockHelper {
   passthrough(matcher?: HttpMockMatcher): void;
   reset(): void;
   calls(): HttpMockCall[];
-  install(target: any): Promise<() => Promise<void>>;
+  install(target: PlaywrightRouteTargetLike): Promise<() => Promise<void>>;
 }
 
 interface HttpMockHandler {
@@ -108,6 +108,44 @@ interface HttpMockHandler {
 interface HttpMockState {
   handlers: HttpMockHandler[];
   calls: HttpMockCall[];
+}
+
+/**
+ * Structural Playwright surface the HTTP mock installs onto — the audit's
+ * narrow adapter interface standing in for `BrowserContext | Page`, which the
+ * published package cannot name without taking the optional peer as a type
+ * dependency.
+ */
+interface PlaywrightRouteTargetLike {
+  route(
+    pattern: string,
+    handler: (route: PlaywrightRouteLike) => Promise<void> | void,
+  ): Promise<void> | void;
+  unroute?(
+    pattern: string,
+    handler: (route: PlaywrightRouteLike) => Promise<void> | void,
+  ): Promise<void> | void;
+}
+
+/** One intercepted Playwright request, with only what resolution needs. */
+interface PlaywrightRouteLike {
+  request(): PlaywrightRequestLike;
+  continue(): Promise<void> | void;
+  fulfill(options: {
+    status: number;
+    headers: Record<string, string>;
+    body: Buffer;
+  }): Promise<void> | void;
+}
+
+/** The fields of a Playwright request the adapter reads. */
+interface PlaywrightRequestLike {
+  method(): string;
+  url(): string;
+  headers(): Record<string, string>;
+  /** Playwright returns a Node Buffer — a Uint8Array is a valid body. */
+  postDataBuffer?(): Uint8Array | null | undefined;
+  postData?(): string | null | undefined;
 }
 
 function createHttpMock(state: HttpMockState): HttpMockHelper {
@@ -195,7 +233,7 @@ function matcherMatches(matcher: HttpMockMatcher, request: Request): boolean {
 }
 
 async function installPlaywrightRoutes(
-  target: any,
+  target: PlaywrightRouteTargetLike,
   state: HttpMockState,
 ): Promise<() => Promise<void>> {
   if (typeof target?.route !== "function") {
@@ -205,7 +243,7 @@ async function installPlaywrightRoutes(
     );
   }
 
-  const routeHandler = async (route: any) => {
+  const routeHandler = async (route: PlaywrightRouteLike) => {
     const pwRequest = route.request();
     const method = pwRequest.method();
     const body = ["GET", "HEAD"].includes(method)
@@ -214,7 +252,10 @@ async function installPlaywrightRoutes(
     const request = new Request(pwRequest.url(), {
       method,
       headers: pwRequest.headers(),
-      body,
+      // bun-types' Buffer<ArrayBufferLike> vs lib's BodyInit
+      // ArrayBufferView<ArrayBuffer> disagree at the type level only; a
+      // Buffer is a valid request body at runtime.
+      body: body as BodyInit | undefined,
     });
     const response = await resolveMock(request, state);
     if (!response) {

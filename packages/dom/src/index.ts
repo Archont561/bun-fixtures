@@ -44,6 +44,24 @@ const GLOBAL_PROPERTIES = [
 ] as const;
 
 /**
+ * The window fixture bridges happy-dom onto the host `globalThis` by name.
+ * This view of `globalThis` names that dynamic surface instead of an `any`
+ * cast (audit finding 2): property keys are strings the swap reads and writes,
+ * and the event constructors the page helper dispatches with.
+ */
+type EventCtorLike = new (type: string, init?: EventInit) => Event;
+
+interface GlobalDomCarrier {
+  [key: string]: unknown;
+  MouseEvent: EventCtorLike;
+  Event: EventCtorLike;
+}
+
+function globals(): GlobalDomCarrier {
+  return globalThis as unknown as GlobalDomCarrier;
+}
+
+/**
  * Concurrency assumption (audit 2026-10-06, finding 4): the swap installs the
  * fixture's window onto `globalThis` and the teardown restores whatever the
  * setup captured, so two overlapping `window` fixtures are only correct in
@@ -73,15 +91,15 @@ export const windowFixture = createFixture<GlobalWindow>({
       );
     }
     const win = new GlobalWindowCtor({ url: "http://localhost" });
-    const originalGlobals = new Map<string, any>();
-    const g = globalThis as any;
+    const originalGlobals = new Map<string, unknown>();
+    const g = globals();
 
-    for (const prop of GLOBAL_PROPERTIES) {
+    for (const prop of GLOBAL_PROPERTIES as readonly string[]) {
       if (prop in g) {
         originalGlobals.set(prop, g[prop]);
       }
       if (prop in win) {
-        g[prop] = (win as any)[prop];
+        g[prop] = (win as unknown as Record<string, unknown>)[prop];
       }
     }
 
@@ -91,7 +109,7 @@ export const windowFixture = createFixture<GlobalWindow>({
       await win.happyDOM.abort();
       await win.happyDOM.close();
 
-      for (const prop of GLOBAL_PROPERTIES) {
+      for (const prop of GLOBAL_PROPERTIES as readonly string[]) {
         if (originalGlobals.has(prop)) {
           g[prop] = originalGlobals.get(prop);
         } else {
@@ -136,7 +154,7 @@ export const pageFixture = createFixture<DomPageHelper>({
             { details: { selector } },
           );
         el.dispatchEvent(
-          new (globalThis as any).MouseEvent("click", { bubbles: true }),
+          new (globals().MouseEvent)("click", { bubbles: true }),
         );
       },
       type(selector: string, text: string) {
@@ -148,12 +166,8 @@ export const pageFixture = createFixture<DomPageHelper>({
             { details: { selector } },
           );
         el.value = text;
-        el.dispatchEvent(
-          new (globalThis as any).Event("input", { bubbles: true }),
-        );
-        el.dispatchEvent(
-          new (globalThis as any).Event("change", { bubbles: true }),
-        );
+        el.dispatchEvent(new (globals().Event)("input", { bubbles: true }));
+        el.dispatchEvent(new (globals().Event)("change", { bubbles: true }));
       },
       html() {
         return doc.body.innerHTML;

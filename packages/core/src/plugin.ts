@@ -80,7 +80,8 @@ export type {
 /* -------------------------------------------------------------------------- */
 
 interface Instance {
-  value: any;
+  /** The delivered fixture value — `unknown`: fixture types are the user's. */
+  value: unknown;
   /** Resolves the `use()` promise and waits for the setup function to finish. */
   teardown: () => Promise<void>;
 }
@@ -116,7 +117,17 @@ const META_KEYS = new Set([
 const SCOPE_RANK: Record<Scope, number> = { session: 0, file: 1, test: 2 };
 const FIXTURE_MAP_SYMBOL = Symbol.for("bun-test-utils.fixtureMap");
 
-const g = globalThis as any;
+/**
+ * The engine keeps all lifecycle state on a global singleton so the preload
+ * copy and every bundled copy share one instance. This carrier names the one
+ * property this module touches on `globalThis` — the narrow interface instead
+ * of an `any` cast at the global boundary (audit finding 2).
+ */
+interface GlobalStateCarrier {
+  __BUN_TEST_UTILS__?: State;
+}
+
+const g = globalThis as GlobalStateCarrier;
 
 const state: State = (g.__BUN_TEST_UTILS__ ??= {
   session: new Map(),
@@ -141,6 +152,10 @@ const state: State = (g.__BUN_TEST_UTILS__ ??= {
  * whose own callback signatures wrap the
  * fixture context.
  */
+// `(...args: any[]) => any` is deliberate on these two: source-text detection
+// accepts every callable shape a user writes (strict `unknown[]` parameters
+// would reject typed callbacks by contravariance). This is the one dynamic
+// boundary; the audit's narrowed interfaces live at the dependency adapters.
 export function detectFixtures(
   fn: (...args: any[]) => any,
   index: number,
@@ -317,11 +332,11 @@ async function build(
   const released = new Promise<void>((r) => (release = r));
 
   let delivered = false;
-  let value: any;
+  let value: unknown;
   let deliver!: () => void;
   const gotValue = new Promise<void>((r) => (deliver = r));
 
-  const use = (v: any): Promise<void> => {
+  const use = (v: unknown): Promise<void> => {
     if (delivered)
       throw new FixtureLifecycleError(
         "FIXTURE_USE_CALLED_TWICE",
@@ -375,7 +390,7 @@ async function instantiate(
   ctx: FixtureContext,
   file: string,
   testStack: Array<() => Promise<void>>,
-): Promise<any> {
+): Promise<unknown> {
   const def = map[name]!;
   const scope = scopeOf(def);
   const key = `${mapId(map)}:${name}#${defId(def)}`;
@@ -707,7 +722,7 @@ export function createTestWithFixtures(
 export async function executeScenarioSteps(
   steps: Array<{
     phase: "given" | "when" | "then";
-    fn: (ctx: ScenarioContext<any>) => any;
+    fn: (ctx: ScenarioContext<any>) => unknown;
   }>,
   context: ScenarioContext<any>,
 ): Promise<void> {
@@ -726,12 +741,12 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
     const steps: Array<{
       phase: "given" | "when" | "then";
       name: string;
-      fn: (ctx: ScenarioContext<any>) => any;
+      fn: (ctx: ScenarioContext<any>) => unknown;
     }> = [];
     let registered = false;
 
     const chain = {
-      given(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      given(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         if (steps.some((step) => step.phase !== "given"))
           throw new Error(
             "[bun-test-utils] scenario given() must precede when() and then()",
@@ -739,7 +754,7 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
         steps.push({ phase: "given", name, fn });
         return chain;
       },
-      when(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      when(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         if (steps.some((step) => step.phase === "then"))
           throw new Error(
             "[bun-test-utils] scenario when() must precede then()",
@@ -748,7 +763,7 @@ function scenarioFactory(file: string, map: FixtureMap): ScenarioFactory {
         return chain;
       },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the intentional fluent scenario phase.
-      then(name: string, fn: (ctx: ScenarioContext<any>) => any) {
+      then(name: string, fn: (ctx: ScenarioContext<any>) => unknown) {
         steps.push({ phase: "then", name, fn });
         if (!registered) {
           registered = true;
@@ -791,7 +806,11 @@ function makeAwareTest(
 ): FixtureAwareTest {
   const map = cloneFixtures ? { ...fixtures } : fixtures;
   const resolveFile = () => resolve(fixedFile ?? callerFile());
-  const aware = ((name: string, fn: any, opts?: TestOptions) => {
+  const aware = ((
+    name: string,
+    fn: (ctx: FixtureContext) => void | Promise<void>,
+    opts?: TestOptions,
+  ) => {
     return makeTest(resolveFile(), map)(name, fn, opts);
   }) as FixtureAwareTest;
   aware.extend = (more) => makeAwareTest({ ...map, ...more }, fixedFile);

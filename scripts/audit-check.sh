@@ -28,9 +28,12 @@ fi
 MERGE_BASE="$(git merge-base "$BASE" HEAD 2>/dev/null || echo "$BASE")"
 
 echo "== audit: TODO/FIXME additions (diff vs ${BASE})"
+# The trailing colon separates a real work marker (the word in caps, directly
+# followed by a colon, the universal convention) from prose about the marker
+# policy — including this file's own text.
 todo_hits="$(git diff "$MERGE_BASE" -- packages apps scripts .github \
   | grep -E '^\+' | grep -vE '^\+\+\+' \
-  | grep -E '\b(TODO|FIXME)\b' || true)"
+  | grep -E '\b(TODO|FIXME):' || true)"
 if [ -n "$todo_hits" ]; then
   echo "::error::TODO/FIXME added — finish the work or record it in the Backlog instead:"
   echo "$todo_hits"
