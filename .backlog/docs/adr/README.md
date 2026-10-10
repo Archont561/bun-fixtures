@@ -37,11 +37,12 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0031](./0031-server-fixtures-pack.md) | Server fixtures pack: testServer, serverUrl, httpMock leave browser | accepted, amends 0013 |
 | [0032](./0032-standard-playwright-install.md) | Browser binaries come from the standard Playwright install; retire the browsers branch | accepted, amends 0030, amended by 0033 |
 | [0033](./0033-browser-ci-verification.md) | CI uses the shared browser installer and verifies both Chromium launch paths | accepted, amends 0032 |
-| [0034](./0034-cassette-callback-serializers.md) | Cassette callback serializers: reversible, versioned, fixture-local | accepted, amends 0022 and 0026, amended by 0035 |
+| [0034](./0034-cassette-callback-serializers.md) | Cassette callback serializers: reversible, versioned, fixture-local | accepted, amends 0022 and 0026, amended by 0035 and 0040 |
 | [0035](./0035-persist-callback-results-across-runs.md) | Persist cassette callback results across runs: sidecar, exact-source staleness, internal in 0.1.x | accepted, amends 0034 (point 8) |
 | [0036](./0036-auto-cassette-mode-and-cache-clearing.md) | Auto cassette mode (record on first use, replay after) and explicit cache clearing for cassettes and snapshots | accepted |
 | [0037](./0037-cli-workspace-and-prompts.md) | CLI as a private workspace bundled into the metapackage: citty commands, clack prompts for `cache clear`, project-root scoping, no config file in v1 | accepted |
 | [0038](./0038-general-purpose-positioning-playwright-style-fixtures.md) | General-purpose test extension with Playwright-style fixtures; supersedes no record, retires the pytest framing from published copy | accepted |
 | [0039](./0039-cassette-get-or-record-wrapper.md) | Callable cassette get-or-record wrapper with visible local refreshes | accepted; amends 0036 decision 4 for local callable callback misses only |
+| [0040](./0040-global-callback-serializers.md) | Process-wide callback serializer registration for cassette preloads | accepted; amends 0034 points 3 and 5 |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).
