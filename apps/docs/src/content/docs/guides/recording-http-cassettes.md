@@ -156,6 +156,14 @@ export const pointSerializer = defineCallbackSerializer<Point>({
 registerCallbackSerializer(pointSerializer);
 ```
 
+Load the module before tests construct fixtures:
+
+```toml
+# bunfig.toml
+[test]
+preload = ["./test-serializers.ts"]
+```
+
 Global registrations last for the Bun process. `registerCallbackSerializer`
 returns the serializer object. If a test helper owns a temporary registration,
 call `unregisterCallbackSerializer(serializer)` in cleanup; it removes every

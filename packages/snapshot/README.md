@@ -19,7 +19,7 @@ test("records a stable value", async ({ snapshot }) => {
 });
 ```
 
-The callable form runs its callback on every invocation, awaits it, matches the result under its required non-empty name, and returns the same result. It never caches or keys by callback source. A thrown or rejected callback error propagates without writing a snapshot. Direct `match` and `matchFile` retain their existing behavior.
+The callable form runs its callback on every invocation, awaits it, matches the result under its required non-empty name, and returns the same result. It is equivalent to awaiting the callback, then calling `snapshot.match(result, name)`; it never caches or keys by callback source. A thrown or rejected callback error propagates without writing a snapshot. Direct `match` and `matchFile` retain their existing behavior, including anonymous auto-numbered keys for `match(value)`.
 
 Snapshots are written to `__snapshots__/<test name>.snap.json` next to the test file. Commit that directory.
 

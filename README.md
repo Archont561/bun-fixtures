@@ -65,6 +65,20 @@ Run `bun test`. The full guide is in the [quickstart](https://archont561.github.
 
 Install only the optional peers you use. `fast-check`, `@aboviq/bun-test-cucumber`, `happy-dom`, and `playwright` are each needed only by the capability that names them.
 
+## Callable helpers at a glance
+
+Both `snapshot` and `cassette` are callable fixtures, but they solve different
+problems:
+
+| Form | What happens on each call | Identity and persistence |
+| :-- | :-- | :-- |
+| `await snapshot(fn, name)` | Runs and awaits `fn`, matches its result, then returns that result. | `name` is required and is the snapshot key. This is an assertion, never a cache or function-body key. |
+| `await cassette(fn)` | Replays a callback result when available, otherwise records according to cassette mode. | Callback source and cassette mode determine replay/record behavior; local auto refreshes only a missing callback source visibly. |
+
+Use `snapshot.match(value, name?)` for an already-produced value, and use
+`cassette.record` or `cassette.replay` when you need explicit callback-cache
+control. The guides explain [snapshot behavior](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/) and [cassette modes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) in full.
+
 ## Stability and platforms
 
 - **Stable:** the fixture engine, and the standard, DOM, snapshot, and property-testing capabilities. These follow semantic versioning.

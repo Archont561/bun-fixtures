@@ -194,6 +194,35 @@ import {
 
 Global registrations remain until unregistered. `registerCallbackSerializer` returns the supplied serializer; `unregisterCallbackSerializer(serializer)` removes every registration of that exact object and returns whether it removed one or more.
 
+For example, a Bun test preload can make one reversible type available to every
+cassette fixture without repeating `cassette.addSerializer(...)`:
+
+```ts
+// test-serializers.ts, listed in bunfig.toml [test].preload
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
+
+class Token {
+  constructor(readonly value: string) {}
+}
+
+registerCallbackSerializer(
+  defineCallbackSerializer<Token>({
+    name: "token",
+    version: 1,
+    test: (value) => value instanceof Token,
+    serialize: (token) => ({ value: token.value }),
+    deserialize: (data) => new Token((data as { value: string }).value),
+  }),
+);
+```
+
+Fixture-local serializers still win over this project-wide default. See
+[Recording HTTP cassettes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/)
+for the versioning and cleanup rules.
+
 ## Stability and platforms
 
 - **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (callable `cassette(fn)`, explicit `record`/`replay`, fixture-local `addSerializer`, `/vcr` global serializer registration, and exact HTTP matching by uppercase method plus full URL).

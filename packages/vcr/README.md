@@ -20,6 +20,34 @@ test("replays a user lookup", async ({ cassette }) => {
 
 The helper-only `@archont561/bun-test-utils/vcr` subpath exports `defineCallbackSerializer`, `registerCallbackSerializer`, `unregisterCallbackSerializer`, and the `CallbackSerializer` type. It exports no fixture. `registerCallbackSerializer(serializer)` returns that serializer and makes it available to every cassette in the process, including root plugin fixtures after a preload. `unregisterCallbackSerializer(serializer)` removes every registration of that exact object and returns `true` when it removed one or more, otherwise `false`. Fixture-local `cassette.addSerializer` remains available and wins over globals; globals then win over built-ins.
 
+A project preload can register a shared serializer once:
+
+```ts
+// test-serializers.ts
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
+
+class Token {
+  constructor(readonly value: string) {}
+}
+
+export const tokenSerializer = registerCallbackSerializer(
+  defineCallbackSerializer<Token>({
+    name: "token",
+    version: 1,
+    test: (value) => value instanceof Token,
+    serialize: (token) => ({ value: token.value }),
+    deserialize: (data) => new Token((data as { value: string }).value),
+  }),
+);
+```
+
+Put that module in `bunfig.toml` under `[test].preload`. Keep the returned
+identity if its owner needs to unregister it; a serializer version remains part
+of the persisted callback format, so a same-name version mismatch stays strict.
+
 The stable contract is callable `cassette(fn)`, explicit `record`/`replay`, fixture-local and `/vcr` global serializer registration, and exact HTTP matching. In local `auto` mode only, a callable callback source miss re-records and warns; HTTP misses, explicit replay, CI, and serializer version mismatches remain errors. Matcher DSLs, configurable redaction, and migration tooling are not part of this release. The on-disk formats are not yet stable.
 
 See the [cassette guide](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour, and [spec 0012](../../.backlog/docs/specs/0012-http-cassette-vcr.md) for the requirements.
