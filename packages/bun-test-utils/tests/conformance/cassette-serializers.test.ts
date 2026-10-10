@@ -2,13 +2,17 @@
  * Cassette callback serializers at the public API boundary (ADR 0024).
  *
  * Imports only published-style entrypoints: the root runner for the
- * `cassette` fixture and the `/vcr` subpath for `defineCallbackSerializer`.
- * The engine-level contract lives in `packages/vcr/tests/`; this suite pins
- * what an installed consumer composes.
+ * `cassette` fixture and the `/vcr` subpath for callback serializers. The
+ * engine-level contract lives in `packages/vcr/tests/`; this suite pins what
+ * an installed consumer composes.
  */
 import { afterAll, beforeAll } from "bun:test";
 import { expect, test } from "@archont561/bun-test-utils";
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+  unregisterCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
 
 /**
  * The cassette fixture's mode is pinned at the file level: every test here
@@ -98,6 +102,25 @@ test("a registered serializer round-trips a class instance", async ({
   const replayed = await cassette.replay(loadToken);
   expect(replayed.token).toBeInstanceOf(Token);
   expect(replayed.token.value).toBe("t-1");
+});
+
+test("a globally registered serializer from /vcr applies to the root cassette", async ({
+  cassette,
+}) => {
+  const registered = registerCallbackSerializer(tokenSerializer);
+  try {
+    const loadToken = () => ({ token: new Token("global") });
+    cassette.setMode("passthrough");
+    expect(await cassette.record(loadToken)).toEqual({
+      token: new Token("global"),
+    });
+    const replayed = await cassette.replay(loadToken);
+    expect(replayed.token).toBeInstanceOf(Token);
+    expect(replayed.token.value).toBe("global");
+  } finally {
+    expect(unregisterCallbackSerializer(registered)).toBe(true);
+  }
+  expect(unregisterCallbackSerializer(registered)).toBe(false);
 });
 
 test("an unclaimed class instance is still refused, with the coded hint", async ({

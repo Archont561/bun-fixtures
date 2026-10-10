@@ -151,7 +151,7 @@ test("loads the user", async ({ httpMock }) => {
 });
 ```
 
-`cassette(fn)` is the get-or-record callback form; explicit `cassette.record` and `cassette.replay` keep precise control. In local default `auto` mode, a missing callback source records with a visible warning and replaces its stale sidecar entry; CI, explicit replay, and serializer-version mismatches remain strict. A test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
+`cassette(fn)` is the get-or-record callback form; explicit `cassette.record` and `cassette.replay` keep precise control. In local default `auto` mode, a missing callback source records with a visible warning and replaces its stale sidecar entry; CI, explicit replay, and serializer-version mismatches remain strict. Use `cassette.addSerializer(...)` for a test-specific callback value type, or register a reusable preload serializer once through the `/vcr` subpath. A test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
 
 ## Optional peers
 
@@ -174,17 +174,23 @@ Typed helpers live on four subpaths. They export definitions and types only, nev
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 import { givenStep, whenStep, thenStep } from "@archont561/bun-test-utils/bdd";
 import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+  unregisterCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
 ```
 
 - `/pbt`: `defineArbitraries` for reusable fast-check arbitrary records.
 - `/bdd`: `givenStep`, `whenStep`, `thenStep` for reusable scenario steps.
 - `/snap`: register and unregister global snapshot serializers, usually from a preload.
-- `/vcr`: `defineCallbackSerializer` for reversible cassette value serializers.
+- `/vcr`: `defineCallbackSerializer` for reversible cassette value serializers, plus `registerCallbackSerializer` and identity-based `unregisterCallbackSerializer` for serializers shared process-wide (typically from a preload). Fixture-local `cassette.addSerializer` remains available and takes precedence over global registrations.
+
+Global registrations remain until unregistered. `registerCallbackSerializer` returns the supplied serializer; `unregisterCallbackSerializer(serializer)` removes every registration of that exact object and returns whether it removed one or more.
 
 ## Stability and platforms
 
-- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (callable `cassette(fn)`, explicit `record`/`replay`, `addSerializer`, and exact HTTP matching by uppercase method plus full URL).
+- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (callable `cassette(fn)`, explicit `record`/`replay`, fixture-local `addSerializer`, `/vcr` global serializer registration, and exact HTTP matching by uppercase method plus full URL).
 - **Experimental, may change in minor versions:** the browser capability and BDD scenarios.
 - **Not yet frozen:** the on-disk cassette and snapshot file formats, and the header-redaction helper.
 - **Not in this release:** a cassette matcher DSL, configurable redaction, cassette migration tooling, database and filesystem-sandbox fixtures, and worker-scoped fixtures.

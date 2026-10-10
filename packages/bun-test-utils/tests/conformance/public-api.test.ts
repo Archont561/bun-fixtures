@@ -6,7 +6,11 @@ import { givenStep, thenStep, whenStep } from "@archont561/bun-test-utils/bdd";
 import * as pbtApi from "@archont561/bun-test-utils/pbt";
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 import * as vcrApi from "@archont561/bun-test-utils/vcr";
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+  unregisterCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
 import fc from "fast-check";
 
 test("public root exports only the approved runner values", () => {
@@ -21,7 +25,24 @@ test("typed helpers are scoped to their capability subpaths", () => {
     "thenStep",
     "whenStep",
   ]);
-  expect(Object.keys(vcrApi).sort()).toEqual(["defineCallbackSerializer"]);
+  expect(Object.keys(vcrApi).sort()).toEqual([
+    "defineCallbackSerializer",
+    "registerCallbackSerializer",
+    "unregisterCallbackSerializer",
+  ]);
+});
+
+test("global callback serializer helpers register by exact identity", () => {
+  const serializer = defineCallbackSerializer<Date>({
+    name: "public-api-date",
+    version: 1,
+    test: () => false,
+    serialize: (value) => value.getTime(),
+    deserialize: (data) => new Date(data as number),
+  });
+  expect(registerCallbackSerializer(serializer)).toBe(serializer);
+  expect(unregisterCallbackSerializer(serializer)).toBe(true);
+  expect(unregisterCallbackSerializer(serializer)).toBe(false);
 });
 
 test("defineArbitraries returns arbitrary records and factories unchanged", () => {

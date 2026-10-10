@@ -88,7 +88,8 @@ test("replays an account", async ({ cassette }) => {
 
 Other values must be plain data: `null`, booleans, strings, finite numbers, arrays without holes, and plain objects. Anything else makes `record` throw a `CassetteError` with the code `CALLBACK_NOT_SERIALIZABLE`. The error names the path to the value, and nothing is stored. A class instance, a function, a symbol, a sparse array, or a circular structure all fail this way.
 
-The fix is to convert the value inside the callback, or to teach the cassette the type:
+The fix is to convert the value inside the callback, or to teach one cassette
+fixture the type:
 
 ```ts
 import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
@@ -120,9 +121,55 @@ test("replays a point", async ({ cassette }) => {
 });
 ```
 
+### Share a callback serializer from a preload
+
+When every cassette in a process needs the same custom class, register it once
+from a Bun test preload instead of repeating `cassette.addSerializer(...)` in
+every test. Import the public `/vcr` subpath; it shares registrations with the
+root cassette plugin even though those entrypoints are bundled separately.
+
+```ts
+// test-serializers.ts, listed in bunfig.toml [test].preload
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
+
+export class Point {
+  constructor(
+    readonly x: number,
+    readonly y: number,
+  ) {}
+}
+
+export const pointSerializer = defineCallbackSerializer<Point>({
+  name: "point",
+  version: 1,
+  test: (value) => value instanceof Point,
+  serialize: (point) => ({ x: point.x, y: point.y }),
+  deserialize: (data) => {
+    const { x, y } = data as { x: number; y: number };
+    return new Point(x, y);
+  },
+});
+
+registerCallbackSerializer(pointSerializer);
+```
+
+Global registrations last for the Bun process. `registerCallbackSerializer`
+returns the serializer object. If a test helper owns a temporary registration,
+call `unregisterCallbackSerializer(serializer)` in cleanup; it removes every
+registration of that exact object and returns `true` when it removed one or
+more, otherwise `false`.
+
+Fixture-local serializers stay available and win over globals. The complete
+selection order is newest fixture-local registration, newest global
+registration, then built-ins. This lets a focused test override a project
+preload without changing other tests. Multiple registrations are allowed.
+
 Serializers are named and versioned, and each encoded payload records both. Two failures are reported by code:
 
-- `CALLBACK_SERIALIZER_NOT_FOUND`: a recording needs an exact serializer name and version that is not registered. Replay fails rather than returning a wrong value. A same-name, different-version registration is also an error; `cassette(fn)` never silently re-records a serializer migration.
+- `CALLBACK_SERIALIZER_NOT_FOUND`: a recording needs an exact serializer name and version that is not registered, whether serializers are fixture-local or global. Replay fails rather than returning a wrong value. A same-name, different-version registration is also an error; `cassette(fn)` never silently re-records a serializer migration.
 - `CALLBACK_SERIALIZER_FAILED`: a serializer threw. The error wraps the original cause.
 
 Some information is not preserved. The built-ins do not keep unknown `Error` subclass constructors, non-enumerable error properties such as `cause`, `RegExp.lastIndex`, or shared-reference identity.

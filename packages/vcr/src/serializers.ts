@@ -3,9 +3,10 @@
  *
  * `record` encodes a callback result to the text the registry stores;
  * `replay` decodes that text back to a structural reconstruction. A value is
- * encoded by the first serializer that claims it — user registrations run
- * newest-first, then the built-ins — and every other value must be plain
- * data or is refused as in ADR 0026. A serialized position holds a
+ * encoded by the first serializer that claims it — fixture-local registrations
+ * run newest-first, then process-wide registrations newest-first, then the
+ * built-ins — and every other value must be plain data or is refused as in ADR
+ * 0026. A serialized position holds a
  * `{ "__bunTestUtils": { name, version, data } }` envelope inside the
  * otherwise plain JSON payload, so encoded values are self-describing and
  * versionable; plain data encodes byte-identically to `JSON.stringify`.
@@ -29,6 +30,51 @@ export interface CallbackSerializer<T = unknown> {
   serialize(value: T): unknown;
   /** Reconstructs the value from fully decoded data. */
   deserialize(data: unknown): T;
+}
+
+/**
+ * Shared by the root plugin bundle and the public `/vcr` bundle, so a preload
+ * registration reaches every cassette codec in this Bun process (ADR 0040).
+ */
+const GLOBAL_CALLBACK_SERIALIZERS = Symbol.for(
+  "bun-test-utils.vcrCallbackSerializers",
+);
+const globalCallbackSerializers = ((globalThis as Record<symbol, unknown>)[
+  GLOBAL_CALLBACK_SERIALIZERS
+] ??= []) as CallbackSerializer<unknown>[];
+
+/**
+ * Registers a serializer for every cassette created in this Bun process.
+ * Fixture-local `cassette.addSerializer` registrations still run first.
+ */
+export function registerCallbackSerializer<T>(
+  serializer: CallbackSerializer<T>,
+): CallbackSerializer<T> {
+  validateSerializer(serializer, "registerCallbackSerializer");
+  globalCallbackSerializers.unshift(serializer as CallbackSerializer<unknown>);
+  return serializer;
+}
+
+/**
+ * Unregisters every registration of this exact serializer object. Returns true
+ * when at least one registration was removed (ADR 0040).
+ */
+export function unregisterCallbackSerializer<T>(
+  serializer: CallbackSerializer<T>,
+): boolean {
+  const target = serializer as CallbackSerializer<unknown>;
+  let removed = false;
+  for (
+    let index = globalCallbackSerializers.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
+    if (globalCallbackSerializers[index] === target) {
+      globalCallbackSerializers.splice(index, 1);
+      removed = true;
+    }
+  }
+  return removed;
 }
 
 /**
@@ -353,11 +399,12 @@ export interface SerializerCodec {
 /** Throws unless `serializer` has the shape the codec can run. */
 function validateSerializer(
   candidate: unknown,
+  registration = "cassette.addSerializer",
 ): asserts candidate is CallbackSerializer<unknown> {
   const invalid = (reason: string): never => {
     throw new CassetteError(
       "INVALID_API_USAGE",
-      `[bun-test-utils/vcr] cassette.addSerializer requires { name: non-empty string, version: integer >= 1, test(value), serialize(value), deserialize(data) } — ${reason}.`,
+      `[bun-test-utils/vcr] ${registration} requires { name: non-empty string, version: integer >= 1, test(value), serialize(value), deserialize(data) } — ${reason}.`,
       { reason },
     );
   };
@@ -383,9 +430,14 @@ function validateSerializer(
 }
 
 export function createSerializerCodec(): SerializerCodec {
-  /** User registrations, newest first, ahead of the built-ins. */
+  /** Fixture-local registrations, newest first, ahead of process globals. */
   const userSerializers: CallbackSerializer<unknown>[] = [];
-  let ordered: CallbackSerializer<unknown>[] = [...BUILT_IN_SERIALIZERS];
+  /** Resolve on each use so preload/global lifecycle changes stay visible. */
+  const ordered = (): CallbackSerializer<unknown>[] => [
+    ...userSerializers,
+    ...globalCallbackSerializers,
+    ...BUILT_IN_SERIALIZERS,
+  ];
 
   /**
    * Encodes one value. `ancestors` maps each object on the current path to
@@ -408,7 +460,7 @@ export function createSerializerCodec(): SerializerCodec {
         `a structure nested deeper than ${MAX_ENCODE_DEPTH} levels`,
         "The value may be unbounded, or a serializer may re-claim values it produces. Return a bounded tree.",
       );
-    for (const serializer of ordered) {
+    for (const serializer of ordered()) {
       if (serializer === skip) continue;
       let claimed = false;
       try {
@@ -582,16 +634,17 @@ export function createSerializerCodec(): SerializerCodec {
           );
         }
         const { name, version } = envelope;
-        const serializer = ordered.find(
+        const serializers = ordered();
+        const serializer = serializers.find(
           (candidate) =>
             candidate.name === name && candidate.version === version,
         );
         if (!serializer) {
-          const registered = ordered.map((s) => `${s.name} v${s.version}`);
+          const registered = serializers.map((s) => `${s.name} v${s.version}`);
           throw new CassetteError(
             "CALLBACK_SERIALIZER_NOT_FOUND",
             `[bun-test-utils/vcr] The recorded value at ${path} was encoded by serializer "${name}" v${version}, which is not registered (registered: ${registered.join(", ")}). ` +
-              "Register it with cassette.addSerializer(...) before replay, or re-record the callback.",
+              "Register it with cassette.addSerializer(...) or registerCallbackSerializer(...) before replay, or re-record the callback.",
             { name, version, path, registered },
           );
         }
@@ -614,7 +667,6 @@ export function createSerializerCodec(): SerializerCodec {
     add<T>(serializer: CallbackSerializer<T>): void {
       validateSerializer(serializer);
       userSerializers.unshift(serializer as CallbackSerializer<unknown>);
-      ordered = [...userSerializers, ...BUILT_IN_SERIALIZERS];
     },
 
     encode(value: unknown): string {

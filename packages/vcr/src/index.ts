@@ -22,7 +22,9 @@ export {
   createSerializerCodec,
   defineCallbackSerializer,
   ENVELOPE_KEY,
+  registerCallbackSerializer,
   type SerializerCodec,
+  unregisterCallbackSerializer,
 } from "./serializers.ts";
 
 export const vcrFixtures: FixtureMap = {
