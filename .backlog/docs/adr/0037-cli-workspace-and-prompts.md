@@ -1,6 +1,6 @@
 # 0037 — CLI as a private workspace bundled into the metapackage, with citty commands and clack prompts
 
-- **Status:** proposed
+- **Status:** accepted (2026-10-10: outside a TTY, flags delete without a prompt; with --all and no package.json above cwd, the command fails)
 - **Date:** 2026-10-10
 
 ## Context
@@ -55,12 +55,13 @@ move with the commands.
     by default. The user deselects, then confirms. `--yes` skips both steps.
   - `--dry-run` never prompts and never deletes.
   - Outside a TTY, or with `CI` set, it never prompts. It deletes the matched files directly, as
-    ADR 0036 already specifies. The explicit scope is the confirmation.
+    ADR 0036 already specifies. The explicit scope is the confirmation. The user accepted this over
+    requiring `--yes`.
 
 **4. Project root.** With `--all`, the root is the nearest `package.json` at or above the working
 directory. A file scope (`--file`) stays relative to the working directory. The output always names
 the root it scanned. If no `package.json` exists above the working directory, the command exits with
-a usage error that tells the user to run it from the project root. A run that matches nothing prints
+a usage error that tells the user to run it from the project root. The user accepted this rule over falling back to cwd. A run that matches nothing prints
 how many files it scanned, so a quiet no-op from a subdirectory is visible.
 
 **5. No config file in v1.** There is no `test-utils.config.ts`, no `defineConfig`, and no

@@ -40,6 +40,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0034](./0034-cassette-callback-serializers.md) | Cassette callback serializers: reversible, versioned, fixture-local | accepted, amends 0022 and 0026, amended by 0035 |
 | [0035](./0035-persist-callback-results-across-runs.md) | Persist cassette callback results across runs: sidecar, exact-source staleness, internal in 0.1.x | accepted, amends 0034 (point 8) |
 | [0036](./0036-auto-cassette-mode-and-cache-clearing.md) | Auto cassette mode (record on first use, replay after) and explicit cache clearing for cassettes and snapshots | accepted |
-| [0037](./0037-cli-workspace-and-prompts.md) | CLI as a private workspace bundled into the metapackage: citty commands, clack prompts for `cache clear`, project-root scoping, no config file in v1 | proposed |
+| [0037](./0037-cli-workspace-and-prompts.md) | CLI as a private workspace bundled into the metapackage: citty commands, clack prompts for `cache clear`, project-root scoping, no config file in v1 | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).
