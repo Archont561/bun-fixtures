@@ -24,7 +24,7 @@ export const mainCommand = defineCommand({
   meta: {
     name: "bun-test-utils",
     version: pkg.version,
-    description: "pytest-style scoped, injectable fixtures for `bun test`",
+    description: "General-purpose test extension for the Bun test runner",
   },
   subCommands: {
     init: initCommand,

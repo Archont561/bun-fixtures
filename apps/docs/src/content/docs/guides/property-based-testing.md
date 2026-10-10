@@ -1,55 +1,74 @@
 ---
 title: Property-Based Testing
-description: Generative tests with fast-check arbitraries over injected fixtures, with a per-sample fixture lifecycle.
+description: Generative tests with fast-check arbitraries and injected fixtures, with a fresh test-scoped lifecycle for every generated sample.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+`test.prop` runs a property test. You describe the inputs with [fast-check](https://fast-check.dev/) arbitraries, state a property that must hold for them, and the runner generates many samples. If a sample fails, fast-check shrinks it to a minimal counterexample and reports the seed to replay it.
 
-
-`test.prop(...)` combines `fast-check` arbitraries with fixture
-injection from the root `@archont561/bun-test-utils` entrypoint: instead of hand-written examples, you state a property and the
-runner generates hundreds of samples — and shrinks any failure down to a
-minimal counterexample.
+Fixtures work in property tests exactly as they do in ordinary tests.
 
 ## Installation
 
-`test.prop` ships inside `@archont561/bun-test-utils`, but `fast-check` is an optional peer.
-Install it only in projects that use property tests:
+`test.prop` ships in `@archont561/bun-test-utils`. `fast-check` is an optional peer, so install it in projects that use property tests:
 
 ```bash
 bun add -d @archont561/bun-test-utils fast-check
 ```
 
-## Writing a property test
+## Write a property test
 
 ```ts
-import { test, expect } from "@archont561/bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
-  "encoding is reversible",
-  (fc) => ({ text: fc.string(), key: fc.integer({ min: 1, max: 255 }) }),
-  async ({ codec }, { text, key }) => {
-    expect(codec.decode(codec.encode(text, key), key)).toBe(text);
+  "addition is commutative",
+  (fc) => ({ a: fc.integer(), b: fc.integer() }),
+  async (_fixtures, { a, b }) => {
+    expect(a + b).toBe(b + a);
   },
   { numRuns: 100 },
 );
 ```
 
-- **Fixtures** are requested exactly like in plain tests: destructure the
-  first parameter (auto-detected), or list names in `options.fixtures`.
-- **Generated values** arrive as the second parameter, one key per
-  arbitrary.
-- **Every other `fast-check` parameter** (`numRuns`, `seed`, …) passes
-  straight through to `fc.assert`.
+- The **arbitrary factory** receives the `fast-check` API and returns a record of arbitraries, one per generated value.
+- The **test body** receives the fixtures first, then the generated values.
+- **Other options** such as `numRuns` and `seed` pass straight through to `fc.assert`.
 
-## Sharing and composing arbitrary definitions
+## Use fixtures in a property
 
-An arbitrary definition is an ordinary record or factory. Export it from a
-shared module and import it explicitly wherever a property needs it; there is
-no registry or runtime definition-processing machinery. Wrap shared factories with
-`defineArbitraries` from the helper-only `@archont561/bun-test-utils/pbt` subpath to get
-contextual fast-check typing without importing `FastCheckApi` in each definition
-file:
+Destructure fixtures from the first parameter, exactly as in an ordinary test. The engine detects them:
+
+```ts
+test.prop(
+  "orders survive a round trip through the store",
+  (fc) => ({ orders: fc.array(fc.record({ id: fc.uuid(), total: fc.nat() })) }),
+  async ({ tmpdir }, { orders }) => {
+    tmpdir.write("orders.json", JSON.stringify(orders));
+    const saved = JSON.parse(tmpdir.read("orders.json"));
+    expect(saved).toEqual(orders);
+  },
+  { numRuns: 50 },
+);
+```
+
+`tmpdir` is test-scoped here, so each sample gets its own directory, and that directory is removed before the next sample starts.
+
+## The fixture lifecycle per sample
+
+A property test is one `bun test` case whose body runs many times. Scope decides what is shared between those runs:
+
+| Scope | Across samples and shrink steps |
+| :-- | :-- |
+| `session` and `file` | **Shared.** Built once and reused for every sample. |
+| `test` (default) | **Rebuilt for each sample.** A fresh instance, torn down before the next sample starts. |
+
+Each sample, and each candidate fast-check tries while shrinking a failure, runs through the engine's iteration protocol. It builds the test-scoped fixtures, runs the body, and tears them down in LIFO order, even when the body throws. State left over from one sample cannot leak into the next.
+
+Put expensive, read-only resources in `session` or `file` scope. Put anything a sample writes to in `test` scope. See [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/).
+
+## Share arbitrary definitions
+
+An arbitrary definition is an ordinary record or factory. Export it from a shared module and import it wherever a property needs it:
 
 ```ts
 // arbitraries.ts
@@ -60,93 +79,52 @@ export const userArbitraries = defineArbitraries((fc) => ({
   age: fc.nat(),
 }));
 
-export const adminUserArbitraries = defineArbitraries((fc) => ({
+export const adminArbitraries = defineArbitraries((fc) => ({
   ...userArbitraries(fc),
   permissions: fc.array(fc.constantFrom("read", "write")),
 }));
 ```
 
-The derived record reuses the base factory with ordinary object spread. Every
-property test importing either factory infers generated values from its
-arbitraries—no casts or per-test annotations are needed:
+`defineArbitraries` is an identity function. It types the `fc` parameter contextually, so you do not need to import the `fast-check` type into every definition module. Generated values are inferred at each call site, so no casts are needed:
 
 ```ts
 // admin.test.ts
 import { expect, test } from "@archont561/bun-test-utils";
-import { adminUserArbitraries } from "./arbitraries";
+import { adminArbitraries } from "./arbitraries";
 
-test.prop("admin permissions are non-empty", adminUserArbitraries, async (_fixtures, {
-  name,
-  age,
-  permissions,
-}) => {
+test.prop("admins have a valid name and permissions", adminArbitraries, async (_fixtures, { name, age, permissions }) => {
   const displayName: string = name;
   const years: number = age;
   const grants: ("read" | "write")[] = permissions;
 
-  expect(displayName.length).toBeGreaterThan(0);
+  expect(displayName.length).toBeGreaterThanOrEqual(0);
   expect(years).toBeGreaterThanOrEqual(0);
   expect(grants.every((grant) => grant === "read" || grant === "write")).toBe(true);
 });
 ```
 
-`test.scenario.prop` accepts the same arbitrary record type, so generated keys are
-available in the first scenario step and continue through the fluent chain.
-The `fast-check` peer remains optional at runtime for projects that do not
-execute property or property-scenario tests. TypeScript's strict declaration
-checking requirement is noted in the [package README](https://github.com/Archont561/bun-test-utils/blob/main/packages/bun-test-utils/README.md).
+`test.scenario.prop` accepts the same kind of arbitrary record, so generated values are available in the first scenario step. See [Scenarios and fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/).
 
-## The fixture lifecycle per sample
+## Choose fixtures explicitly
 
-A property test is one `bun test` case whose body re-executes hundreds of
-times — so scope semantics matter more than usual:
-
-| Scope | Across samples and shrinks |
-| :-- | :-- |
-| `session` / `file` | **Shared** — built once, reused for every sample |
-| `test` (default) | **Rebuilt per sample** — fresh instance, torn down LIFO before the next one |
-
-Under the hood this is the engine's
-[`opts.iterate` protocol](/bun-test-utils/reference/api/#the-iteration-protocol-iterate):
-every sample — and every candidate `fast-check` tries while shrinking a
-failure — runs through `ctx.iterate`, which builds the test-scoped fixtures
-fresh and unwinds them **even when the predicate throws**. A database
-connection or temporary directory opened for one sample can never leak into
-the next.
-
-```ts
-import { test, expect } from "@archont561/bun-test-utils";
-
-test.prop(
-  "orders survive a round-trip through the store",
-  (fc) => ({ orders: fc.array(fc.record({ id: fc.uuid(), total: fc.nat() })) }),
-  async ({ store }, { orders }) => {
-    // `store` is test-scoped: rebuilt for this sample, wiped afterwards.
-    await store.saveAll(orders);
-    expect(await store.count()).toBe(orders.length);
-  },
-  { numRuns: 50 },
-);
-```
-
-## Shrinking and failure output
-
-When a sample fails, `fast-check` shrinks the input to the minimal failing
-case and reports that counterexample together with the replay seed.
-
-## When to list fixtures explicitly
-
-Auto-detection reads the destructuring of the first parameter. List
-`options.fixtures` when the property needs a fixture purely for its side
-effect (a server that must be running) without destructuring it:
+Auto-detection reads the destructured first parameter. If a property needs a fixture only for its side effect, such as a server that must be running, list it in `options.fixtures` instead:
 
 ```ts
 test.prop(
-  "api stays consistent",
+  "the API accepts any JSON payload",
   (fc) => ({ payload: fc.json() }),
   async (_fixtures, { payload }) => {
-    /* … */
+    expect(JSON.parse(payload)).toBeDefined();
   },
-  { fixtures: ["apiServer"], numRuns: 200 },
+  { fixtures: ["testServer"], numRuns: 200 },
 );
 ```
+
+## Shrinking and replay
+
+When a sample fails, fast-check shrinks the input to the smallest failing case and reports the counterexample with the seed. Pass that seed as `{ seed: ... }` to replay the same sequence of samples.
+
+## Requirements and limits
+
+- `fast-check` must be installed in any project that runs a property test. Projects without property tests do not need it at runtime.
+- With `skipLibCheck: false`, TypeScript also needs `fast-check` installed to check the published declarations. See the [package README](https://github.com/Archont561/bun-test-utils/blob/main/packages/bun-test-utils/README.md#optional-peers).

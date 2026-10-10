@@ -1,71 +1,16 @@
-# HTTP cassette fixtures (internal)
+# @bun-test-utils/vcr
 
-The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. The helper-only `@archont561/bun-test-utils/vcr` subpath exposes `defineCallbackSerializer` and `CallbackSerializer`; it does not expose a runner or fixture pack.
+Private workspace. It provides the `cassette` fixture, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md). It records and replays two things:
 
-The stable release surface is intentionally small: `record(callback)`,
-`replay(callback)`, `addSerializer(serializer)`, and HTTP replay matching by
-uppercase method plus exact full URL. Matcher DSLs, configurable redaction,
-and cassette migration tooling are deferred. Other helpers currently used
-inside the workspace are provisional, not part of the stable release
-contract.
-
-The default `VCR_MODE=auto` replays a test whose cassette exists and records a test whose
-cassette does not (ADR 0036). `bunx test-utils cache clear --file <file> [--test <name>]`
-or `--all` deletes a recording so it re-records. With `CI` set, a missing cassette fails.
-
-`record` encodes callback results through reversible, versioned serializers
-(ADR 0034). Built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`,
-`Error`, typed arrays, `ArrayBuffer`, and the numbers JSON cannot represent
-(`NaN`, `±Infinity`, `-0`); anything else must be plain data — `null`,
-booleans, strings, finite numbers, arrays without holes, plain objects — or
-is refused with a `CALLBACK_NOT_SERIALIZABLE` `CassetteError` naming the path
-and the fix (ADR 0026). Teach the cassette your own types with
-`cassette.addSerializer(...)`, defining reusable serializers with
-`defineCallbackSerializer` from the public
-`@archont561/bun-test-utils/vcr` subpath:
-
-```ts
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
-
-class Point {
-  constructor(readonly x: number, readonly y: number) {}
-}
-
-const pointSerializer = defineCallbackSerializer<Point>({
-  name: "point",
-  version: 1,
-  test: (value) => value instanceof Point,
-  serialize: (point) => ({ x: point.x, y: point.y }),
-  deserialize: (data) => new Point(data.x, data.y),
-});
-
-test("round-trips a class instance", async ({ cassette }) => {
-  cassette.addSerializer(pointSerializer);
-  const load = () => ({ home: new Point(1, 2) });
-  expect(await cassette.record(load)).toEqual(load());
-  expect(await cassette.replay(load)).toEqual(load());
-});
-```
-
-Serializer payloads carry `{ name, version }` envelopes, so encoded values
-are self-describing; a missing serializer at decode time is a coded
-`CALLBACK_SERIALIZER_NOT_FOUND`, and a throwing serializer is wrapped as
-`CALLBACK_SERIALIZER_FAILED` with the cause. Callback results persist per test in a sidecar,
-`__cassettes__/<test>.callbacks.json` (ADR 0035). Replay reads it and refuses a
-changed callback body with `CALLBACK_NOT_RECORDED`, a source text that an earlier
-run recorded from more than one closure with `CALLBACK_AMBIGUOUS`, and a corrupt
-file with `CALLBACK_STORE_INVALID`. The cassette file holds HTTP entries only, byte-compatible with
-cassettes recorded before serializers existed.
+- **Callback results.** `cassette.record(callback)` runs a callback once and stores its serializable result. `cassette.replay(callback)` returns the stored result without running it. Values beyond plain data are handled by versioned serializers, and custom ones are added with `cassette.addSerializer(...)`.
+- **HTTP traffic.** In `auto` mode (the default), a test's requests are recorded under `__cassettes__/` on the first run and replayed afterwards with no network access. Matching is exact on the uppercase method and full URL.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
-test("records and replays a callback", async ({ cassette }) => {
+test("replays a user lookup", async ({ cassette }) => {
   let calls = 0;
-  const loadUser = () => {
-    calls++;
-    return { id: "user-1" };
-  };
+  const loadUser = async () => ({ id: `user-${++calls}` });
 
   expect(await cassette.record(loadUser)).toEqual({ id: "user-1" });
   expect(await cassette.replay(loadUser)).toEqual({ id: "user-1" });
@@ -73,10 +18,17 @@ test("records and replays a callback", async ({ cassette }) => {
 });
 ```
 
-Mocking and network fakes should live in fixtures so tests continue to request dependencies through the test context.
+The helper-only `@archont561/bun-test-utils/vcr` subpath exports `defineCallbackSerializer` and the `CallbackSerializer` type. It exports no fixture.
 
-The cassette fixture is exercised in [`tests/`](./tests/) through `test.extend(...)` composition. That suite is also worth reading for two techniques: binding the fixture-aware `test` to a scratch test file with `createTest(<path>)` so the `__cassettes__/` convention resolves into a temp directory, and overriding the `cassette` key with an added `deps` entry so an environment-setting fixture builds before it and tears down after it.
+The stable contract is `record`, `replay`, `addSerializer`, and exact HTTP matching. Matcher DSLs, configurable redaction, and migration tooling are not part of this release. The on-disk formats are not yet stable.
 
-Property tests in `tests/invariants.test.ts` pin record→replay identity over generated JSON values and HTTP replay matching by uppercase method plus exact full URL.
+See the [cassette guide](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour, and [spec 0012](../../.backlog/docs/specs/0012-http-cassette-vcr.md) for the requirements.
 
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+## Develop
+
+```bash
+cd packages/vcr
+bun run test
+bun run test:bdd
+bun run typecheck
+```

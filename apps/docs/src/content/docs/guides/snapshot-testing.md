@@ -1,27 +1,22 @@
 ---
 title: Snapshot Testing
-description: Compare values and files against stored snapshots with the root snapshot fixture.
+description: Compare values and files against stored snapshots with the snapshot fixture, custom serializers, and reviewable diffs.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
-
-
-The built-in `snapshot` fixture serializes a value (or the contents of a file) and
-compares it against a snapshot stored on disk, recording a new one the first
-time a test runs.
+The `snapshot` fixture serializes a value, or the contents of a file, and compares it against a snapshot stored next to the test. The first time a test runs, it records the snapshot. Later runs compare against it and fail with a readable diff when the value changes.
 
 ## Installation
 
-`snapshot` is available on the root `test` context — zero extra dependencies:
+`snapshot` is on the root `test` context, with no extra dependency:
 
 ```bash
 bun add -d @archont561/bun-test-utils
 ```
 
-## Using the snapshot fixture
+## Use the fixture
 
 ```ts
-import { test, expect } from "@archont561/bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 
 test("renders the widget", async ({ snapshot }) => {
   const widget = render({ name: "widget", count: 3 });
@@ -29,30 +24,21 @@ test("renders the widget", async ({ snapshot }) => {
 });
 ```
 
-The first run writes `__snapshots__/renders-the-widget.snap.json` next to
-the test file; every later run compares against it and throws a readable
-diff on mismatch. Commit `__snapshots__/` — reviewing its diff *is* the
-review of a behavioural change.
+The first run writes `__snapshots__/renders-the-widget.snap.json` next to the test file. Every later run compares against that file. Commit `__snapshots__/`: reviewing its diff is how you review a change in behaviour.
 
 ## Modes
 
-Switch modes with `SNAPSHOT_MODE=match|update|ci`, or `snapshot.setMode(...)`
-per test:
+Select a mode with `SNAPSHOT_MODE`, or per test with `snapshot.setMode(...)`:
 
-- **`match`** (default): records missing snapshots, fails on mismatch.
-- **`update`**: accepts new values in bulk after an intentional change.
-- **`ci`**: never records — a missing *or* mismatched snapshot fails the
-  test. Selected automatically when `process.env.CI` is set.
+- **`match`** (default): records missing snapshots, and fails on a mismatch.
+- **`update`**: accepts new values in bulk, after an intentional change.
+- **`ci`**: never records. A missing snapshot or a mismatched one fails the test. Selected automatically when `CI` is set.
 
 ```bash
 SNAPSHOT_MODE=update bun test
 ```
 
-## Reset a snapshot
-
-To accept a new baseline for one test, delete its snapshot file and run the test again. `bunx test-utils cache clear --file <test file> --test "<name>"` does this, `--file <test file>` clears every test in the file, and `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the nearest `package.json` project root (`--dry-run` previews without deleting; `--yes` skips interactive TTY prompts). `match` then records the new value, and `ci` refuses to create it. Review the diff of `__snapshots__/` before you commit the reset. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/#clear-a-recording) for the full command.
-
-## Multiple snapshots and custom serializers
+## Multiple snapshots and files
 
 ```ts
 test("captures three states", async ({ snapshot }) => {
@@ -62,43 +48,44 @@ test("captures three states", async ({ snapshot }) => {
 });
 ```
 
-Unnamed calls are auto-numbered (`value`, `value 2`, ...); pass a `name` to
-address one explicitly. Register a serializer for types the built-in
-string / `Error` / sorted-key JSON handling doesn't cover:
+Unnamed calls are numbered automatically: `value`, `value 2`, and so on. Pass a name to address one explicitly.
+
+## Custom serializers
+
+The built-in serializers handle strings, `Error` values, and objects with sorted keys. Register a serializer for other types. It returns a string for the values it handles, and `undefined` for everything else:
 
 ```ts
-snapshot.addSerializer((value) =>
-  value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
-);
+test("serializes points", async ({ snapshot }) => {
+  snapshot.addSerializer((value) =>
+    value instanceof Point ? `Point(${value.x}, ${value.y})` : undefined,
+  );
+  snapshot.match(new Point(1, 2));
+});
 ```
 
-### Reusable global serializers
+Serializers registered on the fixture apply to that test. They run before the built-in serializers, and the most recent registration runs first.
 
-For serializers shared by every test, register them from a preload module:
+## Global serializers
+
+For a serializer that every test should use, register it once from a preload module with the `/snap` subpath:
 
 ```ts
 // test-serializers.ts
 import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";
 
-createSnapshotSerializer((value) =>
-  value instanceof Date ? "<date>" : undefined,
-);
+createSnapshotSerializer((value) => (value instanceof Date ? "<date>" : undefined));
 ```
+
+Add the module to `[test].preload` in `bunfig.toml`:
 
 ```toml
 [test]
 preload = ["./test-serializers.ts"]
 ```
 
-Global serializers are automatically used by every `snapshot` fixture in the
-Bun process, including nested values inside objects and arrays. Fixture-local
-serializers from `snapshot.addSerializer()` run first; within each group,
-newer registrations run first. Global serializers run before the built-in
-string / `Error` / sorted-key-JSON / `String()` fallbacks. A serializer must
-return `undefined` for values it does not handle.
+Global serializers apply to every `snapshot` in the process, including values nested inside objects and arrays. Fixture-local serializers run first. Global serializers run before the built-in fallbacks.
 
-`registerSnapshotSerializer` and `createSnapshotSerializer` both return the
-registered function. Keep that reference to unregister it when its owner ends:
+`createSnapshotSerializer` and `registerSnapshotSerializer` return the function they register. Keep that reference to remove the serializer later:
 
 ```ts
 import {
@@ -108,52 +95,36 @@ import {
 } from "@archont561/bun-test-utils/snap";
 
 const redactSecrets: Serializer = (value) =>
-  typeof value === "string" && value.startsWith("sk-")
-    ? "<secret>"
-    : undefined;
+  typeof value === "string" && value.startsWith("sk-") ? "<secret>" : undefined;
 
 const registered = createSnapshotSerializer(redactSecrets);
-// At the end of the suite or preload lifecycle:
+// later, when the owner is done with it:
 unregisterSnapshotSerializer(registered);
 ```
 
-Unregistering removes every registration of that exact function and returns
-`true` if any were removed (`false` otherwise). `resetSnapshotSerializers()`
-clears the process-wide registry while preserving the shared registry used by
-the root entrypoint and `/snap` subpath. Use it at a controlled suite or watch
-reload boundary before registering the current set again:
-
-```ts
-import {
-  createSnapshotSerializer,
-  resetSnapshotSerializers,
-} from "@archont561/bun-test-utils/snap";
-
-resetSnapshotSerializers();
-createSnapshotSerializer((value) =>
-  value instanceof Date ? "<date>" : undefined,
-);
-```
-
-Both operations affect every snapshot fixture in this Bun process. Do not reset
-the registry between concurrently running tests; register preload-wide
-serializers once, or unregister only the serializer owned by a suite.
+`unregisterSnapshotSerializer` removes every registration of that exact function and returns `true` if any were removed. `resetSnapshotSerializers()` clears the global registry. Use it only at a controlled boundary, such as the start of a watch-mode reload, and register the serializers you need again afterwards. Both operations affect every snapshot in the process, so do not call them while tests run concurrently.
 
 ## Recursive values and diagnostics
 
-Custom serializers run at the root and recursively for object properties and
-array entries. At each value, fixture-local serializers take precedence over
-global serializers; the newest serializer in each group runs first. The built-in
-`Error` fallback is recursive too, so a nested error snapshots as
-`Error: <message>` unless a custom serializer handles it first. Reusing the same
-acyclic object in two places serializes it at both locations; only a reference
-back to an object on the current recursion path is a cycle.
+Serializers run on the root value, and again on each object property and array entry. At each value, fixture-local serializers take precedence over global ones, and the newest serializer in each group runs first.
 
-Cyclic values fail with an `Error` named `SnapshotSerializationError`, code
-`SNAPSHOT_CIRCULAR_REFERENCE`, and details containing the snapshot name/path,
-the value path (for example `$.user.items[0]`), and the path where the object was
-first seen. If a custom serializer throws, snapshotting fails with code
-`SNAPSHOT_SERIALIZER_FAILED`; the diagnostic identifies the snapshot and value
-path, and the original thrown value is preserved as `cause`. These stable codes
-and details make recursive failures actionable without silently replacing the
-value with `[object Object]`.
+The built-in `Error` serializer is recursive too. A nested error snapshots as `Error: <message>`, unless a custom serializer handles it first. An object that appears in two places is serialized at both. Only a reference back to an object on the current path is treated as a cycle.
+
+A cycle fails with an `Error` named `SnapshotSerializationError` and the code `SNAPSHOT_CIRCULAR_REFERENCE`. Its details give the snapshot name, the value path (for example `$.user.items[0]`), and the path where the object was first seen.
+
+If a custom serializer throws, snapshotting fails with `SNAPSHOT_SERIALIZER_FAILED`. The diagnostic names the snapshot and value path, and the original error is preserved as `cause`.
+
+## Reset a snapshot
+
+To accept a new baseline for one test, clear its snapshot and run the test again. The next run records it:
+
+```bash
+bunx test-utils cache clear --file tests/widget.test.ts --test "renders the widget"
+```
+
+`--file <path>` without `--test` clears every test in the file, and `--all` clears every snapshot and cassette under the project root. `--dry-run` previews what would be deleted. Review the diff of `__snapshots__/` before you commit the reset. In `ci` mode the test fails until a reviewed snapshot is committed. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/#clear-a-recording) for the full command.
+
+## Next steps
+
+- [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/) for recording HTTP traffic and callback results.
+- [API reference](/bun-test-utils/reference/api/) for the environment variables and error codes.

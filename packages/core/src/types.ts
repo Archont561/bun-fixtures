@@ -79,7 +79,7 @@ export interface FixtureContext {
  * `use` hands the value to whoever requested the fixture.
  *
  * `await use(value)` suspends the setup function until the fixture's scope
- * ends — everything after the `await` is the teardown, pytest-`yield`-style.
+ * ends — everything after the `await` is the teardown, run in LIFO order.
  * Not awaiting it is allowed (the fixture then simply has no teardown).
  */
 export type UseFn<T> = (value: T) => Promise<void>;

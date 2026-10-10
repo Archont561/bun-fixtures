@@ -1,23 +1,18 @@
 ---
 title: Explicit fixture composition
-description: Compose fixtures explicitly with Playwright-style test.extend().
+description: Compose fixtures with test.extend(), import the composed runner, and override built-in fixtures on purpose.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+Fixtures are composed with `test.extend()`. A test gets exactly the fixtures in the runner it imports, and nothing else.
 
+## Define a runner
 
-## Explicit composition only
-
-There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not
-automatically loaded, and directories do not contribute fixtures to tests by
-being parents or siblings. A fixture is available only when the test imports a
-runner whose `test.extend()` chain includes that fixture. Built-in capabilities are already composed into the root `test` context.
-
-Define fixtures in a module and export a test runner created with
-`test.extend()`:
+Export a runner created with `test.extend()` from a module. The module is the complete definition of what its tests can request:
 
 ```ts
+// test.ts
 import { test as base } from "@archont561/bun-test-utils";
+
 export const test = base.extend({
   database: {
     scope: "file",
@@ -30,9 +25,10 @@ export const test = base.extend({
 });
 ```
 
-A test imports that runner directly:
+A test imports that runner:
 
 ```ts
+// users.test.ts
 import { test } from "./test";
 
 test("uses the database", async ({ database }) => {
@@ -40,23 +36,15 @@ test("uses the database", async ({ database }) => {
 });
 ```
 
+## Extend a runner
 
-## Extension chains
-
-Calling `extend()` returns a new runner. Child modules can add or override
-fixtures without scanning directories or relying on global state. All fixtures
-share one flat namespace, and composition is last-definition-wins: a consumer
-fixture intentionally replaces a built-in with the same key, and a later
-extension replaces an earlier definition. Dependencies resolve by key and see
-the replacement too.
-
-The nineteen built-in keys are `clock`, `seed`, `networkGuard`, `tmpdir`, `env`,
-`stdio`, `window`, `document`, `page`, `testServer`, `serverUrl`, `browser`,
-`browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`,
-`cassette`, and `snapshot`.
+Calling `extend()` returns a new runner. Child modules add fixtures without touching the parent:
 
 ```ts
-export const testWithUser = test.extend({
+// test-with-user.ts
+import { test as databaseTest } from "./test";
+
+export const test = databaseTest.extend({
   user: {
     setup: async (use, { database }) => {
       await use(await database.createUser("Ada"));
@@ -65,6 +53,43 @@ export const testWithUser = test.extend({
 });
 ```
 
-The engine still resolves dependencies in topological order and applies session,
-file, and test lifetimes with reverse-order teardown. Only the imported extension
-chain contributes fixtures to a test.
+Some files need the database and the user. Others need only the database. Each imports the runner that matches its needs, and each runner is a small, explicit list.
+
+## One namespace, last definition wins
+
+All fixtures share one flat namespace, built-in capabilities included. When two definitions use the same name, the later one replaces the earlier one. That applies to your own fixtures and to built-ins:
+
+```ts
+import { test as base } from "@archont561/bun-test-utils";
+
+// Replace the built-in clock for this project's tests.
+export const test = base.extend({
+  clock: {
+    setup: async (use) => {
+      await use({ now: () => new Date("2026-01-01T00:00:00Z") });
+    },
+  },
+});
+```
+
+A dependency resolves by name, so a fixture that depends on `clock` receives your replacement as well. Use overrides deliberately: a replaced built-in changes the behaviour of every fixture and test that uses it.
+
+The root runner contributes nineteen built-in names:
+
+- Standard: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`
+- DOM: `window`, `document`, `page`
+- Browser and server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
+- Cassettes: `cassette`
+- Snapshots: `snapshot`
+
+## Where fixtures come from
+
+A test can request a fixture only when the imported runner's chain includes it, or when it is one of the built-in names. Directory position never adds a fixture. Two sibling test files that import different runners see different fixtures, even though they sit in the same folder.
+
+Because the composition is explicit, a missing fixture fails with a message that lists the names the chain provides and shows the `test.extend()` call to add it.
+
+## Next steps
+
+- [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/) for how long each fixture lives.
+- [Built-in fixtures](/bun-test-utils/reference/plugins/) for what each built-in does.
+- [API reference](/bun-test-utils/reference/api/) for the `test.extend()` signature.

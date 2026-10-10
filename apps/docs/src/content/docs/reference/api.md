@@ -1,33 +1,24 @@
 ---
 title: API Reference
-description: Public TypeScript API reference for bun-test-utils.
+description: Every public export, option, fixture, error code, and environment variable of bun-test-utils.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+## Imports
 
-
-## Public exports
-
-The root package exposes the runner values `describe`, `expect`, and `test`:
+The root package exports the runner values `describe`, `expect`, and `test`:
 
 ```ts
 import { describe, expect, test } from "@archont561/bun-test-utils";
 ```
 
-Typed definition and serializer helpers live on four helper-only subpaths:
+Four helper-only subpaths export typed definitions and serializer contracts. They never export a runner or a fixture:
 
 ```ts
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 import type { ArbitraryInput, FastCheckApi, GeneratedValues } from "@archont561/bun-test-utils/pbt";
 
 import { givenStep, whenStep, thenStep } from "@archont561/bun-test-utils/bdd";
-import type {
-  GivenChain,
-  GivenStep,
-  ScenarioContext,
-  ThenStep,
-  WhenStep,
-} from "@archont561/bun-test-utils/bdd";
+import type { GivenChain, GivenStep, ScenarioContext, ThenStep, WhenStep } from "@archont561/bun-test-utils/bdd";
 
 import {
   createSnapshotSerializer,
@@ -41,45 +32,23 @@ import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
 import type { CallbackSerializer } from "@archont561/bun-test-utils/vcr";
 ```
 
-`defineArbitraries` is an identity wrapper for an arbitrary record or factory; it
-contextually types a factory's `fc` parameter and preserves generated types for
-`test.prop` and `test.scenario.prop`. The phase-specific scenario wrappers
-contextually type each callback's input and returned state, then return the
-callback unchanged. `/snap` manages process-wide snapshot serializers, and
-`defineCallbackSerializer` on `/vcr` types reusable reversible callback
-serializers for `cassette.addSerializer(...)`. See the
-[property-testing guide](/bun-test-utils/guides/property-based-testing/),
-[scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/),
-[snapshot guide](/bun-test-utils/guides/snapshot-testing/), and
-[cassette guide](/bun-test-utils/guides/recording-http-cassettes/).
+- `/pbt`: `defineArbitraries` returns its argument unchanged and types the factory's `fc` parameter. The phase-specific scenario helpers in `/bdd` do the same for each callback's input and output. See [Property-based testing](/bun-test-utils/guides/property-based-testing/) and [Scenarios and fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/).
+- `/snap`: registers, unregisters, and resets process-wide snapshot serializers. See [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
+- `/vcr`: `defineCallbackSerializer` defines reusable, reversible serializers for `cassette.addSerializer(...)`. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/).
 
-These subpaths expose only typed definition helpers, serializer contracts, and
-aliases—not runners or fixtures. Do not import `@archont561/bun-test-utils/std`,
-`@archont561/bun-test-utils/dom`, `@archont561/bun-test-utils/browser`,
-`@archont561/bun-test-utils/server`, `@archont561/bun-test-utils/snapshot`, or
-other internal workspace paths; fixtures and execution APIs remain on the root
-`test` object.
+Do not import `@archont561/bun-test-utils/std`, `/dom`, `/browser`, `/server`, or `/snapshot`, or any other internal workspace path. Fixtures and execution APIs live on the root `test` object.
 
 ## Stability and platforms
 
-The engine plus the standard, DOM, snapshot, property-testing, and minimal VCR
-capabilities are stable and follow semantic versioning. Browser and BDD are
-experimental: experimental capabilities may change in minor versions.
+The fixture engine and the standard, DOM, snapshot, property-testing, and minimal cassette capabilities are stable and follow semantic versioning. Browser and BDD scenarios are experimental, and may change in minor versions.
 
-The stable VCR contract is `cassette.record(callback)`,
-`cassette.replay(callback)`, `cassette.addSerializer(serializer)` (with
-`defineCallbackSerializer` on `@archont561/bun-test-utils/vcr`), and exact HTTP
-matching by uppercase method plus full URL. Matcher DSLs, configurable
-redaction, and cassette migration tooling are deferred.
+The stable cassette contract is `cassette.record(callback)`, `cassette.replay(callback)`, and `cassette.addSerializer(serializer)`, with HTTP matching by the uppercase method and the full URL. Matcher DSLs, configurable redaction, and cassette migration tooling are not part of this release.
 
-Linux and macOS are supported. Windows support is planned after the first
-release.
+Linux and macOS are supported. Windows support is planned.
 
 ## `test(name, fn, options?)`
 
-Defines a fixture-aware test. Requested fixtures are detected from the first
-parameter's destructuring pattern and must exist in the imported `test.extend()`
-chain or in the built-in root fixture set.
+Defines a fixture-aware test. The fixtures it requests are read from the first parameter's destructuring pattern. Each must exist in the imported `test.extend()` chain, or be one of the built-in root fixtures.
 
 ```ts
 test("uses fixtures", async ({ tmpdir, env }) => {
@@ -88,26 +57,19 @@ test("uses fixtures", async ({ tmpdir, env }) => {
 });
 ```
 
-### Test options
-
 | Option | Type | Default | Behaviour |
 | :-- | :-- | :-- | :-- |
-| `fixtures` | `string[]` | auto-detected | Explicit fixture list, overriding auto-detection from the destructured parameter |
-| `timeout` | `number` | Bun default | Per-test timeout in milliseconds, forwarded to `bun:test` |
-| `iterate` | `boolean` | `false` | Defers test-scoped fixtures and injects `ctx.iterate(fn)` so each sample builds and tears down its own test-scoped fixtures |
+| `fixtures` | `string[]` | auto-detected | Explicit fixture list. Replaces detection from the destructured parameter. |
+| `timeout` | `number` | Bun's default | Per-test timeout in milliseconds, passed to `bun:test`. |
+| `iterate` | `boolean` | `false` | Defers test-scoped fixtures and provides `ctx.iterate(fn)`. See below. |
 
 ### The iteration protocol (`iterate`)
 
-When `options.iterate` is `true`, the outer test context resolves only
-`session`- and `file`-scoped fixtures and exposes `ctx.iterate(fn)`. Each call
-to `await ctx.iterate(fn)` builds a fresh set of `test`-scoped fixtures for that
-single iteration and tears them down in strict LIFO order afterwards—even when
-`fn` throws. `test.prop` and `test.scenario.prop` use this protocol so every
-generated sample and shrink candidate runs with isolated test-scoped state.
+With `iterate: true`, the outer context builds only `session`- and `file`-scoped fixtures, and provides `ctx.iterate(fn)`. Each `await ctx.iterate(fn)` builds a fresh set of test-scoped fixtures for that one call, and tears them down in LIFO order afterwards, even when `fn` throws. `test.prop` and `test.scenario.prop` use this protocol, so each generated sample and each shrink step runs with its own test-scoped state.
 
 ## `test.extend(fixtures)`
 
-Composes project fixtures and mocks explicitly:
+Returns a new runner that includes your fixtures:
 
 ```ts
 import { test as base } from "@archont561/bun-test-utils";
@@ -129,18 +91,19 @@ export const test = base.extend({
 });
 ```
 
-Fixture scopes are `"session"`, `"file"`, and `"test"` (default). Dependencies are resolved before the fixture that requests them, and teardown after `await use(value)` runs in strict LIFO order.
+Each fixture definition takes:
 
-All fixtures share one flat namespace. Composition is last-definition-wins: a
-consumer fixture intentionally overrides a built-in with the same key, and a
-later `extend()` overrides an earlier definition. Dependencies resolve by key,
-so they receive the override as well.
+| Field | Type | Default | Behaviour |
+| :-- | :-- | :-- | :-- |
+| `setup` | `(use, context) => void \| Promise<void>` | required | Builds the value and passes it to `use(value)`. Code after `await use(value)` is the teardown. |
+| `scope` | `"session"` \| `"file"` \| `"test"` | `"test"` | How long the value lives. See [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/). |
+| `deps` | `string[]` | inferred | Explicit dependency list. Normally omitted: dependencies come from the destructured second parameter of `setup`. |
+
+All fixtures share one flat namespace. Composition is last-definition-wins: a fixture with the same name as a built-in replaces it, and a later `extend()` replaces an earlier definition. Dependencies resolve by name, so they receive the replacement as well.
 
 ## `test.prop(title, arbitraryFactory, fn, options?)`
 
-Runs a property test. This optional API requires `fast-check` to be installed by
-the project using it. The arbitrary factory receives the `fast-check` API; the
-test callback receives fixtures first and generated values second.
+Runs a property test. It needs the optional `fast-check` peer. The arbitrary factory receives the `fast-check` API. The test body receives the fixtures first and the generated values second.
 
 ```ts
 test.prop(
@@ -154,20 +117,17 @@ test.prop(
 );
 ```
 
-Every generated sample and shrink candidate gets fresh test-scoped fixtures;
-session and file fixtures are shared across the property run.
+Each generated sample and each shrink step gets fresh test-scoped fixtures. Session and file fixtures are shared across the run. Options other than the fixture list pass through to `fc.assert`.
 
 ## `test.scenario(title)` and `test.scenario.prop(title, arbitraryFactory)`
 
-Builds one fixture-aware test from fluent `given`, `when`, and `then` steps.
-This optional API requires `@aboviq/bun-test-cucumber` to be installed by the
-project using it. Object results from `given` and `when` are merged into the next
-context; fixture values are available alongside scenario state.
+Builds one fixture-aware test from fluent `given`, `when`, and `then` steps. It needs the optional `@aboviq/bun-test-cucumber` peer. Objects returned from `given` and `when` are merged into the next step's context, alongside fixture values.
 
-`test.scenario.prop(...)` additionally requires `fast-check`.
+`test.scenario.prop` also needs `fast-check`. It generates the initial context.
 
 ```ts
-test.scenario("creates a user")
+test
+  .scenario("creates a user")
   .given("a name", () => ({ name: "Ada" }))
   .when("the user is created", async ({ db, name }) => ({
     user: await db.users.create({ name }),
@@ -177,34 +137,33 @@ test.scenario("creates a user")
   });
 ```
 
+## `webPage`: one fixture, two backends
 
-## `webPage`: selectable DOM or Playwright execution
-
-Use `page` when you want happy-dom semantics and `browserPage` when you want a
-real Playwright `Page`. Those fixture names never silently switch meaning. When a
-test should be able to run in either environment, request `webPage` and select
-the backend with `BUN_TEST_UTILS_WEB_ENV=dom` (default) or
-`BUN_TEST_UTILS_WEB_ENV=browser` / `playwright`.
+`page` always uses happy-dom, and `browserPage` always uses Playwright. Their meaning never changes. To write a test that runs on either, request `webPage`. Choose the backend with `BUN_TEST_UTILS_WEB_ENV`: `dom` (the default) or `browser` (or `playwright`).
 
 ```ts
-test("renders in the selected web environment", async ({ webPage }) => {
+test("renders the button", async ({ webPage }) => {
   await webPage.setContent(`<button id="save">Save</button>`);
   await webPage.click("#save");
-  const requested = process.env.BUN_TEST_UTILS_WEB_ENV?.toLowerCase();
-  expect(webPage.mode).toBe(
-    requested === "browser" || requested === "playwright" ? "browser" : "dom",
-  );
+  expect(webPage.mode).toBe(process.env.BUN_TEST_UTILS_WEB_ENV === "browser" ? "browser" : "dom");
 });
 ```
 
-`webPage.raw` is the underlying happy-dom window or Playwright page for
-environment-specific assertions.
+| Member | Behaviour |
+| :-- | :-- |
+| `mode` | `"dom"` or `"browser"`: the backend this test runs on. |
+| `goto(url)` | Loads a page. On the DOM backend, it fetches the URL and sets the body. |
+| `setContent(html)` / `mount(html)` | Replaces the page's content. |
+| `click(selector)` / `type(selector, text)` | Interacts with an element. |
+| `textContent(selector)` / `html()` | Reads the page. |
+| `evaluate(fn)` | Runs `fn` in the page on the browser backend. On the DOM backend, `fn` runs with `this` set to the happy-dom window. |
+| `raw` | The underlying happy-dom window or Playwright page. Use it only for backend-specific assertions. |
 
-## `httpMock`: fixture-based response mocking
+Write portable tests with the helper methods. Reach for `raw` only when you need a backend-specific API.
 
-`httpMock` patches fetch for the current test and exposes an MSW-like handler API (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, or `use`).
-Unhandled requests pass through to the original `fetch`; use `reset()` between
-phases and `calls()` for assertions.
+## `httpMock`: fetch handlers
+
+`httpMock` patches `fetch` for the current test. It exposes an MSW-style API: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, and `use(method, matcher, responder)`. A matcher is a string, a `RegExp`, or a predicate.
 
 ```ts
 test("loads mocked data", async ({ httpMock }) => {
@@ -213,37 +172,60 @@ test("loads mocked data", async ({ httpMock }) => {
     Response.json({ received: await request.json() }),
   );
 
-  expect(await fetch("https://app.test/api/user").then((r) => r.json())).toEqual({
-    name: "Ada",
-  });
+  expect(await fetch("https://app.test/api/user").then((r) => r.json())).toEqual({ name: "Ada" });
   expect(httpMock.calls()[0]).toMatchObject({ method: "GET", handled: true });
 
   httpMock.reset();
 });
 ```
 
-For Playwright tests, request `browserHttpMock` to install the same handlers on
-the `browserContext`, or call `await httpMock.install(browserPage)` manually when
-you need page-scoped routing.
+| Member | Behaviour |
+| :-- | :-- |
+| `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `use` | Registers a responder. Return `undefined` from a responder to pass the request through. |
+| `passthrough(matcher?)` | Lets matching requests reach the network. |
+| `reset()` | Clears the handlers. Use it between phases. |
+| `calls()` | Lists the requests seen: method, URL, and whether a handler matched. |
+| `install(page)` | Installs the same handlers on a Playwright page. Resolves to a cleanup function. |
 
-## `describe` and `expect`
+Request `browserHttpMock` to install the handlers on the `browserContext` automatically.
 
-Re-exported directly from `bun:test` for convenience.
+## `cassette`: callbacks and HTTP recordings
+
+| Member | Behaviour |
+| :-- | :-- |
+| `record(callback)` | Runs the callback once and stores its serializable result. Returns the result. |
+| `replay(callback)` | Returns the stored result without running the callback. |
+| `addSerializer(serializer)` | Registers a reversible, versioned serializer for this test's callback values. |
+| `redactHeader(name)` | Redacts the named request header in recordings. Available, but outside the stable contract. |
+| `mode`, `setMode(mode)` | The mode for this test: `auto`, `record`, `replay`, or `passthrough`. |
+
+See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour.
+
+## `snapshot`: value and file snapshots
+
+| Member | Behaviour |
+| :-- | :-- |
+| `match(value, name?)` | Compares a value against the stored snapshot, or records it on first run. |
+| `matchFile(path, name?)` | Compares the contents of a file. |
+| `addSerializer(serializer)` | Registers a serializer for this test. Return `undefined` for values it does not handle. |
+| `mode`, `setMode(mode)` | `"match"`, `"update"`, or `"ci"`. |
+| `path` | The path of this test's snapshot file. |
+
+See [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
 
 ## Built-in fixture names
 
-The root `test` includes these built-in fixtures:
+The root `test` context includes these built-in fixtures. [Built-in fixtures](/bun-test-utils/reference/plugins/) describes each one.
 
 - Standard: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`
 - DOM: `window`, `document`, `page`
-- Browser/server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
-- VCR: `cassette`
+- Browser and server: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
+- Cassettes: `cassette`
 - Snapshots: `snapshot`
 
 ## Error-message compatibility
 
-Use machine-readable `code` and `details` for integrations when they are
-available. These four human-readable message templates are also contractual:
+Use the machine-readable `code` and `details` of a thrown error in integrations, where available. The four messages below are part of the compatibility contract. Their placeholders vary, but the wording and punctuation around them are stable:
 
 ```text
 [bun-test-utils] unknown fixture "<NAME>" requested in <FILE>. Available in this explicit test.extend(...) chain: <AVAILABLE>. Compose the fixture with test.extend({ <NAME>: ... }) and import that extended test into this file.
@@ -255,18 +237,39 @@ available. These four human-readable message templates are also contractual:
 [bun-test-utils] networkGuard blocked unexpected fetch: <METHOD> <URL>. Allow it explicitly with networkGuard.allow(...).
 ```
 
-Placeholder values vary, but the surrounding wording and punctuation are
-stable. Other diagnostic wording may change without changing its code or
-meaning.
+Other diagnostic wording may change without changing its code or meaning.
+
+### Error codes
+
+| Code | Raised when |
+| :-- | :-- |
+| `UNKNOWN_FIXTURE` | A test requests a fixture that the imported chain does not provide. |
+| `SCOPE_MISMATCH` | A fixture depends on a shorter-lived fixture. Raised when the test is declared. |
+| `CIRCULAR_DEPENDENCY` | Fixtures depend on each other in a cycle. |
+| `FIXTURE_SETUP_FAILED` | A built-in fixture could not start the resource it provides, such as a browser that would not launch. The original error is the `cause`. |
+| `FIXTURE_USE_NOT_CALLED` | A fixture's `setup` finished without calling `use(value)`. |
+| `FIXTURE_USE_CALLED_TWICE` | A fixture's `setup` called `use(value)` more than once. |
+| `MISSING_OPTIONAL_DEPENDENCY` | A capability needs an optional peer that is not installed. The message names the install command. |
+| `CASSETTE_NOT_FOUND` | Replay mode found no cassette for the test. |
+| `CASSETTE_MISMATCH` | A request is missing from an existing cassette. The message names the command that clears it. |
+| `CALLBACK_AMBIGUOUS` | One callback source text was recorded from more than one closure. |
+| `CALLBACK_NOT_RECORDED` | A callback's source text has no recording. Re-record it. |
+| `CALLBACK_NOT_SERIALIZABLE` | A callback returned a value that is not plain data and that no serializer handles. |
+| `CALLBACK_SERIALIZER_NOT_FOUND` | A recording needs a serializer that is not registered. |
+| `CALLBACK_SERIALIZER_FAILED` | A serializer threw. The original error is the `cause`. |
+| `CALLBACK_STORE_INVALID` | A callback sidecar file is corrupt. |
+| `INVALID_API_USAGE` | A capability or command was called with arguments or in a state it does not support. |
+| `SNAPSHOT_CIRCULAR_REFERENCE` | A snapshot value contains a cycle. |
+| `SNAPSHOT_SERIALIZER_FAILED` | A snapshot serializer threw. The original error is the `cause`. |
 
 ## Environment variables
 
 | Variable | Behaviour |
 | :-- | :-- |
-| `BUN_TEST_UTILS_DEBUG` | Emits opt-in diagnostics to stderr when set to `1` |
-| `BUN_TEST_UTILS_WEB_ENV` | Selects `webPage` backend: `dom` (default) or `browser` / `playwright` |
-| `VCR_MODE` | Selects cassette mode: `auto` (default: replay when the cassette exists, record when it does not), `record`, `replay`, or `passthrough` |
-| `SNAPSHOT_MODE` | Selects snapshot mode: `match`, `update`, or `ci` |
+| `BUN_TEST_UTILS_DEBUG` | Set to `1` to print opt-in diagnostics to stderr. |
+| `BUN_TEST_UTILS_WEB_ENV` | Selects the `webPage` backend: `dom` (default), or `browser` / `playwright`. |
+| `VCR_MODE` | Selects the cassette mode: `auto` (default), `record`, `replay`, or `passthrough`. |
+| `SNAPSHOT_MODE` | Selects the snapshot mode: `match` (default), `update`, or `ci`. `ci` is selected automatically when `CI` is set. |
+| `CI` | Makes `auto` cassettes refuse to record, and makes snapshots run in `ci` mode. |
 
-There are no fixture discovery environment variables. The preload does not walk
-your project tree, and `fixtures.ts` / `conftest.ts` are not special filenames.
+The preload does not read your project's files for fixtures. Fixtures come only from the runners you import.

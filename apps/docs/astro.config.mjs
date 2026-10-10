@@ -9,7 +9,7 @@ export default defineConfig({
     starlight({
       title: "bun-test-utils",
       description:
-        "pytest-style scoped, injectable fixtures for bun test — explicit test.extend() composition",
+        "General-purpose test extension for the Bun test runner: Playwright-style typed fixtures composed with test.extend(), plus BDD, property-based, snapshot, cassette, and browser testing",
       logo: {
         light: "./src/assets/logo-light.svg",
         dark: "./src/assets/logo-dark.svg",

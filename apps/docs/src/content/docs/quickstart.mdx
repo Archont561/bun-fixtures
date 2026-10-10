@@ -1,96 +1,89 @@
 ---
 title: Quickstart
-description: Get up and running with bun-test-utils in 5 minutes.
+description: Install bun-test-utils, compose a Playwright-style fixture, write a test, and run it with bun test.
 ---
 
-In this quickstart, you will install `@archont561/bun-test-utils`, initialize its preload, and compose your first Playwright-style fixture test.
+This quickstart installs `@archont561/bun-test-utils`, composes a fixture with `test.extend()`, writes a test that uses it, and runs the suite with `bun test`.
 
-## 1. Install & Initialize
+## 1. Install and initialize
 
 ```bash
 bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
-The `init` command adds the preload plugin to `bunfig.toml` (confirming first in an interactive terminal unless `--yes` is passed). It does not auto-load fixture files; create an extendable `test.ts` module for explicit composition. To reset recorded HTTP cassettes or snapshots later, run `bunx test-utils cache clear --file <path> [--test <name>]` or `--all`.
+`init` adds the package's preload to `bunfig.toml`. It asks for confirmation first in an interactive terminal, unless you pass `--yes`. The preload installs run-wide teardown hooks. It does not load any fixtures, so the next step defines them.
 
-## 2. Compose Fixtures
+## 2. Compose a fixture
 
-Edit `test.ts` and add project fixtures with `test.extend()`:
+Create `test.ts` and extend the base `test` with your project's fixtures:
 
 ```ts
-// test.ts
 import { test as base } from "@archont561/bun-test-utils";
+
 export const test = base.extend({
   server: {
     scope: "session",
     setup: async (use) => {
       const server = await startTestServer();
       await use(server);
-      await server.stop();
+      await server.stop(); // runs once, after the whole run
     },
   },
+
   user: {
     setup: async (use, { server }) => {
       const user = await server.insertUser({ name: "Ada" });
-      await use(user);
+      await use(user); // built for each test, then discarded
     },
   },
 });
 ```
 
-## 3. Write a Test
+Each fixture is a `setup` function. Destructuring a fixture from its second parameter declares a dependency on it. Everything after `await use(value)` is teardown, and it runs in reverse order even when the test fails.
 
-Import the composed test from your local module:
+## 3. Write a test
+
+Import the composed `test` from your local module, and `expect` from the package:
 
 ```ts
-// users.test.ts
 import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
-test("finds created user", async ({ user }) => {
+test("finds the created user", async ({ user }) => {
   expect(user.name).toBe("Ada");
 });
 ```
 
-Fixtures can depend on one another, have session, file, or test scope, and run teardown in reverse order.
+Only the fixtures in the imported `test.extend()` chain are available to this file. A fixture is never picked up because of where a file sits in the tree.
 
-## 4. Run Tests
+## 4. Run the tests
 
 ```bash
 bun test
 ```
 
-`fixtures.ts` and `conftest.ts` are not automatically loaded. Fixtures are composed explicitly through the imported `test.extend()` chain. See [Scenarios & Fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/) for shared state between fluent steps.
+## Optional: mock HTTP and choose a web backend
 
-
-## Optional: Mock HTTP and switch web environments
-
-Built-in mocks are fixtures too. `httpMock` handles fetch-based tests and
-`browserHttpMock` installs the same handlers on Playwright routes. `webPage` runs
-against happy-dom by default; set `BUN_TEST_UTILS_WEB_ENV=browser` when you want
-a real Playwright page without changing the meaning of `browserPage`.
+Built-in capabilities are fixtures on the root `test` context, so you request them the same way. `httpMock` handles fetch-based tests. `webPage` renders against happy-dom by default, and runs on a real Playwright page when you set `BUN_TEST_UTILS_WEB_ENV=browser`.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
-test("renders mocked data", async ({ webPage, httpMock }) => {
+test("renders the mocked user", async ({ webPage, httpMock }) => {
   httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
-  await webPage.setContent(`<main id="name"></main>`);
 
   const user = await fetch("https://app.test/api/user").then((r) => r.json());
-  webPage.raw.document.querySelector("#name")!.textContent = user.name;
+  await webPage.mount(`<h1 id="name">${user.name}</h1>`);
 
   expect(await webPage.textContent("#name")).toBe("Ada");
 });
 ```
 
-## Repository feature suites
+Install `happy-dom` for the default DOM backend, or `playwright` for the browser backend.
 
-In this monorepo, package feature files live at `packages/*/e2e/bdd/features/*.feature`
-and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint
-(`await runPackageFeatures("<package>", import.meta)`). Run the repo-wide BDD gate with:
+## Next steps
 
-```bash
-bun run test:bdd
-```
+- [Getting started](/bun-test-utils/guides/getting-started/) explains how composition, scopes, and teardown fit together.
+- [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/) covers the three lifetimes.
+- [Scenarios and fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/), [property-based testing](/bun-test-utils/guides/property-based-testing/), [snapshot testing](/bun-test-utils/guides/snapshot-testing/), and [recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/) cover the other capabilities.

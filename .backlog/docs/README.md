@@ -73,6 +73,7 @@ tsconfig.json        root TypeScript configuration
 turbo.json           Turborepo monorepo pipeline configuration
 ```
 
-> Explicit composition only: `fixtures.ts` and `conftest.ts` are ordinary
-> module names and are not automatically loaded. Tests import the runner from
-> the root `@archont561/bun-test-utils` package and typed definition/serializer helpers from `/pbt`, `/bdd`, `/snap`, or `/vcr`.
+> Explicit composition: a test gets the fixtures in the `test.extend()` chain it
+> imports, and nothing else. Tests import the runner from the root
+> `@archont561/bun-test-utils` package and typed definition/serializer helpers
+> from `/pbt`, `/bdd`, `/snap`, or `/vcr`.

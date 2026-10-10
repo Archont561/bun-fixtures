@@ -1,41 +1,29 @@
-# Server fixtures (internal)
+# @bun-test-utils/server
 
-The `testServer`, `serverUrl`, and `httpMock` fixtures are internal workspace
-fixtures bundled into the public root `test` from `@archont561/bun-test-utils`.
-There is no public `@archont561/bun-test-utils/server` subpath.
+Private workspace. It provides the server and fetch-mocking fixtures, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md):
+
+| Fixture | Provides |
+| :-- | :-- |
+| `testServer` | An ephemeral `Bun.serve` server on a random port. `handle(fn)` sets the response, and the server shuts down at teardown. |
+| `serverUrl` | The same URL as `testServer.url`, declared as a dependency so the engine resolves one from the other. |
+| `httpMock` | MSW-style handlers for `fetch`: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `use`, `passthrough`, `reset`, `calls`, and `install`. |
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
 test("serves through the ephemeral test server", async ({ testServer, serverUrl }) => {
   testServer.handle(() => Response.json({ status: "ok" }));
-  const response = await fetch(serverUrl);
-  expect(await response.json()).toEqual({ status: "ok" });
+  expect(await (await fetch(serverUrl)).json()).toEqual({ status: "ok" });
 });
 ```
 
-`serverUrl` is a derived alias of `testServer.url` — the same value, declared as
-a dependency so the engine resolves one fixture from the other.
+`httpMock` lives here rather than in the browser workspace, so fetch-based tests never load Playwright ([ADR 0031](../../.backlog/docs/adr/0031-server-fixtures-pack.md)).
 
-`httpMock` is an MSW-like handler API over `fetch`. It never loads Playwright;
-it lives here rather than in the browser pack for exactly that reason
-([ADR 0031](../../.backlog/docs/adr/0031-server-fixtures-pack.md)).
+## Develop
 
-```ts
-test("mocks a response", async ({ httpMock }) => {
-  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
-  const data = await fetch("https://app.test/api/user").then((r) => r.json());
-  expect(data).toEqual({ name: "Ada" });
-});
+```bash
+cd packages/server
+bun run test
+bun run test:bdd
+bun run typecheck
 ```
-
-For Playwright route interception inside a browser context, use
-`browserHttpMock` from `@bun-test-utils/browser`, or call
-`await httpMock.install(browserPage)` inside a test — `install` adapts the same
-handlers onto Playwright routes.
-
-These fixtures are exercised in [`tests/`](./tests/) through `test.extend(...)`
-composition. The suite also pins the helper's exact property surface and proves
-handlers registered in one test are not visible to the next.
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

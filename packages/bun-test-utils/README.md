@@ -1,257 +1,197 @@
-# bun-test-utils
+# @archont561/bun-test-utils
 
-The single published package. The root runtime exports are `describe`, `expect`,
-and `test`. Typed arbitrary-definition and scenario-step helpers live on the
-`@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd` subpaths; global snapshot serializer
-lifecycle helpers live on `@archont561/bun-test-utils/snap`; cassette callback
-serializer helpers live on `@archont561/bun-test-utils/vcr`. These subpaths
-expose helpers, not runners or fixture packs.
+A general-purpose test extension for the [Bun test runner](https://bun.sh/docs/test/overview). It gives `bun test` Playwright-style fixtures: typed, injectable values that you compose explicitly with `test.extend()`, scoped to a session, a file, or a single test, and torn down in strict reverse order. On the same runner, it adds behaviour-driven scenarios, property-based testing, snapshot testing, HTTP record/replay cassettes, and DOM and browser testing.
+
+- **Documentation:** <https://archont561.github.io/bun-test-utils/>
+- **Source and issues:** <https://github.com/Archont561/bun-test-utils>
+- **Changelog and releases:** <https://github.com/Archont561/bun-test-utils/releases>
+
+## Install
 
 ```bash
 bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
-In an interactive terminal without `CI` set, `bunx test-utils init` asks for confirmation before writing `bunfig.toml` (`--yes` skips the prompt; `--dir <path>` and `--entry <path>` customize the target directory and preload path).
+`init` adds the package's preload to `bunfig.toml` (`[test].preload`). The preload only installs run-wide teardown hooks. It does not load fixtures. Fixtures come from the modules you import, as described below.
 
-To reset recorded HTTP cassettes, callback sidecars, or snapshots, run `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all` (every `__cassettes__/` and `__snapshots__/` directory under the nearest `package.json` project root). Add `--dry-run` to list the files without deleting, or `--yes` to skip interactive TTY confirmation prompts.
+Requires Bun 1.1 or later.
 
-Optional test-style peers are installed only if you use those styles:
+## Quick start
 
-```bash
-bun add -d fast-check # test.prop() / test.scenario.prop()
-bun add -d @aboviq/bun-test-cucumber # test.scenario()
-```
-
-`fast-check` is optional at runtime. Its declarations are referenced by the
-published root and `/pbt` `.d.ts` files to preserve typed arbitrary definitions, so
-TypeScript consumers using `skipLibCheck: false` must install `fast-check` even
-if they only use non-property root APIs. With `skipLibCheck: true`, ordinary
-root imports typecheck without the peer; using property APIs still requires the
-runtime peer.
-
-## Public API shape
-
-Built-in capabilities are fixtures on the root `test` context, and the test
-runners hang off `test.*`. The helper subpaths are `@archont561/bun-test-utils/pbt`,
-`@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and
-`@archont561/bun-test-utils/vcr`: PBT/BDD expose typed definitions, `/snap`
-exposes global snapshot serializer helpers, and `/vcr` exposes the cassette
-callback serializer contract. None exports a runner or fixture pack.
-
-- `test(...)` for ordinary fixture-aware tests.
-- `test.extend(...)` for project fixtures and mocks.
-- `test.prop(...)` for property tests when `fast-check` is installed.
-- `defineArbitraries(...)` from `@archont561/bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
-- `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `@archont561/bun-test-utils/bdd` to contextually type reusable scenario callbacks.
-- `createSnapshotSerializer(...)`, `registerSnapshotSerializer(...)`, `unregisterSnapshotSerializer(...)`, and `resetSnapshotSerializers()` from `@archont561/bun-test-utils/snap` to manage reusable global snapshot serializers.
-- `defineCallbackSerializer(...)` from `@archont561/bun-test-utils/vcr` to define reusable cassette callback serializers for `cassette.addSerializer(...)`.
-- `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
-- `test.scenario.prop(...)` when both optional peers are installed.
-
-Mocking should be expressed as fixtures so setup, dependency ordering, and
-teardown remain in the fixture lifecycle.
-
-## Stability and platform support
-
-The fixture engine plus the standard, DOM, snapshot, property-testing, and minimal
-VCR capabilities are stable and follow semantic versioning. Browser and BDD are
-experimental: **experimental capabilities may change in minor versions**.
-
-The stable VCR surface is `cassette.record(callback)`,
-`cassette.replay(callback)`, `cassette.addSerializer(serializer)` for reversible
-callback value serializers, and exact HTTP replay matching by uppercase method
-plus full URL. The default `VCR_MODE=auto` records a test's HTTP traffic and
-callback results under `__cassettes__/` on first use and replays them afterwards
-without network access (refusing to record missing cassettes when `CI` is set,
-and failing with `CASSETTE_MISMATCH` naming `bunx test-utils cache clear` when a
-request is missing from a present cassette). `cassette.record` encodes callback
-results through versioned built-in serializers (`Date`, `BigInt`, `Map`, `Set`,
-`RegExp`, `Error`, typed arrays, `ArrayBuffer`, and `NaN`/`±Infinity`/`-0`) plus
-any fixture-local serializers registered with `cassette.addSerializer(...)`,
-persisting callback recordings per test in `__cassettes__/<test>.callbacks.json`;
-unclaimed non-plain-data values are refused with the `CALLBACK_NOT_SERIALIZABLE`
-error code. Matcher DSLs, configurable redaction, and cassette migration support
-are deferred.
-
-Linux and macOS are supported. Windows support is planned after the first
-release; the current scratch-project harness and BDD presets rely on POSIX paths.
-
-Everything deliberately deferred out of `0.1.0` — database and filesystem-sandbox
-fixtures, worker-scoped fixtures, Windows, the VCR matcher DSL and cassette
-migration tooling — is listed with the condition that would unpark it in the
-[roadmap](https://github.com/Archont561/bun-test-utils#roadmap--deliberately-deferred),
-alongside what ships but is not yet frozen (header redaction, browser, BDD).
-Deferrals are decisions, not oversights.
-
-## Explicit composition only
-
-There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Use `test.extend()` and import the extended runner from each test file that needs those fixtures.
-
-The root runner contributes nineteen keys to one flat namespace:
-
-- Standard: `clock`, `seed`, `networkGuard`, `tmpdir`, `env`, `stdio`
-- DOM: `window`, `document`, `page`
-- Browser: `testServer`, `serverUrl`, `browser`, `browserContext`, `browserPage`, `webPage`, `httpMock`, `browserHttpMock`
-- VCR: `cassette`
-- Snapshots: `snapshot`
-
-Composition is last-definition-wins. A consumer fixture with one of these keys
-intentionally replaces the built-in for that runner, and a later `extend()`
-replaces an earlier definition. Dependencies continue to resolve by key and
-therefore receive the override too.
+Compose the fixtures your project needs in one module, then import the composed `test` into each test file.
 
 ```ts
-// test.ts
+// tests/test.ts
 import { test as base } from "@archont561/bun-test-utils";
 
 export const test = base.extend({
-  db: {
+  database: {
     scope: "file",
     setup: async (use) => {
-      const db = await createDatabase();
-      await use(db);
-      await db.close();
+      const database = await createDatabase();
+      await use(database);
+      await database.close(); // runs after the last test in the file
+    },
+  },
+  user: {
+    setup: async (use, { database }) => {
+      await use(await database.insertUser({ name: "Ada" }));
     },
   },
 });
 ```
 
 ```ts
-// users.test.ts
+// tests/user.test.ts
 import { expect } from "@archont561/bun-test-utils";
 import { test } from "./test";
 
-test("uses the explicit fixture", async ({ db }) => {
-  expect(await db.health()).toBe("ok");
+test("finds the user", async ({ database, user }) => {
+  expect(await database.find(user.id)).toMatchObject({ name: "Ada" });
 });
 ```
 
-## Built-in fixtures
+Run the suite with `bun test`.
 
-The root `test` includes standard, DOM, browser/server, web mocking, VCR, and snapshot
-fixtures in its context:
+A fixture declares its dependencies by destructuring them in `setup`. The engine builds dependencies first and tears them down last. Everything after `await use(value)` is that fixture's teardown, and it runs even when the test fails.
+
+## Fixture model
+
+| Concept | What it means |
+| :-- | :-- |
+| Composition | `test.extend({ ... })` returns a new `test` that includes your fixtures. Only the imported chain contributes fixtures. Nothing is discovered from the file tree. |
+| Scopes | `"session"` (once per run), `"file"` (once per test file), `"test"` (default, once per test). |
+| Lifetimes | A fixture may depend only on fixtures of equal or longer lifetime. A violation is reported when the test is declared, before any assertion runs. |
+| Teardown | Strict LIFO: a fixture's teardown finishes before the teardown of anything it depends on begins. |
+| Overrides | Fixtures share one namespace. A later definition with the same name replaces the earlier one, including built-ins. |
+
+## Built-in capabilities
+
+Built-in capabilities are fixtures on the root `test` context, so you request them the same way as your own:
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
-test("serves and snapshots a response", async ({
-  testServer,
-  serverUrl,
-  snapshot,
-}) => {
-  testServer.handle(() => Response.json({ status: "ok" }));
-  const response = await fetch(serverUrl);
-  const body = await response.json();
-
-  snapshot.match(body, "health");
-  expect(body.status).toBe("ok");
+test("reads the environment", async ({ env, tmpdir }) => {
+  env.set("APP_MODE", "test");
+  tmpdir.write("mode.txt", env.get("APP_MODE")!);
+  expect(tmpdir.read("mode.txt")).toBe("test");
 });
 ```
 
-## Web environment and HTTP mocks
+| Area | Fixtures | Notes |
+| :-- | :-- | :-- |
+| Standard | `tmpdir`, `env`, `stdio`, `clock`, `seed`, `networkGuard` | Isolated temporary directories, sandboxed environment variables, captured output, controlled time and randomness, and blocked outbound `fetch` unless allowed. |
+| DOM | `window`, `document`, `page` | In-memory DOM via happy-dom. Requires `happy-dom`. |
+| Web (either backend) | `webPage` | happy-dom by default. Set `BUN_TEST_UTILS_WEB_ENV=browser` to run the same test on a real Playwright page. |
+| Browser | `browser`, `browserContext`, `browserPage`, `browserHttpMock` | Playwright Chromium, headless. Requires `playwright` and an installed browser. Experimental. |
+| Server and HTTP | `testServer`, `serverUrl`, `httpMock` | An ephemeral `Bun.serve` server, and MSW-like fetch handlers. |
+| Cassettes | `cassette` | Record a callback's result once and replay it, and record and replay HTTP traffic. |
+| Snapshots | `snapshot` | Compare values and files against stored snapshots. |
 
-`page` is always happy-dom and `browserPage` is always Playwright. Use `webPage`
-when one test should be selectable by `BUN_TEST_UTILS_WEB_ENV=dom` (default) or
-`BUN_TEST_UTILS_WEB_ENV=browser`. Use `httpMock` for MSW-like fetch handlers and
-`browserHttpMock` for the same handlers installed on the Playwright context.
+### Property-based tests
 
-```ts
-test("loads mocked data", async ({ webPage, httpMock }) => {
-  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
-  const user = await fetch("https://app.test/api/user").then((r) => r.json());
-
-  await webPage.setContent(`<span id="name"></span>`);
-  webPage.raw.document.querySelector("#name")!.textContent = user.name;
-  expect(await webPage.textContent("#name")).toBe("Ada");
-});
-```
-
-## Property and scenario tests
-
-These APIs are present on `test`, but using them checks their optional peers and throws an actionable install message if the peer is missing.
+`test.prop` runs a property over generated values with `fast-check`. Every sample gets its own test-scoped fixtures, built and torn down in isolation.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
-  "calculates a total",
-  (fc) => ({ price: fc.integer({ min: 0, max: 100 }) }),
-  async ({ tmpdir }, { price }) => {
-    tmpdir.write("price.txt", String(price));
-    expect(Number(tmpdir.read("price.txt"))).toBe(price);
+  "addition is commutative",
+  (fc) => ({ a: fc.integer(), b: fc.integer() }),
+  async (_fixtures, { a, b }) => {
+    expect(a + b).toBe(b + a);
   },
+  { numRuns: 100 },
 );
+```
 
-test.scenario("chains every fluent phase")
-  .given("a base value", () => ({ value: 2 }))
-  .when("the value is incremented", ({ value }) => ({ result: value + 1 }))
-  .then("the number is correct", ({ result, expect }) => {
-    expect(result).toBe(3);
+Requires `bun add -d fast-check`.
+
+### Scenarios
+
+`test.scenario` builds one test from fluent `given`, `when`, and `then` steps. Return values from `given` and `when` are merged into the next step's context, and fixtures are available alongside them.
+
+```ts
+import { test } from "@archont561/bun-test-utils";
+
+test
+  .scenario("creates a user")
+  .given("a name", () => ({ name: "Ada" }))
+  .when("the user is created", ({ name }) => ({ user: { id: 1, name } }))
+  .then("the id is assigned", ({ user, expect }) => {
+    expect(user.id).toBeDefined();
   });
 ```
 
-## Shared arbitrary definitions
+Requires `bun add -d @aboviq/bun-test-cucumber`. Scenarios are experimental.
 
-A fast-check arbitrary record or factory can be explicitly imported from a shared module. Wrap a factory with `defineArbitraries` from `@archont561/bun-test-utils/pbt` to contextually type its fast-check API argument without importing `FastCheckApi`; generated values are inferred at each `test.prop` and `test.scenario.prop` call site. The helper returns the definition unchanged, and arbitrary records compose with ordinary object spread.
-
-```ts
-// arbitraries.ts
-import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
-
-export const baseArbitraries = defineArbitraries((fc) => ({
-  name: fc.string(),
-  age: fc.nat(),
-}));
-
-export const adminArbitraries = defineArbitraries((fc) => ({
-  ...baseArbitraries(fc),
-  canManageUsers: fc.boolean(),
-}));
-```
+### Snapshots
 
 ```ts
-// admin.test.ts
-import { expect, test } from "@archont561/bun-test-utils";
-import { adminArbitraries } from "./arbitraries";
+import { test } from "@archont561/bun-test-utils";
 
-test.prop("generates typed admins", adminArbitraries, async (_fixtures, {
-  name,
-  age,
-  canManageUsers,
-}) => {
-  const typedName: string = name;
-  const typedAge: number = age;
-  const canManage: boolean = canManageUsers;
-  expect(typedName.length + typedAge + Number(canManage)).toBeGreaterThan(0);
+test("renders the widget", async ({ snapshot }) => {
+  snapshot.match({ name: "widget", count: 3 });
 });
 ```
 
-## Shared scenario steps
+The first run writes `__snapshots__/` next to the test file. Commit that directory, so a change to the snapshot shows up in review.
 
-Import `givenStep`, `whenStep`, and `thenStep` from `@archont561/bun-test-utils/bdd` to contextually type shared scenario callbacks; the same subpath exports `GivenStep`, `WhenStep`, `ThenStep`, `ScenarioContext`, and `GivenChain` for explicit annotations. A consumer-owned sequence function can be imported into as many scenario files as needed. Imported step fixtures are auto-detected just like inline steps; compose project fixtures with `test.extend()` as usual. The [scenario guide](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) has a complete example.
+### HTTP mocks and cassettes
 
-## Error compatibility
+```ts
+import { expect, test } from "@archont561/bun-test-utils";
 
-Thrown capability errors expose machine-readable `code` and `details` when
-available; those fields are preferred for integrations. Four core human-readable
-message templates are contractual: unknown fixture, circular fixture
-dependency, a fixture finishing without `use(value)`, and an unexpected fetch
-blocked by `networkGuard`. Snapshot serialization also has stable diagnostic
-codes for circular values and custom serializer failures; see the
-[snapshot guide](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/)
-and [snapshot spec](../../.backlog/docs/specs/0013-snapshot-testing.md).
-
-All workspace packages are implementation boundaries; only `@archont561/bun-test-utils` is published.
-
-## Development
-
-This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/e2e/bdd/features/*.feature` and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint calling `runPackageFeatures` from `@bun-test-utils/config/bdd`.
-
-```bash
-bun run build
-bun test packages/bun-test-utils
-bun run test:bdd
+test("loads the user", async ({ httpMock }) => {
+  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
+  const user = await fetch("https://app.test/api/user").then((r) => r.json());
+  expect(user).toEqual({ name: "Ada" });
+});
 ```
 
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+`cassette.record` and `cassette.replay` store and replay a callback's result. In the default `auto` mode, a test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
+
+## Optional peers
+
+Install a peer only if you use the capability that needs it. The core fixture engine works without any of them.
+
+| Capability | Peer |
+| :-- | :-- |
+| `test.prop`, `test.scenario.prop` | `fast-check` |
+| `test.scenario` | `@aboviq/bun-test-cucumber` |
+| `window`, `document`, `page`, `webPage` (DOM backend) | `happy-dom` |
+| `browser*`, `webPage` (browser backend) | `playwright`, plus the browser binaries: `bunx playwright install chromium` |
+
+`fast-check` is also referenced by the published type declarations. With `skipLibCheck: false`, TypeScript needs it installed even if you only use non-property APIs. With `skipLibCheck: true`, ordinary imports typecheck without it.
+
+## Shared helpers
+
+Typed helpers live on four subpaths. They export definitions and types only, never runners or fixtures.
+
+```ts
+import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
+import { givenStep, whenStep, thenStep } from "@archont561/bun-test-utils/bdd";
+import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";
+import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+```
+
+- `/pbt`: `defineArbitraries` for reusable fast-check arbitrary records.
+- `/bdd`: `givenStep`, `whenStep`, `thenStep` for reusable scenario steps.
+- `/snap`: register and unregister global snapshot serializers, usually from a preload.
+- `/vcr`: `defineCallbackSerializer` for reversible cassette value serializers.
+
+## Stability and platforms
+
+- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (`record`, `replay`, `addSerializer`, and exact HTTP matching by uppercase method plus full URL).
+- **Experimental, may change in minor versions:** the browser capability and BDD scenarios.
+- **Not yet frozen:** the on-disk cassette and snapshot file formats, and the header-redaction helper.
+- **Not in this release:** a cassette matcher DSL, configurable redaction, cassette migration tooling, database and filesystem-sandbox fixtures, and worker-scoped fixtures.
+- **Platforms:** Linux and macOS. Windows support is planned.
+
+The full stability and error-compatibility contract is in the [API reference](https://archont561.github.io/bun-test-utils/reference/api/).
+
+## License
+
+Licensed under either the [MIT License](https://github.com/Archont561/bun-test-utils/blob/main/LICENSE-MIT) or the [Apache License 2.0](https://github.com/Archont561/bun-test-utils/blob/main/LICENSE-APACHE), at your option.

@@ -1,22 +1,24 @@
 ---
 title: Recording HTTP Cassettes
-description: Record callback results and replay exact HTTP requests with the root cassette fixture.
+description: Record a callback's result and record and replay HTTP traffic with the cassette fixture, with deterministic, committed recordings.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+The `cassette` fixture records results once and replays them afterwards, so a test that depends on a network call or a slow computation runs the same way every time. It has two parts:
 
-The built-in `cassette` fixture provides a deliberately small stable contract:
+- **Callback recording.** `cassette.record(callback)` runs a callback once and stores its serializable result. `cassette.replay(callback)` returns the stored result without running the callback.
+- **HTTP recording.** During a test, `fetch` traffic is captured under `__cassettes__/` on the first run and replayed from that file afterwards, with no network access.
 
-- `cassette.record(callback)` executes a callback once and stores its serializable result;
-- `cassette.replay(callback)` returns the stored result without executing the callback;
-- `cassette.addSerializer(serializer)` registers a reversible, versioned serializer for custom callback values (typed with `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`); and
-- HTTP replay matches one way only: the uppercase method and full URL must both match exactly.
+The stable surface is intentionally small:
 
-Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
+- `cassette.record(callback)` and `cassette.replay(callback)`;
+- `cassette.addSerializer(serializer)` for custom callback values, typed with `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`;
+- HTTP matching by the uppercase method and the full URL, both exact.
+
+Matcher DSLs, configurable redaction, and cassette migration tooling are not part of this release.
 
 ## Installation
 
-`cassette` is available on the root `test` context with no extra dependency:
+`cassette` is on the root `test` context, with no extra dependency:
 
 ```bash
 bun add -d @archont561/bun-test-utils
@@ -34,30 +36,23 @@ test("replays a user lookup", async ({ cassette }) => {
     return { id: "user-1", name: "Ada" };
   };
 
-  expect(await cassette.record(loadUser)).toEqual({
-    id: "user-1",
-    name: "Ada",
-  });
-  expect(await cassette.replay(loadUser)).toEqual({
-    id: "user-1",
-    name: "Ada",
-  });
-  expect(calls).toBe(1);
+  expect(await cassette.record(loadUser)).toEqual({ id: "user-1", name: "Ada" });
+  expect(await cassette.replay(loadUser)).toEqual({ id: "user-1", name: "Ada" });
+  expect(calls).toBe(1); // the callback ran once
 });
 ```
 
-A callback is identified by its function object once the test has recorded it, so
-replay the same function you recorded. A new function is matched by its source
-text only when every recording with that text holds the same result. Otherwise
-`replay` throws `CALLBACK_AMBIGUOUS` and does not run the callback. Two closures
-created by one factory are separate callbacks: each runs once and keeps its own
-result. A new closure with different captured values still matches agreeing
-recordings of the same code, so replay the closure you recorded when values differ.
+Replay the same function you recorded. Within a run, a function is identified by its object. In a later run, a function that has the same source text as a recording is matched to it, as long as every recording with that source text holds the same result. Otherwise `replay` throws `CALLBACK_AMBIGUOUS` without running the callback.
 
-Callback results round-trip through reversible, versioned serializers. The
-built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`, `Error`, typed
-arrays, `ArrayBuffer`, and the numbers JSON cannot represent (`NaN`,
-`±Infinity`, `-0`):
+Two closures created by one factory are separate callbacks. Each runs once and keeps its own result. A closure with different captured values can still match a recording of the same code, so replay the closure you recorded when the captured values differ.
+
+## Serializable values
+
+Callback results round-trip through versioned serializers. These built-ins are included:
+
+- `Date`, `BigInt`, `Map`, `Set`, `RegExp`, `Error`
+- typed arrays and `ArrayBuffer`
+- `NaN`, `Infinity`, `-Infinity`, and `-0`
 
 ```ts
 test("replays an account", async ({ cassette }) => {
@@ -66,18 +61,15 @@ test("replays an account", async ({ cassette }) => {
     roles: new Map([["admin", true]]),
     balance: 10n,
   });
+
   expect(await cassette.record(account)).toEqual(account());
   expect(await cassette.replay(account)).toEqual(account());
 });
 ```
 
-Everything else must be plain data: `null`, booleans, strings, finite numbers,
-arrays without holes, and plain objects. A value no serializer claims and that
-is not plain data — a class instance, nested `undefined`, a function, a
-symbol, a sparse array, a circular structure — makes `record` throw a
-`CassetteError` with the code `CALLBACK_NOT_SERIALIZABLE` that names the path
-of the value and stores nothing. Convert the value inside the callback, or
-teach the cassette the type:
+Other values must be plain data: `null`, booleans, strings, finite numbers, arrays without holes, and plain objects. Anything else makes `record` throw a `CassetteError` with the code `CALLBACK_NOT_SERIALIZABLE`. The error names the path to the value, and nothing is stored. A class instance, a function, a symbol, a sparse array, or a circular structure all fail this way.
+
+The fix is to convert the value inside the callback, or to teach the cassette the type:
 
 ```ts
 import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
@@ -103,68 +95,67 @@ const pointSerializer = defineCallbackSerializer<Point>({
 test("replays a point", async ({ cassette }) => {
   cassette.addSerializer(pointSerializer);
   const load = () => new Point(1, 2);
+
   expect(await cassette.record(load)).toEqual(load());
   expect(await cassette.replay(load)).toEqual(load());
 });
 ```
 
-Serializers are named and versioned, and encoded payloads record both: a
-serializer needed to decode a recording but not registered fails replay with
-`CALLBACK_SERIALIZER_NOT_FOUND` instead of returning a wrong value, and a
-serializer that throws is wrapped as `CALLBACK_SERIALIZER_FAILED` with the
-original cause. Documented losses: unknown `Error` subclass constructors and
-non-enumerable error properties (such as `cause`), `RegExp.lastIndex`, and
-shared-reference identity.
+Serializers are named and versioned, and each encoded payload records both. Two failures are reported by code:
 
-Callback results persist per test in `__cassettes__/<test>.callbacks.json`, next
-to the cassette (ADR 0035). `record` writes this run's results when the test
-ends. `replay` reads them in replay mode only, so a later run replays a callback
-an earlier run recorded, without running it. A callback whose body changed has
-different source text, so replay refuses it with `CALLBACK_NOT_RECORDED` and names
-the file to re-record. A source text recorded from more than one closure is
-refused with `CALLBACK_AMBIGUOUS`, because the closures' captured values cannot
-be told apart across runs. A corrupt sidecar fails at setup with
-`CALLBACK_STORE_INVALID`. The cassette file still holds HTTP entries only.
+- `CALLBACK_SERIALIZER_NOT_FOUND`: a recording needs a serializer that is not registered. Replay fails rather than returning a wrong value.
+- `CALLBACK_SERIALIZER_FAILED`: a serializer threw. The error wraps the original cause.
 
-## Record once, then replay HTTP traffic
+Some information is not preserved. The built-ins do not keep unknown `Error` subclass constructors, non-enumerable error properties such as `cause`, `RegExp.lastIndex`, or shared-reference identity.
 
-The default mode is `auto`. The first run of a test records its HTTP traffic and callback results under `__cassettes__/`, next to the test file. Later runs replay them without network access:
+## Callback results persist across runs
 
-```bash
-bun test tests/user.test.ts   # first run records; later runs replay
-```
+Callback results are saved per test in `__cassettes__/<test>.callbacks.json`, next to the HTTP cassette. `record` writes this run's results when the test ends. `replay` reads them in replay mode only, so a later run can replay a callback that an earlier run recorded, without running it.
 
-Commit the `__cassettes__/` directory, so CI replays the same recordings.
+Three more failures are reported by code:
 
-`VCR_MODE` pins a mode:
+- `CALLBACK_NOT_RECORDED`: the callback's body changed, so its source text no longer matches a recording. The error names the file to re-record.
+- `CALLBACK_AMBIGUOUS`: one source text was recorded from more than one closure, so their captured values cannot be told apart across runs.
+- `CALLBACK_STORE_INVALID`: the sidecar file is corrupt. This fails at setup.
 
-- `auto` (default): replays when the cassette exists, and records when it does not. When `CI` is set, a missing cassette fails instead of recording.
-- `record`: goes to the network on every run, and overwrites the cassette when the run ends.
-- `replay`: never goes to the network. A missing cassette fails.
-- `passthrough`: ignores the cassette.
+The cassette file itself still holds only HTTP entries.
 
-> **Always re-recording:** `auto` is the default in `0.1.0`. To hit the network and overwrite the cassette on every run instead, set `VCR_MODE=record`.
+## Record and replay HTTP traffic
 
-A test whose body fails writes nothing in `auto`, so a broken first run cannot leave a partial recording behind.
+The default mode is `auto`. The first run of a test records its HTTP traffic under `__cassettes__/`, next to the test file, and later runs replay it without network access:
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
 test("fetches user details", async ({ cassette }) => {
-  // Requesting the fixture activates interception for this test.
+  // Requesting the fixture turns interception on for this test.
   expect(cassette).toBeDefined();
+
   const response = await fetch("https://api.example.test/users/user-1");
   expect(await response.json()).toEqual({ id: "user-1" });
 });
 ```
 
-Replay compares the uppercase request method and full URL exactly. It does not
-perform partial URL, regular-expression, body, or custom predicate matching.
-In `auto` mode, a request missing from a present cassette fails with `CASSETTE_MISMATCH`, instead of reaching the network or recording silently. The message names the command to clear that test.
+Commit `__cassettes__/`, so CI replays the same recordings.
+
+`VCR_MODE` selects the mode for a run:
+
+| Mode | Behaviour |
+| :-- | :-- |
+| `auto` (default) | Replays when the cassette exists, and records when it does not. When `CI` is set, a missing cassette fails instead of recording. |
+| `record` | Goes to the network on every run and overwrites the cassette when the run ends. |
+| `replay` | Never goes to the network. A missing cassette fails. |
+| `passthrough` | Ignores the cassette. |
+
+A test whose body fails writes nothing in `auto` mode, so a broken first run cannot leave a partial recording behind.
+
+Replay compares the uppercase request method and the full URL, exactly. It does not match partial URLs, regular expressions, request bodies, or custom predicates.
+
+Because the URL includes the port, a recording of a request to `testServer` will not replay on the next run, since that server binds a new port each time. Record against a stable URL, or stub local endpoints with `httpMock` instead. In `auto` mode, a request that is missing from an existing cassette fails with `CASSETTE_MISMATCH`. The message names the command that clears the test's recording. The request never reaches the network and is never recorded silently.
 
 ## Clear a recording
 
-When a request or callback changes, clear its recording and run the test again. Clearing deletes files, so the next run records them again:
+When a request or callback changes, clear its recording and run the test again. The next run records it again:
 
 ```bash
 bunx test-utils cache clear --file tests/user.test.ts --test "fetches user details"
@@ -173,27 +164,25 @@ bunx test-utils cache clear --all
 bunx test-utils cache clear --all --dry-run
 ```
 
-Choose exactly one scope:
+Choose one scope:
 
-- `--file <path>` clears every test in that file. The command finds the test names by reading the file's literal test names. A name built at runtime, such as a template literal, is not found, so clear it with `--test`.
+- `--file <path>` clears every test in the file. The command finds test names by reading the file's literal names. A name built at runtime, such as one from a template literal, is not found, so clear it with `--test`.
 - `--file <path> --test "<name>"` clears one test.
-- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root — the nearest `package.json` at or above the working directory, skipping `node_modules`.
+- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root, which is the nearest `package.json` at or above the working directory, skipping `node_modules`.
 
-`--dry-run` lists the files and deletes nothing. In a TTY without `CI`, the command shows the matched files as a multi-select (all selected by default) and confirms before deleting; `--yes` skips both. Outside a TTY, the explicit scope is the confirmation. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
+`--dry-run` lists the files and deletes nothing. In an interactive terminal without `CI`, the command shows the matched files as a multi-select, all selected by default, and asks before deleting. `--yes` skips both steps. Outside a terminal, the explicit scope is the confirmation. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Because recordings are committed, `git checkout -- <path>` restores a file deleted by mistake.
 
 ## Files and secrets
 
-The current implementation writes deterministic JSON under `__cassettes__/`
-next to the test: the HTTP cassette, and the callback sidecar when a test records
-callbacks. The exact file schema is not yet a stable public format, and
-migration tooling is deferred; treat cassette files as generated test artifacts
-owned by the version that recorded them.
+Recordings are deterministic JSON. The file format is not yet a stable public format, so treat cassette files as generated test artifacts, owned by the version that wrote them.
 
-Do not record secrets. Configurable redaction is outside the stable release
-contract, so remove or replace credentials before a request reaches the
-recorder.
+Do not record secrets. Redaction covers sensitive request headers only, and configurable redaction is not part of this release. Remove or replace credentials before a request reaches the recorder.
 
-Committed recordings hold real response bodies. Redaction covers sensitive request headers only, so review a new recording for personal or confidential data before you commit it.
+Committed recordings contain real response bodies. Review a new recording for personal or confidential data before you commit it.
 
-The real `globalThis.fetch` is restored when the fixture tears down, including
-when the test fails.
+The real `globalThis.fetch` is restored when the fixture tears down, including when the test fails.
+
+## Next steps
+
+- [Snapshot testing](/bun-test-utils/guides/snapshot-testing/) for the same commit-and-review workflow applied to values.
+- [API reference](/bun-test-utils/reference/api/) for the cassette error codes and environment variables.

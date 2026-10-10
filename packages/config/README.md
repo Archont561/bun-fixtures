@@ -1,17 +1,19 @@
-# Shared build configuration
+# @bun-test-utils/config
 
-`@bun-test-utils/config` is a private workspace package used by the repository's TypeScript and Bunup configuration. It is not a consumer-facing runtime package.
+Private workspace of shared configuration for this repository. It is not a consumer-facing package, and it is not published.
 
-> Repository runtime packages use explicit fixture composition. `fixtures.ts` and `conftest.ts` are not automatically loaded by bun-test-utils; consumer tests import runner values from the root and typed definition/serializer helpers from the approved `/pbt`, `/bdd`, `/snap`, and `/vcr` subpaths; capability fixtures are provided through the root `test` context.
+It provides:
 
-It centralizes the strict library/app compiler presets, the Bunup configuration factory used by capability packs, and the shared BDD runner helper. Runtime packages keep their own entrypoint at `e2e/bdd/features.test.ts`, reduced to a single `runPackageFeatures("<package-dir>", import.meta)` call ([ADR-0017](../../.backlog/docs/adr/0017-shared-bdd-runner-helper.md)); consumer tests should import from `@archont561/bun-test-utils`, not from this package.
+- **TypeScript presets** for the repository: `base.json`, `lib.json` (libraries), and `app.json` (applications). Packages extend one of them in their `tsconfig.json`.
+- **A Bunup build factory**, `createBunupConfig`, from `./bunup`, used by every package that builds with Bunup.
+- **The BDD runner helper**, from `./bdd`. `runPackageFeatures("<package-dir>", import.meta)` runs a package's Gherkin features. Each package's `e2e/bdd/features.test.ts` is a single call to this helper ([ADR 0017](../../.backlog/docs/adr/0017-shared-bdd-runner-helper.md)).
+
+Consumer tests do not import from this workspace. Use the public API documented at the [docs site](https://archont561.github.io/bun-test-utils/).
+
+## Develop
 
 ```bash
-bun install
+cd packages/config
+bun run test
 bun run typecheck
-bun run build
 ```
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
-
-BDD runners are owned by each runtime package under `e2e/bdd/`. This package exposes the shared presets and runner helper they call; it owns unit tests for those exports (`bun test tests`), never a repository-wide suite.

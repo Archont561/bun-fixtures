@@ -1,100 +1,32 @@
-# Browser fixtures (internal)
+# @bun-test-utils/browser
 
-> **Experimental:** browser capability APIs may change in minor releases. The
-> Playwright peer and browser-binary path make this the heaviest CI capability.
+Private workspace. It provides the Playwright-backed browser fixtures, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md):
 
-The browser fixtures (`browser`, `browserContext`, `browserPage`, `webPage`, and
-`browserHttpMock`) are internal workspace fixtures bundled into the public root
-`test` from `@archont561/bun-test-utils`. There is no public
-`@archont561/bun-test-utils/browser` subpath. The ephemeral server and
-`httpMock` fixtures live in `@bun-test-utils/server`
-([ADR 0031](../../.backlog/docs/adr/0031-server-fixtures-pack.md)).
+| Fixture | Provides |
+| :-- | :-- |
+| `browser` | A headless Chromium `Browser`. |
+| `browserContext` | A `BrowserContext` for the test. |
+| `browserPage` | A Playwright `Page` in that context. |
+| `browserHttpMock` | The `httpMock` handlers, installed on the context. |
+| `webPage` | One helper that runs on happy-dom or a real Playwright page. The backend comes from `BUN_TEST_UTILS_WEB_ENV` (`dom` by default, or `browser` / `playwright`). |
 
-```ts
-import { expect, test } from "@archont561/bun-test-utils";
+These fixtures are loaded only when a test requests them. The `playwright` peer is required, along with an installed browser binary (`bunx playwright install chromium`).
 
-test("clicks a button in the DOM backend", async ({ webPage }) => {
-  await webPage.setContent(
-    '<button id="inc">add</button><span id="count">0</span>',
-  );
-  webPage.raw.document.querySelector("#inc")!.addEventListener("click", () => {
-    webPage.raw.document.querySelector("#count")!.textContent = "1";
-  });
-  await webPage.click("#inc");
-  expect(await webPage.textContent("#count")).toBe("1");
-});
-```
+Design points:
 
-Playwright is loaded by browser fixtures only when those fixtures are requested.
+- **Headless only, Chromium only** ([ADR 0030](../../.backlog/docs/adr/0030-headless-only-browser-testing.md)). If a headless shell is not available to Playwright, the workspace falls back to the full Chromium build in its new headless mode.
+- **Standard Playwright installation** ([ADR 0032](../../.backlog/docs/adr/0032-standard-playwright-install.md)) with CI verification of both launch paths ([ADR 0033](../../.backlog/docs/adr/0033-browser-ci-verification.md)).
+- **Experimental.** The browser capability may change in a minor release.
 
-`browserPage` is always a real Playwright `Page`; its semantics never switch. If
-you want a portable helper, request `webPage`. It defaults to happy-dom and uses
-Playwright only when `BUN_TEST_UTILS_WEB_ENV=browser` or `playwright` is set.
+`page` and `browserPage` keep their own meanings. `page` is always happy-dom, and `browserPage` is always Playwright.
 
-For Playwright route interception, use `browserHttpMock` — it adapts the
-`httpMock` handlers from `@bun-test-utils/server` onto a browser context — or
-call `await httpMock.install(browserPage)` inside a test.
-
-These fixtures are exercised in [`tests/`](./tests/) through `test.extend(...)`
-composition. The Playwright suite is the clearest illustration of scope:
-`browser` is session-scoped and therefore shared by consecutive tests, while
-`browserContext` and `browserPage` are test-scoped, so isolation is asserted
-*across* tests rather than by opening two contexts inside one.
-
-## Real browser example
-
-```ts
-import { expect, test } from "@archont561/bun-test-utils";
-
-test("interacts with a page served on an ephemeral port", async ({
-  browserPage,
-  testServer,
-}) => {
-  testServer.handle(() => new Response(
-    `<button id="inc" onclick="count.textContent = Number(count.textContent) + 1">add</button>
-     <span id="count">0</span>`,
-    { headers: { "content-type": "text/html" } },
-  ));
-
-  await browserPage.goto(testServer.url);
-  await browserPage.click("#inc");
-  expect(await browserPage.textContent("#count")).toBe("1");
-});
-```
-
-The engine closes the page and context after the test, stops the ephemeral
-server, and closes the shared browser at the end of the session. The real
-fixture suite in [`tests/playwright.test.ts`](./tests/playwright.test.ts)
-verifies these lifetimes and isolation between tests.
-
-## Installing and verifying browsers
-
-From the repository root:
+## Develop
 
 ```bash
-bun run install-browsers
-# On a Linux CI runner without pixi's shared libraries:
-bun run install-browsers --with-deps
+cd packages/browser
+bun run test
+bun run test:bdd
+bun run typecheck
 ```
 
-The command uses the workspace-pinned Playwright to install Chromium (the full
-build and headless shell) and Firefox. The fixture prefers the headless shell
-and falls back to full Chromium, still headless, when the shell is missing.
-Chromium installation or launch failures fail the suite with an actionable
-error; they do not silently skip it.
-
-CI runs the normal suite, then reruns the real Chromium tests with a fresh
-`PLAYWRIGHT_BROWSERS_PATH` installed using `bun run install-browsers --no-shell`.
-Do not reuse an existing browser cache for this check: `--no-shell` does not
-remove an already installed shell. Firefox's Playwright-level launch proof is
-required under `CI=true`, and may skip locally when Firefox cannot launch.
-The browser fixture itself remains Chromium-only; Firefox/WebKit fixtures and
-headed mode are not added by this verification
-([ADR 0033](../../.backlog/docs/adr/0033-browser-ci-verification.md)).
-
-There is no property-based suite here: a Playwright subprocess makes randomized
-runs slow and flaky, so algebraic coverage lives in vcr, snapshot, std, and the
-engine combinatorics hosted by `@bun-test-utils/pbt` (see
-[spec 0015](../../.backlog/docs/specs/0015-package-test-layout.md)).
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+Browser suites run headless. In this repository, `bun run install-browsers` from the root installs the browser builds they use. On Linux, the pixi `browser` environment supplies the shared libraries. See the repository README for details.

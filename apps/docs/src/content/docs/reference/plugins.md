@@ -1,14 +1,9 @@
 ---
 title: Built-in fixtures
-description: Root test-context fixtures for standard, DOM, browser, VCR, snapshot, and property testing.
+description: The built-in fixtures on the root test context, grouped by area, with the members each one provides.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
-
-
-## Public surface
-
-The root `@archont561/bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The public helper subpaths are `@archont561/bun-test-utils/pbt` for reusable typed fast-check schemas, `@archont561/bun-test-utils/bdd` for typed scenario-step callbacks, `@archont561/bun-test-utils/snap` for global snapshot serializer lifecycle helpers, and `@archont561/bun-test-utils/vcr` for reusable cassette callback serializers; none exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
+Built-in capabilities are fixtures on the root `test` context. Request them by destructuring, exactly as you request your own fixtures. You do not compose them yourself, and you can override any of them with `test.extend()`.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
@@ -17,92 +12,83 @@ test("uses built-in fixtures", async ({ tmpdir, env, cassette, snapshot }) => {
   env.set("APP_MODE", "test");
   tmpdir.write("mode.txt", env.get("APP_MODE")!);
   snapshot.match({ mode: tmpdir.read("mode.txt") }, "mode");
+
   const readMode = () => tmpdir.read("mode.txt");
   await cassette.record(readMode);
   expect(await cassette.replay(readMode)).toBe("test");
 });
 ```
 
+The root package exports only the runners `describe`, `expect`, and `test`. The helper subpaths `/pbt`, `/bdd`, `/snap`, and `/vcr` export typed definitions and serializer helpers. None of them exports a fixture.
 
-## Repo-wide BDD gate
+## Standard
 
-The repository's behavioural specs live under `packages/*/e2e/bdd/features/*.feature`,
-and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint
-that calls the shared `runPackageFeatures` helper. Run the same gate locally and in CI
-with:
+| Fixture | Members | Behaviour |
+| :-- | :-- | :-- |
+| `tmpdir` | `dir`, `path(...parts)`, `write(name, content)`, `read(name)`, `exists(name)`, `remove(name)` | An isolated temporary directory, removed recursively at teardown. `write` returns the file's path. |
+| `env` | `set(key, value)`, `get(key)`, `delete(key)`, `snapshot()` | Changes environment variables for the test. Every change is reverted at teardown. |
+| `stdio` | `stdout()`, `stderr()`, `output()`, `clear()` | Captures writes to `process.stdout` and `process.stderr` for the test. The real streams are restored at teardown. `console.*` output is not captured, so assert on `process.stdout.write` output or on the value directly. |
+| `clock` | `freeze(time)`, `set(time)`, `now()` | Controls `Date` and time. `time` may be a string, a number, or a `Date`. Restored at teardown. |
+| `seed` | `value`, `set(seed)`, `random()` | Makes `Math.random` deterministic from a seed. `set` restarts the sequence from a given seed, so a failing run can be replayed. |
+| `networkGuard` | `allow(...matchers)`, `calls()` | Blocks `fetch` calls to hosts that are not allowed. `calls()` lists every request and whether it was allowed. |
 
-```bash
-bun run test:bdd
-```
+Only tests that request `networkGuard` are guarded. In those tests, a `fetch` that is not allowed throws, naming the method and URL.
 
-A layout conformance test asserts the other half: every package that owns feature files
-has that entrypoint, and that the entrypoint is exactly the one-line helper call — so the
-wiring cannot drift package by package. Package-local `bunfig` files are not required for
-Gherkin discovery.
+## DOM
 
-## Fixtures
+| Fixture | Provides | Requires |
+| :-- | :-- | :-- |
+| `window` | The happy-dom window. | `happy-dom` |
+| `document` | The happy-dom document. | `happy-dom` |
+| `page` | The DOM helper: `mount(html)`, `querySelector(selector)`, `querySelectorAll(selector)`, `click(selector)`, `type(selector, text)`, `html()`, `clear()`. | `happy-dom` |
 
-### Standard
+`page` always uses happy-dom. For a test that should run on happy-dom or a real browser, use `webPage` (see below).
 
-- `clock`: Frozen or controlled system time, restored on teardown.
-- `seed`: Deterministic `Math.random` sequences with replayable seed reporting.
-- `networkGuard`: Blocks unexpected fetches unless explicitly allowed.
-- `tmpdir`: Isolated temporary directory with helper methods (`write`, `read`, `exists`, `remove`, `path`) and automatic recursive wipe.
-- `env`: Environment variable sandboxing with exact restoration on teardown.
-- `stdio`: Output capture for stdout and stderr, with the real streams handed back on teardown.
+## Web (either backend)
 
-### DOM
+`webPage` picks its backend from `BUN_TEST_UTILS_WEB_ENV`: `dom` (the default, using happy-dom) or `browser` (or `playwright`, using a real Playwright page). Its members are the same on both backends:
 
-- `window`, `document`, and `page`: In-memory DOM fixtures powered by `happy-dom`, with automatic global cleanup.
-- `webPage`: A portable page helper that uses happy-dom by default and switches to real Playwright only when `BUN_TEST_UTILS_WEB_ENV=browser` (or `playwright`) is set. `page` and `browserPage` keep their original semantics.
+- `mode`: the backend this test runs on, `"dom"` or `"browser"`.
+- `goto(url)`, `setContent(html)`, `mount(html)`
+- `click(selector)`, `type(selector, text)`
+- `textContent(selector)`, `html()`
+- `evaluate(fn)`
+- `raw`: the underlying happy-dom window or Playwright page, for backend-specific assertions.
 
-### Browser and server (experimental)
+## Browser (experimental)
 
-Browser capability APIs may change in minor versions.
+Browser fixtures launch headless Chromium through Playwright. They need the `playwright` peer and an installed browser binary (`bunx playwright install chromium`). They are loaded only when requested, and the browser API may change in a minor release.
 
-- `testServer` and `serverUrl`: Ephemeral `Bun.serve` server on random port 0 with automatic shutdown.
-- `browser`, `browserPage`, `browserContext`: Playwright browser automation, loaded only when requested.
-- `httpMock`: MSW-like `get` / `post` / `put` / `patch` / `delete` / `head` / `options` handlers for fetch-based tests, plus `passthrough`, `reset`, and `calls()` assertions.
-- `browserHttpMock`: The same mock helper installed on the Playwright `browserContext`; use `httpMock.install(browserPage)` for page-scoped routes.
+| Fixture | Provides |
+| :-- | :-- |
+| `browser` | A Playwright `Browser`, shared for the test. |
+| `browserContext` | A Playwright `BrowserContext` for the test. |
+| `browserPage` | A Playwright `Page` in that context. |
+| `browserHttpMock` | The `httpMock` handlers installed on the `browserContext`. |
 
-### VCR
+`browserPage` and `page` keep their own meanings. Use `webPage` when one test should run on either backend.
 
-The stable VCR surface is deliberately minimal:
+## Server and HTTP
 
-- `cassette.record(callback)`: executes a callback and stores its serializable result.
-- `cassette.replay(callback)`: returns that result without executing the callback.
-- `cassette.addSerializer(serializer)`: registers a reversible, versioned callback value serializer for the test (reusable definitions use `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`).
-- HTTP replay matches uppercase method plus exact full URL only.
+| Fixture | Provides |
+| :-- | :-- |
+| `testServer` | An ephemeral `Bun.serve` server on a random port, shut down at teardown. Members: `url`, `port`, `server`, `handle(fn)`. |
+| `serverUrl` | The same URL as `testServer.url`, declared as a dependency. |
+| `httpMock` | MSW-style fetch handlers: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `use`, `passthrough`, `reset`, `calls`, `install`. |
 
-The current implementation writes under `__cassettes__/`, but its schema is not
-yet a stable public format. The default `auto` mode records a test on first use and
-replays it afterwards. `bunx test-utils cache clear` deletes recordings and snapshots
-so they re-record. Matcher DSLs, configurable redaction, and migration
-tooling are deferred.
+`httpMock` lives with the server fixtures, not with the browser ones, so fetch-based tests never load Playwright. See [API reference](/bun-test-utils/reference/api/#httpmock-fetch-handlers) for the full member list.
 
-### Snapshots
+## Cassettes
 
-- `snapshot`: Serializes a value (or a file's contents via `matchFile`) and compares it against a stored snapshot.
-- Automatic snapshot files live at `__snapshots__/<test name>.snap.json` next to the test file.
-- `match` / `update` / `ci` modes are available through the fixture API or the `SNAPSHOT_MODE` environment variable.
+`cassette` records and replays callback results and HTTP traffic: `record(callback)`, `replay(callback)`, `addSerializer(serializer)`, and `redactHeader(name)`. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/).
 
-### Property and BDD-style tests
+## Snapshots
 
-- `test.prop(title, factory, fn, options)`: stable property tests with per-sample fixture teardown. Requires the optional `fast-check` peer.
-- `test.scenario(title)`: experimental fluent `given` / `when` / `then` scenarios using the same fixture context. Requires the optional `@aboviq/bun-test-cucumber` peer and may change in minor versions.
-- `test.scenario.prop(title, factory)`: experimental generated values plus fluent scenarios. Requires both optional peers.
+`snapshot` compares values and files against stored snapshots: `match(value, name?)`, `matchFile(path, name?)`, `addSerializer(serializer)`, `setMode(mode)`, and the `mode` and `path` properties. See [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
 
+## Property and scenario tests
 
-```ts
-import { expect, test } from "@archont561/bun-test-utils";
+These are methods on `test`, not fixtures:
 
-test("mocks fetch through a fixture", async ({ httpMock }) => {
-  httpMock.get("/api/user", () => Response.json({ name: "Ada" }));
-
-  const data = await fetch("https://app.test/api/user").then((r) => r.json());
-  expect(data).toEqual({ name: "Ada" });
-  expect(httpMock.calls()).toHaveLength(1);
-});
-```
-
-Mocking should be expressed as fixtures and composed with `test.extend()` so mocks get dependency ordering and teardown just like built-in capabilities.
+- `test.prop(title, arbitraries, fn, options?)` runs a property test. It needs `fast-check`. See [Property-based testing](/bun-test-utils/guides/property-based-testing/).
+- `test.scenario(title)` and `test.scenario.prop(title, arbitraries)` build BDD-style scenarios. They need `@aboviq/bun-test-cucumber`, and scenarios are experimental. See [Scenarios and fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/).
