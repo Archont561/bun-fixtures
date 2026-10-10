@@ -351,6 +351,8 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     const requested: VcrMode = (process.env.VCR_MODE as VcrMode) || "auto";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
+    /** HTTP entries captured during this fixture run, not ones replay loaded. */
+    let recordedHttpEntries = 0;
     const codec = createSerializerCodec();
     const origFetch = globalThis.fetch;
 
@@ -484,6 +486,7 @@ export const cassetteFixture = createFixture<CassetteHelper>({
           body: resBody,
         },
       });
+      recordedHttpEntries++;
 
       return liveRes;
     }) as any;
@@ -497,13 +500,18 @@ export const cassetteFixture = createFixture<CassetteHelper>({
       // In auto, only a completed body writes the cache, so a failed first run
       // cannot leave a partial recording for later runs to replay (ADR 0036, rule 3).
       const writesAllowed = requested !== "auto" || bodyCompleted;
-      if (mode === "record" && writesAllowed) {
-        const recordings = callbacks.recordings();
-        if (entries.length > 0 || recordings.length > 0) {
-          // A run with no HTTP entries never empties an existing cassette. It
-          // only creates an empty one when none exists, so replay's existence
-          // guard still holds (ADR 0035, D1).
-          if (entries.length > 0 || !existsSync(cassettePath)) {
+      const recordings = callbacks.recordings();
+      // `record(callback)` is an explicit request to replace the callback
+      // store, even when auto resolved the HTTP cassette to replay. Without
+      // this, an edited callback runs but leaves its old source in the sidecar,
+      // and the following replay can never find the edited body (ADR 0035 D2.1).
+      const writesCallbackStore = mode === "record" || recordings.length > 0;
+      if (writesCallbackStore && writesAllowed) {
+        if (recordedHttpEntries > 0 || recordings.length > 0) {
+          // A run with no newly recorded HTTP entries never empties an existing
+          // cassette. It only creates an empty one when none exists, so replay's
+          // existence guard still holds (ADR 0035, D1).
+          if (recordedHttpEntries > 0 || !existsSync(cassettePath)) {
             helper.save(cassettePath);
           }
           writeSidecar(callbacksPath, recordings);

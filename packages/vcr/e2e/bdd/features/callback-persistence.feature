@@ -53,3 +53,40 @@ Feature: Callback results persist across runs (ADR 0035)
     And I run the test suite with VCR_MODE set to "replay"
     Then the test run fails
     And the output contains "loads-the-user.callbacks.json"
+
+  Scenario: cassette.record replaces an edited callback's stale sidecar entry
+    Given a project with bun-test-utils preloaded
+    And the file "callbacks.test.ts":
+      """
+      import { expect, test } from "@archont561/bun-test-utils";
+
+      test("loads the user", async ({ cassette }) => {
+        const loadUser = () => ({ id: "u1" });
+        expect(await cassette.record(loadUser)).toEqual({ id: "u1" });
+      });
+      """
+    When I run the test suite
+    Then 1 test passes
+    And the file "__cassettes__/loads-the-user.callbacks.json" exists
+    When I rewrite the file "callbacks.test.ts":
+      """
+      import { expect, test } from "@archont561/bun-test-utils";
+
+      test("loads the user", async ({ cassette }) => {
+        const loadUser = () => ({ id: "u2" });
+        expect(await cassette.record(loadUser)).toEqual({ id: "u2" });
+      });
+      """
+    And I run the test suite
+    Then 1 test passes
+    When I rewrite the file "callbacks.test.ts":
+      """
+      import { expect, test } from "@archont561/bun-test-utils";
+
+      test("loads the user", async ({ cassette }) => {
+        const loadUser = () => ({ id: "u2" });
+        expect(await cassette.replay(loadUser)).toEqual({ id: "u2" });
+      });
+      """
+    And I run the test suite with VCR_MODE set to "replay"
+    Then 1 test passes

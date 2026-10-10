@@ -5179,7 +5179,7 @@ tasks:
       clear. ADR 0035 D2.1 says the next record run drops stale recordings.
       Follow-up to task_085."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - cassette
@@ -5211,7 +5211,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:22.783Z
-    updated_at: 2026-10-10T18:08:22.783Z
+    updated_at: 2026-10-10T18:17:24.264Z
   - id: task_096
     title: "ADR: cassette(fn) get-or-record wrapper, superseding the ADR 0036
       stale-cache rule for the wrapper"
