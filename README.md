@@ -60,7 +60,7 @@ Run `bun test`. The full guide is in the [quickstart](https://archont561.github.
 | BDD scenarios | Fluent `given` / `when` / `then` tests on `test.scenario` (experimental) | [Scenarios and fluent API](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) |
 | Property-based testing | `test.prop` with fast-check, one fixture lifecycle per generated sample | [Property-based testing](https://archont561.github.io/bun-test-utils/guides/property-based-testing/) |
 | Snapshot testing | The `snapshot` fixture for values and files | [Snapshot testing](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/) |
-| HTTP record/replay | The `cassette` fixture, `httpMock`, and deterministic replay of HTTP traffic | [Recording HTTP cassettes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) |
+| HTTP record/replay | The callable `cassette(fn)` callback cache, explicit `record`/`replay`, `httpMock`, and deterministic HTTP replay | [Recording HTTP cassettes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) |
 | DOM and browser testing | happy-dom pages, Playwright pages, and one `webPage` fixture that selects either backend | [API reference](https://archont561.github.io/bun-test-utils/reference/api/) |
 
 Install only the optional peers you use. `fast-check`, `@aboviq/bun-test-cucumber`, `happy-dom`, and `playwright` are each needed only by the capability that names them.

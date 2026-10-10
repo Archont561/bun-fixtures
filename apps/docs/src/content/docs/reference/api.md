@@ -193,11 +193,12 @@ Request `browserHttpMock` to install the handlers on the `browserContext` automa
 
 | Member | Behaviour |
 | :-- | :-- |
+| `cassette(callback)` | Get-or-record callback wrapper. Local `auto` replays a hit and refreshes only a missing source with a visible warning; CI, explicit replay, ambiguity, and serializer errors stay strict. |
 | `record(callback)` | Runs the callback once and stores its serializable result. Returns the result. |
 | `replay(callback)` | Returns the stored result without running the callback. |
 | `addSerializer(serializer)` | Registers a reversible, versioned serializer for this test's callback values. |
 | `redactHeader(name)` | Redacts the named request header in recordings. Available, but outside the stable contract. |
-| `mode`, `setMode(mode)` | The mode for this test: `auto`, `record`, `replay`, or `passthrough`. |
+| `mode`, `setMode(mode)` | The mode for this test: `auto`, `record`, `replay`, or `passthrough`. A mode explicitly set to `replay` keeps the callable strict. |
 
 See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour.
 

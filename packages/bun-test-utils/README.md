@@ -87,7 +87,7 @@ test("reads the environment", async ({ env, tmpdir }) => {
 | Web (either backend) | `webPage` | happy-dom by default. Set `BUN_TEST_UTILS_WEB_ENV=browser` to run the same test on a real Playwright page. |
 | Browser | `browser`, `browserContext`, `browserPage`, `browserHttpMock` | Playwright Chromium, headless. Requires `playwright` and an installed browser. Experimental. |
 | Server and HTTP | `testServer`, `serverUrl`, `httpMock` | An ephemeral `Bun.serve` server, and MSW-like fetch handlers. |
-| Cassettes | `cassette` | Record a callback's result once and replay it, and record and replay HTTP traffic. |
+| Cassettes | `cassette` | Get or record callback results with `cassette(fn)`, use explicit record/replay controls, and record and replay HTTP traffic. |
 | Snapshots | `snapshot` | Compare values and files against stored snapshots. |
 
 ### Property-based tests
@@ -151,7 +151,7 @@ test("loads the user", async ({ httpMock }) => {
 });
 ```
 
-`cassette.record` and `cassette.replay` store and replay a callback's result. In the default `auto` mode, a test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
+`cassette(fn)` is the get-or-record callback form; explicit `cassette.record` and `cassette.replay` keep precise control. In local default `auto` mode, a missing callback source records with a visible warning and replaces its stale sidecar entry; CI, explicit replay, and serializer-version mismatches remain strict. A test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
 
 ## Optional peers
 
@@ -184,7 +184,7 @@ import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
 
 ## Stability and platforms
 
-- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (`record`, `replay`, `addSerializer`, and exact HTTP matching by uppercase method plus full URL).
+- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (callable `cassette(fn)`, explicit `record`/`replay`, `addSerializer`, and exact HTTP matching by uppercase method plus full URL).
 - **Experimental, may change in minor versions:** the browser capability and BDD scenarios.
 - **Not yet frozen:** the on-disk cassette and snapshot file formats, and the header-redaction helper.
 - **Not in this release:** a cassette matcher DSL, configurable redaction, cassette migration tooling, database and filesystem-sandbox fixtures, and worker-scoped fixtures.

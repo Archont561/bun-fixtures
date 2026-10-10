@@ -5,12 +5,12 @@ description: Record a callback's result and record and replay HTTP traffic with 
 
 The `cassette` fixture records results once and replays them afterwards, so a test that depends on a network call or a slow computation runs the same way every time. It has two parts:
 
-- **Callback recording.** `cassette.record(callback)` runs a callback once and stores its serializable result. `cassette.replay(callback)` returns the stored result without running the callback.
+- **Callback recording.** `cassette(callback)` is a get-or-record wrapper. The explicit `cassette.record(callback)` always runs an unrecorded callback, and `cassette.replay(callback)` returns a stored result without running it.
 - **HTTP recording.** During a test, `fetch` traffic is captured under `__cassettes__/` on the first run and replayed from that file afterwards, with no network access.
 
 The stable surface is intentionally small:
 
-- `cassette.record(callback)` and `cassette.replay(callback)`;
+- callable `cassette(callback)`, plus explicit `cassette.record(callback)` and `cassette.replay(callback)`;
 - `cassette.addSerializer(serializer)` for custom callback values, typed with `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`;
 - HTTP matching by the uppercase method and the full URL, both exact.
 
@@ -45,6 +45,25 @@ test("replays a user lookup", async ({ cassette }) => {
 Replay the same function you recorded. Within a run, a function is identified by its object. In a later run, a function that has the same source text as a recording is matched to it, as long as every recording with that source text holds the same result. Otherwise `replay` throws `CALLBACK_AMBIGUOUS` without running the callback.
 
 Two closures created by one factory are separate callbacks. Each runs once and keeps its own result. A closure with different captured values can still match a recording of the same code, so replay the closure you recorded when the captured values differ.
+
+## Get or record with `cassette(fn)`
+
+For the usual cache lookup, call the fixture itself. The callable keeps all of the object methods, so you can still add serializers or choose an explicit mode:
+
+```ts
+test("gets or records a profile", async ({ cassette }) => {
+  const loadProfile = () => api.profiles.get("ada");
+
+  const profile = await cassette(loadProfile);
+  expect(profile.id).toBe("ada");
+});
+```
+
+In `record` mode, the callable records. In `replay` mode it is strict and never runs a missing callback. In `passthrough` mode it just runs the callback without storing it. In local `auto` mode, it records on a first run; when an existing cassette has no matching **callback source**, it records the callback again, replaces stale sidecar entries at teardown, and writes one warning beginning `[bun-test-utils/vcr] cassette(fn) re-recorded callback`.
+
+That exception is deliberately limited to this explicit wrapper. A missing HTTP request still fails with `CASSETTE_MISMATCH`; direct `cassette.replay(callback)` stays strict; and a callback miss in CI never runs or writes. The warning and resulting sidecar diff make a local refresh visible for review.
+
+Callback identity remains exact function source text. Captured values, module state, environment values, and changed imported helper implementations are not part of that text. If one of those hidden inputs changed while the callback source did not, use explicit `VCR_MODE=record` or clear the recording and review the replacement. The callable intentionally takes no separate key or version argument.
 
 ## Serializable values
 
@@ -103,14 +122,14 @@ test("replays a point", async ({ cassette }) => {
 
 Serializers are named and versioned, and each encoded payload records both. Two failures are reported by code:
 
-- `CALLBACK_SERIALIZER_NOT_FOUND`: a recording needs a serializer that is not registered. Replay fails rather than returning a wrong value.
+- `CALLBACK_SERIALIZER_NOT_FOUND`: a recording needs an exact serializer name and version that is not registered. Replay fails rather than returning a wrong value. A same-name, different-version registration is also an error; `cassette(fn)` never silently re-records a serializer migration.
 - `CALLBACK_SERIALIZER_FAILED`: a serializer threw. The error wraps the original cause.
 
 Some information is not preserved. The built-ins do not keep unknown `Error` subclass constructors, non-enumerable error properties such as `cause`, `RegExp.lastIndex`, or shared-reference identity.
 
 ## Callback results persist across runs
 
-Callback results are saved per test in `__cassettes__/<test>.callbacks.json`, next to the HTTP cassette. `record` writes this run's results when the test ends. `replay` reads them in replay mode only, so a later run can replay a callback that an earlier run recorded, without running it.
+Callback results are saved per test in `__cassettes__/<test>.callbacks.json`, next to the HTTP cassette. `record` writes this run's results when the test ends, including an explicit `record` or a successful local-auto `cassette(fn)` refresh after HTTP auto resolved to replay. Each write contains this run's recordings only, so an edited callback source replaces its stale sidecar entry. `replay` reads them in replay mode only, so a later run can replay a callback that an earlier run recorded, without running it.
 
 Three more failures are reported by code:
 
@@ -155,7 +174,7 @@ Because the URL includes the port, a recording of a request to `testServer` will
 
 ## Clear a recording
 
-When a request or callback changes, clear its recording and run the test again. The next run records it again:
+When an HTTP request changes, or when a callback's hidden inputs change without changing its source, clear its recording and run the test again. The next run records it again. A changed callback body passed through local-auto `cassette(fn)` refreshes itself visibly instead: it warns and replaces the sidecar entry.
 
 ```bash
 bunx test-utils cache clear --file tests/user.test.ts --test "fetches user details"
