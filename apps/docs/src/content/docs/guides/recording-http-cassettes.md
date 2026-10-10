@@ -176,9 +176,9 @@ Choose exactly one scope:
 
 - `--file <path>` clears every test in that file. The command finds the test names by reading the file's literal test names. A name built at runtime, such as a template literal, is not found, so clear it with `--test`.
 - `--file <path> --test "<name>"` clears one test.
-- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the working directory, skipping `node_modules`.
+- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root — the nearest `package.json` at or above the working directory, skipping `node_modules`.
 
-`--dry-run` lists the files and deletes nothing. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](./snapshot-testing.md).
+`--dry-run` lists the files and deletes nothing. In a TTY without `CI`, the command shows the matched files as a multi-select (all selected by default) and confirms before deleting; `--yes` skips both. Outside a TTY, the explicit scope is the confirmation. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](./snapshot-testing.md).
 
 ## Files and secrets
 

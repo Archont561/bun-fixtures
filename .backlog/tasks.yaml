@@ -4944,10 +4944,10 @@ tasks:
       dist/cli.js. The CLI uses citty for commands and @clack/prompts for the
       cache clear picker and confirmations. It exposes init and cache clear.
       Project root is the nearest package.json. There is no config file in v1.
-      Decisions are in ADR 0037 (proposed). Requires ADR 0037 to be accepted
-      before implementation. Depends on task_086 (done).
+      Decisions are in ADR 0037 (accepted 2026-10-10). Depends on task_086
+      (done).
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - cli
@@ -5003,4 +5003,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T13:45:24.834Z
-    updated_at: 2026-10-10T14:07:43.251Z
+    updated_at: 2026-10-10T15:16:10.703Z

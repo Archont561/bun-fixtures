@@ -1,5 +1,5 @@
 import { createBunupConfig } from "@bun-test-utils/config/bunup";
 
-export default createBunupConfig(["src/plugin.ts", "src/types.ts"], {
+export default createBunupConfig("src/index.ts", {
   preferredTsconfig: "tsconfig.build.json",
 });
