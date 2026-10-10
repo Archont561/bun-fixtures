@@ -4936,17 +4936,16 @@ tasks:
     created_at: 2026-10-10T13:16:36.924Z
     updated_at: 2026-10-10T13:31:48.798Z
   - id: task_087
-    title: "bun-test-utils CLI: citty plus clack prompts for init and cache, with
-      test-utils.config.ts discovery and defineConfig"
-    description: "Rework the test-utils binary (packages/bun-test-utils/src/cli.ts)
-      into a citty CLI that exposes the init and cache clear commands (ADR
-      0036). Interactive input uses @clack/prompts. The CLI discovers a config
-      file, test-utils.config.ts, in the current directory only, or at the path
-      given by --config. The config file is written with defineConfig imported
-      from @archont561/bun-test-utils. A JSON config is out of scope: a JSON
-      file cannot import defineConfig. Requires an accepted ADR before
-      implementation: the config contract, the defineConfig export, prompt
-      rules, and the new runtime dependency. Depends on task_086 (done)."
+    title: "CLI workspace: citty commands, clack prompts for cache clear,
+      project-root scoping (ADR 0037)"
+    description: Rework the CLI into a private workspace, @bun-test-utils/cli
+      (packages/cli), bundled into the @archont561/bun-test-utils metapackage.
+      The test-utils bin stays in the metapackage package.json and points at
+      dist/cli.js. The CLI uses citty for commands and @clack/prompts for the
+      cache clear picker and confirmations. It exposes init and cache clear.
+      Project root is the nearest package.json. There is no config file in v1.
+      Decisions are in ADR 0037 (proposed). Requires ADR 0037 to be accepted
+      before implementation. Depends on task_086 (done).
     source_links: []
     status: ready
     priority: P2
@@ -4956,37 +4955,34 @@ tasks:
     repo_targets:
       - bun-test-utils
     acceptance_criteria:
-      - ADR drafted and accepted before implementation. It fixes the config
-        schema, the defineConfig export location, the prompt rules, and the
-        @clack/prompts dependency.
-      - The test-utils binary uses citty for parsing and exposes both init and
-        cache clear, with --help output for each.
-      - Prompts run only when stdin and stdout are TTYs and a required value is
-        missing. Non-TTY runs and CI never prompt. They exit 1 with a usage
-        message that lists the missing flags.
-      - cache clear asks for confirmation before it deletes, and shows the file
-        count from the dry-run planner. --yes skips the prompt. --dry-run never
-        prompts and never deletes.
-      - defineConfig is exported from @archont561/bun-test-utils. It is a typed
-        identity function that validates its argument. Importing the root entry
-        from a config file has no test-registration side effects, and a test
-        proves it.
-      - "Config discovery: --config <path> wins. Otherwise test-utils.config.ts
-        is read from the current directory only, with no walk up the tree. A
-        missing config is not an error. An invalid config fails with a message
-        that names the file and the field. The file is loaded with Bun native
-        TypeScript import, with no new loader."
-      - The config holds defaults only; flags override it. The first version
-        covers init entry and the cache clear --all roots and excluded
-        directories. The exact schema is set by the ADR.
-      - "@clack/prompts is a runtime dependency of @archont561/bun-test-utils,
-        not only a transitive changesets dependency. The pack smoke test
-        installs the tarball and runs test-utils --help."
-      - Tests cover config discovery, validation, the prompt guard (non-TTY, CI,
-        --yes), and the BDD scenarios for cache clear and init. Prompt wrapping
-        takes an injected prompter so it can be unit tested.
-      - "audit:api diff is reviewed: every new export is listed. Specs 0012 and
-        0013 and the CLI docs are updated. No changeset before M5."
+      - ADR 0037 is accepted. It fixes the workspace layout, the bundling, the
+        prompt rules, the project-root rule, the config deferral, and the public
+        contract.
+      - packages/cli (@bun-test-utils/cli) is a private workspace. It owns the
+        citty command tree, the cache planner, project-root resolution, and the
+        prompts. Core no longer contains CLI code.
+      - The metapackage bunup config replaces @bun-test-utils/core/cli with
+        @bun-test-utils/cli in bundledWorkspaces. bin test-utils stays
+        ./dist/cli.js. citty and @clack/prompts are runtime dependencies of
+        @archont561/bun-test-utils. @clack/prompts is pinned to the lockfile
+        version.
+      - init keeps its flags. In a TTY without --yes it confirms before writing
+        bunfig.toml. It never prompts in CI or a non-TTY.
+      - cache clear keeps the ADR 0036 scopes and adds --yes. With a scope in a
+        TTY it shows a multi-select, all selected, then confirms. --yes skips
+        both. --dry-run never prompts. Outside a TTY or with CI set it never
+        prompts. A missing scope is a usage error in every mode.
+      - With --all, the root is the nearest package.json at or above cwd. No
+        package.json is a usage error. The output names the root and the file
+        count scanned.
+      - No config file, defineConfig, or /config subpath is added in v1.
+      - The pack test passes with the new bundled workspace.
+        scripts/public-api.txt diff shows no change in cli names, or every
+        change is listed. The ./cli subpath stays absent from the exports map.
+      - Unit tests cover the prompt guard with an injected prompter,
+        project-root resolution, and the planner. BDD scenarios cover cache
+        clear and init in non-TTY mode.
+      - Spec 0012 and the CLI docs are updated. Changeset is not added before M5.
       - bun test, bun run typecheck, bun run lint, audit:api, and audit:check
         are all green.
     dependencies: []
@@ -5007,4 +5003,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T13:45:24.834Z
-    updated_at: 2026-10-10T13:45:24.834Z
+    updated_at: 2026-10-10T14:07:43.251Z
