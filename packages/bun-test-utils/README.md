@@ -87,7 +87,7 @@ test("reads the environment", async ({ env, tmpdir }) => {
 | Web (either backend) | `webPage` | happy-dom by default. Set `BUN_TEST_UTILS_WEB_ENV=browser` to run the same test on a real Playwright page. |
 | Browser | `browser`, `browserContext`, `browserPage`, `browserHttpMock` | Playwright Chromium, headless. Requires `playwright` and an installed browser. Experimental. |
 | Server and HTTP | `testServer`, `serverUrl`, `httpMock` | An ephemeral `Bun.serve` server, and MSW-like fetch handlers. |
-| Cassettes | `cassette` | Record a callback's result once and replay it, and record and replay HTTP traffic. |
+| Cassettes | `cassette` | Get or record callback results with `cassette(fn)`, use explicit record/replay controls, and record and replay HTTP traffic. |
 | Snapshots | `snapshot` | Compare values and files against stored snapshots. |
 
 ### Property-based tests
@@ -130,12 +130,18 @@ Requires `bun add -d @aboviq/bun-test-cucumber`. Scenarios are experimental.
 ### Snapshots
 
 ```ts
-import { test } from "@archont561/bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("renders the widget", async ({ snapshot }) => {
-  snapshot.match({ name: "widget", count: 3 });
+  const widget = await snapshot(
+    async () => render({ name: "widget", count: 3 }),
+    "widget",
+  );
+  expect(widget.count).toBe(3);
 });
 ```
+
+Callable `snapshot(fn, name)` runs and awaits `fn` every time, matches its result under the required explicit name, and returns that same result. It is an assertion wrapper, not a cache: it never keys on the function body. If `fn` throws or rejects, its error propagates and no snapshot is written. Use `snapshot.match(value, name?)` and `snapshot.matchFile(path, name?)` unchanged for direct values and files.
 
 The first run writes `__snapshots__/` next to the test file. Commit that directory, so a change to the snapshot shows up in review.
 
@@ -151,7 +157,7 @@ test("loads the user", async ({ httpMock }) => {
 });
 ```
 
-`cassette.record` and `cassette.replay` store and replay a callback's result. In the default `auto` mode, a test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
+`cassette(fn)` is the get-or-record callback form; explicit `cassette.record` and `cassette.replay` keep precise control. In local default `auto` mode, a missing callback source records with a visible warning and replaces its stale sidecar entry; CI, explicit replay, and serializer-version mismatches remain strict. Use `cassette.addSerializer(...)` for a test-specific callback value type, or register a reusable preload serializer once through the `/vcr` subpath. A test's HTTP traffic is recorded under `__cassettes__/` on its first run and replayed afterwards with no network access.
 
 ## Optional peers
 
@@ -174,17 +180,52 @@ Typed helpers live on four subpaths. They export definitions and types only, nev
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
 import { givenStep, whenStep, thenStep } from "@archont561/bun-test-utils/bdd";
 import { createSnapshotSerializer } from "@archont561/bun-test-utils/snap";
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+  unregisterCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
 ```
 
 - `/pbt`: `defineArbitraries` for reusable fast-check arbitrary records.
 - `/bdd`: `givenStep`, `whenStep`, `thenStep` for reusable scenario steps.
 - `/snap`: register and unregister global snapshot serializers, usually from a preload.
-- `/vcr`: `defineCallbackSerializer` for reversible cassette value serializers.
+- `/vcr`: `defineCallbackSerializer` for reversible cassette value serializers, plus `registerCallbackSerializer` and identity-based `unregisterCallbackSerializer` for serializers shared process-wide (typically from a preload). Fixture-local `cassette.addSerializer` remains available and takes precedence over global registrations.
+
+Global registrations remain until unregistered. `registerCallbackSerializer` returns the supplied serializer; `unregisterCallbackSerializer(serializer)` removes every registration of that exact object and returns whether it removed one or more.
+
+For example, a Bun test preload can make one reversible type available to every
+cassette fixture without repeating `cassette.addSerializer(...)`:
+
+```ts
+// test-serializers.ts, listed in bunfig.toml [test].preload
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
+
+class Token {
+  constructor(readonly value: string) {}
+}
+
+registerCallbackSerializer(
+  defineCallbackSerializer<Token>({
+    name: "token",
+    version: 1,
+    test: (value) => value instanceof Token,
+    serialize: (token) => ({ value: token.value }),
+    deserialize: (data) => new Token((data as { value: string }).value),
+  }),
+);
+```
+
+Fixture-local serializers still win over this project-wide default. See
+[Recording HTTP cassettes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/)
+for the versioning and cleanup rules.
 
 ## Stability and platforms
 
-- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (`record`, `replay`, `addSerializer`, and exact HTTP matching by uppercase method plus full URL).
+- **Stable, follows semantic versioning:** the fixture engine, the standard, DOM, snapshot, and property-testing capabilities, and the minimal cassette contract (callable `cassette(fn)`, explicit `record`/`replay`, fixture-local `addSerializer`, `/vcr` global serializer registration, and exact HTTP matching by uppercase method plus full URL).
 - **Experimental, may change in minor versions:** the browser capability and BDD scenarios.
 - **Not yet frozen:** the on-disk cassette and snapshot file formats, and the header-redaction helper.
 - **Not in this release:** a cassette matcher DSL, configurable redaction, cassette migration tooling, database and filesystem-sandbox fixtures, and worker-scoped fixtures.

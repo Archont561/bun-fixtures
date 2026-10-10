@@ -88,6 +88,12 @@ export function createSnapshotSerializer(serializer: Serializer): Serializer {
 }
 
 export interface SnapshotHelper {
+  /**
+   * Runs `callback` once, awaits its result, matches it under the required
+   * logical `name`, then returns that original result (ADR 0041). This is an
+   * assertion wrapper, not a cache: function identity and source are ignored.
+   */
+  <T>(callback: () => T | Promise<T>, name: string): Promise<T>;
   mode: SnapshotMode;
   setMode(mode: SnapshotMode): void;
   /** Registered serializers run before the built-ins, most recent first. */
@@ -309,32 +315,46 @@ export const snapshotFixture = createFixture<SnapshotHelper>({
       }
     }
 
-    const helper: SnapshotHelper = {
-      get mode() {
-        return mode;
-      },
-      get path() {
-        return snapshotPath;
-      },
-      setMode(m: SnapshotMode) {
-        mode = m;
-      },
-      addSerializer(serializer: Serializer) {
-        serializers.unshift(serializer);
-      },
-      match(value, name) {
-        const key = nextKey(name);
-        compare(key, serialize(value, key));
-      },
-      matchFile(filePath, name) {
-        if (!existsSync(filePath)) {
-          throw new Error(
-            `[bun-test-utils/snapshot] File not found: ${filePath}`,
-          );
-        }
-        compare(nextKey(name), readFileSync(filePath, "utf8"));
-      },
+    function match(value: unknown, name?: string): void {
+      const key = nextKey(name);
+      compare(key, serialize(value, key));
+    }
+
+    function matchFile(filePath: string, name?: string): void {
+      if (!existsSync(filePath)) {
+        throw new Error(
+          `[bun-test-utils/snapshot] File not found: ${filePath}`,
+        );
+      }
+      compare(nextKey(name), readFileSync(filePath, "utf8"));
+    }
+
+    const helper = (async <T>(
+      callback: () => T | Promise<T>,
+      name: string,
+    ): Promise<T> => {
+      if (typeof name !== "string" || name.length === 0) {
+        throw new Error(
+          "[bun-test-utils/snapshot] snapshot(callback, name) requires a non-empty name.",
+        );
+      }
+      const value = await callback();
+      match(value, name);
+      return value;
+    }) as SnapshotHelper;
+
+    Object.defineProperties(helper, {
+      mode: { enumerable: true, get: () => mode },
+      path: { enumerable: true, get: () => snapshotPath },
+    });
+    helper.setMode = (nextMode: SnapshotMode) => {
+      mode = nextMode;
     };
+    helper.addSerializer = (serializer: Serializer) => {
+      serializers.unshift(serializer);
+    };
+    helper.match = match;
+    helper.matchFile = matchFile;
 
     try {
       await use(helper);

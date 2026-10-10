@@ -5179,7 +5179,7 @@ tasks:
       clear. ADR 0035 D2.1 says the next record run drops stale recordings.
       Follow-up to task_085."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - cassette
@@ -5211,7 +5211,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:22.783Z
-    updated_at: 2026-10-10T18:08:22.783Z
+    updated_at: 2026-10-10T18:17:24.264Z
   - id: task_096
     title: "ADR: cassette(fn) get-or-record wrapper, superseding the ADR 0036
       stale-cache rule for the wrapper"
@@ -5226,7 +5226,7 @@ tasks:
       captured variables and imported helpers are handled, since source text
       does not see them."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - cassette
@@ -5259,7 +5259,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:23.266Z
-    updated_at: 2026-10-10T18:08:23.266Z
+    updated_at: 2026-10-10T18:18:21.555Z
   - id: task_097
     title: Implement cassette(fn) get-or-record wrapper
     description: "Depends on the ADR task above; do not start before that ADR is
@@ -5268,7 +5268,7 @@ tasks:
       Update README, docs (cassette guide and API reference), the matching spec,
       and scripts/public-api.txt."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - cassette
@@ -5299,7 +5299,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:23.770Z
-    updated_at: 2026-10-10T18:08:23.770Z
+    updated_at: 2026-10-10T18:22:25.659Z
   - id: task_098
     title: Global callback serializer registration on /vcr
       (registerCallbackSerializer)
@@ -5309,7 +5309,7 @@ tasks:
       the stored format (name and version), so the version rule from the
       cassette wrapper ADR applies.
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - cassette
@@ -5340,7 +5340,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:24.272Z
-    updated_at: 2026-10-10T18:08:24.272Z
+    updated_at: 2026-10-10T18:27:39.786Z
   - id: task_099
     title: "snapshot(fn, name) callable form: run, match, and return the result"
     description: Make the snapshot fixture callable as well as an object.
@@ -5349,7 +5349,7 @@ tasks:
       body. A name is required for the callable form. Errors from fn propagate
       and nothing is written. snapshot.match and matchFile are unchanged.
     source_links: []
-    status: ready
+    status: done
     priority: P2
     labels:
       - snapshot
@@ -5382,4 +5382,4 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:24.778Z
-    updated_at: 2026-10-10T18:08:24.778Z
+    updated_at: 2026-10-10T18:32:56.154Z

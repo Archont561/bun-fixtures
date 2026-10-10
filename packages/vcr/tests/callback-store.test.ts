@@ -169,6 +169,12 @@ const GOLDEN_PATH = join(
 
 const breadcrumbs: { golden?: string; factory?: string; remove?: string } = {};
 
+/** Restores the ambient mode after a direct fixture run. */
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
 describe("callback persistence: record side (ADR 0035)", () => {
   recordTest(GOLDEN_NAME, async ({ cassette }) => {
     cassette.setMode("record");
@@ -270,6 +276,75 @@ describe("callback persistence: record side (ADR 0035)", () => {
     expect((caught as CassetteError).code).toBe("CALLBACK_NOT_RECORDED");
     expect(ranCount()).toBeUndefined();
   });
+});
+
+describe("callback persistence: replacing stale entries (ADR 0035 D2.1)", () => {
+  bunTest(
+    "cassette.record replaces a stale sidecar entry when auto has resolved to replay",
+    async () => {
+      const name = "records an edited callback body in auto replay";
+      const oldCallback = new Function(
+        "return { id: 'before-edit' }",
+      ) as () => { id: string };
+      const editedCallback = new Function(
+        "return { id: 'after-edit' }",
+      ) as () => { id: string };
+      const oldSource = Function.prototype.toString.call(oldCallback);
+      const editedSource = Function.prototype.toString.call(editedCallback);
+      const cassettePath = cassettePathFor(name);
+      const sidecarPath = sidecarPathFor(name);
+      const priorVcrMode = process.env.VCR_MODE;
+      const priorCi = process.env.CI;
+
+      seed(cassettePath, "[]");
+      seed(
+        sidecarPath,
+        sidecarText([
+          { source: oldSource, closures: 1, encoded: '{"id":"before-edit"}' },
+        ]),
+      );
+
+      try {
+        // With a cassette already present, auto resolves to replay. Calling the
+        // explicit record method is the intentional re-record operation.
+        delete process.env.VCR_MODE;
+        delete process.env.CI;
+        await cassetteFixture.setup(
+          async (cassette) => {
+            expect(cassette.mode).toBe("replay");
+            expect(await cassette.record(editedCallback)).toEqual({
+              id: "after-edit",
+            });
+          },
+          { testFile: scratchFile, testName: name },
+        );
+
+        const saved = JSON.parse(readFileSync(sidecarPath, "utf8")) as {
+          recordings: Array<{ source: string; encoded: string }>;
+        };
+        expect(saved.recordings).toHaveLength(1);
+        expect(saved.recordings[0]!.source).toBe(editedSource);
+        expect(saved.recordings[0]!.encoded).toBe('{"id":"after-edit"}');
+
+        // The following replay run sees the replacement without cache clear.
+        process.env.VCR_MODE = "replay";
+        await cassetteFixture.setup(
+          async (cassette) => {
+            const sameEditedBody = new Function(
+              "return { id: 'after-edit' }",
+            ) as () => { id: string };
+            expect(await cassette.replay(sameEditedBody)).toEqual({
+              id: "after-edit",
+            });
+          },
+          { testFile: scratchFile, testName: name },
+        );
+      } finally {
+        restoreEnv("VCR_MODE", priorVcrMode);
+        restoreEnv("CI", priorCi);
+      }
+    },
+  );
 });
 
 describe("callback persistence: replay side (ADR 0035)", () => {

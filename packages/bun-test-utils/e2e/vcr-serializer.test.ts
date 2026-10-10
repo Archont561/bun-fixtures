@@ -1,17 +1,18 @@
 /**
  * ADR 0024 installed-consumer boundary for cassette callback serializers
- * (task_077; spec 0012 R9, ADR 0034).
+ * (task_077; spec 0012 R9, ADRs 0034 and 0040).
  *
  * Packs the publishable package, installs the tarball into a scratch project,
- * preloads a module that defines a reversible `CallbackSerializer` and the
- * custom class it claims, and runs a root `bun-test-utils` cassette test that
- * registers the serializer fixture-locally and round-trips a callback result
- * whose value mixes built-in shapes (`Date`, `Map`, `BigInt`) with the custom
- * class. The replay's `calls` counter proves the second invocation did not
- * execute the callback — the analogue of task_057's stored-snapshot tampering
- * proof, adapted to the in-memory per-test cassette contract (ADR 0034 §8).
- * This is the exact flow task_005 criterion 5 re-runs against the registry
- * package after publication.
+ * preloads a module that defines and process-globally registers a reversible
+ * `CallbackSerializer` and the custom class it claims, then runs a root
+ * `bun-test-utils` cassette test with no fixture-local registration. This
+ * proves the `/vcr` bundle's Symbol-backed preload registry reaches the
+ * separately bundled root plugin. The callback's result mixes built-in shapes
+ * (`Date`, `Map`, `BigInt`) with the custom class. The replay's `calls`
+ * counter proves the second invocation did not execute the callback — the
+ * analogue of task_057's stored-snapshot tampering proof, adapted to the
+ * in-memory per-test cassette contract (ADR 0034 §8). This is the exact flow
+ * task_005 criterion 5 re-runs against the registry package after publication.
  */
 
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -59,7 +60,7 @@ function run(cmd: string[], cwd?: string): string {
 
 describe("installed-consumer cassette serializer preload", () => {
   test(
-    "a packed install applies a /vcr-defined callback serializer and the root cassette round-trips built-in plus custom values",
+    "a packed install preloads a globally registered /vcr serializer for the root cassette",
     () => {
       const packDir = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-vcr-"));
       const project = mkdtempSync(
@@ -84,18 +85,16 @@ describe("installed-consumer cassette serializer preload", () => {
           "the installed package exposes dist/vcr.js for the ./vcr subpath",
         ).toBe(true);
 
-        // The documented consumer flow: a preload module that defines the
-        // custom class and a reversible `CallbackSerializer` through the
-        // public `/vcr` subpath. Registration is fixture-local (ADR 0034 §5),
-        // so the preload only constructs the definition; the consumer test
-        // registers it via `cassette.addSerializer(...)`. The class is
-        // exported so the consumer test can construct the same Token
-        // instance the serializer claims via `instanceof`. If the subpath is
-        // broken or the named export is missing, this preload throws at
-        // module load and the consumer test fails to start.
+        // The documented ADR 0040 consumer flow: a preload defines the custom
+        // class and globally registers a reversible `CallbackSerializer` via
+        // the public `/vcr` subpath. The root test deliberately never calls
+        // `cassette.addSerializer(...)`. The class is exported so the consumer
+        // test can construct the same Token instance the serializer claims via
+        // `instanceof`. If either public export is missing, this preload throws
+        // at module load and the consumer test fails to start.
         writeFileSync(
           join(project, "test-serializers.ts"),
-          `import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";\n` +
+          `import { defineCallbackSerializer, registerCallbackSerializer } from "@archont561/bun-test-utils/vcr";\n` +
             `\n` +
             `export class Token {\n` +
             `  constructor(readonly value: string) {}\n` +
@@ -107,7 +106,8 @@ describe("installed-consumer cassette serializer preload", () => {
             `  test: (candidate) => candidate instanceof Token,\n` +
             `  serialize: (token) => ({ value: token.value }),\n` +
             `  deserialize: (data) => new Token((data as { value: string }).value),\n` +
-            `});\n`,
+            `});\n` +
+            `registerCallbackSerializer(tokenSerializer);\n`,
         );
         // The standard engine preload plus the serializer preload.
         writeFileSync(
@@ -117,18 +117,17 @@ describe("installed-consumer cassette serializer preload", () => {
         );
 
         // A root bun-test-utils test: the cassette fixture is on the root
-        // test context, the custom serializer is registered fixture-locally,
-        // and the callback's result mixes built-in shapes (Date / Map /
-        // BigInt) with a Token the custom serializer claims. The same
-        // closure is passed to record and replay, so replay hits the
-        // recorded-object path and `calls` stays at 1.
+        // test context, and the preload's globally registered serializer is
+        // available without fixture-local setup. The callback result mixes
+        // built-in shapes (Date / Map / BigInt) with a Token the global
+        // serializer claims. The same closure is passed to record and replay,
+        // so replay hits the recorded-object path and `calls` stays at 1.
         writeFileSync(
           join(project, "app.test.ts"),
           `import { expect, test } from "@archont561/bun-test-utils";\n` +
-            `import { Token, tokenSerializer } from "./test-serializers.ts";\n` +
+            `import { Token } from "./test-serializers.ts";\n` +
             `\n` +
-            `test("cassette round-trips built-in and custom serializer values", async ({ cassette }) => {\n` +
-            `  cassette.addSerializer(tokenSerializer);\n` +
+            `test("cassette round-trips built-in and globally registered custom values", async ({ cassette }) => {\n` +
             `  const value = () => ({\n` +
             `    at: new Date(0),\n` +
             `    roles: new Map([["admin", true]]),\n` +
@@ -150,10 +149,10 @@ describe("installed-consumer cassette serializer preload", () => {
 
         const output = run([BUN, "test"], project);
         // The consumer test must pass: it is the proof the subpath import
-        // + defineCallbackSerializer + cassette.addSerializer + record +
-        // replay round-trip all wired through the packed tarball.
+        // + global registration + root fixture record/replay round-trip all
+        // work across the separately bundled packed tarball entrypoints.
         expect(output).toContain(
-          "cassette round-trips built-in and custom serializer values",
+          "cassette round-trips built-in and globally registered custom values",
         );
         expect(output).toContain("1 pass");
         expect(output).toContain("0 fail");

@@ -1,7 +1,9 @@
 # 0034 — Cassette callback serializers: reversible, versioned, fixture-local
 
-- **Status:** accepted, amended by 0035 (point 8: persistence)
+- **Status:** accepted, amended by 0035 (point 8: persistence) and 0040 (points 3 and 5: global registration)
 - **Date:** 2026-10-09
+
+> **Amendment (2026-10-10, ADR 0040):** preload-driven demand now exists. Global callback serializers are registered through `/vcr`, backed by a `Symbol.for` process registry, and run after fixture-local serializers but before built-ins. Decision 5's fixture-local-only/no-global-registry conclusion is superseded; its validation and fixture-local lifetime rules remain. Exact `(name, version)` decoding and all other decisions remain unchanged.
 
 ## Context
 

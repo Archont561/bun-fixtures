@@ -28,13 +28,17 @@ import {
 } from "@archont561/bun-test-utils/snap";
 import type { Serializer } from "@archont561/bun-test-utils/snap";
 
-import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+  unregisterCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
 import type { CallbackSerializer } from "@archont561/bun-test-utils/vcr";
 ```
 
 - `/pbt`: `defineArbitraries` returns its argument unchanged and types the factory's `fc` parameter. The phase-specific scenario helpers in `/bdd` do the same for each callback's input and output. See [Property-based testing](/bun-test-utils/guides/property-based-testing/) and [Scenarios and fluent API](/bun-test-utils/guides/scenarios-and-fluent-api/).
 - `/snap`: registers, unregisters, and resets process-wide snapshot serializers. See [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
-- `/vcr`: `defineCallbackSerializer` defines reusable, reversible serializers for `cassette.addSerializer(...)`. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/).
+- `/vcr`: `defineCallbackSerializer` defines reusable, reversible serializers; `registerCallbackSerializer` and `unregisterCallbackSerializer` manage process-wide cassette serializers, usually from a preload. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/).
 
 Do not import `@archont561/bun-test-utils/std`, `/dom`, `/browser`, `/server`, or `/snapshot`, or any other internal workspace path. Fixtures and execution APIs live on the root `test` object.
 
@@ -42,7 +46,7 @@ Do not import `@archont561/bun-test-utils/std`, `/dom`, `/browser`, `/server`, o
 
 The fixture engine and the standard, DOM, snapshot, property-testing, and minimal cassette capabilities are stable and follow semantic versioning. Browser and BDD scenarios are experimental, and may change in minor versions.
 
-The stable cassette contract is `cassette.record(callback)`, `cassette.replay(callback)`, and `cassette.addSerializer(serializer)`, with HTTP matching by the uppercase method and the full URL. Matcher DSLs, configurable redaction, and cassette migration tooling are not part of this release.
+The stable cassette contract is callable `cassette(callback)`, `cassette.record(callback)`, `cassette.replay(callback)`, fixture-local `cassette.addSerializer(serializer)`, and `/vcr` global serializer registration, with HTTP matching by the uppercase method and the full URL. Matcher DSLs, configurable redaction, and cassette migration tooling are not part of this release.
 
 Linux and macOS are supported. Windows support is planned.
 
@@ -193,18 +197,37 @@ Request `browserHttpMock` to install the handlers on the `browserContext` automa
 
 | Member | Behaviour |
 | :-- | :-- |
+| `cassette(callback)` | Get-or-record callback wrapper. Local `auto` replays a hit and refreshes only a missing source with a visible warning; CI, explicit replay, ambiguity, and serializer errors stay strict. |
 | `record(callback)` | Runs the callback once and stores its serializable result. Returns the result. |
 | `replay(callback)` | Returns the stored result without running the callback. |
 | `addSerializer(serializer)` | Registers a reversible, versioned serializer for this test's callback values. |
 | `redactHeader(name)` | Redacts the named request header in recordings. Available, but outside the stable contract. |
-| `mode`, `setMode(mode)` | The mode for this test: `auto`, `record`, `replay`, or `passthrough`. |
+| `mode`, `setMode(mode)` | The mode for this test: `auto`, `record`, `replay`, or `passthrough`. A mode explicitly set to `replay` keeps the callable strict. |
 
 See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour.
+
+### `/vcr`: global callback serializers
+
+The helper-only `/vcr` subpath exports no fixture. Use it from a preload when a
+serializer should apply to every cassette in a Bun process.
+
+| Export | Behaviour |
+| :-- | :-- |
+| `defineCallbackSerializer(serializer)` | Returns a reusable reversible serializer definition unchanged. Its `name` and positive integer `version` are stored in callback recordings. |
+| `registerCallbackSerializer(serializer)` | Validates, registers, and returns the same serializer object. Registrations persist for the Bun process and are shared between the `/vcr` preload bundle and root cassette plugin bundle. |
+| `unregisterCallbackSerializer(serializer)` | Removes every registration of that exact object. Returns `true` if it removed one or more registrations, otherwise `false`. |
+| `CallbackSerializer<T>` | A versioned `{ name, version, test, serialize, deserialize }` contract for a callback value shape. |
+
+Selection order is newest fixture-local `cassette.addSerializer` registration,
+then newest global registration, then built-ins. Exact `(name, version)`
+decoding is required at every level: a same-name different-version serializer
+causes `CALLBACK_SERIALIZER_NOT_FOUND`, not an automatic refresh.
 
 ## `snapshot`: value and file snapshots
 
 | Member | Behaviour |
 | :-- | :-- |
+| `snapshot(callback, name)` | Runs and awaits `callback` once, matches its result under the required non-empty `name`, and returns that original result. It never caches or keys on callback source; callback errors propagate before any snapshot write. |
 | `match(value, name?)` | Compares a value against the stored snapshot, or records it on first run. |
 | `matchFile(path, name?)` | Compares the contents of a file. |
 | `addSerializer(serializer)` | Registers a serializer for this test. Return `undefined` for values it does not handle. |

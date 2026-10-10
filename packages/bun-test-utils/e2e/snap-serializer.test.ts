@@ -3,9 +3,9 @@
  *
  * Packs the publishable package, installs the tarball into a scratch project,
  * preloads a module that registers a global serializer through the public
- * `@archont561/bun-test-utils/snap` subpath, runs a root `bun-test-utils` snapshot test,
- * and verifies the generated snapshot — the exact flow task_005 criterion 5
- * re-runs against the registry package after publication.
+ * `@archont561/bun-test-utils/snap` subpath, runs a root `bun-test-utils` callable
+ * snapshot test, and verifies the generated snapshot — the exact flow task_005
+ * criterion 5 re-runs against the registry package after publication.
  */
 
 import {
@@ -59,7 +59,7 @@ function run(cmd: string[], cwd?: string): string {
 
 describe("installed-consumer snapshot serializer preload", () => {
   test(
-    "a packed install applies a global serializer from @archont561/bun-test-utils/snap to a root snapshot test",
+    "a packed install applies a global serializer to a callable root snapshot",
     () => {
       const packDir = mkdtempSync(join(tmpdir(), "bun-test-utils-pack-snap-"));
       const project = mkdtempSync(
@@ -102,13 +102,21 @@ describe("installed-consumer snapshot serializer preload", () => {
         );
 
         // A root bun-test-utils test: the snapshot fixture is on the root
-        // test context, and the Date sits nested inside the matched value.
+        // test context, and its callable form runs the async callback once,
+        // returns that value, and snapshots the nested Date under an explicit
+        // logical name.
         writeFileSync(
           join(project, "app.test.ts"),
-          `import { test } from "@archont561/bun-test-utils";\n` +
+          `import { expect, test } from "@archont561/bun-test-utils";\n` +
             `\n` +
-            `test("renders the widget", ({ snapshot }) => {\n` +
-            `  snapshot.match({ at: new Date(0), label: "widget" });\n` +
+            `test("renders the widget", async ({ snapshot }) => {\n` +
+            `  let calls = 0;\n` +
+            `  const widget = await snapshot(async () => {\n` +
+            `    calls++;\n` +
+            `    return { at: new Date(0), label: "widget" };\n` +
+            `  }, "widget");\n` +
+            `  expect(widget.label).toBe("widget");\n` +
+            `  expect(calls).toBe(1);\n` +
             `});\n`,
         );
 
@@ -126,7 +134,7 @@ describe("installed-consumer snapshot serializer preload", () => {
         const stored = JSON.parse(readFileSync(snapPath, "utf8"));
         // The global serializer ran — including for the nested Date. The
         // built-in JSON path would have stored an ISO-8601 string instead.
-        expect(stored.value).toBe(
+        expect(stored.widget).toBe(
           '{\n  "at": "<date>",\n  "label": "widget"\n}',
         );
 
@@ -138,11 +146,11 @@ describe("installed-consumer snapshot serializer preload", () => {
 
         // The stored snapshot is load-bearing: corrupting it fails the run
         // with a mismatch naming both values.
-        stored.value = '{\n  "at": "<tampered>",\n  "label": "widget"\n}';
+        stored.widget = '{\n  "at": "<tampered>",\n  "label": "widget"\n}';
         writeFileSync(snapPath, JSON.stringify(stored));
         const tampered = spawn([BUN, "test"], project);
         expect(tampered.exitCode).not.toBe(0);
-        expect(tampered.output).toContain('Snapshot "value" mismatch');
+        expect(tampered.output).toContain('Snapshot "widget" mismatch');
         expect(tampered.output).toContain("<tampered>");
         expect(tampered.output).toContain("<date>");
       } finally {

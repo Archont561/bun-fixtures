@@ -1,9 +1,11 @@
 # 0036 — Auto cassette mode and explicit cache clearing for cassettes and snapshots
 
-- **Status:** accepted (2026-10-10: committed storage, auto as the default, `cache clear` by test file, fail with a hint on a cache miss)
+- **Status:** accepted, amended by 0039 for local `cassette(fn)` callback misses only (2026-10-10: committed storage, auto as the default, `cache clear` by test file, fail with a hint on a cache miss)
 - **Date:** 2026-10-10
 
 > **Amendment (2026-10-10, during implementation):** the package binary is `test-utils`, the same name `init` uses (`packages/bun-test-utils/package.json` `bin`). Every `bunx test-utils cache clear` in this ADR means `bunx test-utils cache clear`. No second binary is added.
+>
+> **Amendment (2026-10-10, ADR 0039):** decision 4's no-silent-re-record rule remains binding for HTTP requests, direct `cassette.replay(callback)`, explicit replay, and CI. [ADR 0039](./0039-cassette-get-or-record-wrapper.md) supersedes it only for a local `auto` callback-source miss through the explicit `cassette(fn)` wrapper: that wrapper records, replaces the sidecar's stale entries, and emits a warning. It does not append an HTTP response or change the HTTP cache-clear rule.
 
 ## Context
 

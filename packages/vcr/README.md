@@ -2,7 +2,7 @@
 
 Private workspace. It provides the `cassette` fixture, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md). It records and replays two things:
 
-- **Callback results.** `cassette.record(callback)` runs a callback once and stores its serializable result. `cassette.replay(callback)` returns the stored result without running it. Values beyond plain data are handled by versioned serializers, and custom ones are added with `cassette.addSerializer(...)`.
+- **Callback results.** `cassette(callback)` is the get-or-record form: it replays a result when available and records a safe local `auto` miss with a visible warning. `cassette.record(callback)` and `cassette.replay(callback)` retain explicit control. Values beyond plain data are handled by versioned serializers. Add one for a test with `cassette.addSerializer(...)`, or register one process-wide from a preload through the public `/vcr` subpath.
 - **HTTP traffic.** In `auto` mode (the default), a test's requests are recorded under `__cassettes__/` on the first run and replayed afterwards with no network access. Matching is exact on the uppercase method and full URL.
 
 ```ts
@@ -12,15 +12,43 @@ test("replays a user lookup", async ({ cassette }) => {
   let calls = 0;
   const loadUser = async () => ({ id: `user-${++calls}` });
 
-  expect(await cassette.record(loadUser)).toEqual({ id: "user-1" });
-  expect(await cassette.replay(loadUser)).toEqual({ id: "user-1" });
+  expect(await cassette(loadUser)).toEqual({ id: "user-1" });
+  expect(await cassette(loadUser)).toEqual({ id: "user-1" });
   expect(calls).toBe(1);
 });
 ```
 
-The helper-only `@archont561/bun-test-utils/vcr` subpath exports `defineCallbackSerializer` and the `CallbackSerializer` type. It exports no fixture.
+The helper-only `@archont561/bun-test-utils/vcr` subpath exports `defineCallbackSerializer`, `registerCallbackSerializer`, `unregisterCallbackSerializer`, and the `CallbackSerializer` type. It exports no fixture. `registerCallbackSerializer(serializer)` returns that serializer and makes it available to every cassette in the process, including root plugin fixtures after a preload. `unregisterCallbackSerializer(serializer)` removes every registration of that exact object and returns `true` when it removed one or more, otherwise `false`. Fixture-local `cassette.addSerializer` remains available and wins over globals; globals then win over built-ins.
 
-The stable contract is `record`, `replay`, `addSerializer`, and exact HTTP matching. Matcher DSLs, configurable redaction, and migration tooling are not part of this release. The on-disk formats are not yet stable.
+A project preload can register a shared serializer once:
+
+```ts
+// test-serializers.ts
+import {
+  defineCallbackSerializer,
+  registerCallbackSerializer,
+} from "@archont561/bun-test-utils/vcr";
+
+class Token {
+  constructor(readonly value: string) {}
+}
+
+export const tokenSerializer = registerCallbackSerializer(
+  defineCallbackSerializer<Token>({
+    name: "token",
+    version: 1,
+    test: (value) => value instanceof Token,
+    serialize: (token) => ({ value: token.value }),
+    deserialize: (data) => new Token((data as { value: string }).value),
+  }),
+);
+```
+
+Put that module in `bunfig.toml` under `[test].preload`. Keep the returned
+identity if its owner needs to unregister it; a serializer version remains part
+of the persisted callback format, so a same-name version mismatch stays strict.
+
+The stable contract is callable `cassette(fn)`, explicit `record`/`replay`, fixture-local and `/vcr` global serializer registration, and exact HTTP matching. In local `auto` mode only, a callable callback source miss re-records and warns; HTTP misses, explicit replay, CI, and serializer version mismatches remain errors. Matcher DSLs, configurable redaction, and migration tooling are not part of this release. The on-disk formats are not yet stable.
 
 See the [cassette guide](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) for the full behaviour, and [spec 0012](../../.backlog/docs/specs/0012-http-cassette-vcr.md) for the requirements.
 

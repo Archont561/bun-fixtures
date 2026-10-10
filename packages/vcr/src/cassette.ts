@@ -47,6 +47,12 @@ export interface CassetteEntry {
 
 export interface CassetteHelper {
   /**
+   * Get or record a callback result (ADR 0039). In local `auto` mode, a
+   * missing callback source records with a visible warning; CI and explicit
+   * replay remain strict. The existing object methods stay available.
+   */
+  <T>(callback: () => T | Promise<T>): Promise<T>;
+  /**
    * Execute a callback and remember its result. A callback object the test has
    * not recorded always runs, so closures from one factory each keep their own
    * result. A callback object recorded earlier returns its stored result without
@@ -351,6 +357,8 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     const requested: VcrMode = (process.env.VCR_MODE as VcrMode) || "auto";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
+    /** HTTP entries captured during this fixture run, not ones replay loaded. */
+    let recordedHttpEntries = 0;
     const codec = createSerializerCodec();
     const origFetch = globalThis.fetch;
 
@@ -365,6 +373,9 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     const callbacksPath = callbacksPathFor(cassettePath);
     let mode: VcrMode =
       requested === "auto" ? resolveAuto(cassettePath) : requested;
+    // The callable gets local get-or-record fallback only when auto selected
+    // this mode. An explicit `setMode("replay")` remains strict (ADR 0039).
+    let callableUsesAuto = requested === "auto";
     /** The cache-clear command for this test, named in a cache-miss error. */
     const clearHint = `bunx test-utils cache clear --file ${shellQuote(relative(process.cwd(), ctx.testFile))} --test ${shellQuote(ctx.testName ?? "cassette")}`;
     let persisted: PersistedRecording[] = [];
@@ -385,45 +396,63 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     }
     const callbacks = createCallbackRegistry(codec, persisted, persistedPath);
 
-    const helper: CassetteHelper = {
-      async record<T>(callback: () => T | Promise<T>): Promise<T> {
-        return callbacks.record(callback);
-      },
-      async replay<T>(callback: () => T | Promise<T>): Promise<T> {
+    const helper = (async <T>(callback: () => T | Promise<T>): Promise<T> => {
+      if (mode === "passthrough") return callback();
+      if (mode === "record") return callbacks.record(callback);
+      if (mode !== "replay" || !callableUsesAuto)
         return callbacks.replay(callback);
-      },
-      addSerializer<T>(serializer: CallbackSerializer<T>): void {
-        codec.add(serializer);
-      },
-      get mode() {
-        return mode;
-      },
-      get path() {
-        return cassettePath;
-      },
-      setMode(m: VcrMode) {
-        mode = m === "auto" ? resolveAuto(cassettePath) : m;
-      },
-      redactHeader(name: string) {
-        redacted.add(name.toLowerCase());
-      },
-      get entries() {
-        return entries;
-      },
-      save(filePath: string) {
-        writeAtomic(filePath, JSON.stringify(entries, null, 2));
-      },
-      load(filePath: string) {
-        if (!existsSync(filePath)) {
-          throw new CassetteError(
-            "CASSETTE_NOT_FOUND",
-            `[bun-test-utils/vcr] Cassette file not found: ${filePath}`,
-            { path: filePath },
-          );
-        }
-        entries = JSON.parse(readFileSync(filePath, "utf8"));
-      },
+
+      try {
+        return await callbacks.replay(callback);
+      } catch (cause) {
+        // An absent source is the one safe local-auto fallback (ADR 0039).
+        // Ambiguity, corrupt stores, and serializer failures all remain loud.
+        if (
+          !(cause instanceof CassetteError) ||
+          cause.code !== "CALLBACK_NOT_RECORDED" ||
+          process.env.CI
+        )
+          throw cause;
+        const result = await callbacks.record(callback);
+        console.warn(
+          `[bun-test-utils/vcr] cassette(fn) re-recorded callback ${sourceLabel(sourceOf(callback))} in auto mode after a callback replay miss; rewrote ${callbacksPath}.`,
+        );
+        return result;
+      }
+    }) as CassetteHelper;
+
+    helper.record = async <T>(callback: () => T | Promise<T>): Promise<T> =>
+      callbacks.record(callback);
+    helper.replay = async <T>(callback: () => T | Promise<T>): Promise<T> =>
+      callbacks.replay(callback);
+    helper.addSerializer = <T>(serializer: CallbackSerializer<T>): void => {
+      codec.add(serializer);
     };
+    helper.setMode = (nextMode: VcrMode): void => {
+      callableUsesAuto = nextMode === "auto";
+      mode = nextMode === "auto" ? resolveAuto(cassettePath) : nextMode;
+    };
+    helper.redactHeader = (name: string): void => {
+      redacted.add(name.toLowerCase());
+    };
+    helper.save = (filePath: string): void => {
+      writeAtomic(filePath, JSON.stringify(entries, null, 2));
+    };
+    helper.load = (filePath: string): void => {
+      if (!existsSync(filePath)) {
+        throw new CassetteError(
+          "CASSETTE_NOT_FOUND",
+          `[bun-test-utils/vcr] Cassette file not found: ${filePath}`,
+          { path: filePath },
+        );
+      }
+      entries = JSON.parse(readFileSync(filePath, "utf8"));
+    };
+    Object.defineProperties(helper, {
+      mode: { enumerable: true, get: () => mode },
+      path: { enumerable: true, get: () => cassettePath },
+      entries: { enumerable: true, get: () => entries },
+    });
 
     // Override fetch
     globalThis.fetch = (async (input: any, init?: any): Promise<Response> => {
@@ -484,6 +513,7 @@ export const cassetteFixture = createFixture<CassetteHelper>({
           body: resBody,
         },
       });
+      recordedHttpEntries++;
 
       return liveRes;
     }) as any;
@@ -497,13 +527,18 @@ export const cassetteFixture = createFixture<CassetteHelper>({
       // In auto, only a completed body writes the cache, so a failed first run
       // cannot leave a partial recording for later runs to replay (ADR 0036, rule 3).
       const writesAllowed = requested !== "auto" || bodyCompleted;
-      if (mode === "record" && writesAllowed) {
-        const recordings = callbacks.recordings();
-        if (entries.length > 0 || recordings.length > 0) {
-          // A run with no HTTP entries never empties an existing cassette. It
-          // only creates an empty one when none exists, so replay's existence
-          // guard still holds (ADR 0035, D1).
-          if (entries.length > 0 || !existsSync(cassettePath)) {
+      const recordings = callbacks.recordings();
+      // `record(callback)` is an explicit request to replace the callback
+      // store, even when auto resolved the HTTP cassette to replay. Without
+      // this, an edited callback runs but leaves its old source in the sidecar,
+      // and the following replay can never find the edited body (ADR 0035 D2.1).
+      const writesCallbackStore = mode === "record" || recordings.length > 0;
+      if (writesCallbackStore && writesAllowed) {
+        if (recordedHttpEntries > 0 || recordings.length > 0) {
+          // A run with no newly recorded HTTP entries never empties an existing
+          // cassette. It only creates an empty one when none exists, so replay's
+          // existence guard still holds (ADR 0035, D1).
+          if (recordedHttpEntries > 0 || !existsSync(cassettePath)) {
             helper.save(cassettePath);
           }
           writeSidecar(callbacksPath, recordings);

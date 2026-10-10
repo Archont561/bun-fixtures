@@ -81,6 +81,10 @@ import type { CallbackSerializer } from "@archont561/bun-test-utils/vcr";
 
 type _DefineCallbackSerializerIsExported =
   typeof import("@archont561/bun-test-utils/vcr").defineCallbackSerializer;
+type _RegisterCallbackSerializerIsExported =
+  typeof import("@archont561/bun-test-utils/vcr").registerCallbackSerializer;
+type _UnregisterCallbackSerializerIsExported =
+  typeof import("@archont561/bun-test-utils/vcr").unregisterCallbackSerializer;
 
 type _CallbackSerializerIsUsable = CallbackSerializer<Date>;
 

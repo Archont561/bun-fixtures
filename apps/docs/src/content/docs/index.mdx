@@ -77,12 +77,12 @@ test("creates and verifies a user", async ({ db, user }) => {
 
   <div class="feature-card">
     <h3>📸 Snapshot testing</h3>
-    <p>Compare values and files against stored snapshots with the <code>snapshot</code> fixture, with custom serializers and readable diffs.</p>
+    <p>Run and assert callback results with <code>snapshot(fn, name)</code>, or compare values and files directly. Custom serializers and readable diffs keep baselines reviewable.</p>
   </div>
 
   <div class="feature-card">
     <h3>📼 HTTP record/replay</h3>
-    <p>Record a test's HTTP traffic once and replay it deterministically. Use <code>cassette</code> for recordings and <code>httpMock</code> for handlers.</p>
+    <p>Use callable <code>cassette(fn)</code> to get or record callback results, record HTTP traffic deterministically, and register reusable serializers from a preload. Use <code>httpMock</code> for handlers.</p>
   </div>
 
   <div class="feature-card">
@@ -121,4 +121,6 @@ bunx test-utils init
 - [Getting started](/bun-test-utils/guides/getting-started/): how fixtures, scopes, and teardown fit together.
 - [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/): session, file, and test lifetimes.
 - [Built-in fixtures](/bun-test-utils/reference/plugins/): the standard, DOM, browser, server, cassette, and snapshot fixtures.
+- [Snapshot testing](/bun-test-utils/guides/snapshot-testing/): callable snapshot assertions, direct value/file matching, serializers, and modes.
+- [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/): callback replay, HTTP recordings, and preload serializers.
 - [API reference](/bun-test-utils/reference/api/): every export, option, and environment variable.
