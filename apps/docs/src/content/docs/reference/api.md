@@ -235,7 +235,7 @@ meaning.
 | :-- | :-- |
 | `BUN_TEST_UTILS_DEBUG` | Emits opt-in diagnostics to stderr when set to `1` |
 | `BUN_TEST_UTILS_WEB_ENV` | Selects `webPage` backend: `dom` (default) or `browser` / `playwright` |
-| `VCR_MODE` | Selects cassette mode: `record`, `replay`, or `passthrough` |
+| `VCR_MODE` | Selects cassette mode: `auto` (default: replay when the cassette exists, record when it does not), `record`, `replay`, or `passthrough` |
 | `SNAPSHOT_MODE` | Selects snapshot mode: `match`, `update`, or `ci` |
 
 There are no fixture discovery environment variables. The preload does not walk

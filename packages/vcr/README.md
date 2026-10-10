@@ -9,6 +9,10 @@ and cassette migration tooling are deferred. Other helpers currently used
 inside the workspace are provisional, not part of the stable release
 contract.
 
+The default `VCR_MODE=auto` replays a test whose cassette exists and records a test whose
+cassette does not (ADR 0036). `bunx test-utils cache clear --file <file> [--test <name>]`
+or `--all` deletes a recording so it re-records. With `CI` set, a missing cassette fails.
+
 `record` encodes callback results through reversible, versioned serializers
 (ADR 0034). Built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`,
 `Error`, typed arrays, `ArrayBuffer`, and the numbers JSON cannot represent
@@ -46,8 +50,11 @@ test("round-trips a class instance", async ({ cassette }) => {
 Serializer payloads carry `{ name, version }` envelopes, so encoded values
 are self-describing; a missing serializer at decode time is a coded
 `CALLBACK_SERIALIZER_NOT_FOUND`, and a throwing serializer is wrapped as
-`CALLBACK_SERIALIZER_FAILED` with the cause. Callback results stay in memory
-per test — the cassette file holds HTTP entries only, byte-compatible with
+`CALLBACK_SERIALIZER_FAILED` with the cause. Callback results persist per test in a sidecar,
+`__cassettes__/<test>.callbacks.json` (ADR 0035). Replay reads it and refuses a
+changed callback body with `CALLBACK_NOT_RECORDED`, a source text that an earlier
+run recorded from more than one closure with `CALLBACK_AMBIGUOUS`, and a corrupt
+file with `CALLBACK_STORE_INVALID`. The cassette file holds HTTP entries only, byte-compatible with
 cassettes recorded before serializers existed.
 
 ```ts

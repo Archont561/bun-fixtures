@@ -94,26 +94,46 @@ export function projectFileExists(project: Project, relPath: string): boolean {
 function run(
   project: Project,
   cmd: string[],
-  env: Record<string, string> = {},
+  env: Record<string, string | undefined> = {},
 ): RunResult {
-  const proc = Bun.spawnSync({
-    cmd,
-    cwd: project.dir,
-    env: { ...process.env, FORCE_COLOR: "0", ...env },
-  });
+  // An undefined overlay value removes the variable for this run only.
+  const childEnv: Record<string, string> = {};
+  for (const [key, value] of Object.entries({
+    ...process.env,
+    FORCE_COLOR: "0",
+    ...env,
+  })) {
+    if (value !== undefined) childEnv[key] = value;
+  }
+  const proc = Bun.spawnSync({ cmd, cwd: project.dir, env: childEnv });
   const stdout = proc.stdout.toString();
   const stderr = proc.stderr.toString();
   return { stdout, stderr, output: stdout + stderr, exitCode: proc.exitCode };
 }
 
-/** Runs `bun test` inside the scratch project. */
-export function runTests(project: Project): RunResult {
-  return run(project, [BUN, "test"]);
+/**
+ * Runs `bun test` inside the scratch project. `env` overlays the inherited
+ * environment for this run only, so a scenario can run the same project twice
+ * in different modes.
+ */
+export function runTests(
+  project: Project,
+  env: Record<string, string> = {},
+): RunResult {
+  // CI and VCR_MODE are cleared unless a scenario sets them, so a CI runner's
+  // own environment cannot change what a scenario means (ADR 0036).
+  return run(project, [BUN, "test"], {
+    CI: undefined,
+    VCR_MODE: undefined,
+    ...env,
+  });
 }
 
 /** Runs the bun-test-utils CLI inside the scratch project. */
 export function runCli(project: Project, args: string[]): RunResult {
-  return run(project, [BUN, join(PACKAGE_ROOT, "src", "cli.ts"), ...args]);
+  return run(project, [BUN, join(PACKAGE_ROOT, "src", "cli.ts"), ...args], {
+    CI: undefined,
+  });
 }
 
 export function removeProject(project: Project): void {

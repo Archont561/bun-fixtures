@@ -31,6 +31,7 @@ built-in equivalent.
 | R10 | Custom serializers MUST run recursively for object properties and array elements. Fixture-local serializers run before global serializers; within each group, newest registrations run first. The built-in `Error` fallback MUST also apply recursively. |
 | R11 | Serialization MUST detect a circular reference on the active recursion path and throw a stable diagnostic with code `SNAPSHOT_CIRCULAR_REFERENCE`, snapshot name/path, value path, and first-seen path. Repeated references that are not cycles MUST serialize normally. |
 | R12 | A custom serializer exception MUST be wrapped in a stable diagnostic with code `SNAPSHOT_SERIALIZER_FAILED`, snapshot name/path, value path, and the original thrown value as `cause`. |
+| R13 | `bunx test-utils cache clear` (spec 0012, R12) MUST delete the `__snapshots__/<slug>.snap.json` file of each selected test. No new snapshot mode is added. After a clear, `match` MUST record new baselines, and `ci` MUST still refuse to create them, as defined in [ADR 0036](../adr/0036-auto-cassette-mode-and-cache-clearing.md). |
 
 ## Verification
 

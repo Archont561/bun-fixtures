@@ -56,6 +56,8 @@ test("the root cassette round-trips built-in serializer values", async ({
     return account();
   };
 
+  // Passthrough: callbacks stay in memory, so nothing is written to the source tree (ADR 0035).
+  cassette.setMode("passthrough");
   expect(await cassette.record(loadAccount)).toEqual(account());
   expect(calls).toBe(1);
 
@@ -73,6 +75,8 @@ test("a registered serializer round-trips a class instance", async ({
   cassette.addSerializer(tokenSerializer);
   const loadToken = () => ({ token: new Token("t-1") });
 
+  // Passthrough: callbacks stay in memory, so nothing is written to the source tree (ADR 0035).
+  cassette.setMode("passthrough");
   expect(await cassette.record(loadToken)).toEqual(loadToken());
   const replayed = await cassette.replay(loadToken);
   expect(replayed.token).toBeInstanceOf(Token);

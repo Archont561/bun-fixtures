@@ -70,6 +70,8 @@ describe("style matrix: property cells over the assembled root", () => {
         return payload;
       };
 
+      // Passthrough: callbacks stay in memory, so nothing is written to the source tree (ADR 0035).
+      cassette.setMode("passthrough");
       expect(await cassette.record(load)).toEqual(payload);
       expect(calls).toBe(1);
       expect(await cassette.replay(load)).toEqual(
@@ -93,6 +95,8 @@ describe("style matrix: property cells over the assembled root", () => {
         calls++;
         return { n };
       };
+      // Passthrough: callbacks stay in memory, so nothing is written to the source tree (ADR 0035).
+      cassette.setMode("passthrough");
       expect(await cassette.record(load)).toEqual({ n });
       expect(await cassette.replay(load)).toEqual({ n });
       expect(calls).toBe(1);

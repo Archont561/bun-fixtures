@@ -55,6 +55,8 @@ test("standard and VCR fixtures are available from the root test context", async
 
   tmpdir.write("seed.txt", "ok");
   expect(tmpdir.read("seed.txt")).toBe("ok");
+  // Passthrough: callbacks stay in memory, so nothing is written to the source tree (ADR 0035).
+  cassette.setMode("passthrough");
   expect(await cassette.record(getUser)).toEqual({ id: "user-1" });
   expect(await cassette.replay(getUser)).toEqual({ id: "user-1" });
   expect(calls).toBe(1);
