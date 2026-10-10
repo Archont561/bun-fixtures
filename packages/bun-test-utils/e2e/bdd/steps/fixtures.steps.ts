@@ -87,6 +87,11 @@ When("I run the test suite with VCR_MODE set to {string}", (state, [mode]) => ({
   lastRun: runTests(theProject(state), { VCR_MODE: mode }),
 }));
 
+When("I run the test suite with CI set", (state) => ({
+  ...state,
+  lastRun: runTests(theProject(state), { CI: "true" }),
+}));
+
 When("I rewrite the file {string}:", (state, [path], argument) => {
   writeProjectFile(theProject(state), path, docString(argument));
   return state;
@@ -116,6 +121,11 @@ Then("the test run fails", (state) => {
 
 Then("the command succeeds", (state) => {
   expect(theRun(state).exitCode).toBe(0);
+  return state;
+});
+
+Then("the command fails", (state) => {
+  expect(theRun(state).exitCode).not.toBe(0);
   return state;
 });
 
@@ -149,6 +159,11 @@ Then("{string} comes before {string}", (state, [first, second]) => {
 
 Then("the file {string} exists", (state, [path]) => {
   expect(projectFileExists(theProject(state), path)).toBe(true);
+  return state;
+});
+
+Then("the file {string} does not exist", (state, [path]) => {
+  expect(projectFileExists(theProject(state), path)).toBe(false);
   return state;
 });
 

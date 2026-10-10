@@ -74,7 +74,9 @@ The stable VCR surface is deliberately minimal:
 - HTTP replay matches uppercase method plus exact full URL only.
 
 The current implementation writes under `__cassettes__/`, but its schema is not
-yet a stable public format. Matcher DSLs, configurable redaction, and migration
+yet a stable public format. The default `auto` mode records a test on first use and
+replays it afterwards. `bunx test-utils cache clear` deletes recordings and snapshots
+so they re-record. Matcher DSLs, configurable redaction, and migration
 tooling are deferred.
 
 ### Snapshots

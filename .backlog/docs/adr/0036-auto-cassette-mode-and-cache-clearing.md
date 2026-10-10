@@ -3,6 +3,8 @@
 - **Status:** accepted (2026-10-10: committed storage, auto as the default, `cache clear` by test file, fail with a hint on a cache miss)
 - **Date:** 2026-10-10
 
+> **Amendment (2026-10-10, during implementation):** the package binary is `test-utils`, the same name `init` uses (`packages/bun-test-utils/package.json` `bin`). Every `bunx test-utils cache clear` in this ADR means `bunx test-utils cache clear`. No second binary is added.
+
 ## Context
 
 Three facts about the current code shape this decision.
@@ -53,11 +55,11 @@ Snapshots keep their existing modes, and the same command clears them.**
 
 4. **Cache miss is loud.** In `auto`, a request missing from a present cassette throws
    `CASSETTE_MISMATCH`. The message names the exact command to clear that test:
-   `bunx bun-test-utils cache clear --file <test file> --test "<test name>"`. Nothing is
+   `bunx test-utils cache clear --file <test file> --test "<test name>"`. Nothing is
    recorded silently and nothing is appended. Replay of a callback the sidecar lacks keeps
    `CALLBACK_NOT_RECORDED` (ADR 0035).
 
-5. **Clear command.** `bunx bun-test-utils cache clear` takes exactly one scope:
+5. **Clear command.** `bunx test-utils cache clear` takes exactly one scope:
    - `--file <path>` — the suite. Clears every cassette, sidecar, and snapshot belonging to
      that test file.
    - `--file <path> --test "<name>"` — one test case. Uses the same slug rule as the
@@ -78,7 +80,7 @@ Snapshots keep their existing modes, and the same command clears them.**
 7. **Public surface.** Each change is additive or a documented default change:
    - the `auto` value of `VCR_MODE` and the new default (behaviour change, noted in the
      docs and the changelog);
-   - the `bun-test-utils cache clear` subcommand and its flags;
+   - the `test-utils cache clear` subcommand and its flags;
    - spec 0012 amended for `auto` (R3, and the storage rule in R2), and spec 0013 amended
      for snapshot clearing;
    - the README and `apps/docs` guides updated in the same change.

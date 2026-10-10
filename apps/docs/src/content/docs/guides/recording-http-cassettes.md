@@ -125,14 +125,26 @@ refused with `CALLBACK_AMBIGUOUS`, because the closures' captured values cannot
 be told apart across runs. A corrupt sidecar fails at setup with
 `CALLBACK_STORE_INVALID`. The cassette file still holds HTTP entries only.
 
-## Record and replay HTTP traffic
+## Record once, then replay HTTP traffic
 
-Set `VCR_MODE=record` for the live run, then `VCR_MODE=replay` for offline runs:
+The default mode is `auto`. The first run of a test records its HTTP traffic and callback results under `__cassettes__/`, next to the test file. Later runs replay them without network access:
 
 ```bash
-VCR_MODE=record bun test tests/user.test.ts
-VCR_MODE=replay bun test tests/user.test.ts
+bun test tests/user.test.ts   # first run records; later runs replay
 ```
+
+Commit the `__cassettes__/` directory, so CI replays the same recordings.
+
+`VCR_MODE` pins a mode:
+
+- `auto` (default): replays when the cassette exists, and records when it does not. When `CI` is set, a missing cassette fails instead of recording.
+- `record`: goes to the network on every run, and overwrites the cassette when the run ends.
+- `replay`: never goes to the network. A missing cassette fails.
+- `passthrough`: ignores the cassette.
+
+> **Upgrading from 0.1.x:** the default used to be `record`, which hit the network and overwrote the cassette on every run. To keep that behaviour, set `VCR_MODE=record`.
+
+A test whose body fails writes nothing in `auto`, so a broken first run cannot leave a partial recording behind.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
@@ -147,7 +159,26 @@ test("fetches user details", async ({ cassette }) => {
 
 Replay compares the uppercase request method and full URL exactly. It does not
 perform partial URL, regular-expression, body, or custom predicate matching.
-An unmatched replay request fails instead of reaching the network.
+In `auto` mode, a request missing from a present cassette fails with `CASSETTE_MISMATCH`, instead of reaching the network or recording silently. The message names the command to clear that test.
+
+## Clear a recording
+
+When a request or callback changes, clear its recording and run the test again. Clearing deletes files, so the next run records them again:
+
+```bash
+bunx test-utils cache clear --file tests/user.test.ts --test "fetches user details"
+bunx test-utils cache clear --file tests/user.test.ts
+bunx test-utils cache clear --all
+bunx test-utils cache clear --all --dry-run
+```
+
+Choose exactly one scope:
+
+- `--file <path>` clears every test in that file. The command finds the test names by reading the file's literal test names. A name built at runtime, such as a template literal, is not found, so clear it with `--test`.
+- `--file <path> --test "<name>"` clears one test.
+- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the working directory, skipping `node_modules`.
+
+`--dry-run` lists the files and deletes nothing. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](./snapshot-testing.md).
 
 ## Files and secrets
 
@@ -160,6 +191,8 @@ owned by the version that recorded them.
 Do not record secrets. Configurable redaction is outside the stable release
 contract, so remove or replace credentials before a request reaches the
 recorder.
+
+Committed recordings hold real response bodies. Redaction covers sensitive request headers only, so review a new recording for personal or confidential data before you commit it.
 
 The real `globalThis.fetch` is restored when the fixture tears down, including
 when the test fails.

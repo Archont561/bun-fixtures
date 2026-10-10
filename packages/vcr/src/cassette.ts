@@ -6,7 +6,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import {
   CassetteError,
   createFixture,
@@ -19,7 +19,12 @@ import {
   type SerializerCodec,
 } from "./serializers.ts";
 
-export type VcrMode = "record" | "replay" | "passthrough";
+/**
+ * `auto` is the default. It is decided per test at setup: a present cassette
+ * replays, an absent one records (ADR 0036). `mode` on the helper always reports
+ * the resolved mode, never `auto`.
+ */
+export type VcrMode = "auto" | "record" | "replay" | "passthrough";
 
 export interface RecordedRequest {
   method: string;
@@ -192,6 +197,29 @@ function loadSidecar(path: string): PersistedRecording[] {
   });
 }
 
+/** Quotes a value for a shell command shown in a hint. */
+function shellQuote(value: string): string {
+  return `"${value.replace(/(["\\$`])/g, "\\$1")}"`;
+}
+
+/**
+ * Resolves `auto` for one test (ADR 0036, rule 2). A present cassette replays.
+ * An absent one records, unless CI is set: CI never creates a recording, so it
+ * fails here, before the body runs.
+ */
+function resolveAuto(cassettePath: string): VcrMode {
+  if (existsSync(cassettePath)) return "replay";
+  if (process.env.CI) {
+    throw new CassetteError(
+      "CASSETTE_NOT_FOUND",
+      `[bun-test-utils/vcr] No cassette at ${cassettePath}, and CI is set, so auto mode will not record. ` +
+        "Run the test once locally to record it, then commit the __cassettes__ directory.",
+      { path: cassettePath },
+    );
+  }
+  return "record";
+}
+
 /** Record mode writes this run's recordings. No recordings removes a stale file. */
 function writeSidecar(path: string, recordings: PersistedRecording[]): void {
   if (recordings.length === 0) {
@@ -320,7 +348,7 @@ function createCallbackRegistry(
 export const cassetteFixture = createFixture<CassetteHelper>({
   scope: "test",
   setup: async (use, ctx) => {
-    let mode: VcrMode = (process.env.VCR_MODE as VcrMode) || "record";
+    const requested: VcrMode = (process.env.VCR_MODE as VcrMode) || "auto";
     const redacted = new Set<string>(SENSITIVE_HEADERS);
     let entries: CassetteEntry[] = [];
     const codec = createSerializerCodec();
@@ -335,6 +363,10 @@ export const cassetteFixture = createFixture<CassetteHelper>({
     );
 
     const callbacksPath = callbacksPathFor(cassettePath);
+    let mode: VcrMode =
+      requested === "auto" ? resolveAuto(cassettePath) : requested;
+    /** The cache-clear command for this test, named in a cache-miss error. */
+    const clearHint = `bunx test-utils cache clear --file ${shellQuote(relative(process.cwd(), ctx.testFile))} --test ${shellQuote(ctx.testName ?? "cassette")}`;
     let persisted: PersistedRecording[] = [];
     let persistedPath: string | undefined;
     if (mode === "replay") {
@@ -370,7 +402,7 @@ export const cassetteFixture = createFixture<CassetteHelper>({
         return cassettePath;
       },
       setMode(m: VcrMode) {
-        mode = m;
+        mode = m === "auto" ? resolveAuto(cassettePath) : m;
       },
       redactHeader(name: string) {
         redacted.add(name.toLowerCase());
@@ -417,9 +449,13 @@ export const cassetteFixture = createFixture<CassetteHelper>({
           (e) => e.request.method === method && e.request.url === url,
         );
         if (!match) {
+          const hint =
+            requested === "auto"
+              ? ` ${cassettePath} is present, so auto mode replays it and does not record new requests. To re-record this test, run: ${clearHint}`
+              : "";
           throw new CassetteError(
             "CASSETTE_MISMATCH",
-            `[bun-test-utils/vcr] No matching cassette entry for ${method} ${url}`,
+            `[bun-test-utils/vcr] No matching cassette entry for ${method} ${url}.${hint}`,
             { method, url },
           );
         }
@@ -452,11 +488,16 @@ export const cassetteFixture = createFixture<CassetteHelper>({
       return liveRes;
     }) as any;
 
+    let bodyCompleted = false;
     try {
       await use(helper);
+      bodyCompleted = true;
     } finally {
       globalThis.fetch = origFetch;
-      if (mode === "record") {
+      // In auto, only a completed body writes the cache, so a failed first run
+      // cannot leave a partial recording for later runs to replay (ADR 0036, rule 3).
+      const writesAllowed = requested !== "auto" || bodyCompleted;
+      if (mode === "record" && writesAllowed) {
         const recordings = callbacks.recordings();
         if (entries.length > 0 || recordings.length > 0) {
           // A run with no HTTP entries never empties an existing cassette. It

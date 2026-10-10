@@ -147,7 +147,9 @@ test.prop(
 );`,
       );
 
-      expectGreenRun(runTests(project));
+      // Pinned to record: under the default `auto` mode, sample 2 would preload
+      // sample 1's cassette, and the per-sample entry count below would be wrong.
+      expectGreenRun(runTests(project, { VCR_MODE: "record" }));
 
       const cassetteFiles = filesIn(project, "__cassettes__");
       expect(cassetteFiles).toHaveLength(1);

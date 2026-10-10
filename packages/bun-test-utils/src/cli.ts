@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { initCommand } from "@bun-test-utils/core/cli";
+import { cacheCommand, initCommand } from "@bun-test-utils/core/cli";
 /** Public CLI adapter for the internal core implementation. */
 import { defineCommand, runMain } from "citty";
 import pkg from "../package.json" with { type: "json" };
@@ -15,6 +15,7 @@ export const mainCommand = defineCommand({
   },
   subCommands: {
     init: initCommand,
+    cache: cacheCommand,
   },
 });
 

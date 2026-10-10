@@ -9,6 +9,10 @@ and cassette migration tooling are deferred. Other helpers currently used
 inside the workspace are provisional, not part of the stable release
 contract.
 
+The default `VCR_MODE=auto` replays a test whose cassette exists and records a test whose
+cassette does not (ADR 0036). `bunx test-utils cache clear --file <file> [--test <name>]`
+or `--all` deletes a recording so it re-records. With `CI` set, a missing cassette fails.
+
 `record` encodes callback results through reversible, versioned serializers
 (ADR 0034). Built-ins cover `Date`, `BigInt`, `Map`, `Set`, `RegExp`,
 `Error`, typed arrays, `ArrayBuffer`, and the numbers JSON cannot represent

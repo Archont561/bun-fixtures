@@ -4,6 +4,7 @@
  * bun-test-utils CLI — built with citty.
  *
  *   bunx test-utils init [--dir <path>] [--entry <preload path>] [--force]
+ *   bunx test-utils cache clear (--file <path> [--test <name>] | --all) [--dry-run]
  */
 
 import { existsSync } from "node:fs";
@@ -11,6 +12,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import { parse, stringify } from "smol-toml";
+import { cacheClear, describeCacheClear } from "./cache.ts";
+import { BunTestUtilsError } from "./errors.ts";
 
 export const DEFAULT_ENTRY =
   "./node_modules/@archont561/bun-test-utils/dist/plugin.js";
@@ -110,5 +113,70 @@ export const initCommand = defineCommand({
   },
   async run({ args }) {
     await init({ dir: args.dir, entry: args.entry, force: args.force });
+  },
+});
+
+export const cacheClearCommand = defineCommand({
+  meta: {
+    name: "clear",
+    description:
+      "Delete cassettes, callback sidecars, and snapshots so they re-record on the next run",
+  },
+  args: {
+    file: {
+      type: "string",
+      description: "Test file whose recordings to clear (every test in it)",
+      valueHint: "path",
+    },
+    test: {
+      type: "string",
+      description: "One test name in --file to clear",
+      valueHint: "name",
+    },
+    all: {
+      type: "boolean",
+      description:
+        "Clear every __cassettes__/ and __snapshots__/ under the working directory",
+      default: false,
+    },
+    "dry-run": {
+      type: "boolean",
+      description: "List the files that would be removed and delete nothing",
+      default: false,
+    },
+  },
+  async run({ args }) {
+    const cwd = process.cwd();
+    try {
+      const result = cacheClear({
+        cwd,
+        file: args.file,
+        test: args.test,
+        all: args.all,
+        dryRun: args["dry-run"],
+      });
+      for (const line of describeCacheClear(result, cwd)) console.log(line);
+    } catch (error) {
+      // A bad scope is a usage error: print the message, not a stack trace.
+      if (
+        error instanceof BunTestUtilsError &&
+        error.code === "INVALID_API_USAGE"
+      ) {
+        console.error(error.message);
+        process.exitCode = 1;
+        return;
+      }
+      throw error;
+    }
+  },
+});
+
+export const cacheCommand = defineCommand({
+  meta: {
+    name: "cache",
+    description: "Manage recorded cassettes and snapshots",
+  },
+  subCommands: {
+    clear: cacheClearCommand,
   },
 });
