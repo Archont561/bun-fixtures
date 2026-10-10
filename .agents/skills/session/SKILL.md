@@ -39,11 +39,38 @@ bun run install-browsers   # bunx playwright install chromium firefox
 This downloads the revision-pinned chromium and firefox builds into the standard
 global cache (`~/.cache/ms-playwright`). The pixi `browser` environment (restored
 by `sh scripts/restore.sh`) supplies the system libraries; no `--with-deps` is
-needed. **Sandbox caveat:** `cdn.playwright.dev` is blocked in this sandbox, so
-the install cannot run here. After a cache wipe the browser fixtures fail loudly
-by design — a red root suite whose only failures are browser-fixture errors
-(naming `bun run install-browsers`) is the expected sandbox state, not a
-regression; record the count and the reason, do not trust memory.
+needed.
+
+**Sandbox path — `bun run install-browsers:sandbox` (task_084).** `cdn.playwright.dev` is
+blocked in this sandbox, so `install-browsers` cannot download here. The sandbox command takes
+the same Chromium from npm instead:
+
+```bash
+bun run install-browsers:sandbox   # npm i -g @sparticuz/chromium@153.0.0, then links it into the Playwright cache
+```
+
+What it does, and what it does not:
+
+- It installs `@sparticuz/chromium@153.0.0` as a **global** npm package (`npm root -g`), unpacks
+  its Chromium and runtime libraries to `/tmp` with the package's own `inflate`, and writes
+  `sparticuz-chromium.sh` into the Playwright cache. That wrapper sets `LD_LIBRARY_PATH` and
+  `FONTCONFIG_PATH`. The Chromium 153 build matches Playwright 1.63's pinned revision 1243.
+- It links the wrapper at both pinned Playwright slots (`chromium-1243` and
+  `chromium_headless_shell-1243`), so the fixture's normal launch path finds it. Then it
+  smoke-tests a real launch. Re-running it is safe.
+- **Limits:** both slots point at the same binary, so the headless-shell and full-build
+  fallbacks are not tested separately. Firefox is not installed; its suite stays skipped. The
+  `/tmp` extraction does not survive a wipe, so re-run the command after one.
+- **CI does not use this.** CI runs `install-browsers --with-deps` and `--no-shell` (ADR 0033),
+  and the sandbox path can't prove those. Do not change `install-browsers` to this path.
+- **Global install needs a writable prefix.** In this sandbox `/usr/local` is writable. A
+  contributor machine may need a different npm prefix or elevated rights.
+
+Without the sandbox command, a cache wipe leaves the browser fixtures failing loudly by
+design — a red root suite whose only failures are browser-fixture errors (naming
+`bun run install-browsers`) is the expected state, not a regression. Record the count and the
+reason, do not trust memory. With it, the suite is green: 533 passing / 2 skipped / 0 failing
+across 62 files (the 2 skips are Firefox).
 
 **Assume the toolchain is gone and reinstall it — nothing outside the git tree survives.**
 `bun` and `node_modules/` are both pruned between sessions, and have disappeared *mid*-session

@@ -24,6 +24,7 @@
     "docs:build": "bun --filter docs build",
     "docs:preview": "bun --filter docs preview",
     "install-browsers": "cd packages/browser && bunx playwright install chromium firefox",
+    "install-browsers:sandbox": "bun scripts/install-browsers-sandbox.ts",
     "changeset": "changeset",
     "release:version": "changeset version",
     "release:publish": "changeset publish",
