@@ -5226,7 +5226,7 @@ tasks:
       captured variables and imported helpers are handled, since source text
       does not see them."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - cassette
@@ -5259,7 +5259,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-10T18:08:23.266Z
-    updated_at: 2026-10-10T18:08:23.266Z
+    updated_at: 2026-10-10T18:18:21.555Z
   - id: task_097
     title: Implement cassette(fn) get-or-record wrapper
     description: "Depends on the ADR task above; do not start before that ADR is
