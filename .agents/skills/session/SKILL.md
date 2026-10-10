@@ -136,9 +136,14 @@ Facts about this sandbox that shape every command:
   `bunx backlog task list` for reading; they return plain text.
 - **`bunx backlog claim start` needs its directory to exist.** `.backlog/claims/` is
   gitignored, so a fresh clone has none and the command dies with
-  `ENOENT: … .backlog/claims/active/claim_0NN.json`. `mkdir -p .backlog/claims/active` first.
+  `ENOENT: … .backlog/claims/active/claim_0NN.json`; `claim finish` dies identically on the
+  missing archive. `mkdir -p .backlog/claims/{active,archive}` once, before either.
   There is no `claim update`: to widen a claim's paths, `claim finish` and start a new one —
   and do it *before* committing, because `pre-commit` enforces the staged paths against it.
+  **That enforcement is not wired in this sandbox**: `enforce_on_commit = true` needs a backlog
+  git hook, and `.git/hooks/` holds only lefthook's three (`pre-commit`, `commit-msg`, `pre-push`),
+  so committing paths outside the claim passes silently. Check yourself with
+  `bunx backlog claim check --staged` (it answers `Claim claim_0NN covers N path(s).`).
 - **`bunx skills add` scatters litter.** It creates ~50 agent directories (`.claude/`,
   `.qwen/`, `.windsurf/`, …) plus `agent/`, `data/` and `skills/` at the repo root. This
   repository keeps skills in `.agents/skills/` only — delete the rest before committing.
@@ -146,8 +151,30 @@ Facts about this sandbox that shape every command:
   `@bun-test-utils/browser` Playwright fixtures cannot be exercised here. The `Bun.serve`
   test-server fixture in the same package can.
 - **Lefthook hooks run real gates**, so a commit is slower than you expect and a push slower
-  still: `pre-commit` = Biome over staged files + `turbo run typecheck`; `commit-msg` =
-  commitlint; `pre-push` = `turbo run test`.
+  still: `pre-commit` = Biome over staged files + `turbo run typecheck` + actionlint, each one
+  glob-restricted; `commit-msg` = commitlint; `pre-push` = `turbo run test`. A docs-only commit
+  therefore validates nothing at all — Biome runs and reports `Checked 0 files`, then
+  `typecheck (skip) no matching staged files` and `actionlint (skip) no files for inspection`.
+  A green `pre-commit` is not evidence; run the gates yourself when the staged paths fall
+  outside the globs.
+- **Both pixi-dependent steps fail closed here — they do not warn and pass.** The sandbox has no
+  pixi at all (`command -v pixi` empty, no `.pixi/`, no `~/.pixi/`), so: staging *any*
+  `.github/workflows/*.yml` makes `pre-commit` die with
+  `sh: 1: .pixi/envs/default/bin/actionlint: not found` (127) and **the commit never happens**,
+  while lefthook still prints a friendly `🥊 actionlint` and `✔️` for the steps that passed — so
+  trust `git log --oneline -1`, not the hook summary. `pre-push` degrades to plain
+  `bunx turbo run test`, which is environmentally red on `@bun-test-utils/browser#test` alone.
+  Confirm that is the *only* failure, then run what the skipped steps would have run
+  (`biome check`, `bunx turbo run typecheck`, `bunx commitlint --edit <msgfile>`) and use
+  `--no-verify`. Do not "fix" either shim by editing `lefthook.yml` or adding a fallback — CI
+  runs the real actionlint and the real browser gates.
+- **The clone is shallow (`--depth 1`, one commit), which blinds the CI audit gate.**
+  `scripts/audit-check.ts` resolves its base to `HEAD~1` when given no argument and no
+  `GITHUB_BASE_REF`; with no parent commit, `git diff HEAD~1` dies, the pipeline's `|| true`
+  swallows that, and the TODO/FIXME gate prints `clean` while auditing *nothing*. The tell is
+  `fatal: bad revision 'HEAD~1'` on stderr. Prove anything about that gate against a base that
+  resolves — an explicit sha or `origin/main`, or your own commit once one exists — never against
+  the shallow tip.
 
 ## 2. Survey the Backlog
 

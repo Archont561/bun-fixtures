@@ -4537,3 +4537,88 @@ tasks:
       push_comments: false
     created_at: 2026-10-10T08:38:56.891Z
     updated_at: 2026-10-10T08:47:42.837Z
+  - id: task_080
+    title: Fold the audit-port sandbox findings into the session skill
+    description: >-
+      task_079 surfaced four facts about this sandbox that the session procedure
+      gets wrong or omits, and they cost a session each time they are
+      rediscovered: (1) the actionlint lefthook step is not warn-and-pass — with
+      no pixi env it exits 127 and the commit silently does not happen, while
+      the hook summary still prints checkmarks; (2) pre-push degrades to plain
+      turbo run test, environmentally red on browser#test alone, so --no-verify
+      is the documented path; (3) backlog claim enforcement is not wired at all
+      here (no backlog git hook), so claim check --staged must be run by hand,
+      and claim finish needs .backlog/claims/archive; (4) the clone is shallow,
+      so scripts/audit-check.ts defaults to an unresolvable HEAD~1 and its
+      TODO/FIXME gate prints clean while auditing nothing. Record all four in
+      .agents/skills/session/SKILL.md, in the file's voice, without touching
+      lefthook.yml or the shims themselves.
+
+
+      Evidence (2026-10-10): every string the edit quotes was observed in this
+      sandbox, not inferred — `sh: 1: .pixi/envs/default/bin/actionlint: not
+      found` + `exit status 127` + `🥊 actionlint` from a real pre-commit run
+      whose commit did not land (HEAD stayed at the shallow boundary until
+      committed with --no-verify); `command -v pixi` empty and no `.pixi/` or
+      `~/.pixi/`, so the pre-push probe takes its degrade branch to plain `bunx
+      turbo run test`, red on `@bun-test-utils/browser#test` alone (20/21
+      tasks); `ENOENT: …/claims/archive/claim_079.json` from `claim finish`;
+      `NONE: no backlog hook installed` from grepping .git/hooks, and `Claim
+      claim_079 covers 5 path(s).` from `claim check --staged`; `fatal: bad
+      revision 'HEAD~1'` with the gate printing `clean` + exit 0, twice (shell
+      original and port). Widest new line 97 chars against a file max of 106, so
+      the wrap matches. lefthook.yml, the shims and scripts/audit-check.ts
+      untouched. Change is markdown under .agents/, which biome excludes and
+      ci.yml paths-ignore (`**.md`) skips, and docs.yml does not watch — so CI
+      stays green by not running, and the real actionlint gate remains CI's.
+
+
+      Fifth refinement folded in while committing, then sharpened by the commit
+      itself: lefthook glob-restricts every pre-commit command, so a docs-only
+      commit validates nothing at all — Biome runs over zero files ('Checked 0
+      files', because biome.json excludes .backlog and reads no .md), and
+      typecheck and actionlint both report '(skip) no matching staged files' /
+      'no files for inspection'. The skill says that plainly now, because 'hooks
+      run real gates' had read as 'a green pre-commit means the repo was
+      checked'. That same live run confirmed the actionlint finding's trigger:
+      the step runs only when a .github/workflows/*.yml is staged, and then it
+      dies at 127.
+    source_links: []
+    status: done
+    priority: P3
+    labels:
+      - docs
+      - tooling
+    repo_targets:
+      - bun-test-utils
+    acceptance_criteria:
+      - "All four findings recorded in .agents/skills/session/SKILL.md:
+        actionlint fails closed (127, commit aborts, verify with git log),
+        pre-push pixi degradation and the --no-verify path, claim enforcement
+        inert plus the claims archive mkdir, and the shallow-clone blind spot in
+        the audit gate's default base"
+      - Every command and message quoted is one that was actually observed in
+        this sandbox, not inferred
+      - lefthook.yml, the pixi shims and scripts/audit-check.ts are untouched —
+        the finding is documented, not worked around
+      - Line width and voice match the file's existing bullets; markdown links
+        and paths named in the text exist
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T08:53:19.812Z
+    updated_at: 2026-10-10T08:54:54.093Z
