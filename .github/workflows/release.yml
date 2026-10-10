@@ -73,6 +73,23 @@ jobs:
             exit 1
           fi
 
+      - name: Restore Playwright browser cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          # Playwright's browser directory. Contents are keyed by browser
+          # revision, which only moves when the pinned playwright version in
+          # the lockfile changes, so the lockfile is the right cache key.
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # The release gates run the same suite as ci.yml, so they need the same
+      # browsers: Chromium for the browser package and Firefox because the
+      # headless-firefox proof is mandatory under CI=true (ADR 0033).
+      - name: Install browsers
+        run: bun run install-browsers --with-deps
+
       - name: Run release gates
         run: |
           bun run lint
