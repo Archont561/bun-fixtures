@@ -29,6 +29,19 @@ bun --version          # must print 1.4.2
 bun install --frozen-lockfile
 ```
 
+**Download the browser binaries as part of every bootstrap, before the baseline.** The
+browser fixtures need Chromium in the Playwright cache, and this sandbox cannot fetch it from
+the standard CDN. So each session runs the sandbox download — it is safe to re-run, and it
+takes seconds once the npm package is cached:
+
+```bash
+bun run install-browsers:sandbox   # downloads Chromium 153 from npm, links it into ~/.cache/ms-playwright, smoke-tests a launch
+```
+
+Expect the output to end with `smoke launch ok: Chromium 153.0.8010.0`. If it fails, record the
+error before going further — every browser-fixture test depends on it, so a red baseline
+without it is not a regression. Details and limits are in the sandbox section below.
+
 **Browser binaries come from the standard Playwright installer**, not from the
 repository's `browsers` orphan branch (retired — ADR 0032):
 
