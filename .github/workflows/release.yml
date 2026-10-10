@@ -82,9 +82,20 @@ jobs:
       - name: Build package
         run: bun run build
 
+      # The same packer and the same guard as publish-npm, so verify inspects
+      # the artifact that gets published (task_090).
       - name: Create and inspect package tarball
         working-directory: packages/bun-test-utils
-        run: bun pm pack --dry-run
+        run: |
+          mkdir -p "$RUNNER_TEMP/verify"
+          bun pm pack --destination "$RUNNER_TEMP/verify"
+          tarball=$(ls "$RUNNER_TEMP"/verify/archont561-bun-test-utils-*.tgz)
+          manifest=$(tar -xOzf "$tarball" package/package.json)
+          case "$manifest" in
+            *workspace:*)
+              echo "::error::packed package.json still names workspace: specifiers"
+              exit 1 ;;
+          esac
 
   publish-npm:
     name: Publish to npm
@@ -114,24 +125,39 @@ jobs:
           bun install --frozen-lockfile
           bun run build
 
+      # `bun pm pack` rewrites workspace: specifiers to real versions. `npm pack`
+      # does not, so the tarball published here would differ from the one the
+      # verify job and the pack harness inspect (task_090).
       - name: Create release tarball
         working-directory: packages/bun-test-utils
-        run: npm pack --pack-destination "$RUNNER_TEMP"
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          bun pm pack --destination "$RUNNER_TEMP/release"
+          tarball=$(ls "$RUNNER_TEMP"/release/archont561-bun-test-utils-*.tgz)
+          manifest=$(tar -xOzf "$tarball" package/package.json)
+          case "$manifest" in
+            *workspace:*)
+              echo "::error::packed package.json still names workspace: specifiers"
+              exit 1 ;;
+          esac
 
       - name: Upload release tarball
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-tarball
-          path: ${{ runner.temp }}/archont561-bun-test-utils-*.tgz
+          path: ${{ runner.temp }}/release/archont561-bun-test-utils-*.tgz
           if-no-files-found: error
           retention-days: 30
 
       # npm 11.5.1+ obtains an ephemeral publish credential from GitHub's OIDC
       # token when this job has id-token: write and the matching npm trusted
       # publisher is configured. Do not add NODE_AUTH_TOKEN here.
+      # Publish the tarball that was just packed and uploaded, not the directory:
+      # `npm publish <dir>` packs again with npm's packer.
       - name: Publish with npm Trusted Publishing
-        working-directory: packages/bun-test-utils
-        run: npm publish --provenance --access public
+        run: |
+          tarball=$(ls "$RUNNER_TEMP"/release/archont561-bun-test-utils-*.tgz)
+          npm publish "$tarball" --provenance --access public
 
   publish-github-packages:
     name: Publish to GitHub Packages

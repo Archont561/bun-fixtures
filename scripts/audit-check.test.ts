@@ -13,18 +13,13 @@
  */
 
 import { afterAll, describe, expect, test } from "bun:test";
-import {
-  copyFileSync,
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 const REPO_ROOT = resolve(import.meta.dir, "..");
 const AUDIT = join(REPO_ROOT, "scripts", "audit-check.ts");
+const PUBLIC_API = join(REPO_ROOT, "scripts", "public-api.ts");
 
 /** Assembled at runtime so the literal never appears in the tree. */
 const MARKER = ["TO", "DO:"].join("");
@@ -67,24 +62,15 @@ function git(cwd: string, ...args: string[]): string {
   return result.stdout.toString().trim();
 }
 
-/** A fresh repository on `main`, with the two gated scripts copied in. */
+/**
+ * A fresh, empty repository on `main`. Nothing is copied in: the gate and the
+ * public-API step both resolve their scripts from the repository they live in,
+ * whatever the working directory is.
+ */
 function makeRepo(): string {
   const dir = mkdtempSync(join(tmpdir(), "audit-check-"));
   tempRoots.push(dir);
   git(dir, "init", "-q", "-b", "main");
-  mkdirSync(join(dir, "scripts"), { recursive: true });
-  // The gate under test is run from its real location (see `audit`); only the
-  // public-API step needs a copy, because it resolves `dist` from its own path.
-  // The public-API step resolves `dist` from its own location, so a copy in the
-  // temp repo reaches the documented `dist/ not found` error path.
-  copyFileSync(
-    join(REPO_ROOT, "scripts", "public-api.ts"),
-    join(dir, "scripts", "public-api.ts"),
-  );
-  copyFileSync(
-    join(REPO_ROOT, "scripts", "public-api.txt"),
-    join(dir, "scripts", "public-api.txt"),
-  );
   return dir;
 }
 
@@ -123,9 +109,9 @@ async function audit(
   return { stdout, stderr, code: await proc.exited };
 }
 
-/** The public-API step's own exit code, run directly in the same repo. */
+/** The public-API step's own exit code, run directly from the same cwd. */
 async function publicApiExitCode(repo: string): Promise<number> {
-  const proc = Bun.spawn([process.execPath, "scripts/public-api.ts"], {
+  const proc = Bun.spawn([process.execPath, PUBLIC_API], {
     cwd: repo,
     stdout: "pipe",
     stderr: "pipe",
@@ -344,8 +330,25 @@ describe("base resolution — three-step order", () => {
   });
 });
 
-describe("public-API step — exit code passthrough", () => {
+describe("public-API step — resolution and exit code passthrough", () => {
+  test("resolves scripts/public-api.ts from the script's own location, not the cwd", async () => {
+    // The temp repo has no scripts/public-api.ts. A cwd-relative call fails
+    // with `Module not found`; the absolute path reaches the real script.
+    const repo = makeRepo();
+    write(repo, "packages/a.ts", "export const a = 1;\n");
+    commit(repo, "base");
+    write(repo, "packages/a.ts", "export const a = 2;\n");
+    commit(repo, "change");
+
+    const run = await audit(repo, ["HEAD~1"]);
+    expect(run.stdout).toContain(API_HEADER);
+    expect(run.stderr).not.toContain("Module not found");
+    expect(run.stderr).not.toContain("public-api.ts");
+  });
+
   test("a clean marker gate hands the public-API exit code straight through", async () => {
+    // Equality only: the code depends on whether `dist/` is built, and both
+    // runs see the same tree, so they must agree whichever it is.
     const repo = makeRepo();
     write(repo, "packages/a.ts", "export const a = 1;\n");
     commit(repo, "base");
@@ -356,7 +359,5 @@ describe("public-API step — exit code passthrough", () => {
     const direct = await publicApiExitCode(repo);
     expect(run.stdout).toContain(API_HEADER);
     expect(run.code).toBe(direct);
-    expect(direct).not.toBe(0);
-    expect(run.stderr).toContain("dist/ not found");
   });
 });

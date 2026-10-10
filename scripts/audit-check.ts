@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * CI audit check (audit 2026-10-06, deferred item; task_062; ported from
  * `scripts/audit-check.sh` to TypeScript in task_079 — same gates, same
@@ -15,6 +16,7 @@
  * pull requests; `HEAD~1` otherwise. Exits non-zero on the first violated gate.
  */
 
+import { join } from "node:path";
 import { $, type ShellExpression } from "bun";
 
 /** Paths the marker gate audits, relative to the repository root. */
@@ -94,6 +96,9 @@ console.log("clean");
 
 console.log("== audit: public API surface");
 // The second gate is scripts/public-api.ts, unchanged: it owns its output and
-// its exit code, so the status is handed straight through.
-const api = await $`${process.execPath} scripts/public-api.ts`.nothrow();
+// its exit code, so the status is handed straight through. It is resolved from
+// this script's own directory, not the cwd, so the gate runs the same from any
+// working directory (task_083).
+const publicApi = join(import.meta.dir, "public-api.ts");
+const api = await $`${process.execPath} ${publicApi}`.nothrow();
 process.exit(api.exitCode);
