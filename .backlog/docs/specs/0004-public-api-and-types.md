@@ -11,7 +11,7 @@
 | # | Requirement |
 |---|-------------|
 | R1 | `import { test, expect, describe } from "@archont561/bun-test-utils"` MUST work with no global monkey-patching. |
-| R2 | The package MUST expose the root runner plus the helper-only `./pbt`, `./bdd`, and `./snap` subpaths (and `./package.json`); `/snap` is limited to global snapshot serializer helpers. It MUST NOT expose runner/fixture subpaths, general implementation helpers, default objects, or any other subpaths. |
+| R2 | The package MUST expose the root runner plus the helper-only `./pbt`, `./bdd`, `./snap`, and `./vcr` subpaths (and `./package.json`); `/snap` is limited to global snapshot serializer helpers, `/vcr` to cassette callback-serializer helpers. It MUST NOT expose runner/fixture subpaths, general implementation helpers, default objects, or any other subpaths. |
 | R3 | The root `test` MUST expose built-in fixture context for std, DOM, browser, VCR, and snapshot capabilities. |
 | R4 | Property and BDD-style APIs MUST live on `test.*`: `test.prop`, `test.scenario`, and `test.scenario.prop`. |
 | R5 | `test.extend(fixtures)` MUST remain the only public composition hook for user fixtures and mocks. |
