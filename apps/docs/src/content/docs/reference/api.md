@@ -14,7 +14,7 @@ The root package exposes the runner values `describe`, `expect`, and `test`:
 import { describe, expect, test } from "@archont561/bun-test-utils";
 ```
 
-Typed definition helpers live on two helper-only subpaths:
+Typed definition and serializer helpers live on four helper-only subpaths:
 
 ```ts
 import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
@@ -28,18 +28,37 @@ import type {
   ThenStep,
   WhenStep,
 } from "@archont561/bun-test-utils/bdd";
+
+import {
+  createSnapshotSerializer,
+  registerSnapshotSerializer,
+  resetSnapshotSerializers,
+  unregisterSnapshotSerializer,
+} from "@archont561/bun-test-utils/snap";
+import type { Serializer } from "@archont561/bun-test-utils/snap";
+
+import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+import type { CallbackSerializer } from "@archont561/bun-test-utils/vcr";
 ```
 
 `defineArbitraries` is an identity wrapper for an arbitrary record or factory; it
 contextually types a factory's `fc` parameter and preserves generated types for
 `test.prop` and `test.scenario.prop`. The phase-specific scenario wrappers
 contextually type each callback's input and returned state, then return the
-callback unchanged. See the [property-testing guide](/bun-test-utils/guides/property-based-testing/)
-and [scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/).
+callback unchanged. `/snap` manages process-wide snapshot serializers, and
+`defineCallbackSerializer` on `/vcr` types reusable reversible callback
+serializers for `cassette.addSerializer(...)`. See the
+[property-testing guide](/bun-test-utils/guides/property-based-testing/),
+[scenario guide](/bun-test-utils/guides/scenarios-and-fluent-api/),
+[snapshot guide](/bun-test-utils/guides/snapshot-testing/), and
+[cassette guide](/bun-test-utils/guides/recording-http-cassettes/).
 
-These subpaths expose only typed definition helpers and aliases—not runners or
-fixtures. Do not import `@archont561/bun-test-utils/std`, `@archont561/bun-test-utils/vcr`, or other
-capability paths; fixtures and execution APIs remain on the root `test` object.
+These subpaths expose only typed definition helpers, serializer contracts, and
+aliases—not runners or fixtures. Do not import `@archont561/bun-test-utils/std`,
+`@archont561/bun-test-utils/dom`, `@archont561/bun-test-utils/browser`,
+`@archont561/bun-test-utils/server`, `@archont561/bun-test-utils/snapshot`, or
+other internal workspace paths; fixtures and execution APIs remain on the root
+`test` object.
 
 ## Stability and platforms
 
@@ -48,9 +67,10 @@ capabilities are stable and follow semantic versioning. Browser and BDD are
 experimental: experimental capabilities may change in minor versions.
 
 The stable VCR contract is `cassette.record(callback)`,
-`cassette.replay(callback)`, and exact HTTP matching by uppercase method plus
-full URL. Matcher DSLs, configurable redaction, and cassette migration tooling
-are deferred.
+`cassette.replay(callback)`, `cassette.addSerializer(serializer)` (with
+`defineCallbackSerializer` on `@archont561/bun-test-utils/vcr`), and exact HTTP
+matching by uppercase method plus full URL. Matcher DSLs, configurable
+redaction, and cassette migration tooling are deferred.
 
 Linux and macOS are supported. Windows support is planned after the first
 release.
@@ -74,6 +94,16 @@ test("uses fixtures", async ({ tmpdir, env }) => {
 | :-- | :-- | :-- | :-- |
 | `fixtures` | `string[]` | auto-detected | Explicit fixture list, overriding auto-detection from the destructured parameter |
 | `timeout` | `number` | Bun default | Per-test timeout in milliseconds, forwarded to `bun:test` |
+| `iterate` | `boolean` | `false` | Defers test-scoped fixtures and injects `ctx.iterate(fn)` so each sample builds and tears down its own test-scoped fixtures |
+
+### The iteration protocol (`iterate`)
+
+When `options.iterate` is `true`, the outer test context resolves only
+`session`- and `file`-scoped fixtures and exposes `ctx.iterate(fn)`. Each call
+to `await ctx.iterate(fn)` builds a fresh set of `test`-scoped fixtures for that
+single iteration and tears them down in strict LIFO order afterwards—even when
+`fn` throws. `test.prop` and `test.scenario.prop` use this protocol so every
+generated sample and shrink candidate runs with isolated test-scoped state.
 
 ## `test.extend(fixtures)`
 

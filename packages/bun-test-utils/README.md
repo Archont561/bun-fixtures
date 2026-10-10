@@ -12,6 +12,10 @@ bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
+In an interactive terminal without `CI` set, `bunx test-utils init` asks for confirmation before writing `bunfig.toml` (`--yes` skips the prompt; `--dir <path>` and `--entry <path>` customize the target directory and preload path).
+
+To reset recorded HTTP cassettes, callback sidecars, or snapshots, run `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all` (every `__cassettes__/` and `__snapshots__/` directory under the nearest `package.json` project root). Add `--dry-run` to list the files without deleting, or `--yes` to skip interactive TTY confirmation prompts.
+
 Optional test-style peers are installed only if you use those styles:
 
 ```bash
@@ -40,6 +44,7 @@ callback serializer contract. None exports a runner or fixture pack.
 - `test.prop(...)` for property tests when `fast-check` is installed.
 - `defineArbitraries(...)` from `@archont561/bun-test-utils/pbt` to define reusable fast-check arbitrary records or factories without importing the `FastCheckApi` type in each definition module.
 - `givenStep(...)`, `whenStep(...)`, and `thenStep(...)` from `@archont561/bun-test-utils/bdd` to contextually type reusable scenario callbacks.
+- `createSnapshotSerializer(...)`, `registerSnapshotSerializer(...)`, `unregisterSnapshotSerializer(...)`, and `resetSnapshotSerializers()` from `@archont561/bun-test-utils/snap` to manage reusable global snapshot serializers.
 - `defineCallbackSerializer(...)` from `@archont561/bun-test-utils/vcr` to define reusable cassette callback serializers for `cassette.addSerializer(...)`.
 - `test.scenario(...)` for BDD-style fluent tests when `@aboviq/bun-test-cucumber` is installed.
 - `test.scenario.prop(...)` when both optional peers are installed.
@@ -54,11 +59,20 @@ VCR capabilities are stable and follow semantic versioning. Browser and BDD are
 experimental: **experimental capabilities may change in minor versions**.
 
 The stable VCR surface is `cassette.record(callback)`,
-`cassette.replay(callback)`, and exact HTTP replay matching by uppercase method
-plus full URL. Matcher DSLs, configurable redaction, and cassette migration
-support are deferred. `cassette.record` refuses a callback result that is not
-plain data, such as a `Date`, `Map`, or `BigInt`, with the
-`CALLBACK_NOT_SERIALIZABLE` error code.
+`cassette.replay(callback)`, `cassette.addSerializer(serializer)` for reversible
+callback value serializers, and exact HTTP replay matching by uppercase method
+plus full URL. The default `VCR_MODE=auto` records a test's HTTP traffic and
+callback results under `__cassettes__/` on first use and replays them afterwards
+without network access (refusing to record missing cassettes when `CI` is set,
+and failing with `CASSETTE_MISMATCH` naming `bunx test-utils cache clear` when a
+request is missing from a present cassette). `cassette.record` encodes callback
+results through versioned built-in serializers (`Date`, `BigInt`, `Map`, `Set`,
+`RegExp`, `Error`, typed arrays, `ArrayBuffer`, and `NaN`/`±Infinity`/`-0`) plus
+any fixture-local serializers registered with `cassette.addSerializer(...)`,
+persisting callback recordings per test in `__cassettes__/<test>.callbacks.json`;
+unclaimed non-plain-data values are refused with the `CALLBACK_NOT_SERIALIZABLE`
+error code. Matcher DSLs, configurable redaction, and cassette migration support
+are deferred.
 
 Linux and macOS are supported. Windows support is planned after the first
 release; the current scratch-project harness and BDD presets rely on POSIX paths.
@@ -232,7 +246,7 @@ All workspace packages are implementation boundaries; only `@archont561/bun-test
 
 ## Development
 
-This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/features/*.feature` and are loaded by the shared `packages/config/bdd/features.test.ts` entrypoint.
+This package's conformance tests exercise the assembled public exports. Repo-wide Gherkin features live in `packages/*/e2e/bdd/features/*.feature` and each package loads its own through a one-line `e2e/bdd/features.test.ts` entrypoint calling `runPackageFeatures` from `@bun-test-utils/config/bdd`.
 
 ```bash
 bun run build

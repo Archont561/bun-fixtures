@@ -50,7 +50,7 @@ SNAPSHOT_MODE=update bun test
 
 ## Reset a snapshot
 
-To accept a new baseline for one test, delete its snapshot file and run the test again. `bunx test-utils cache clear --file <test file> --test "<name>"` does this, and `--file <test file>` clears every test in the file. `match` then records the new value, and `ci` refuses to create it. Review the diff of `__snapshots__/` before you commit the reset. See [Recording HTTP cassettes](./recording-http-cassettes.md#clear-a-recording) for the full command.
+To accept a new baseline for one test, delete its snapshot file and run the test again. `bunx test-utils cache clear --file <test file> --test "<name>"` does this, `--file <test file>` clears every test in the file, and `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the nearest `package.json` project root (`--dry-run` previews without deleting; `--yes` skips interactive TTY prompts). `match` then records the new value, and `ci` refuses to create it. Review the diff of `__snapshots__/` before you commit the reset. See [Recording HTTP cassettes](/bun-test-utils/guides/recording-http-cassettes/#clear-a-recording) for the full command.
 
 ## Multiple snapshots and custom serializers
 

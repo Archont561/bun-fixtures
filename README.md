@@ -23,7 +23,9 @@ bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
-To reset recorded HTTP cassettes or snapshots, delete the test's cache with `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all` (every cache file under the nearest `package.json` root). Add `--dry-run` to list the files first. In a TTY the command shows the matched files and asks before deleting; `--yes` skips the prompt.
+In an interactive terminal without `CI` set, `bunx test-utils init` asks for confirmation before writing `bunfig.toml` (`--yes` skips the prompt; `--dir <path>` and `--entry <path>` customize the target directory and preload path).
+
+To reset recorded HTTP cassettes, callback sidecars, or snapshots, delete the test's cache with `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all` (every cache file under the nearest `package.json` root). Add `--dry-run` to list the files first. In a TTY without `CI` set, the command shows the matched files as a multi-select and asks before deleting; `--yes` skips the prompts.
 
 Optional capability dependencies are loaded by fixtures only when requested:
 
@@ -49,6 +51,13 @@ export const userArbitraries = defineArbitraries((fc) => ({
 
 For reusable scenario callbacks, import `givenStep`, `whenStep`, and `thenStep`
 from `@archont561/bun-test-utils/bdd`. Scenario execution itself remains on root `test.scenario(...)`.
+
+For global snapshot serializers registered from a preload module, import
+`createSnapshotSerializer`, `registerSnapshotSerializer`,
+`unregisterSnapshotSerializer`, and `resetSnapshotSerializers` from
+`@archont561/bun-test-utils/snap`. For reusable reversible cassette callback
+serializers passed to `cassette.addSerializer(...)`, import
+`defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`.
 
 ## Quick start
 
@@ -86,7 +95,7 @@ The root runner contributes nineteen names to one flat fixture namespace: `clock
 
 The fixture engine plus the standard, DOM, snapshot, property-testing, and minimal VCR capabilities are stable and follow semantic versioning. Browser and BDD are experimental: **experimental capabilities may change in minor versions**.
 
-The stable VCR surface is `cassette.record(callback)`, `cassette.replay(callback)`, `cassette.addSerializer(...)` for reversible callback value serializers, and exact HTTP replay matching by method plus full URL. Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
+The stable VCR surface is `cassette.record(callback)`, `cassette.replay(callback)`, `cassette.addSerializer(...)` for reversible callback value serializers, and exact HTTP replay matching by uppercase method plus full URL. The default `VCR_MODE=auto` records a test's HTTP traffic and callback results under `__cassettes__/` on first use and replays them afterwards without network access (refusing to record missing cassettes when `CI` is set, and failing with `CASSETTE_MISMATCH` naming the `bunx test-utils cache clear` command when a request is missing from a present cassette). Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
 
 Linux and macOS are supported. Windows support is planned after the first release; the current scratch-project harness and BDD presets still rely on POSIX paths.
 
@@ -108,7 +117,7 @@ Parked as decisions rather than omissions, each with the condition that would st
 | Worker / concurrency-scoped fixtures | Bun's test parallelism semantics stabilize — `session` scope currently assumes a single process |
 | Windows support | POSIX `URL.pathname` assumptions removed from the harness and BDD presets, **and** a Windows CI lane exists |
 | VCR matcher DSL and cassette migration tooling | post-release demand establishes the right API; `0.1.x` freezes callback record/replay/addSerializer with exact method-plus-URL matching ([ADR 0018](./.backlog/docs/adr/0018-release-compatibility-contract.md), [ADR 0034](./.backlog/docs/adr/0034-cassette-callback-serializers.md)) |
-| Callback-result persistence, explicit callback keys, and global cassette serializer registration | cross-run callback replay is demanded — persistence and explicit keys both change what `replay` matches, so they get designed together ([ADR 0034](./.backlog/docs/adr/0034-cassette-callback-serializers.md), [ADR 0027](./.backlog/docs/adr/0027-identify-callbacks-by-object-then-source.md)) |
+| Explicit callback keys and global cassette serializer registration | a consumer needs to disambiguate factory closures across runs or register cassette serializers globally from a preload ([ADR 0027](./.backlog/docs/adr/0027-identify-callbacks-by-object-then-source.md), [ADR 0034](./.backlog/docs/adr/0034-cassette-callback-serializers.md), [ADR 0035](./.backlog/docs/adr/0035-persist-callback-results-across-runs.md)) |
 | Mutation testing as an internal quality gate | the engine suite needs a stronger signal than line coverage |
 | Fuzzing beyond fast-check | an invariant appears that property testing cannot express |
 | Benchmark fixtures | a performance claim needs defending |

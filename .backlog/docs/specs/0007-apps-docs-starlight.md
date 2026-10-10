@@ -1,6 +1,6 @@
 # 0007 — Documentation site with Astro Starlight & GitHub Pages
 
-- **Status:** ready
+- **Status:** implemented
 - **Implementation:** `apps/docs/`, `package.json`, `.github/workflows/docs.yml`
 - **Tests:** `bun run docs:build` / `bun run --filter docs build`
 

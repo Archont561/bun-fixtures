@@ -2,7 +2,7 @@
 
 - **Status:** implemented/revised
 - **Milestone:** M4
-- **Implementation:** `packages/bun-test-utils/src/{plugin,pbt,bdd}.ts`, package export map, `packages/core/src/plugin.ts`, `packages/core/src/types.ts`
+- **Implementation:** `packages/bun-test-utils/src/{plugin,pbt,bdd,snap,vcr}.ts`, package export map, `packages/core/src/plugin.ts`, `packages/core/src/types.ts`
 - **Tests:** `packages/core/tests/{plugin,error-messages}.test.ts`, `packages/std/tests/network-guard.test.ts`, `packages/bun-test-utils/tests/conformance/*.test.ts`, `bun run typecheck`
 - **Compatibility:** [ADR 0018](../adr/0018-release-compatibility-contract.md)
 
@@ -26,7 +26,7 @@
 
 ## Design
 
-The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The root package exposes the runner (`describe`, `expect`, and `test`); typed definition helpers are capability-scoped under `@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd`.
+The core engine still owns explicit composition, fixture ordering, teardown, stack detection, and scenario execution. The root package exposes the runner (`describe`, `expect`, and `test`); typed definition and serializer helpers are capability-scoped under `@archont561/bun-test-utils/pbt`, `@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and `@archont561/bun-test-utils/vcr`.
 
 `use` is typed `(value: T) => Promise<void>` rather than `=> void`: a `void` return makes `await use(v)` meaningless and teardown impossible. Awaiting remains optional.
 
@@ -44,7 +44,7 @@ The user first authorized `propTestSchema` as a top-level runtime identity wrapp
 
 ### Capability-scoped typed helpers (ADR 0022)
 
-`@archont561/bun-test-utils/pbt` exports `defineArbitraries` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `@archont561/bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. `@archont561/bun-test-utils/snap` exposes only the global snapshot serializer helpers; its lifecycle and diagnostics are specified in [spec 0013](./0013-snapshot-testing.md). The root runtime surface is exactly `describe`, `expect`, and `test`; helper subpaths expose no runners or fixtures, and no other root helper or `test.*` member is added. ADR 0023 records the pre-release rename from `propTestSchema` to `defineArbitraries`; ADR 0024 records public-boundary dogfooding.
+`@archont561/bun-test-utils/pbt` exports `defineArbitraries` and the PBT type aliases `FastCheckApi`, `ArbitraryInput`, and `GeneratedValues`. `@archont561/bun-test-utils/bdd` exports the phase-specific identity wrappers `givenStep`, `whenStep`, and `thenStep`, along with `ScenarioContext`, `GivenChain`, `GivenStep`, `WhenStep`, and `ThenStep`. Each wrapper returns its callback unchanged while providing the corresponding generic step signature. `@archont561/bun-test-utils/snap` exposes only the global snapshot serializer helpers; its lifecycle and diagnostics are specified in [spec 0013](./0013-snapshot-testing.md). `@archont561/bun-test-utils/vcr` exposes `defineCallbackSerializer` and `CallbackSerializer` for reversible cassette callback serializers ([spec 0012](./0012-http-cassette-vcr.md), [ADR 0034](../adr/0034-cassette-callback-serializers.md)). The root runtime surface is exactly `describe`, `expect`, and `test`; helper subpaths expose no runners or fixtures, and no other root helper or `test.*` member is added. ADR 0023 records the pre-release rename from `propTestSchema` to `defineArbitraries`; ADR 0024 records public-boundary dogfooding.
 
 The declarations still reference `fast-check` types for PBT inference. The peer remains optional at runtime, but a strict TypeScript consumer with `skipLibCheck: false` may need to install `fast-check` even for ordinary root imports; `skipLibCheck: true` avoids checking a missing optional peer declaration. Neither the PBT definition helper nor the BDD step wrappers load an optional peer at runtime.
 
@@ -75,7 +75,7 @@ The contractual network-guard template is also requirement R10 in
 
 ## Out of scope
 
-Public `test.each`, `test.skip/only/todo` fixture variants, custom matchers, runner/fixture subpaths, capability helper subpaths other than `./pbt`, `./bdd`, and `./snap`, and additional root helpers.
+Public `test.each`, `test.skip/only/todo` fixture variants, custom matchers, runner/fixture subpaths, capability helper subpaths other than `./pbt`, `./bdd`, `./snap`, and `./vcr`, and additional root helpers.
 
 ## Verification
 

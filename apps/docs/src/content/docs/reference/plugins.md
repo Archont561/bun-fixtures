@@ -8,7 +8,7 @@ description: Root test-context fixtures for standard, DOM, browser, VCR, snapsho
 
 ## Public surface
 
-The root `@archont561/bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The only public helper subpaths are `@archont561/bun-test-utils/pbt` for reusable typed fast-check schemas and `@archont561/bun-test-utils/bdd` for typed scenario-step callbacks; neither subpath exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
+The root `@archont561/bun-test-utils` entrypoint exposes the runner values `describe`, `expect`, and `test`. The public helper subpaths are `@archont561/bun-test-utils/pbt` for reusable typed fast-check schemas, `@archont561/bun-test-utils/bdd` for typed scenario-step callbacks, `@archont561/bun-test-utils/snap` for global snapshot serializer lifecycle helpers, and `@archont561/bun-test-utils/vcr` for reusable cassette callback serializers; none exposes a runner or fixture pack. Request built-in capabilities by destructuring fixtures from the root `test` context.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
@@ -71,6 +71,7 @@ The stable VCR surface is deliberately minimal:
 
 - `cassette.record(callback)`: executes a callback and stores its serializable result.
 - `cassette.replay(callback)`: returns that result without executing the callback.
+- `cassette.addSerializer(serializer)`: registers a reversible, versioned callback value serializer for the test (reusable definitions use `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`).
 - HTTP replay matches uppercase method plus exact full URL only.
 
 The current implementation writes under `__cassettes__/`, but its schema is not
