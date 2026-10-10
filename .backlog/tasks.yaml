@@ -4694,8 +4694,12 @@ tasks:
   - id: task_082
     title: Decide whether lefthook's actionlint step should warn-and-pass in the
       sandbox
-    description: "lefthook.yml runs .pixi/envs/default/bin/actionlint on staged
-      .github/workflows/*.{yml,yaml}. In this sandbox there is no pixi at all,
+    description: "STATUS 2026-10-10: the failure below is no longer reproducible after
+      `sh scripts/restore.sh` (session skill step 1b). Pixi restores from origin branch
+      sandbox/bun-test-utils-linux-64; .pixi/envs/default/bin/actionlint (1.7.12) and the
+      pixi browser env both work. The decision below is still open, but option (b) is now
+      cheap in this sandbox. lefthook.yml runs .pixi/envs/default/bin/actionlint on staged
+      .github/workflows/*.{yml,yaml}. Before the restore, this sandbox had no pixi at all,
       so that command dies with exit 127 and the whole pre-commit hook FAILS:
       the commit does not happen, while lefthook's summary still shows
       checkmarks for the passing steps. The comments in lefthook.yml and the
