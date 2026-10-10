@@ -13,9 +13,26 @@
  * by spec 0015 (thin glue / subprocess cost), and prop-inside-BDD stays the
  * one seeded scratch-project scenario in `e2e/bdd/features/property.feature`.
  */
+import { afterAll, beforeAll } from "bun:test";
 import { existsSync } from "node:fs";
 import { describe, expect, test } from "@archont561/bun-test-utils";
 import { textFileSchema } from "./shared/property-schemas.ts";
+
+/**
+ * The cassette fixture's mode is pinned at the file level: the vcr cells keep
+ * every callback in memory (`passthrough`, selected again in each body), and
+ * the default `auto` mode refuses to resolve without a committed cassette
+ * when CI is set (ADR 0036). A CI runner's environment must not change what
+ * these cells mean.
+ */
+const ambientVcrMode = process.env.VCR_MODE;
+beforeAll(() => {
+  process.env.VCR_MODE = "passthrough";
+});
+afterAll(() => {
+  if (ambientVcrMode === undefined) delete process.env.VCR_MODE;
+  else process.env.VCR_MODE = ambientVcrMode;
+});
 
 const SEED = 20261007;
 const ISOLATION_RUNS = 20;

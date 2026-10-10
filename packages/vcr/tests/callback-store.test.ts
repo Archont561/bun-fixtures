@@ -48,7 +48,30 @@ const sidecarPathFor = (testName: string) =>
 
 const { test: scratchTest } = createTest(scratchFile);
 
-/** Replay mode, selected declaratively, as in cassette.test.ts. */
+/**
+ * Mode selection is declarative, as in cassette.test.ts: `vcrEnv` is a
+ * dependency of `cassette`, so the engine builds it first and tears it down
+ * last. These suites characterize the machinery, not mode resolution (the
+ * `auto` default and its CI guard are pinned in auto-mode.test.ts), so the
+ * record side pins `VCR_MODE=record`: the default `auto` mode refuses to
+ * record when CI is set (ADR 0036), and a CI runner's environment must not
+ * change what a test means.
+ */
+const recordTest = scratchTest.extend({
+  vcrEnv: {
+    setup: async (use: (value: string) => unknown) => {
+      process.env.VCR_MODE = "record";
+      try {
+        await use("record");
+      } finally {
+        delete process.env.VCR_MODE;
+      }
+    },
+  },
+  cassette: { ...cassetteFixture, deps: ["vcrEnv"] },
+});
+
+/** Replay mode, selected the same declarative way. */
 const replayTest = scratchTest.extend({
   vcrEnv: {
     setup: async (use: (value: string) => unknown) => {
@@ -62,8 +85,6 @@ const replayTest = scratchTest.extend({
   },
   cassette: { ...cassetteFixture, deps: ["vcrEnv"] },
 });
-
-const recordTest = scratchTest.extend({ cassette: cassetteFixture });
 
 /**
  * A closure whose body counts its own executions. Replay must never run it,
