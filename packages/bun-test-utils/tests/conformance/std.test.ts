@@ -12,9 +12,26 @@
  * previous test's teardown left behind.
  */
 
+import { afterAll, beforeAll } from "bun:test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "@archont561/bun-test-utils";
+
+/**
+ * The cassette fixture's mode is pinned at the file level: the one cassette
+ * test below keeps its callbacks in memory (`passthrough`, selected again in
+ * the body), and the default `auto` mode refuses to resolve without a
+ * committed cassette when CI is set (ADR 0036). A CI runner's environment
+ * must not change what this suite means.
+ */
+const ambientVcrMode = process.env.VCR_MODE;
+beforeAll(() => {
+  process.env.VCR_MODE = "passthrough";
+});
+afterAll(() => {
+  if (ambientVcrMode === undefined) delete process.env.VCR_MODE;
+  else process.env.VCR_MODE = ambientVcrMode;
+});
 
 type TmpDirHelper = {
   dir: string;

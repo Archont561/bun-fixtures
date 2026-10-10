@@ -5004,3 +5004,43 @@ tasks:
       push_comments: false
     created_at: 2026-10-10T13:45:24.834Z
     updated_at: 2026-10-10T15:16:10.703Z
+  - id: task_088
+    title: Repair the cassette suites the auto-mode default broke on CI (ADR 0036
+      fallout)
+    description: "task_086 flipped the VCR default from record to auto
+      (resolveAuto). Every suite that opened the cassette fixture without
+      pinning a mode now dies with CASSETTE_NOT_FOUND on a CI runner (CI set, no
+      committed cassette). Fix by pinning explicit modes: record vcrEnv deps in
+      the vcr machinery suites (they record their own helper traffic),
+      VCR_MODE=passthrough file pins in the wrapper conformance suites. Keep the
+      ADR 0036 guard intact."
+    source_links: []
+    status: done
+    priority: P1
+    labels: []
+    repo_targets: []
+    acceptance_criteria:
+      - CI=true bun test tests green in packages/vcr
+      - CI=true bun test tests/conformance green in packages/bun-test-utils
+      - root bun test unchanged (647 pass / 2 skip / 0 fail)
+      - ADR 0036 guard tests (auto-mode, cache-clear) green; resolveAuto
+        untouched
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T16:01:25.276Z
+    updated_at: 2026-10-10T16:01:37.950Z

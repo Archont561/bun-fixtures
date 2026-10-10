@@ -38,10 +38,26 @@ const serverFixture = {
   },
 };
 
+/**
+ * Record mode is pinned through the composition idiom (a `vcrEnv` dependency
+ * of `cassette`, as in cassette.test.ts): these invariants characterize
+ * record/replay behaviour and HTTP matching, not mode resolution, and the
+ * default `auto` mode refuses to record when CI is set (ADR 0036).
+ */
 const { test: scratchTest } = createTest(scratchFile);
 const test = withPropertyTesting(
   scratchTest.extend({
-    cassette: cassetteFixture,
+    vcrEnv: {
+      setup: async (use: (value: string) => unknown) => {
+        process.env.VCR_MODE = "record";
+        try {
+          await use("record");
+        } finally {
+          delete process.env.VCR_MODE;
+        }
+      },
+    },
+    cassette: { ...cassetteFixture, deps: ["vcrEnv"] },
     server: serverFixture,
   }),
   scratchFile,

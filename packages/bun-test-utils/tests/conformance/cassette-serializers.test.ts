@@ -6,8 +6,25 @@
  * The engine-level contract lives in `packages/vcr/tests/`; this suite pins
  * what an installed consumer composes.
  */
+import { afterAll, beforeAll } from "bun:test";
 import { expect, test } from "@archont561/bun-test-utils";
 import { defineCallbackSerializer } from "@archont561/bun-test-utils/vcr";
+
+/**
+ * The cassette fixture's mode is pinned at the file level: every test here
+ * keeps its callbacks in memory (`passthrough`, selected again in each body),
+ * and the default `auto` mode refuses to resolve without a committed cassette
+ * when CI is set (ADR 0036). A CI runner's environment must not change what
+ * this suite means.
+ */
+const ambientVcrMode = process.env.VCR_MODE;
+beforeAll(() => {
+  process.env.VCR_MODE = "passthrough";
+});
+afterAll(() => {
+  if (ambientVcrMode === undefined) delete process.env.VCR_MODE;
+  else process.env.VCR_MODE = ambientVcrMode;
+});
 
 /** A class instance: real data, non-plain prototype — userland serializer. */
 class Token {

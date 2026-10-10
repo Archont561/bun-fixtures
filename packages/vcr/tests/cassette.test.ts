@@ -10,9 +10,12 @@
  *    stays hermetic and repeatable, and the repository stays clean.
  * 2. Overriding the `cassette` key with the same fixture plus a `deps` entry
  *    forces `vcrEnv` to build before it and tear down after it. That is how a
- *    test selects replay mode: the engine's dependency ordering sets the
+ *    test selects its mode: the engine's dependency ordering sets the
  *    environment variable before the cassette reads it, and LIFO teardown
- *    removes it again.
+ *    removes it again. The shared `test` pins `record` and `replayTest`
+ *    selects `replay` — this file characterizes the machinery, not mode
+ *    resolution, and the default `auto` mode refuses to record when CI is set
+ *    (ADR 0036; auto-mode.test.ts pins that guard).
  *
  * Writes happen during teardown, after the body returns, so assertions about
  * what landed on disk live in the *next* test via a module-scope breadcrumb.
@@ -87,7 +90,17 @@ const serverFixture = {
 };
 
 const test = scratchTest.extend({
-  cassette: cassetteFixture,
+  vcrEnv: {
+    setup: async (use: (value: string) => unknown) => {
+      process.env.VCR_MODE = "record";
+      try {
+        await use("record");
+      } finally {
+        delete process.env.VCR_MODE;
+      }
+    },
+  },
+  cassette: { ...cassetteFixture, deps: ["vcrEnv"] },
   server: serverFixture,
 });
 
