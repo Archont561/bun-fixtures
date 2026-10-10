@@ -59,7 +59,7 @@ Run `bun test`. The full guide is in the [quickstart](https://archont561.github.
 | Standard fixtures | `tmpdir`, `env`, `stdio`, `clock`, `seed`, `networkGuard` | [Built-in fixtures](https://archont561.github.io/bun-test-utils/reference/plugins/) |
 | BDD scenarios | Fluent `given` / `when` / `then` tests on `test.scenario` (experimental) | [Scenarios and fluent API](https://archont561.github.io/bun-test-utils/guides/scenarios-and-fluent-api/) |
 | Property-based testing | `test.prop` with fast-check, one fixture lifecycle per generated sample | [Property-based testing](https://archont561.github.io/bun-test-utils/guides/property-based-testing/) |
-| Snapshot testing | The `snapshot` fixture for values and files | [Snapshot testing](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/) |
+| Snapshot testing | The callable `snapshot(fn, name)` assertion wrapper, plus value and file snapshots | [Snapshot testing](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/) |
 | HTTP record/replay | The callable `cassette(fn)` callback cache, explicit `record`/`replay`, fixture-local or preload-global callback serializers, `httpMock`, and deterministic HTTP replay | [Recording HTTP cassettes](https://archont561.github.io/bun-test-utils/guides/recording-http-cassettes/) |
 | DOM and browser testing | happy-dom pages, Playwright pages, and one `webPage` fixture that selects either backend | [API reference](https://archont561.github.io/bun-test-utils/reference/api/) |
 

@@ -72,6 +72,10 @@ const SERIALIZED = "serializes a custom type";
 const GLOBAL_SERIALIZED = "uses a globally registered serializer";
 const REPORT = "renders a report";
 const NESTED = "stable nested value";
+const CALLABLE = "runs a snapshot callback";
+const CALLABLE_REPEAT = "runs a snapshot callback every time";
+const CALLABLE_REJECTION = "does not write a rejected snapshot callback";
+const CALLABLE_REQUIRED_NAME = "requires a callable snapshot name";
 
 seed(STALE, "old");
 seed(REFRESHED, "old");
@@ -180,6 +184,85 @@ describe("@bun-test-utils/snapshot", () => {
       "value 2": "b",
       named: "c",
     });
+  });
+
+  test(CALLABLE, async ({ snapshot }) => {
+    snapshot.setMode("match");
+    const result = { component: "card", count: 2 };
+    let calls = 0;
+
+    const returned = await snapshot(async () => {
+      calls++;
+      return result;
+    }, "card-result");
+
+    expect(returned).toBe(result);
+    expect(calls).toBe(1);
+  });
+
+  test("…and the callable stores its result under the required name", () => {
+    expect(read(CALLABLE)).toEqual({
+      "card-result": '{\n  "component": "card",\n  "count": 2\n}',
+    });
+  });
+
+  test(CALLABLE_REPEAT, async ({ snapshot }) => {
+    snapshot.setMode("match");
+    const result = { stable: true };
+    let calls = 0;
+    const load = () => {
+      calls++;
+      return result;
+    };
+
+    await snapshot(load, "same-name");
+    await snapshot(load, "same-name");
+    expect(calls).toBe(2);
+  });
+
+  test(CALLABLE_REJECTION, async ({ snapshot }) => {
+    snapshot.setMode("match");
+    const failure = new Error("callback exploded");
+    let calls = 0;
+
+    await expect(
+      snapshot(async () => {
+        calls++;
+        throw failure;
+      }, "never-written"),
+    ).rejects.toBe(failure);
+    expect(calls).toBe(1);
+  });
+
+  test("…and a rejected callback wrote no snapshot", () => {
+    expect(existsSync(pathFor(CALLABLE_REJECTION))).toBe(false);
+  });
+
+  test(CALLABLE_REQUIRED_NAME, async ({ snapshot }) => {
+    snapshot.setMode("match");
+    let calls = 0;
+    const invokeWithoutName = snapshot as unknown as (
+      callback: () => unknown,
+      name?: string,
+    ) => Promise<unknown>;
+
+    await expect(
+      invokeWithoutName(() => {
+        calls++;
+        return "never-run";
+      }),
+    ).rejects.toThrow("snapshot(callback, name) requires a non-empty name");
+    await expect(
+      invokeWithoutName(() => {
+        calls++;
+        return "never-run";
+      }, ""),
+    ).rejects.toThrow("snapshot(callback, name) requires a non-empty name");
+    expect(calls).toBe(0);
+  });
+
+  test("…and missing callable names wrote no snapshot", () => {
+    expect(existsSync(pathFor(CALLABLE_REQUIRED_NAME))).toBe(false);
   });
 
   test(SERIALIZED, async ({ snapshot }) => {

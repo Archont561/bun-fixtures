@@ -30,6 +30,7 @@ function captureError(action: () => void): SnapshotDiagnostic {
 }
 
 const writtenSnapshots: string[] = [];
+let callableSnapshotPath: string | undefined;
 afterAll(() => {
   resetSnapshotSerializers();
   for (const path of writtenSnapshots) {
@@ -235,4 +236,30 @@ test("nested Error snapshots retain the error message", () => {
   expect(stored["nested-errors"]).toBe(
     '{\n  "errors": [\n    "Error: nested failure"\n  ]\n}',
   );
+});
+
+test("the root snapshot fixture is callable and returns its awaited result", async ({
+  snapshot,
+}) => {
+  resetSnapshotSerializers();
+  snapshot.setMode("match");
+  writtenSnapshots.push(snapshot.path);
+  callableSnapshotPath = snapshot.path;
+
+  const result = { status: "ok" as const };
+  let calls = 0;
+  const returned: { status: "ok" } = await snapshot(async () => {
+    calls++;
+    return result;
+  }, "callback-result");
+
+  expect(returned).toBe(result);
+  expect(calls).toBe(1);
+});
+
+test("the root callable stores the result under its explicit name", () => {
+  const stored = JSON.parse(readFileSync(callableSnapshotPath!, "utf8"));
+  expect(stored).toEqual({
+    "callback-result": '{\n  "status": "ok"\n}',
+  });
 });

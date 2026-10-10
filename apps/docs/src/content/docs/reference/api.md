@@ -227,6 +227,7 @@ causes `CALLBACK_SERIALIZER_NOT_FOUND`, not an automatic refresh.
 
 | Member | Behaviour |
 | :-- | :-- |
+| `snapshot(callback, name)` | Runs and awaits `callback` once, matches its result under the required non-empty `name`, and returns that original result. It never caches or keys on callback source; callback errors propagate before any snapshot write. |
 | `match(value, name?)` | Compares a value against the stored snapshot, or records it on first run. |
 | `matchFile(path, name?)` | Compares the contents of a file. |
 | `addSerializer(serializer)` | Registers a serializer for this test. Return `undefined` for values it does not handle. |

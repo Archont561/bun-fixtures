@@ -130,12 +130,18 @@ Requires `bun add -d @aboviq/bun-test-cucumber`. Scenarios are experimental.
 ### Snapshots
 
 ```ts
-import { test } from "@archont561/bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test("renders the widget", async ({ snapshot }) => {
-  snapshot.match({ name: "widget", count: 3 });
+  const widget = await snapshot(
+    async () => render({ name: "widget", count: 3 }),
+    "widget",
+  );
+  expect(widget.count).toBe(3);
 });
 ```
+
+Callable `snapshot(fn, name)` runs and awaits `fn` every time, matches its result under the required explicit name, and returns that same result. It is an assertion wrapper, not a cache: it never keys on the function body. If `fn` throws or rejects, its error propagates and no snapshot is written. Use `snapshot.match(value, name?)` and `snapshot.matchFile(path, name?)` unchanged for direct values and files.
 
 The first run writes `__snapshots__/` next to the test file. Commit that directory, so a change to the snapshot shows up in review.
 

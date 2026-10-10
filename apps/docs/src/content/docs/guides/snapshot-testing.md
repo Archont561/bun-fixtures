@@ -26,6 +26,34 @@ test("renders the widget", async ({ snapshot }) => {
 
 The first run writes `__snapshots__/renders-the-widget.snap.json` next to the test file. Every later run compares against that file. Commit `__snapshots__/`: reviewing its diff is how you review a change in behaviour.
 
+## Snapshot a callback result
+
+For work that produces a value asynchronously, call the fixture itself. The
+name is required and becomes the stored snapshot key:
+
+```ts
+import { expect, test } from "@archont561/bun-test-utils";
+
+test("loads a profile", async ({ snapshot }) => {
+  const profile = await snapshot(
+    async () => fetchProfile("ada"),
+    "ada-profile",
+  );
+
+  expect(profile.id).toBe("ada");
+});
+```
+
+`await snapshot(fn, name)` always runs and awaits `fn` once, then behaves like
+`snapshot.match(result, name)` and returns the original result. It is not a
+cache: it never reads the function body, captures, or identity, and calling it
+again runs the callback again. Use a direct `snapshot.match(value, name?)` for
+an already available value, including anonymous auto-numbered snapshots.
+
+If `fn` throws or rejects, its original error propagates, `match` is not called,
+and that invocation writes no snapshot. A successful callback can still report
+the ordinary snapshot mismatch or serializer error after it returns.
+
 ## Modes
 
 Select a mode with `SNAPSHOT_MODE`, or per test with `snapshot.setMode(...)`:
