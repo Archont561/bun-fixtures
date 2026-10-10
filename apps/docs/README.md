@@ -30,4 +30,4 @@ bun run docs:preview  # preview the production build
 
 ## Deployment
 
-`.github/workflows/docs.yml` builds the site and deploys it to GitHub Pages on every push to `main`.
+`.github/workflows/docs.yml` builds the site and deploys it to GitHub Pages on pushes to `main` that change `apps/docs/**`, `.backlog/docs/**`, or `packages/**`.
