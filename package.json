@@ -14,6 +14,8 @@
     "test:all": "turbo run test test:e2e",
     "coverage": "turbo run build && bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage packages/*/tests packages/*/e2e",
     "typecheck": "turbo run typecheck",
+    "audit:check": "bash scripts/audit-check.sh",
+    "audit:api": "bun scripts/public-api.ts --update",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",

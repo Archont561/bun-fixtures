@@ -3368,17 +3368,25 @@ tasks:
   - id: task_062
     title: Characterize global env and DOM fixture state, extract shared test
       doubles, and add a CI audit check (audit findings 4 and 5)
-    description: "Audit 2026-10-06 finding 4 (medium): global environment and DOM
-      fixtures mutate process and global state. The try/finally cleanup is good,
-      but the concurrent-test assumptions should be documented, and tests should
-      cover setup failures and overlapping fixtures. Finding 5 (low): large test
-      files duplicate fake adapters. Extract shared test doubles only once each
-      package's behavioral contract is explicit, since textual similarity alone
-      does not justify production consolidation. Also the audit's deferred item:
-      add a CI audit check for TODO or FIXME additions and accidental public API
-      changes."
+    description: "Audit 2026-10-06 findings 4+5 and the deferred CI audit check.
+      LANDED: (1) env fixture global-state contract characterized in
+      packages/std/tests/env-restoration.test.ts (6 tests: restore-on-success,
+      restore through consumer failure, LIFO overlap, out-of-order-close leak
+      pinned, late-write wiped, snapshot-is-copy); (2) window fixture contract
+      in packages/dom/tests/window-globals.test.ts (3 tests incl. overlapping
+      LIFO and the out-of-order leak); concurrency assumptions documented in
+      std/src/env.ts, dom/src/index.ts and .backlog/docs/caveats.md
+      (single-flight rule); (3) shared lifecycle doubles extracted to
+      packages/core/tests/support.ts
+      (recordingFixture/brokenFixture/teardownFailsFixture), plugin.test.ts
+      teardown suite converted (8 inline maps deduplicated); (4) CI audit check:
+      scripts/audit-check.sh + scripts/public-api.ts + scripts/public-api.txt
+      baseline, wired as the audit job in ci.yml (fetch-depth 0, build, check);
+      both gates proven to fire (TODO addition -> exit 1; public-API addition ->
+      exit 1 with +/− surface diff) and to pass clean. Suite 496 pass / 2 skip /
+      7 documented browser fails (was 487)."
     source_links: []
-    status: ready
+    status: done
     priority: P1
     labels:
       - testing
@@ -3410,7 +3418,7 @@ tasks:
       push_status: false
       push_comments: false
     created_at: 2026-10-08T19:47:48.859Z
-    updated_at: 2026-10-09T21:44:19.135Z
+    updated_at: 2026-10-10T08:10:19.545Z
   - id: task_063
     title: "Regular test path: a teardown error in the finally unwind replaces the
       setup error"

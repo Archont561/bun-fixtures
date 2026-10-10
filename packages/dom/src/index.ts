@@ -43,6 +43,17 @@ const GLOBAL_PROPERTIES = [
   "navigator",
 ] as const;
 
+/**
+ * Concurrency assumption (audit 2026-10-06, finding 4): the swap installs the
+ * fixture's window onto `globalThis` and the teardown restores whatever the
+ * setup captured, so two overlapping `window` fixtures are only correct in
+ * LIFO order — the inner setup captured the outer fixture's globals as "its
+ * originals". Closing out of order leaks the outer window pointer into the
+ * host (pinned in `tests/window-globals.test.ts`). Bun runs tests in a file
+ * sequentially, so the test-scoped fixture satisfies the supported shape
+ * (one swapped-in window per process at a time) by default.
+ */
+
 export const windowFixture = createFixture<GlobalWindow>({
   scope: "test",
   setup: async (use) => {
