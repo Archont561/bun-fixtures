@@ -1,0 +1,679 @@
+{
+  "schema": 2,
+  "tool": {
+    "name": "pixi-sandbox",
+    "version": "0.6.0"
+  },
+  "created_at": "2026-10-10T18:59:03Z",
+  "platform": "linux-64",
+  "shard_limit_bytes": 99614720,
+  "source": {
+    "commit": "009f233",
+    "lock_sha256": "8e3b2bba68b89a59be9620f5b114b1dcb45d5bcc0a6c1297796a98d23f37f4c0"
+  },
+  "tools": {
+    "pixi": {
+      "version": "0.81.0",
+      "url": "https://github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-x86_64-unknown-linux-musl",
+      "pinned_sha256": "248510f5f75460a2ae4ec62d761e15c0191dc35db3b1da6f82d9f17c6017051d",
+      "linkage": "static",
+      "size_bytes": 80335584,
+      "path": "tools/linux-64/pixi"
+    },
+    "pixi-sandbox": {
+      "version": "0.6.0",
+      "linkage": "static",
+      "size_bytes": 3779056,
+      "path": "tools/linux-64/pixi-sandbox"
+    },
+    "pixi-unpack": {
+      "version": "0.7.11",
+      "url": "https://github.com/Quantco/pixi-pack/releases/download/v0.7.11/pixi-unpack-x86_64-unknown-linux-musl",
+      "pinned_sha256": "8191f586b734e634e2f1644e553dcb8e07718d0bafbfefb65c5e6e22b4d484b7",
+      "linkage": "static",
+      "size_bytes": 15729744,
+      "path": "tools/linux-64/pixi-unpack"
+    }
+  },
+  "envs": {
+    "browser": {
+      "platform": "linux-64",
+      "pack_path": ".pixi-sandbox/envs/browser/pack",
+      "packed_size_bytes": 111503517,
+      "unpacked_size_bytes": 422532197,
+      "pixi_environment_fingerprint": "09ebc20095d13493",
+      "blobs": [
+        {
+          "path": "envs/browser/pack/channel/linux-64/_openmp_mutex-4.5-20_gnu.conda",
+          "size": 28948,
+          "sha256": "1dd3fffd892081df9726d7eb7e0dea6198962ba775bd88842135a4ddb4deb3c9"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/actionlint-1.7.12-h8bc977c_0.conda",
+          "size": 2131192,
+          "sha256": "1fff5ee0d83045ef90104ca83f52b4c44feb4ab2036fc7903fe9733f50721209"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/alsa-lib-1.2.3.2-h166bdaf_0.tar.bz2",
+          "size": 567040,
+          "sha256": "9bf4cf7e39f63a02a8fa0498acc210d206ccbdb0546c76dcfc4cc3455d0ac3da"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/at-spi2-atk-2.38.0-h0630a04_3.tar.bz2",
+          "size": 339899,
+          "sha256": "26ab9386e80bf196e51ebe005da77d57decf6d989b4f34d96130560bc133479c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/at-spi2-core-2.40.3-h0630a04_0.tar.bz2",
+          "size": 658390,
+          "sha256": "c4f9b66bd94c40d8f1ce1fad2d8b46534bdefda0c86e3337b28f6c25779f258d"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/atk-1.0-2.38.0-h04ea711_2.conda",
+          "size": 355900,
+          "sha256": "df682395d05050cd1222740a42a551281210726a67447e5258968dd55854302e"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/atk-2.38.0-ha770c72_2.conda",
+          "size": 15865,
+          "sha256": "446ce406d5477bd14be63970063f0959fb75bbe05cd1d1d78cbb1604a5d1bd26"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/bzip2-1.0.8-hda65f42_10.conda",
+          "size": 257808,
+          "sha256": "1a0d382c515ebf55f8ee1f38c8b81bc95af5c2acc42ad53b66bc5df932032f96"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/cairo-1.18.2-h3394656_1.conda",
+          "size": 978868,
+          "sha256": "de7d0d094e53decc005cb13e527be2635b8f604978da497d4c0d282c7dc08385"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/dbus-1.13.6-h5008d03_3.tar.bz2",
+          "size": 618596,
+          "sha256": "8f5f995699a2d9dbdd62c61385bfeeb57c82a681a7c8c5313c395aa0ccab68a5"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/epoxy-1.5.10-h166bdaf_1.tar.bz2",
+          "size": 1440699,
+          "sha256": "1e58ee2ed0f4699be202f23d49b9644b499836230da7dd5b2f63e6766acff89e"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/expat-2.8.5-hd2095e1_0.conda",
+          "size": 151545,
+          "sha256": "c18c5196847fbf5ba3653f13664bf1a57c87aaa063b87d77c246e3b040aa1963"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/fontconfig-2.18.3-h4db4eae_1.conda",
+          "size": 296288,
+          "sha256": "5a3eb10b18a97223ab06b3a7f0d7f56658db2f2800e2f2af95836fe3bf55ba63"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/freetype-2.14.3-ha770c72_2.conda",
+          "size": 175239,
+          "sha256": "612a8e0c1a6ecae23da54d81ef395f6ebb5c8e4468ec2611593ebce75876a4e0"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/fribidi-1.0.17-h7cc23a3_0.conda",
+          "size": 64102,
+          "sha256": "3ba79ebfbd14ca5db4affaf10ee8001064e907de5baabc2dbe5bcd9aec856c9f"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/gdk-pixbuf-2.42.12-hb9ae30d_0.conda",
+          "size": 528149,
+          "sha256": "d5283b95a8d49dcd88d29b360d8b38694aaa905d968d156d72ab71d32b38facb"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/glib-2.90.0-h5e3c387_0.conda",
+          "size": 85802,
+          "sha256": "4d3ddb32831bbd89d4c1b5282930f70a1bf0e1210c772d2df4c13b3eb12f577f"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/glib-tools-2.90.0-h3d503d9_0.conda",
+          "size": 237225,
+          "sha256": "a31c2244c6743a85941ac1d19a77ce2cc871afa171b0ad9aaac309af532d0677"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/graphite2-1.3.15-h54a6638_1.conda",
+          "size": 102835,
+          "sha256": "7fa3b6a9c081fa3e545573152a788d061a0a0ba57df7251cc0f4f75225fc93e7"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/gtk3-3.24.43-hd6cba2e_1.conda",
+          "size": 5575495,
+          "sha256": "7cc33a840e659d3f98345e95aaf6e8c6d8ed6ff960d9b20f0eed95964ddd1041"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/harfbuzz-10.4.0-h76408a6_0.conda",
+          "size": 1694183,
+          "sha256": "3b4ccabf170e1bf98c593f724cc4defe286d64cb19288751a50c63809ca32d5f"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/hicolor-icon-theme-0.17-ha770c72_3.conda",
+          "size": 17625,
+          "sha256": "6d7e6e1286cb521059fe69696705100a03b006efb914ffe82a2ae97ecbae66b7"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/icu-75.1-he02047a_0.conda",
+          "size": 12129203,
+          "sha256": "71e750d509f5fa3421087ba88ef9a7b9be11c53174af3aa4d06aff4c18b38e8e"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/keyutils-1.6.3-h7cc23a3_1.conda",
+          "size": 135295,
+          "sha256": "dd053c96dcb0dcfd59422aefea9d2fe937a190167f34fba7893ec1e10a7e8963"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/krb5-1.21.3-h659f571_0.conda",
+          "size": 1370023,
+          "sha256": "99df692f7a8a5c27cd14b5fb1374ee55e756631b9c3d659ed3ee60830249b238"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/ld_impl_linux-64-2.46.1-bootstrap_ha15bf96_2.conda",
+          "size": 744588,
+          "sha256": "87a2158a8f16f8082f8d57282ef8f7b56dee8647b95919948cf03df91574edeb"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/lerc-4.2.0-hdb68285_0.conda",
+          "size": 271158,
+          "sha256": "bf9fdebf55d8bc99d83531cdffda00703f4dc5f93a1a956768c147362c72feda"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libcups-2.3.3-h4637d8d_4.conda",
+          "size": 4519402,
+          "sha256": "bc67b9b21078c99c6bd8595fe7e1ed6da1f721007726e717f0449de7032798c4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libdeflate-1.25-hd45a770_1.conda",
+          "size": 73710,
+          "sha256": "82e134c8a08b1eed9a2ed8ab578b89aa1730dcde3dea8dd87645ed0637878e54"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libdrm-2.4.129-h7cc23a3_0.conda",
+          "size": 313461,
+          "sha256": "ea46b0ca0fa16af1f8b329b740e6cd8b4577c5378fa8717b28a885f70668633d"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libedit-3.1.20260512-pl5321h373387f_0.conda",
+          "size": 135877,
+          "sha256": "45301f14f4eb66da57cfaf2d265f3eeee73f8b07e99614ee3afc5b26eea91126"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libexpat-2.8.5-hd2095e1_0.conda",
+          "size": 77893,
+          "sha256": "6de73033a7c5f712c9c5a54124e4581e025691029835e5bceaf10a333a7e7bc0"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libffi-3.7.0-h81df57d_1.conda",
+          "size": 68004,
+          "sha256": "c8c7583ef063bc3c430f1d48298e5ad24f796a35c22ed5b14183325825a61106"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libfreetype-2.14.3-ha770c72_2.conda",
+          "size": 8407,
+          "sha256": "fb12ecb46c30d18d928c0e8fc346ab13b5f6fc8a9cacae4f2f4bb188782586f5"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libfreetype6-2.14.3-h5e6c136_2.conda",
+          "size": 387671,
+          "sha256": "ec607dd5445dd17ff6bf8b7fe6832e5504c226dd91d3aaea7ba83569808b0ce4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libgbm-1.0.9-hee9eb32_0.conda",
+          "size": 33808,
+          "sha256": "c870f6177a0099ccf0301bf97e7c1e4706a3b34dd152b7974c6596ff25bc636c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libgcc-16.2.0-ha9f2e26_7.conda",
+          "size": 1058444,
+          "sha256": "e031634c3a928f9594eba868bc46ef5230d6571a364a0c63215b06c4563bfcea"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libgcc-ng-16.2.0-h69a702a_7.conda",
+          "size": 28616,
+          "sha256": "03b54d7008de080a17cc2174b0e4acd6d06e1c981b2eb19846f46d8f59966034"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libglib-2.90.0-h569388d_0.conda",
+          "size": 4819130,
+          "sha256": "9e688e046550415c030c3d08ed9a3fd13a51d7bc56295283b858b6c3070bb9f8"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libgomp-16.2.0-he0feb66_7.conda",
+          "size": 640566,
+          "sha256": "92a0bb350c7be6a4eedcb4e111c60aefd176018e6b1c009a6e025dbe9bbcd758"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libiconv-1.18-h0cb94f2_3.conda",
+          "size": 789471,
+          "sha256": "f943117edb9cd4d9c61cc972eee5a34291dc55ea7a6e9e38da104995841cbcb6"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libjpeg-turbo-3.2.0-hb03c661_1.conda",
+          "size": 650434,
+          "sha256": "bba8538e6538ed58a8479b332337b96986561f975d06cfa2039a016c2d246ee4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/liblzma-5.8.3-hb03c661_1.conda",
+          "size": 112995,
+          "sha256": "9787df8c22a59c9a70d3e5a10db9ad663485e75e9ccc3f09bd092cb7b95e0dab"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/liblzma-devel-5.8.3-hb03c661_1.conda",
+          "size": 491970,
+          "sha256": "adef6e8b60afb684110b06b5310977c6836e1c923ce3ec199f45c0f000b42f20"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libnsl-2.0.1-hb9d3cd8_1.conda",
+          "size": 33731,
+          "sha256": "927fe72b054277cde6cb82597d0fcf6baf127dcbce2e0a9d8925a68f1265eef5"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libpciaccess-0.19-hb03c661_1.conda",
+          "size": 30070,
+          "sha256": "addc80c69d362a9e6c40305c493139a8e9ee504b2f45a6687dbdaa9da3c6183c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libpng-1.6.59-h922cc85_0.conda",
+          "size": 316872,
+          "sha256": "c7381be8ef713501f6cd2f5ad473e401f2edeaec3c46788296b8dbf0de165e15"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libsqlite-3.46.0-hde9e2c9_0.conda",
+          "size": 865346,
+          "sha256": "daee3f68786231dad457d0dfde3f7f1f9a7f2018adabdbb864226775101341a8"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libstdcxx-16.2.0-h934c35e_7.conda",
+          "size": 6615436,
+          "sha256": "fa7018298629fc429971fffd6ecba3d27a7b02e4e890d6a93ea01ffebe8cb745"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libstdcxx-ng-16.2.0-hdf11a46_7.conda",
+          "size": 28665,
+          "sha256": "337f481db36cc357884f05f404ccd1b3a7e0fc1ee48ec5c884e4281d213bc863"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libtiff-4.6.0-h1dd3fc0_3.conda",
+          "size": 282688,
+          "sha256": "fc3b210f9584a92793c07396cb93e72265ff3f1fa7ca629128bf0a50d5cb15e4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libuuid-2.42.4-hcfc3c73_0.conda",
+          "size": 34442,
+          "sha256": "f34b8d1de9a2bf62476d8608057d9b8a918d97444236dc53a47128f2fae79041"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libwebp-base-1.4.0-hd590300_0.conda",
+          "size": 438953,
+          "sha256": "49bc5f6b1e11cb2babf2a2a731d1a680a5e08a858280876a779dbda06c78c35f"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libxcb-1.17.0-hb83e432_2.conda",
+          "size": 395120,
+          "sha256": "7b49e6fd2a584b7f072943e6adf4149677af5121246975278804782d37752837"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libxcrypt-4.4.38-h280c20c_0.conda",
+          "size": 101957,
+          "sha256": "f7e9292dd219a6435bbb1223da9586c3e70d66d169c5a92f08db3f2127df04e9"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libxkbcommon-1.11.0-he8b52b9_0.conda",
+          "size": 791328,
+          "sha256": "23f47e86cc1386e7f815fa9662ccedae151471862e971ea511c5c886aa723a54"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libxml2-2.13.9-h04c0eec_0.conda",
+          "size": 697033,
+          "sha256": "5d12e993894cb8e9f209e2e6bef9c90fa2b7a339a1f2ab133014b71db81f5d88"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/libzlib-1.3.2-h25fd6f3_3.conda",
+          "size": 63713,
+          "sha256": "eb8a0db0aa570124f7d2a93d7c7f596e3390df5e047818d873baad32985fc736"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/ncurses-6.6-hdb14827_1.conda",
+          "size": 911196,
+          "sha256": "5d46557214ed184381dafe835b7c94a474a1c3b307a08a250b1ea4779b44ffb3"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/nspr-4.40-h29cc59b_0.conda",
+          "size": 231356,
+          "sha256": "7cf473259ef9945ce19ecc898a2dd146cd32dc86099d87b86f79c5e5b0ef55f0"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/nss-3.100-hca3bf56_0.conda",
+          "size": 2047723,
+          "sha256": "a4146d2b6636999a21afcaf957029d066637bf26239fd3170242501e38fb1fa4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/openssl-3.6.5-h781a0a9_0.conda",
+          "size": 3195299,
+          "sha256": "9c1533f1cf784f0e250919c0c9762d0b0e6bc727a79290ffb7cea1ceca1d038c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/pango-1.56.1-h861ebed_0.conda",
+          "size": 451406,
+          "sha256": "20e5e280859a7803e8b5a09f18a7e43b56d1b8e61e4888c1a24cbb0d5b9cabd3"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/pcre2-10.47-h8b3dc9c_1.conda",
+          "size": 1218833,
+          "sha256": "9ebb10a4eb3be51ae67d85c679f5a7a50cb040ed25c783e6331a225ea09991d4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/pixman-0.46.4-h54a6638_3.conda",
+          "size": 376704,
+          "sha256": "829d8288764282de5a9f7b9169acb75cc7dc0b6c3fe2535cfe87dea3436bbc5d"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/pthread-stubs-0.4-h7cc23a3_1004.conda",
+          "size": 9630,
+          "sha256": "4a44fd00ea73b79ca2c89b0727b9ccf61c506ead71e67a9abfa4c590042b5a4a"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/python-3.12.3-hab00c5b_0_cpython.conda",
+          "size": 31991381,
+          "sha256": "f9865bcbff69f15fd89a33a2da12ad616e98d65ce7c83c644b92e66e5016b227"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/readline-8.3-hd6e31c0_1.conda",
+          "size": 348899,
+          "sha256": "01b3fe073a66e321970d09e04b388708f8cbdca5cdfbfcb7c9eeb470ad10383d"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/repodata.json",
+          "size": 71905,
+          "sha256": "4c7e34462e6e222b70d4d58cef1129e28f97fb7129f75cd244a172f3f0f91f1c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/tk-8.6.13-noxft_h4845f30_101.conda",
+          "size": 3318875,
+          "sha256": "e0569c9caa68bf476bead1bed3d79650bb080b532c64a4af7d8ca286c08dea4e"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/wayland-1.26.0-hc1c935e_2.conda",
+          "size": 340058,
+          "sha256": "df65b987979e6d7f88e756494da5a230d4f2d08d17437d04eecd35559c3a04e4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xkeyboard-config-2.48-h280c20c_0.conda",
+          "size": 441670,
+          "sha256": "3b04afd5d1a65d2d27ac2d49a63b01ab8bcd875776779ec63e337370ed38afdc"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-compositeproto-0.4.2-hb9d3cd8_1002.conda",
+          "size": 14808,
+          "sha256": "b800b09a090e4acef0b8653bcb1a4811e8f44559d4eff050886770fdfa77857b"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-damageproto-1.2.1-hb9d3cd8_1003.conda",
+          "size": 27720,
+          "sha256": "424a9202255359a75770eaca534e4e8b07464242f0146871915e1bb76fb3ffae"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-fixesproto-5.0-hb9d3cd8_1003.conda",
+          "size": 11311,
+          "sha256": "07268980b659a84a4bac64b475329348e9cf5fa4aee255fa94aa0407ae5b804c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-inputproto-2.3.2-hb9d3cd8_1003.conda",
+          "size": 22320,
+          "sha256": "77eea289f9d3fa753a290f988533c842694b826fe1900abd6d7b142c528512ba"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libice-1.1.2-h280c20c_0.conda",
+          "size": 62517,
+          "sha256": "49b532d1df875c6749d9078b56a76f3f5db49a5abe0ca620b593ed474ef0ebf1"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libsm-1.2.6-h0d788c3_1.conda",
+          "size": 30739,
+          "sha256": "ef907caee0665cf3b0f775602cc50e388e3bade8ce22ecade0873ff26604b2fd"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libx11-1.8.13-he1eb515_1.conda",
+          "size": 839578,
+          "sha256": "68053eebfa9f0d91666786c8fb5839d989aa9b869add92cb8815228bb2d7302c"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxau-1.0.12-h7cc23a3_2.conda",
+          "size": 18793,
+          "sha256": "3ec065b94554dc48a4ca582a960a5484bc166b26e83ce0954653e08d17e8bd53"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxcomposite-0.4.6-h0b41bf4_1.conda",
+          "size": 13436,
+          "sha256": "7c5806a8de1ce0d4e0c7aae8d29565f11fba6c6da4a787c3e09f1fcc428725a4"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxcursor-1.2.0-h0b41bf4_1.conda",
+          "size": 31383,
+          "sha256": "109cffb4c07cec101fad55b3f8f8d1e83bb7acef00798a7d2fd6992f14218189"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxdamage-1.1.5-h7f98852_1.tar.bz2",
+          "size": 11964,
+          "sha256": "4cab878855e48669b64dd7522a518433ac83bb56fa79743d12db316326e2e39e"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxdmcp-1.1.5-h7cc23a3_2.conda",
+          "size": 22606,
+          "sha256": "8a095df9bc1d2e50f2504ce8858a047ae29ea634aad6cc0b43298c63361da6d9"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxext-1.3.7-h7cc23a3_1.conda",
+          "size": 53124,
+          "sha256": "aa9bbe8b278aacc194e280ff5037f9f9a1f2c5b33ed97de8e7f01cfbe90dda43"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxfixes-5.0.3-h7f98852_1004.tar.bz2",
+          "size": 18145,
+          "sha256": "1e426a1abb774ef1dcf741945ed5c42ad12ea2dc7aeed7682d293879c3e1e4c3"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxi-1.7.10-h4bc722e_1.conda",
+          "size": 46794,
+          "sha256": "e1416eb435e3d903bc658e3c637f0e87efd2dca290fe70daf29738b3a3d1f8ff"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxinerama-1.1.6-hecca717_0.conda",
+          "size": 14818,
+          "sha256": "3a9da41aac6dca9d3ff1b53ee18b9d314de88add76bafad9ca2287a494abcd86"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxrandr-1.5.2-h7f98852_1.tar.bz2",
+          "size": 29688,
+          "sha256": "ffd075a463896ed86d9519e26dc36f754b695b9c1e1b6115d34fe138b36d8200"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxrender-0.9.11-hd590300_0.conda",
+          "size": 37770,
+          "sha256": "26da4d1911473c965c32ce2b4ff7572349719eaacb88a066db8d968a4132c3f7"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-libxtst-1.2.5-h4bc722e_0.conda",
+          "size": 32931,
+          "sha256": "0139b52c3cbce57bfd1d120c41637bc239430faff4aa0445f58de0adf4c4b976"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-randrproto-1.5.0-hb9d3cd8_1002.conda",
+          "size": 35658,
+          "sha256": "d742ac2970c05abb597dacccd411af0d5b7a280b0b3390c4f681022edf4541a2"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-recordproto-1.14.2-hb9d3cd8_1003.conda",
+          "size": 10290,
+          "sha256": "fa721a0a041453612f9dc03059905cf7426669ab8795e1b46d1b0f61c332b1ea"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-renderproto-0.11.1-hb9d3cd8_1003.conda",
+          "size": 11867,
+          "sha256": "54dd934b0e1c942e54759eb13672fd59b7e523fabea6e69a32d5bf483e45b329"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-util-macros-1.20.2-ha770c72_2.conda",
+          "size": 45730,
+          "sha256": "6dd4af20014f6f5b656b393cf529687d3aedd5f8318a226feda5c2d539e87985"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-xextproto-7.3.0-hb9d3cd8_1004.conda",
+          "size": 30549,
+          "sha256": "f302a3f6284ee9ad3b39e45251d7ed15167896564dc33e006077a896fd3458a6"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xorg-xproto-7.0.31-hb9d3cd8_1008.conda",
+          "size": 73315,
+          "sha256": "ea02425c898d6694167952794e9a865e02e14e9c844efb067374f90b9ce8ce33"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xz-5.8.3-ha02ee65_1.conda",
+          "size": 23610,
+          "sha256": "547b2392d8f7b76efd4a0970946f6da2a1136ad5fe3dc936af81e02eb7181076"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xz-gpl-tools-5.8.3-ha02ee65_1.conda",
+          "size": 40118,
+          "sha256": "ed6dbec5e4f0f71e7ac629b90dc4c9fba38d194cc88eab891c29e461b408977a"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/xz-tools-5.8.3-hb03c661_1.conda",
+          "size": 96459,
+          "sha256": "c74fa3eddd3ea648456517948f85068d8a07acad7752fd83c7e95b6cebb7114a"
+        },
+        {
+          "path": "envs/browser/pack/channel/linux-64/zstd-1.5.6-ha6fb4c9_0.conda",
+          "size": 554846,
+          "sha256": "c558b9cc01d9c1444031bd1ce4b9cff86f9085765f17627a6cd85fc623c8a02b"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/ca-certificates-2026.7.22-hbd8a1cb_0.conda",
+          "size": 131780,
+          "sha256": "0a0544cf95f64394fe4959286f5c71f5444ad58feb0602e53becb27448d24da6"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/font-ttf-dejavu-2.37-hd8ed1ab_1.tar.bz2",
+          "size": 5209313,
+          "sha256": "d4f939d9559104e07de895eec70df7e6a891ec135412a7cd2083242eb4fc4d11"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2",
+          "size": 397370,
+          "sha256": "58d7f40d2940dd0a8aa28651239adbf5613254df0f75789919c4e6762054403b"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/font-ttf-inconsolata-3.000-h77eed37_0.tar.bz2",
+          "size": 96530,
+          "sha256": "c52a29fdac682c20d252facc50f01e7c2e7ceac52aa9817aaf0bb83f7559ec5c"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/font-ttf-source-code-pro-2.038-h77eed37_0.tar.bz2",
+          "size": 700814,
+          "sha256": "00925c8c055a2275614b4d983e1df637245e19058d79fc7dd1a93b8d9fb4b139"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/font-ttf-ubuntu-0.83-h77eed37_3.conda",
+          "size": 1620504,
+          "sha256": "2821ec1dc454bd8b9a31d0ed22a7ce22422c0aef163c59f49dfdf915d0f0ca14"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/fonts-conda-ecosystem-1-0.tar.bz2",
+          "size": 3667,
+          "sha256": "a997f2f1921bb9c9d76e6fa2f6b408b7fa549edd349a77639c9fe7a23ea93e61"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/fonts-conda-forge-1-hc364b38_1.conda",
+          "size": 4059,
+          "sha256": "54eea8469786bc2291cc40bca5f46438d3e062a399e8f53f013b6a9f50e98333"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/packaging-26.3-pyhc364b38_0.conda",
+          "size": 116363,
+          "sha256": "c432626b16768b8dab228bfb706f7060c2d462a21c516d240f68f2f902b5a044"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/repodata.json",
+          "size": 5524,
+          "sha256": "d3136c844fe4560869b4226c00fe4db765072a6796c1bba40bdb8686ba3ba613"
+        },
+        {
+          "path": "envs/browser/pack/channel/noarch/tzdata-2026c-h151e31d_0.conda",
+          "size": 118849,
+          "sha256": "b928c30ddcb0e3f544c6eade8352737e6e610e263276b90232db6a578ef899d8"
+        },
+        {
+          "path": "envs/browser/pack/environment.yml",
+          "size": 3670,
+          "sha256": "16144b1445b097f042e827d92bb23c802a1a369527079c79a77ad979fb061304"
+        },
+        {
+          "path": "envs/browser/pack/pixi-pack.json",
+          "size": 79,
+          "sha256": "ffd4e5e48d1cbf4b9cf2379332b1ccef5745c7f1febd5be613b710cf4d03f7af"
+        }
+      ],
+      "files": {
+        "blob": {
+          "path": "envs/browser/files.json",
+          "size": 1478470,
+          "sha256": "783477ecdb0b0d4775392debbddcf4dce3aa26ab0fe35776269d72b24f528c73"
+        },
+        "entries": 11270
+      }
+    },
+    "default": {
+      "platform": "linux-64",
+      "pack_path": ".pixi-sandbox/envs/default/pack",
+      "packed_size_bytes": 3862247,
+      "unpacked_size_bytes": 11724983,
+      "pixi_environment_fingerprint": "00a0b982b3d3f9ed",
+      "blobs": [
+        {
+          "path": "envs/default/pack/channel/linux-64/_openmp_mutex-4.5-20_gnu.conda",
+          "size": 28948,
+          "sha256": "1dd3fffd892081df9726d7eb7e0dea6198962ba775bd88842135a4ddb4deb3c9"
+        },
+        {
+          "path": "envs/default/pack/channel/linux-64/actionlint-1.7.12-h8bc977c_0.conda",
+          "size": 2131192,
+          "sha256": "1fff5ee0d83045ef90104ca83f52b4c44feb4ab2036fc7903fe9733f50721209"
+        },
+        {
+          "path": "envs/default/pack/channel/linux-64/libgcc-16.2.0-ha9f2e26_7.conda",
+          "size": 1058444,
+          "sha256": "e031634c3a928f9594eba868bc46ef5230d6571a364a0c63215b06c4563bfcea"
+        },
+        {
+          "path": "envs/default/pack/channel/linux-64/libgomp-16.2.0-he0feb66_7.conda",
+          "size": 640566,
+          "sha256": "92a0bb350c7be6a4eedcb4e111c60aefd176018e6b1c009a6e025dbe9bbcd758"
+        },
+        {
+          "path": "envs/default/pack/channel/linux-64/repodata.json",
+          "size": 2844,
+          "sha256": "97165ed9de04abb9be285c5f8c195cbc718a85b5241c4ebfc3aa798b09f6f100"
+        },
+        {
+          "path": "envs/default/pack/environment.yml",
+          "size": 174,
+          "sha256": "61a82c7a482c18b034531acf6bce223c35c961d538a5018d5c9a22951bd993ca"
+        },
+        {
+          "path": "envs/default/pack/pixi-pack.json",
+          "size": 79,
+          "sha256": "ffd4e5e48d1cbf4b9cf2379332b1ccef5745c7f1febd5be613b710cf4d03f7af"
+        }
+      ],
+      "files": {
+        "blob": {
+          "path": "envs/default/files.json",
+          "size": 3014,
+          "sha256": "c6169acd1a6032b6d9d9707a170712515c3ede04a02a5348c84d2106c9470313"
+        },
+        "entries": 26
+      }
+    }
+  }
+}

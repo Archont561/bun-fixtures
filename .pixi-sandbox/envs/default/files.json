@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "excluded": [
+    "conda-meta/pixi_env_prefix",
+    "conda-meta/.pixi-environment-fingerprint",
+    "etc/conda/activate.d/pixi-sandbox-cargo-home.sh",
+    "etc/conda/activate.d/pixi-sandbox-cargo-home.ps1",
+    "etc/conda/activate.d/pixi-sandbox-cargo-home.bat"
+  ],
+  "files": [
+    {
+      "p": "CACHEDIR.TAG",
+      "h": "5fd8d0f0d1bc590ed69ecd369111ed0e01944ae48cf7da43e99e32db6a367699"
+    },
+    {
+      "p": "bin/actionlint",
+      "h": "fa9b589a9bdce0ca6a01d801dd185def607a7e06bce2df3098df815c3d3ec855",
+      "x": true
+    },
+    {
+      "p": "conda-meta/_openmp_mutex-4.5-20_gnu.json"
+    },
+    {
+      "p": "conda-meta/actionlint-1.7.12-h8bc977c_0.json"
+    },
+    {
+      "p": "conda-meta/history"
+    },
+    {
+      "p": "conda-meta/libgcc-16.2.0-ha9f2e26_7.json"
+    },
+    {
+      "p": "conda-meta/libgomp-16.2.0-he0feb66_7.json"
+    },
+    {
+      "p": "lib/libatomic.so.1.2.0",
+      "h": "aca24522e594e0cb3f56dd8b2f14cae34c30cdbeacb803ccea039a807063feb1",
+      "x": true
+    },
+    {
+      "p": "lib/libgcc_s.so",
+      "h": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd"
+    },
+    {
+      "p": "lib/libgcc_s.so.1",
+      "h": "952432f54cd02e07649676591b9814e00f16d7d944e2f9b8ed5ea240d1ad0ba9"
+    },
+    {
+      "p": "lib/libgcc_s_asneeded.so",
+      "h": "10bc094393cfacd92e7683eff066803c7c5bfd51ac8ee8eb7b57847a4c9b3ebb"
+    },
+    {
+      "p": "lib/libgomp.so.1.0.0",
+      "h": "f73d0033a22d6005347a531aabaadb38c13c45ae8b5ef1bbbaa1bd9f9665606b",
+      "x": true
+    },
+    {
+      "p": "lib/libitm.so.1.0.0",
+      "h": "b9e929ce8b96cb3ba177ad0c6662aedbfbe53e96790dd8d4aab1cc83b003deb2",
+      "x": true
+    },
+    {
+      "p": "lib/libquadmath.so.0.0.0",
+      "h": "ee77db81457a2f67b424e629ab2a85752964f01b896fe23f47c54e1b8ae47c5d",
+      "x": true
+    },
+    {
+      "p": "share/info/libgomp.info",
+      "h": "ee25a92782cf91cbbe6ec44d94da188c29eb02fbb6c243408eb91e52d929d344"
+    },
+    {
+      "p": "share/info/libquadmath.info",
+      "h": "f956b6e3cb6a38ace2a0bfbfbf5770ce001dc013eea5c9dd05bbcf25545d5eaa"
+    },
+    {
+      "p": "share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION",
+      "h": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+    },
+    {
+      "p": "share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION.gomp_copy",
+      "h": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+    },
+    {
+      "p": "lib/libatomic.so",
+      "l": "libatomic.so.1.2.0"
+    },
+    {
+      "p": "lib/libatomic.so.1",
+      "l": "libatomic.so.1.2.0"
+    },
+    {
+      "p": "lib/libgomp.so",
+      "l": "libgomp.so.1.0.0"
+    },
+    {
+      "p": "lib/libgomp.so.1",
+      "l": "libgomp.so.1.0.0"
+    },
+    {
+      "p": "lib/libitm.so",
+      "l": "libitm.so.1.0.0"
+    },
+    {
+      "p": "lib/libitm.so.1",
+      "l": "libitm.so.1.0.0"
+    },
+    {
+      "p": "lib/libquadmath.so",
+      "l": "libquadmath.so.0.0.0"
+    },
+    {
+      "p": "lib/libquadmath.so.0",
+      "l": "libquadmath.so.0.0.0"
+    }
+  ]
+}

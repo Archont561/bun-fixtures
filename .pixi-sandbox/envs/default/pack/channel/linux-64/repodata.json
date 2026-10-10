@@ -1,0 +1,104 @@
+{
+  "info": {
+    "subdir": "linux-64"
+  },
+  "packages": {},
+  "packages.conda": {
+    "_openmp_mutex-4.5-20_gnu.conda": {
+      "arch": "x86_64",
+      "build": "20_gnu",
+      "build_number": 20,
+      "constrains": [
+        "openmp_impl <0.0a0"
+      ],
+      "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "libgomp >=7.5.0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "a9f577daf3de00bca7c3c76c0ecbd1de",
+      "name": "_openmp_mutex",
+      "platform": "linux",
+      "run_exports": {
+        "strong": [
+          "_openmp_mutex >=4.5"
+        ]
+      },
+      "sha256": "1dd3fffd892081df9726d7eb7e0dea6198962ba775bd88842135a4ddb4deb3c9",
+      "size": 28948,
+      "subdir": "linux-64",
+      "timestamp": 1770939786096,
+      "version": "4.5"
+    },
+    "actionlint-1.7.12-h8bc977c_0.conda": {
+      "arch": "x86_64",
+      "build": "h8bc977c_0",
+      "build_number": 0,
+      "depends": [
+        "libgcc >=14",
+        "__glibc >=2.17",
+        "__glibc >=2.17,<3.0.a0"
+      ],
+      "license": "MIT",
+      "license_family": "MIT",
+      "md5": "bab393750db08f50eebaf96f50d18734",
+      "name": "actionlint",
+      "platform": "linux",
+      "run_exports": {},
+      "sha256": "1fff5ee0d83045ef90104ca83f52b4c44feb4ab2036fc7903fe9733f50721209",
+      "size": 2131192,
+      "subdir": "linux-64",
+      "timestamp": 1774975766537,
+      "version": "1.7.12"
+    },
+    "libgcc-16.2.0-ha9f2e26_7.conda": {
+      "arch": "x86_64",
+      "build": "ha9f2e26_7",
+      "build_number": 7,
+      "constrains": [
+        "libgcc-ng ==16.2.0=*_7",
+        "libgomp 16.2.0 he0feb66_7"
+      ],
+      "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "_openmp_mutex >=4.5"
+      ],
+      "license": "GPL-3.0-only WITH GCC-exception-3.1",
+      "license_family": "GPL",
+      "md5": "735629b400b70eeab21a2ba8f5b1c2ce",
+      "name": "libgcc",
+      "platform": "linux",
+      "run_exports": {},
+      "sha256": "e031634c3a928f9594eba868bc46ef5230d6571a364a0c63215b06c4563bfcea",
+      "size": 1058444,
+      "subdir": "linux-64",
+      "timestamp": 1790303109576,
+      "version": "16.2.0"
+    },
+    "libgomp-16.2.0-he0feb66_7.conda": {
+      "arch": "x86_64",
+      "build": "he0feb66_7",
+      "build_number": 7,
+      "depends": [
+        "__glibc >=2.17,<3.0.a0"
+      ],
+      "license": "GPL-3.0-only WITH GCC-exception-3.1",
+      "license_family": "GPL",
+      "md5": "d904c7ddd95e026254b4b80808ee9e12",
+      "name": "libgomp",
+      "platform": "linux",
+      "run_exports": {
+        "strong": [
+          "_openmp_mutex >=4.5"
+        ]
+      },
+      "sha256": "92a0bb350c7be6a4eedcb4e111c60aefd176018e6b1c009a6e025dbe9bbcd758",
+      "size": 640566,
+      "subdir": "linux-64",
+      "timestamp": 1790303046034,
+      "version": "16.2.0"
+    }
+  },
+  "repodata_version": 2
+}
