@@ -168,7 +168,7 @@ jobs:
         run: bun run build
 
       - name: Audit check
-        run: bash scripts/audit-check.sh
+        run: bun scripts/audit-check.ts
 
   test:
     name: Test
