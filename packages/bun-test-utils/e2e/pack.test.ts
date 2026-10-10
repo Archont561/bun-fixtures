@@ -30,6 +30,7 @@ const TARBALL_NAME = "archont561-bun-test-utils";
 
 /** Internal workspace packages that must stay private. */
 const INTERNAL_WORKSPACES = [
+  "cli",
   "core",
   "std",
   "pbt",

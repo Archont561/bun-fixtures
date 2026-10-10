@@ -10,8 +10,10 @@ const entries = [
 ];
 
 const bundledWorkspaces = [
+  "@bun-test-utils/cli",
   "@bun-test-utils/core",
-  "@bun-test-utils/core/cli",
+  "@bun-test-utils/core/errors",
+  "@bun-test-utils/core/fetch",
   "@bun-test-utils/core/types",
   "@bun-test-utils/std",
   "@bun-test-utils/pbt",

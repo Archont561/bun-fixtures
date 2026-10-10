@@ -39,6 +39,7 @@ delivered but remain implementation details behind the root `test` API:
 | `@bun-test-utils/bdd` | [0014](./specs/0014-bdd-fixture-bridge.md) | `task_021`, `task_048` | ✅ done (`task_048` sequencing waiver recorded 2026-10-08; experimental) |
 | `@bun-test-utils/dom` · `@bun-test-utils/browser` | [0011](./specs/0011-dom-and-browser-fixtures.md) | `task_013`, `task_058`, `task_072`, `task_073`, `task_075` | ✅ done — [PR #47 CI](https://github.com/Archont561/bun-test-utils/actions/runs/37994965762) verifies the shared installer, headless shell, isolated full-build Chromium fallback, and required Firefox launch proof (ADR 0033). Browser remains experimental, headless and Chromium-only |
 | `@bun-test-utils/vcr` | [0012](./specs/0012-http-cassette-vcr.md) | `task_014`, `task_058`, `task_065`, `task_067`, `task_050`, `task_077`, `task_085`, `task_086` | ✅ done — callback serializers per [ADR 0034](./adr/0034-cassette-callback-serializers.md); callback results persist per test in a sidecar per [ADR 0035](./adr/0035-persist-callback-results-across-runs.md) (`task_085`); `auto` default mode and `test-utils cache clear` per [ADR 0036](./adr/0036-auto-cassette-mode-and-cache-clearing.md) (`task_086`); installed-consumer `/vcr` preload proof in `packages/bun-test-utils/e2e/vcr-serializer.test.ts` |
+| `@bun-test-utils/cli` | [0003](./specs/0003-cli-init.md) | `task_087` | ✅ done — citty commands, `@clack/prompts` confirmations and cache picker, cache planner, and project-root scoping per [ADR 0037](./adr/0037-cli-workspace-and-prompts.md); bundled into the metapackage, `test-utils` bin unchanged |
 
 Source of truth for task state is Backlog: `bunx backlog status` / `bunx backlog board`.
 Each 🟡 task carries the precise remaining gap in its description —
@@ -51,7 +52,8 @@ This is a Bun workspace ([ADR 0010](./adr/0010-monorepo-layout.md), [ADR 0013](.
 ```
 packages/
   bun-test-utils/     published wrapper and cross-cutting/E2E tests
-  core/               @bun-test-utils/core (fixture engine, types, CLI internals)
+  cli/                @bun-test-utils/cli (citty commands, clack prompts, cache planner)
+  core/               @bun-test-utils/core (fixture engine, types)
   std/                @bun-test-utils/std (tmpdir, env, stdio)
   pbt/                @bun-test-utils/pbt (property-based testing)
   dom/               @bun-test-utils/dom (happy-dom in-memory component testing)

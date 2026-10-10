@@ -1,34 +1,45 @@
 /**
- * `bun-test-utils cache clear` (ADR 0036, rule 5).
+ * `bun-test-utils cache clear` planner (ADR 0036 rule 5, ADR 0037 rules 3–4).
  *
- * Deletes recordings and snapshots so the next run records them again. It
- * deletes only files whose names match the runtime's conventions, and never a
- * directory. Recordings are committed, so git restores a mistaken delete.
+ * Plans which recordings and snapshots to delete so the next run records them
+ * again, and deletes only files whose names match the runtime's conventions —
+ * never a directory. Recordings are committed, so git restores a mistaken
+ * delete. Planning and applying are separate so a TTY run can show the matched
+ * files and confirm before anything is deleted.
  */
 
 import { readdirSync, readFileSync, statSync, unlinkSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { BunTestUtilsError } from "./errors.ts";
-import { slugifyFilename } from "./fetch.ts";
+// Leaf imports: the CLI bundle must not pull in the engine entry (plugin.ts).
+import { BunTestUtilsError } from "@bun-test-utils/core/errors";
+import { slugifyFilename } from "@bun-test-utils/core/fetch";
+import { findProjectRoot } from "./root.ts";
 
 export interface CacheClearOptions {
-  /** The working directory: the base for relative paths and the `--all` search root. */
+  /** The working directory: the base for relative `--file` paths. */
   cwd: string;
   /** A test file, absolute or relative to `cwd`. Its directory holds the cache. */
   file?: string;
   /** One test name inside `file`. Requires `file`. */
   test?: string;
-  /** Every `__cassettes__/` and `__snapshots__/` directory under `cwd`. */
+  /** Every `__cassettes__/` and `__snapshots__/` directory under the project root. */
   all?: boolean;
-  /** Lists the matching files and deletes nothing. */
-  dryRun?: boolean;
 }
 
-export interface CacheClearResult {
-  /** Absolute paths that matched. They are deleted unless `dryRun` is set. */
+export interface CacheClearPlan {
+  /** Absolute paths that matched. They are deleted unless the run is a dry run. */
   files: string[];
   /** Test names in `file` the static scan could not read (templates, `test.each`). */
   unmatchedNames: number;
+  /** The directory the scan covered: the `--all` project root, or `cwd` for `--file`. */
+  root: string;
+  /** Files the scan visited: every file under `root` for `--all`, the test file for `--file`. */
+  scanned: number;
+}
+
+export interface CacheClearOutcome {
+  /** Files deleted, or that would be deleted when `dryRun` is set. */
+  removed: string[];
   dryRun: boolean;
 }
 
@@ -112,39 +123,61 @@ function isFile(path: string): boolean {
 }
 
 /** Every cache file under a `__cassettes__/` or `__snapshots__/` directory. */
-function collectCacheDir(dir: string, out: string[]): void {
+function collectCacheDir(dir: string, out: string[]): number {
+  let scanned = 0;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (!entry.isFile()) continue;
+    scanned++;
     const path = join(dir, entry.name);
     if (dir.endsWith("__cassettes__") && entry.name.endsWith(".json"))
       out.push(path);
     if (dir.endsWith("__snapshots__") && entry.name.endsWith(".snap.json"))
       out.push(path);
   }
+  return scanned;
 }
 
-function walk(dir: string, out: string[]): void {
+/** Recurses `dir`, collecting cache files and counting the files visited. */
+function walk(dir: string, out: string[]): number {
+  let scanned = 0;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
-    const path = join(dir, entry.name);
-    if (entry.name === "__cassettes__" || entry.name === "__snapshots__") {
-      collectCacheDir(path, out);
-    } else {
-      walk(path, out);
+    if (entry.isDirectory()) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const path = join(dir, entry.name);
+      if (entry.name === "__cassettes__" || entry.name === "__snapshots__") {
+        scanned += collectCacheDir(path, out);
+      } else {
+        scanned += walk(path, out);
+      }
+    } else if (entry.isFile()) {
+      scanned++;
     }
   }
+  return scanned;
 }
 
-/** Plans, and unless `dryRun` is set performs, the deletion of matching cache files. */
-export function cacheClear(options: CacheClearOptions): CacheClearResult {
+/**
+ * Plans the deletion of matching cache files. With `--all` the scan root is
+ * the nearest `package.json` at or above `cwd` (ADR 0037, rule 4); with no
+ * such file the run is a usage error, not a quiet no-op.
+ */
+export function planCacheClear(options: CacheClearOptions): CacheClearPlan {
   validateCacheClearScope(options);
   const cwd = resolve(options.cwd);
-  const dryRun = options.dryRun ?? false;
   let files: string[] = [];
   let unmatchedNames = 0;
+  let scanned = 0;
+  let root = cwd;
 
   if (options.all) {
-    walk(cwd, files);
+    const projectRoot = findProjectRoot(cwd);
+    if (projectRoot === null) {
+      throw usageError(
+        "No package.json at or above the working directory. Run cache clear --all from the project root.",
+      );
+    }
+    root = projectRoot;
+    scanned = walk(root, files);
   } else {
     const file = resolve(cwd, options.file!);
     const dir = dirname(file);
@@ -157,44 +190,60 @@ export function cacheClear(options: CacheClearOptions): CacheClearResult {
         );
       }
       const scan = scanTestNames(readFileSync(file, "utf8"));
+      scanned = 1;
       unmatchedNames = scan.unmatched;
       files = scan.names.flatMap((name) => candidatesFor(dir, name));
     }
     files = files.filter(isFile);
   }
 
-  files = [...new Set(files)].sort();
-  if (!dryRun) {
-    for (const path of files) unlinkSync(path);
-  }
-  return { files, unmatchedNames, dryRun };
+  return {
+    files: [...new Set(files)].sort(),
+    unmatchedNames,
+    root,
+    scanned,
+  };
 }
 
-/** Human-readable lines for a result, relative to `cwd`. */
+/** Deletes the planned files. Never called for `--dry-run` or a cancelled prompt. */
+export function applyCacheClear(files: readonly string[]): void {
+  for (const path of files) unlinkSync(path);
+}
+
+/**
+ * Human-readable lines for a run: the outcome of the deletion, relative to
+ * `plan.root`. The scanned-root line comes from `describeScanned` and is
+ * printed before any prompt.
+ */
 export function describeCacheClear(
-  result: CacheClearResult,
-  cwd: string,
+  plan: CacheClearPlan,
+  outcome: CacheClearOutcome,
 ): string[] {
-  const root = resolve(cwd);
   const lines: string[] = [];
-  const verb = result.dryRun ? "would remove" : "removed";
-  for (const path of result.files)
-    lines.push(`  ${verb} ${relative(root, path)}`);
-  if (result.files.length === 0) {
+  const verb = outcome.dryRun ? "would remove" : "removed";
+  for (const path of outcome.removed) {
+    lines.push(`  ${verb} ${relative(plan.root, path) || path}`);
+  }
+  if (plan.files.length === 0) {
     lines.push("No cache files matched.");
-  } else if (result.dryRun) {
+  } else if (outcome.dryRun) {
     lines.push(
-      `Dry run: ${result.files.length} file(s) would be removed. Nothing was deleted.`,
+      `Dry run: ${outcome.removed.length} file(s) would be removed. Nothing was deleted.`,
     );
   } else {
     lines.push(
-      `Deleted ${result.files.length} file(s). Recordings are committed, so \`git checkout -- <path>\` restores one.`,
+      `Deleted ${outcome.removed.length} file(s). Recordings are committed, so \`git checkout -- <path>\` restores one.`,
     );
   }
-  if (result.unmatchedNames > 0) {
+  if (plan.unmatchedNames > 0) {
     lines.push(
-      `note: ${result.unmatchedNames} test name(s) are built at runtime and cannot be matched. Clear them with --test "<name>".`,
+      `note: ${plan.unmatchedNames} test name(s) are built at runtime and cannot be matched. Clear them with --test "<name>".`,
     );
   }
   return lines;
+}
+
+/** The line naming the root the scan covered and how many files it visited. */
+export function describeScanned(plan: CacheClearPlan): string {
+  return `Scanned ${plan.root} (${plan.scanned} file(s)).`;
 }

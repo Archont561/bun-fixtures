@@ -14,7 +14,8 @@ function canonicalRunner(packageDir: string): string {
 }
 
 const MIRRORED_TESTS = {
-  core: ["cli", "plugin"],
+  cli: ["cache", "commands", "init", "prompts", "root"],
+  core: ["plugin"],
   bdd: ["index"],
   browser: ["index"],
   dom: ["index"],

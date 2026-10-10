@@ -23,7 +23,7 @@ bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
-To reset recorded HTTP cassettes or snapshots, delete the test's cache with `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all`. Add `--dry-run` to list the files first.
+To reset recorded HTTP cassettes or snapshots, delete the test's cache with `bunx test-utils cache clear --file <test file> [--test <name>]` or `--all` (every cache file under the nearest `package.json` root). Add `--dry-run` to list the files first. In a TTY the command shows the matched files and asks before deleting; `--yes` skips the prompt.
 
 Optional capability dependencies are loaded by fixtures only when requested:
 

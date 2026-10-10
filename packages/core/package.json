@@ -2,7 +2,7 @@
   "name": "@bun-test-utils/core",
   "version": "0.1.0",
   "private": true,
-  "description": "Internal fixture engine and CLI implementation for bun-test-utils.",
+  "description": "Internal fixture engine for bun-test-utils.",
   "type": "module",
   "main": "./src/plugin.ts",
   "module": "./src/plugin.ts",
@@ -14,17 +14,14 @@
     "test:bdd": "bun test e2e/bdd/features.test.ts",
     "test:e2e": "bun test e2e"
   },
-  "dependencies": {
-    "citty": "^0.2.2",
-    "smol-toml": "^1.9.0"
-  },
   "devDependencies": {
     "@bun-test-utils/config": "workspace:*"
   },
   "exports": {
     ".": "./src/plugin.ts",
     "./plugin": "./src/plugin.ts",
-    "./cli": "./src/cli.ts",
+    "./errors": "./src/errors.ts",
+    "./fetch": "./src/fetch.ts",
     "./types": "./src/types.ts"
   }
 }

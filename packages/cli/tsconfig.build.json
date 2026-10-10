@@ -1,0 +1,9 @@
+{
+  "extends": "@bun-test-utils/config/lib.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
