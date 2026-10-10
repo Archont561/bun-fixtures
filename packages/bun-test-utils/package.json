@@ -1,17 +1,19 @@
 {
   "name": "@archont561/bun-test-utils",
   "version": "0.1.0",
-  "description": "pytest-style scoped, injectable fixtures for `bun test` \u2014 explicit test.extend() composition with describe, test, and expect as the public API",
+  "description": "General-purpose test extension for the Bun test runner covering unit, integration, and e2e tests — Playwright-style typed fixtures composed with test.extend(), with scopes and LIFO teardown, plus BDD, property-based testing, snapshots, HTTP record/replay, and browser testing.",
   "type": "module",
   "license": "MIT OR Apache-2.0",
   "author": "Archont561 (https://github.com/Archont561)",
   "keywords": [
     "bun",
     "bun-test",
-    "fixtures",
-    "pytest",
     "testing",
-    "dependency-injection",
+    "fixtures",
+    "playwright",
+    "bdd",
+    "property-based-testing",
+    "snapshot-testing",
     "test-utils"
   ],
   "homepage": "https://archont561.github.io/bun-test-utils/",

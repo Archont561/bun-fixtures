@@ -1,21 +1,29 @@
-# Snapshot fixtures (internal)
+# @bun-test-utils/snapshot
 
-The `snapshot` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/snapshot` subpath.
+Private workspace. It provides the `snapshot` fixture, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md). It compares values and files against stored snapshots:
+
+- `snapshot.match(value, name?)` and `snapshot.matchFile(path, name?)`;
+- three modes, selected with `SNAPSHOT_MODE` or `snapshot.setMode`: `match` (default), `update`, and `ci` (selected automatically when `CI` is set);
+- fixture-local serializers, plus process-wide serializers registered through the helper-only `@archont561/bun-test-utils/snap` subpath;
+- stable diagnostic codes for circular values (`SNAPSHOT_CIRCULAR_REFERENCE`) and failing serializers (`SNAPSHOT_SERIALIZER_FAILED`).
 
 ```ts
-import { expect, test } from "@archont561/bun-test-utils";
+import { test } from "@archont561/bun-test-utils";
 
 test("records a stable value", async ({ snapshot }) => {
-  snapshot.setMode("match");
   snapshot.match({ component: "card", count: 2 }, "card");
-  expect(snapshot.mode).toBe("match");
 });
 ```
 
-Snapshots are scoped fixtures: setup, storage, and teardown stay in the test context rather than in globals. Reusable serializers registered through `@archont561/bun-test-utils/snap` are process-global by design; unregister or reset them at controlled suite/watch boundaries. The public guide documents lifecycle controls, recursive precedence, and failure diagnostics: <https://archont561.github.io/bun-test-utils/guides/snapshot-testing/>.
+Snapshots are written to `__snapshots__/<test name>.snap.json` next to the test file. Commit that directory.
 
-The snapshot fixture is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, with `createTest(<path>)` binding the suite to a scratch test file so the `__snapshots__/` convention resolves into a temp directory. Because the fixture writes during teardown, every on-disk assertion lives in the test that follows its writer.
+The public guide is at [Snapshot testing](https://archont561.github.io/bun-test-utils/guides/snapshot-testing/). The behaviour is specified in [spec 0013](../../.backlog/docs/specs/0013-snapshot-testing.md).
 
-Property tests in `tests/invariants.test.ts` pin serialization identity and key-order stability: matching a generated JSON value, then matching a key-rotated copy, does not throw.
+## Develop
 
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+```bash
+cd packages/snapshot
+bun run test
+bun run test:bdd
+bun run typecheck
+```

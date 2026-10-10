@@ -1,59 +1,38 @@
-# Core fixture engine (internal)
+# @bun-test-utils/core
 
-`@bun-test-utils/core` is the private workspace that powers the published `@archont561/bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed definition and serializer helpers are limited to `@archont561/bun-test-utils/pbt`, `@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and `@archont561/bun-test-utils/vcr`. Core helpers and fixture-pack helpers remain internal implementation details.
+Private workspace. This is the fixture engine behind [`@archont561/bun-test-utils`](../bun-test-utils/README.md). It provides the root `test`, `describe`, and `expect` runners, the `test.extend()` chain, and the rules that govern fixtures:
 
-## Explicit composition only
+- resolves each test's fixture dependencies and orders them topologically;
+- enforces scope rules, so a fixture never depends on a shorter-lived one;
+- builds each fixture once for its scope (`session`, `file`, or `test`);
+- tears fixtures down in strict LIFO order, including when a test fails;
+- reports diagnostics with stable error codes and messages.
 
-There is no implicit fixture discovery. `fixtures.ts` and `conftest.ts` are not automatically loaded, and fixtures are not inherited by directory. Compose project fixtures with `test.extend()` and import that runner wherever the fixtures are needed.
+This package is not published on its own. It is bundled into the public package, and its surface is the public API documented in the [docs site](https://archont561.github.io/bun-test-utils/reference/api/).
 
-```ts
-// test.ts
-import { test as base } from "@archont561/bun-test-utils";
+## Source layout
 
-export const test = base.extend({
-  db: {
-    scope: "file",
-    setup: async (use) => {
-      const db = await createDatabase();
-      await use(db);
-      await db.close();
-    },
-  },
-});
+| File | Role |
+| :-- | :-- |
+| `src/factory.ts` | The fixture-aware `test` wrapper and `test.extend()`. |
+| `src/graph.ts` | Dependency ordering and scope-rule checks. |
+| `src/lifecycle.ts` | Scope caches, LIFO unwinding, and session teardown. |
+| `src/state.ts` | Process-wide state shared by every loaded copy of the engine. |
+| `src/scenario.ts` | The fluent `test.scenario` builder. |
+| `src/detect.ts` | Reads requested fixtures from a test's destructuring pattern. |
+| `src/fetch.ts` | The fetch interceptor used by `networkGuard`. |
+| `src/errors.ts`, `src/types.ts` | Error classes, error codes, and public types. |
+| `src/plugin.ts` | The entrypoint: the preload hook and the root exports. |
+
+Subpath exports: `./errors`, `./fetch`, `./types`, and `./plugin`.
+
+## Develop
+
+```bash
+cd packages/core
+bun run test        # unit tests
+bun run test:bdd    # behavioural (Gherkin) suite
+bun run typecheck
 ```
 
-```ts
-// users.test.ts
-import { expect } from "@archont561/bun-test-utils";
-import { test } from "./test";
-
-test("uses the explicit fixture", async ({ db }) => {
-  expect(await db.health()).toBe("ok");
-});
-```
-
-`await use(value)` separates setup from teardown. `session`, `file`, and `test` scopes control lifetime; dependencies are resolved before the fixture and teardown is LIFO.
-
-## Fluent scenarios
-
-Scenario steps share one context. Values returned by `given` and `when` are available to later steps, and multiple steps can be chained:
-
-```ts
-import { test } from "./test";
-
-test.scenario("creates a user")
-  .given("a name", () => ({ name: "Ada" }))
-  .when("the user is created", ({ name }) => ({ user: { id: 1, name } }))
-  .then("the id is assigned", ({ user, expect }) => {
-    expect(user.id).toBe(1);
-  })
-  .then("the name is retained", ({ user, expect }) => {
-    expect(user.name).toBe("Ada");
-  });
-```
-
-## Tests
-
-Core behaviour is exercised in [`tests/`](./tests/), including explicit composition, scopes, dependency ordering, teardown, scenario chains, and collection-time validation. The assembled public surface is covered by the [conformance tests](../bun-test-utils/tests/conformance/).
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+Architectural decisions for the engine are recorded in [`.backlog/docs/adr`](../../.backlog/docs/adr) (for example ADR 0001 on the preload and ADR 0006 on `use`), and its behaviour is specified in [`.backlog/docs/specs/0001-fixture-engine.md`](../../.backlog/docs/specs/0001-fixture-engine.md).

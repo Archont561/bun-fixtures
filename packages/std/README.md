@@ -1,38 +1,38 @@
-# Standard fixtures (internal)
+# @bun-test-utils/std
 
-The standard fixtures (`tmpdir`, `env`, `stdio`, `clock`, `seed`, and `networkGuard`) are internal workspace fixtures bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/std` subpath.
+Private workspace. It provides the standard fixtures, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md). Each one gives a test isolated state and restores it at teardown:
+
+| Fixture | Provides |
+| :-- | :-- |
+| `tmpdir` | An isolated temporary directory with `write`, `read`, `exists`, `remove`, and `path`. Removed at teardown. |
+| `env` | Sandboxed environment variables: `set`, `get`, `delete`, `snapshot`. Reverted at teardown. |
+| `stdio` | Captured writes to `process.stdout` and `process.stderr`: `stdout()`, `stderr()`, `output()`, `clear()`. The real streams are restored at teardown. `console.*` is not captured. |
+| `clock` | Controlled time: `freeze`, `set`, `now`. |
+| `seed` | A deterministic `Math.random` sequence: `value`, `set`, `random`. `set` restarts the sequence from a given seed. |
+| `networkGuard` | Blocks `fetch` unless allowed: `allow(...matchers)`, `calls()`. |
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
 
-test("runs with isolated deterministic state", async ({
-  tmpdir,
-  env,
-  clock,
-  seed,
-  networkGuard,
-}) => {
+test("runs with isolated, deterministic state", async ({ tmpdir, env, clock, seed }) => {
   env.set("APP_MODE", "test");
   tmpdir.write("notes/todo.txt", "buy milk");
   clock.freeze("2026-01-02T03:04:05Z");
   seed.set(42);
-  networkGuard.allow("https://api.example.test/health");
 
   expect(env.get("APP_MODE")).toBe("test");
   expect(tmpdir.read("notes/todo.txt")).toBe("buy milk");
   expect(clock.now().toISOString()).toBe("2026-01-02T03:04:05.000Z");
-  expect(Math.random()).toBeTypeOf("number"); // deterministic from seed 42
 });
 ```
 
-- `clock.freeze(value)` and `clock.set(value)` wrap `bun:test`'s `setSystemTime`; `clock.now()` reads the current instant.
-- `seed` replaces `Math.random` with a deterministic per-test generator. Read `seed.value` to capture the generated replay seed or call `seed.set(value)` to replay it. A failing test includes `[bun-test-utils] seed: <value>` in its error.
-- `networkGuard` blocks every unexpected `fetch` with a stable method-and-URL error. Add explicit passthrough entries with `networkGuard.allow(string | RegExp | predicate)` and inspect requests with `networkGuard.calls()`.
+The fixture reference is in the [built-in fixtures](https://archont561.github.io/bun-test-utils/reference/plugins/) page, and the behaviour is specified in [spec 0009](../../.backlog/docs/specs/0009-standard-fixtures-std.md).
 
-During fixture teardown, `tmpdir` is removed, `env` is restored, `stdio` hands the real streams back, the system clock and `Math.random` are restored, and the network guard removes its shared fetch interceptor.
+## Develop
 
-These fixtures are exercised in [`tests/`](./tests/) through this package's own `test.extend(...)` composition — injected by name, torn down by the engine. Teardown assertions live in the test *after* the one using a fixture because the engine tears down after the test body returns.
-
-Property tests in `tests/invariants.test.ts` pin `env` set/get/delete round-trips and `tmpdir` write/read identity over generated relative paths, plus the escape check for `..` and absolute paths.
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+```bash
+cd packages/std
+bun run test
+bun run test:bdd
+bun run typecheck
+```

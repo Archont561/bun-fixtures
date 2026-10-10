@@ -1,22 +1,21 @@
 ---
 title: Scenarios and fluent API
-description: Share state across given, when, and then steps with typed fluent scenarios.
+description: Write behaviour-driven tests with given, when, and then steps that share typed state and fixtures.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+A scenario is one test written as fluent `given`, `when`, and `then` steps. Each step can read the state the steps before it produced, and each step can use fixtures. Scenarios are a readable form of an ordinary fixture-aware test, so they support the same fixtures, scopes, and teardown.
 
-
-Scenarios are a readable wrapper around one fixture-aware test. Each `given` and `when` step may return an object; its properties are merged into the next step's context.
+> Scenarios are experimental. Their API may change in a minor release.
 
 ## Installation
 
-The fluent scenario API is optional. Install the BDD peer only in projects that use it:
+The scenario API uses the optional `@aboviq/bun-test-cucumber` peer:
 
 ```bash
 bun add -d @archont561/bun-test-utils @aboviq/bun-test-cucumber
 ```
 
-Property scenarios also require `fast-check`:
+Property scenarios also need `fast-check`:
 
 ```bash
 bun add -d fast-check
@@ -27,7 +26,8 @@ bun add -d fast-check
 ```ts
 import { test } from "@archont561/bun-test-utils";
 
-test.scenario("creates a user")
+test
+  .scenario("creates a user")
   .given("a name", () => ({ name: "Ada" }))
   .given("a request id", () => ({ requestId: "req-1" }))
   .when("the user is created", ({ name, requestId }) => ({
@@ -42,26 +42,32 @@ test.scenario("creates a user")
   });
 ```
 
-Steps can be asynchronous. Fixture values are available alongside scenario state:
+The chain is typed in phase order: `given` steps come first, then `when`, then `then`. Each phase accepts several steps.
+
+- An object returned by a `given` or `when` step is merged into the context of the next step.
+- A `then` step is an assertion. Its return value is not merged.
+- `expect` is passed into every step, so you do not import it.
+
+## Use fixtures in steps
+
+Fixture values are available alongside scenario state. Destructure a fixture in a step, and the engine builds it for the scenario like any other test:
 
 ```ts
-test.scenario("uses a fixture")
-  .given("a record", async ({ db }) => ({
-    record: await db.insert({ name: "Ada" }),
+test
+  .scenario("stores a record")
+  .given("a record", async ({ database }) => ({
+    record: await database.insert({ name: "Ada" }),
   }))
-  .then("the record exists", ({ record, expect }) => {
+  .then("the record has an id", ({ record, expect }) => {
     expect(record.id).toBeDefined();
   });
 ```
 
-## Sharing typed steps and sequences
+Fixtures are composed the same way as in any other test: with `test.extend()`, in the imported runner.
 
-Put reusable steps in a shared module and wrap them with the phase-specific
-helpers from `@archont561/bun-test-utils/bdd`. The generic arguments declare the incoming
-scenario state and the state returned by `given`/`when`; `then` declares only
-its input state. The same subpath exports `GivenStep`, `WhenStep`, `ThenStep`,
-`ScenarioContext`, and `GivenChain` for explicit type annotations. A
-consumer-owned function can still apply a reusable sequence to a `GivenChain`.
+## Share steps and sequences
+
+Put reusable steps in a shared module. The phase-specific helpers from `@archont561/bun-test-utils/bdd` give each step its input and output types. The generic arguments declare the state a step expects, and the state it adds:
 
 ```ts
 // scenario-steps.ts
@@ -86,10 +92,10 @@ export const withSharedFile = (chain: GivenChain) =>
   chain.given("a shared file", writeFile).when("the file is read", readFile);
 ```
 
-Use the same sequence from separate scenario files:
+A consumer-owned function can apply the sequence to any chain, so several scenario files can reuse it:
 
 ```ts
-// first.test.ts (second.test.ts imports the same sequence)
+// reads-shared-file.test.ts
 import { test } from "@archont561/bun-test-utils";
 import { assertSharedContents, withSharedFile } from "./scenario-steps";
 
@@ -99,15 +105,11 @@ withSharedFile(test.scenario("reads a file from a shared sequence")).then(
 );
 ```
 
-Fixtures destructured by imported steps are auto-detected per step, just as
-inline steps are; scenarios do not need to repeat a fixture list. Continue to
-compose project fixtures explicitly with `test.extend()`.
-
-`then` steps are assertions and their return values are not merged. The chain is typed so `given` comes before `when`, `when` comes before `then`, and multiple steps in each phase are supported.
+Steps that destructure fixtures are detected per step, so the scenario does not repeat a fixture list.
 
 ## Property scenarios
 
-`test.scenario.prop(...)` adds generated values as the initial context:
+`test.scenario.prop` generates the scenario's initial context:
 
 ```ts
 import { test } from "@archont561/bun-test-utils";
@@ -125,6 +127,9 @@ test.scenario
   });
 ```
 
-Every generated example receives a fresh scenario context. Test-scoped fixtures are rebuilt for each example and shrink candidate; session and file fixtures are shared.
+Each generated example gets a fresh scenario context. Test-scoped fixtures are rebuilt for every example and every shrink step, while session and file fixtures are shared. See [Property-based testing](/bun-test-utils/guides/property-based-testing/) for the lifecycle.
 
-See the [property testing guide](/bun-test-utils/guides/property-based-testing/) and the [package examples on GitHub](https://github.com/Archont561/bun-test-utils/tree/main/packages/bun-test-utils/e2e/bdd/features).
+## Next steps
+
+- [Property-based testing](/bun-test-utils/guides/property-based-testing/) for generated values and shared arbitrary definitions.
+- [API reference](/bun-test-utils/reference/api/) for the `test.scenario` signatures.

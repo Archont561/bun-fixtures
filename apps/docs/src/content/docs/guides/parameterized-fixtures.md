@@ -1,25 +1,16 @@
 ---
-title: Parameterizing Tests
-description: Run one test over several values with test.prop and fast-check arbitraries.
+title: Parameterized tests
+description: Run one test over a matrix of values with test.prop and fc.constantFrom, with a fresh fixture lifecycle for each combination.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
-
-Parameterization in `bun-test-utils` is `test.prop` — the same mechanism the
-[Property-Based Testing](/bun-test-utils/guides/property-based-testing/) guide describes for
-generative tests. There is no separate `params` feature: it was removed before
-`0.1.0`
-([ADR 0020](https://github.com/Archont561/bun-test-utils/blob/main/.backlog/docs/adr/0020-remove-parameterized-fixtures.md))
-because two mechanisms for "run this test over several values", with different
-case identity and failure output, was one too many.
+Parameterized tests run one test body over several values. In `bun-test-utils` that is `test.prop`: the same mechanism the [property-based testing](/bun-test-utils/guides/property-based-testing/) guide describes, used with a fixed set of values instead of random ones.
 
 ## A fixed matrix
 
-`fc.constantFrom` turns a static list into an arbitrary, so a small matrix is a
-property with one value per axis:
+`fc.constantFrom` turns a list of values into an arbitrary. One arbitrary per axis gives you a matrix:
 
 ```ts
-import { test, expect } from "@archont561/bun-test-utils";
+import { expect, test } from "@archont561/bun-test-utils";
 
 test.prop(
   "renders the navigation bar",
@@ -28,45 +19,39 @@ test.prop(
     locale: fc.constantFrom("en", "pl"),
   }),
   async ({ tmpdir }, { viewport, locale }) => {
-    // …assert the rendering for this combination
+    tmpdir.write("config.json", JSON.stringify({ viewport, locale }));
+    // assert the rendering for this combination
+    expect(tmpdir.read("config.json")).toContain(viewport);
   },
   { numRuns: 20, seed: 20261007 },
 );
 ```
 
-Test-scoped fixtures are rebuilt and unwound LIFO for every sample, so each
-combination gets a fresh fixture set; session and file fixtures stay shared for
-the whole run. A seeded run replays exactly, and a failure shrinks to the
-minimal counterexample.
+Test-scoped fixtures are built and torn down for every sample, so each combination gets a fresh set. Session and file fixtures are shared across the whole run. A run with a fixed `seed` replays exactly, and a failure shrinks to the smallest counterexample.
 
 ## Coverage caveat
 
-`fc.constantFrom` draws with replacement: `numRuns` controls how many samples
-are drawn, so a small `numRuns` may not exercise every value. When *guaranteed
-enumeration* is the requirement rather than a sample over values, use an
-ordinary loop in the test body:
+`fc.constantFrom` draws with replacement. `numRuns` sets how many samples are drawn, so a small `numRuns` may miss some values. When every value must run, use a plain loop in the test body:
 
 ```ts
 test("renders the navigation bar in every locale", async ({ tmpdir }) => {
   for (const locale of ["en", "pl"]) {
-    // …
+    // assert the rendering for this locale
   }
 });
 ```
 
-## Migrating from `params`
+Choose the form that matches the requirement. Use `test.prop` when sampling over a space is the point. Use a loop when every named case must run and report.
 
-Before `0.1.0`, a fixture definition could carry `params: [...]`, and every
-requesting test was expanded into one case per value — the cartesian product
-when several parameterized fixtures met — with the current value exposed as
-`ctx.param` and encoded in the case name (`"renders [browser=chromium]"`).
-That surface is gone: a `params` key is now ignored like any other unknown
-fixture key, and `ctx.param` is not injected.
+## Requirements
 
-- A fixture's `params` becomes an arbitrary on the corresponding key of the
-  property, and `ctx.param` becomes a generated value received in the test
-  body's second parameter.
-- The `[key=value]` case-name suffix disappears: one test runs every sample,
-  and a failure reports the shrunk counterexample instead of the case name.
-- The `fast-check` peer is required for the axis; install it with
-  `bun add -d fast-check`.
+`test.prop` needs the optional `fast-check` peer:
+
+```bash
+bun add -d fast-check
+```
+
+## Next steps
+
+- [Property-based testing](/bun-test-utils/guides/property-based-testing/) covers generated values, shrinking, and shared arbitrary definitions.
+- [Scopes and teardown](/bun-test-utils/guides/scopes-and-teardown/) explains which fixtures are shared across samples.

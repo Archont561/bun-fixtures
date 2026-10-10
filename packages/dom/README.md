@@ -1,6 +1,9 @@
-# DOM fixtures (internal)
+# @bun-test-utils/dom
 
-The DOM fixtures (`window`, `document`, `page`) are internal workspace fixtures bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/dom` subpath.
+Private workspace. It provides the in-memory DOM fixtures, bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md), built on [happy-dom](https://github.com/capricorn86/happy-dom):
+
+- `window` and `document`: the happy-dom window and document for the test;
+- `page`: a small helper with `mount(html)`, `querySelector`, `querySelectorAll`, `click(selector)`, `type(selector, text)`, `html()`, and `clear()`.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
@@ -15,15 +18,13 @@ test("mounts markup and dispatches clicks", async ({ page }) => {
 });
 ```
 
-`happy-dom` is loaded by the fixture only when a DOM fixture is requested.
+happy-dom is loaded only when a DOM fixture is requested, and the fixture removes its globals at teardown. Use `webPage` when a test should run either on happy-dom or on a real browser.
 
-`page` remains the happy-dom helper. If you want one test to run against either
-happy-dom or a real Playwright page, request the root `webPage` fixture and
-select `BUN_TEST_UTILS_WEB_ENV=dom` (default) or `browser`; do not overload
-`page` or `browserPage`.
+## Develop
 
-These fixtures are exercised in [`tests/`](./tests/) through this package's own `test.extend(...)` composition. Requesting `{ page }` alone is enough — the engine resolves the `window` → `document` → `page` dependency chain and restores the patched globals on teardown.
-
-There is no property-based suite here: the package is thin glue over happy-dom and has no algebraic invariant of its own (see [spec 0015](../../.backlog/docs/specs/0015-package-test-layout.md)).
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).
+```bash
+cd packages/dom
+bun run test
+bun run test:bdd
+bun run typecheck
+```

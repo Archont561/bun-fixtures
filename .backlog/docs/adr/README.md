@@ -41,5 +41,6 @@ Short, immutable records of *why*. Supersede rather than rewrite.
 | [0035](./0035-persist-callback-results-across-runs.md) | Persist cassette callback results across runs: sidecar, exact-source staleness, internal in 0.1.x | accepted, amends 0034 (point 8) |
 | [0036](./0036-auto-cassette-mode-and-cache-clearing.md) | Auto cassette mode (record on first use, replay after) and explicit cache clearing for cassettes and snapshots | accepted |
 | [0037](./0037-cli-workspace-and-prompts.md) | CLI as a private workspace bundled into the metapackage: citty commands, clack prompts for `cache clear`, project-root scoping, no config file in v1 | accepted |
+| [0038](./0038-general-purpose-positioning-playwright-style-fixtures.md) | General-purpose test extension with Playwright-style fixtures; supersedes no record, retires the pytest framing from published copy | accepted |
 
 Start from [`TEMPLATE.md`](./TEMPLATE.md).

@@ -1,6 +1,9 @@
-# Property-based testing (internal)
+# @bun-test-utils/pbt
 
-Property-test execution remains on the public root `test` as `test.prop(...)` and `test.scenario.prop(...)`. The helper-only `@archont561/bun-test-utils/pbt` subpath exposes `defineArbitraries` and PBT type aliases; it does not expose a runner or fixtures.
+Private workspace. It provides property-based testing on top of [fast-check](https://fast-check.dev/), bundled into [`@archont561/bun-test-utils`](../bun-test-utils/README.md):
+
+- **`test.prop(title, arbitraryFactory, fn, options?)`** and **`test.scenario.prop`** on the root `test`. Each generated sample, and each shrink step, gets fresh test-scoped fixtures through the engine's iteration protocol.
+- **`defineArbitraries`**, exported from the helper-only `@archont561/bun-test-utils/pbt` subpath. It types a factory's `fc` parameter contextually and returns the definition unchanged, so shared arbitrary records can be imported into any test.
 
 ```ts
 import { expect, test } from "@archont561/bun-test-utils";
@@ -15,48 +18,15 @@ test.prop(
 );
 ```
 
-The first argument passed to the arbitrary factory is the `fast-check` API, loaded only after the user installs the optional `fast-check` peer and uses the property API. Fixtures are the first callback parameter and follow the same session/file/test lifecycles as ordinary tests. Wrap a shared factory with `defineArbitraries` from `@archont561/bun-test-utils/pbt` to get contextual typing without importing `FastCheckApi` in each definition module. The helper-subpath declaration and public root runner declaration reference fast-check types; strict consumer typechecks with `skipLibCheck: false` therefore require `fast-check` even for non-property root imports. Runtime loading remains lazy and optional; the package README documents this TypeScript tradeoff.
+`fast-check` is an optional peer. It is loaded only when a property API runs. The published declarations refer to it, so TypeScript projects with `skipLibCheck: false` must install it.
 
-## Shared arbitrary definitions
+See the [property-based testing guide](https://archont561.github.io/bun-test-utils/guides/property-based-testing/) and [spec 0010](../../.backlog/docs/specs/0010-property-based-testing-fastcheck.md).
 
-Arbitrary records and factories are plain definitions that can live in shared modules and be imported by any property-test file. The `@archont561/bun-test-utils/pbt` `defineArbitraries` wrapper contextually types a factory and preserves its inferred arbitrary record; `FastCheckApi`, `ArbitraryInput<T>`, and `GeneratedValues<T>` are type-only exports from the same subpath when consumers need to name those types explicitly.
+## Develop
 
-```ts
-// arbitraries.ts
-import { defineArbitraries } from "@archont561/bun-test-utils/pbt";
-
-export const userArbitraries = defineArbitraries((fc) => ({
-  name: fc.string(),
-  age: fc.nat(),
-}));
-
-export const adminArbitraries = defineArbitraries((fc) => ({
-  ...userArbitraries(fc),
-  permissions: fc.array(fc.constantFrom("read", "write")),
-}));
+```bash
+cd packages/pbt
+bun run test
+bun run test:bdd
+bun run typecheck
 ```
-
-```ts
-// admin.test.ts
-import { expect, test } from "@archont561/bun-test-utils";
-import { adminArbitraries } from "./arbitraries";
-
-test.prop("generates typed admin records", adminArbitraries, async (_fixtures, {
-  name,
-  age,
-  permissions,
-}) => {
-  const typedName: string = name;
-  const typedAge: number = age;
-  const typedPermissions: ("read" | "write")[] = permissions;
-  expect(typedName.length + typedAge + typedPermissions.length).toBeGreaterThan(0);
-});
-```
-
-Use explicit imports and ordinary object spread for composition. `defineArbitraries` is an identity wrapper only: it does not register, inspect, or alter definitions. `test.scenario.prop` accepts the same factory type and preserves the generated value types through the scenario chain.
-
-The property API is exercised in [`tests/`](./tests/) through `test.extend(...)` composition, including the per-iteration fixture lifecycle: a test-scoped fixture is rebuilt and torn down around every generated sample and every shrink step, while session- and file-scoped fixtures are shared across them.
-
-Engine combinatorics that would otherwise live in `packages/core` — topological `resolveOrder` (the setup order LIFO teardown reverses) — are property-tested here so core never depends on this package. `dom` and `browser` have no property suites: the former is thin happy-dom glue, the latter a Playwright subprocess whose randomized runs would be slow and flaky.
-
-[MIT](../../LICENSE-MIT) OR [Apache-2.0](../../LICENSE-APACHE).

@@ -1,34 +1,32 @@
 ---
 title: CLI Reference
-description: Command-line interface reference for test-utils init and test-utils cache clear.
+description: The test-utils command, its init and cache clear subcommands, their options, and their prompts.
 ---
 
-> Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
+The `test-utils` binary has two commands, `init` and `cache clear`. Its flags are the stable interface. Prompts appear only in an interactive terminal without `CI` set. In scripts and CI, the flags alone decide what happens. `--yes` and `--dry-run` skip every prompt.
 
-The stable CLI surface is the `test-utils` binary and its flags. Prompts appear only when running in a TTY without `CI` set; in scripts and CI the flags alone decide what happens. `--yes` and `--dry-run` skip every prompt.
+## `test-utils init`
 
-## Commands
-
-### `test-utils init`
-
-Initializes `bun-test-utils` in the current project or workspace by adding the preload hook to `bunfig.toml`. Create your own `test.ts` and compose fixtures with `test.extend()`.
+Adds the package's preload to `bunfig.toml`, under `[test].preload`. The package's other settings are left untouched.
 
 ```bash
 bunx test-utils init [options]
 ```
 
-#### Options
+| Option | Behaviour |
+| :-- | :-- |
+| `--dir <path>` | The directory to work in. Defaults to the current directory. |
+| `--entry <path>` | The preload entry to add. Defaults to the package's `dist/plugin.js` under `node_modules`. |
+| `--force` | Accepted for backward compatibility. `init` never overwrites project files. |
+| `--yes` | Writes `bunfig.toml` without asking. |
 
-- `--dir <path>`: Working directory (defaults to current directory).
-- `--entry <path>`: Path to preload script entrypoint.
-- `--force`: Accepted for backward compatibility; `init` does not overwrite project files.
-- `--yes`: Write without asking for confirmation.
+In an interactive terminal without `--yes`, `init` asks for confirmation before it writes, and only when a write is needed. Outside a terminal, or with `CI` set, it writes without prompting. If the preload is already configured, it reports that and changes nothing.
 
-In a TTY without `--yes`, `init` asks for confirmation before writing `bunfig.toml`, and only when a write is needed. Outside a TTY, or with `CI` set, it writes without prompting.
+After `init`, create your own `test.ts` module and compose fixtures there with `test.extend()`. `init` does not create fixture files.
 
-### `test-utils cache clear`
+## `test-utils cache clear`
 
-Deletes cassettes, callback sidecars, and snapshots so the next run records them again. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake.
+Deletes recorded cassettes, callback sidecars, and snapshots, so the next run records them again. It removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files. It never removes a directory. Recordings are normally committed, so `git checkout -- <path>` restores a file deleted by mistake.
 
 ```bash
 bunx test-utils cache clear (--file <path> [--test <name>] | --all) [--dry-run] [--yes]
@@ -36,13 +34,13 @@ bunx test-utils cache clear (--file <path> [--test <name>] | --all) [--dry-run] 
 
 Choose exactly one scope:
 
-- `--file <path>` clears every test in that file. The command finds the test names by reading the file's literal test names; a name built at runtime needs `--test`.
+- `--file <path>` clears every test in the file. The command finds test names by reading the file's literal test names. A name built at runtime needs `--test`.
 - `--file <path> --test "<name>"` clears one test.
-- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root — the nearest `package.json` at or above the working directory, skipping `node_modules`. Without a `package.json` above the working directory the command fails and asks to be run from the project root.
+- `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root. The project root is the nearest `package.json` at or above the working directory, skipping `node_modules`. Without a `package.json` above the working directory, the command fails and asks you to run it from the project root.
 
-#### Options
+| Option | Behaviour |
+| :-- | :-- |
+| `--dry-run` | Lists the files that would be removed, and deletes nothing. Never prompts. |
+| `--yes` | Deletes without asking. |
 
-- `--dry-run`: List the files that would be removed and delete nothing. Never prompts.
-- `--yes`: Delete without asking for confirmation.
-
-In a TTY without `CI`, `--yes`, or `--dry-run`, the command shows the matched files as a multi-select (all selected by default), then asks for confirmation before deleting. Outside a TTY, or with `CI` set, the explicit scope is the confirmation: it deletes the matched files directly. The output names the scanned root, and a run that matches nothing prints how many files it scanned.
+In an interactive terminal without `CI`, `--yes`, or `--dry-run`, the command shows the matched files as a multi-select, all selected by default, and asks for confirmation before it deletes. Outside a terminal, or with `CI` set, the explicit scope is the confirmation, and the matched files are deleted directly. The output names the scanned root. When nothing matches, it says how many files it scanned.

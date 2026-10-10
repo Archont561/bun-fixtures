@@ -5170,3 +5170,216 @@ tasks:
       push_comments: false
     created_at: 2026-10-10T16:54:07.570Z
     updated_at: 2026-10-10T17:00:54.513Z
+  - id: task_095
+    title: Fix cassette record() not replacing stale callback entries (ADR 0035 D2.1)
+    description: "Reproduced on branch arena/fe882aeb-bun-test-utils: after a
+      callback body edit, cassette.record(fn) runs the new body but keeps the
+      old sidecar entry and does not store the new one. replay(fn) then keeps
+      throwing CALLBACK_NOT_RECORDED, so the only recovery is cassette cache
+      clear. ADR 0035 D2.1 says the next record run drops stale recordings.
+      Follow-up to task_085."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - cassette
+      - bug
+    repo_targets: []
+    acceptance_criteria:
+      - A record run after a body edit writes a sidecar holding only that run's
+        recordings (old entry dropped)
+      - replay(fn) succeeds on the next run after that record run, with no cache
+        clear
+      - Regression test in packages/vcr/tests and a behavioural scenario in
+        packages/vcr/e2e/bdd/features
+      - bun test and bun run typecheck green
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T18:08:22.783Z
+    updated_at: 2026-10-10T18:08:22.783Z
+  - id: task_096
+    title: "ADR: cassette(fn) get-or-record wrapper, superseding the ADR 0036
+      stale-cache rule for the wrapper"
+    description: "Design decision before implementation. Proposed: cassette(fn) is
+      callable and keeps the object methods (record, replay, addSerializer,
+      mode, path, entries, save, load). The wrapper replays when an entry
+      exists, records on a miss, and in CI fails on a miss. Open conflict: ADR
+      0036 says a stale cache fails with the exact clear command, not a silent
+      re-record. The wrapper's edited-body and serializer-version rules must
+      either supersede that rule explicitly or keep the error. Keying: source
+      text (ADR 0035), with stale entries pruned on record. Must state how
+      captured variables and imported helpers are handled, since source text
+      does not see them."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - cassette
+      - design
+      - adr
+    repo_targets: []
+    acceptance_criteria:
+      - New ADR accepted (next number after 0038) before any implementation
+      - Explicitly supersedes or keeps the ADR 0036 stale-cache rule, with the
+        superseded record marked
+      - Defines auto, replay, record, and CI behaviour, and the
+        serializer-version-mismatch rule
+      - Defines whether a re-record logs a message, so a silent re-record is
+        never possible
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T18:08:23.266Z
+    updated_at: 2026-10-10T18:08:23.266Z
+  - id: task_097
+    title: Implement cassette(fn) get-or-record wrapper
+    description: "Depends on the ADR task above; do not start before that ADR is
+      accepted. Implements the accepted design: callable cassette that keeps the
+      object methods, uses registered serializers, and prunes stale entries.
+      Update README, docs (cassette guide and API reference), the matching spec,
+      and scripts/public-api.txt."
+    source_links: []
+    status: ready
+    priority: P1
+    labels:
+      - cassette
+      - feature
+    repo_targets: []
+    acceptance_criteria:
+      - Behaviour matches the accepted ADR for auto, replay, record, and CI
+        modes, including the stale and serializer-version rules
+      - Regression tests for hit, miss, edited body, serializer version change,
+        and CI refusal
+      - Docs, README, spec, and public-api.txt updated in the same PR
+      - bun test and bun run typecheck green
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T18:08:23.770Z
+    updated_at: 2026-10-10T18:08:23.770Z
+  - id: task_098
+    title: Global callback serializer registration on /vcr
+      (registerCallbackSerializer)
+    description: Mirror the global snapshot registry on /snap so a Point-style
+      serializer is registered once from a preload and applies to every test.
+      Per-test cassette.addSerializer stays. Registered serializers are part of
+      the stored format (name and version), so the version rule from the
+      cassette wrapper ADR applies.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - cassette
+      - feature
+    repo_targets: []
+    acceptance_criteria:
+      - registerCallbackSerializer exported from the /vcr subpath, with an
+        unregister counterpart returning true or false
+      - A serializer registered in a preload applies to all tests, verified
+        through the installed-consumer e2e
+      - Per-test addSerializer keeps working and takes precedence
+      - README, cassette guide, spec, and public-api.txt updated
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T18:08:24.272Z
+    updated_at: 2026-10-10T18:08:24.272Z
+  - id: task_099
+    title: "snapshot(fn, name) callable form: run, match, and return the result"
+    description: Make the snapshot fixture callable as well as an object.
+      snapshot(fn, name) runs fn, awaits it, matches the result under name, and
+      returns the result. It does not cache and does not key on the function
+      body. A name is required for the callable form. Errors from fn propagate
+      and nothing is written. snapshot.match and matchFile are unchanged.
+    source_links: []
+    status: ready
+    priority: P2
+    labels:
+      - snapshot
+      - feature
+    repo_targets: []
+    acceptance_criteria:
+      - Callable form requires a name, returns the awaited result, and never
+        caches or keys on source text
+      - A throwing or rejecting fn propagates the error and writes no snapshot
+      - Function argument is run; non-function argument falls through to match
+        semantics
+      - Small ADR or spec amendment recorded before implementation;
+        public-api.txt, README, snapshot guide, and API reference updated
+      - bun test and bun run typecheck green
+    dependencies: []
+    planning:
+      split_status: pending
+      risk: medium
+    execution_defaults:
+      manual_approval_required: false
+      auto_commit: true
+      push_when_done: true
+      create_pr: false
+      merge_pr: false
+      worktree_mode: direct
+      preferred_agents: []
+      max_subagents: 5
+    sync:
+      source_of_truth: backlog
+      push_status: false
+      push_comments: false
+    created_at: 2026-10-10T18:08:24.778Z
+    updated_at: 2026-10-10T18:08:24.778Z
