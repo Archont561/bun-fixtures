@@ -6,7 +6,7 @@ description: Run one test over several values with test.prop and fast-check arbi
 > Fixture composition is explicit: `fixtures.ts` and `conftest.ts` are not automatically loaded. Compose project fixtures with `test.extend()`; built-in capabilities are fixtures on the root `test` context.
 
 Parameterization in `bun-test-utils` is `test.prop` — the same mechanism the
-[Property-Based Testing](./property-based-testing) guide describes for
+[Property-Based Testing](/bun-test-utils/guides/property-based-testing/) guide describes for
 generative tests. There is no separate `params` feature: it was removed before
 `0.1.0`
 ([ADR 0020](https://github.com/Archont561/bun-test-utils/blob/main/.backlog/docs/adr/0020-remove-parameterized-fixtures.md))

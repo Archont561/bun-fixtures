@@ -8,7 +8,8 @@ description: Record callback results and replay exact HTTP requests with the roo
 The built-in `cassette` fixture provides a deliberately small stable contract:
 
 - `cassette.record(callback)` executes a callback once and stores its serializable result;
-- `cassette.replay(callback)` returns the stored result without executing the callback; and
+- `cassette.replay(callback)` returns the stored result without executing the callback;
+- `cassette.addSerializer(serializer)` registers a reversible, versioned serializer for custom callback values (typed with `defineCallbackSerializer` from `@archont561/bun-test-utils/vcr`); and
 - HTTP replay matches one way only: the uppercase method and full URL must both match exactly.
 
 Matcher DSLs, configurable redaction, and cassette migration tooling are deferred.
@@ -142,7 +143,7 @@ Commit the `__cassettes__/` directory, so CI replays the same recordings.
 - `replay`: never goes to the network. A missing cassette fails.
 - `passthrough`: ignores the cassette.
 
-> **Upgrading from 0.1.x:** the default used to be `record`, which hit the network and overwrote the cassette on every run. To keep that behaviour, set `VCR_MODE=record`.
+> **Always re-recording:** `auto` is the default in `0.1.0`. To hit the network and overwrite the cassette on every run instead, set `VCR_MODE=record`.
 
 A test whose body fails writes nothing in `auto`, so a broken first run cannot leave a partial recording behind.
 
@@ -178,7 +179,7 @@ Choose exactly one scope:
 - `--file <path> --test "<name>"` clears one test.
 - `--all` clears every `__cassettes__/` and `__snapshots__/` directory under the project root — the nearest `package.json` at or above the working directory, skipping `node_modules`.
 
-`--dry-run` lists the files and deletes nothing. In a TTY without `CI`, the command shows the matched files as a multi-select (all selected by default) and confirms before deleting; `--yes` skips both. Outside a TTY, the explicit scope is the confirmation. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](./snapshot-testing.md).
+`--dry-run` lists the files and deletes nothing. In a TTY without `CI`, the command shows the matched files as a multi-select (all selected by default) and confirms before deleting; `--yes` skips both. Outside a TTY, the explicit scope is the confirmation. The command removes `<name>.json`, `<name>.callbacks.json`, and `<name>.snap.json` files, and never a directory. Recordings are committed, so `git checkout -- <path>` restores a file deleted by mistake. Snapshots are cleared the same way; see [Snapshot testing](/bun-test-utils/guides/snapshot-testing/).
 
 ## Files and secrets
 

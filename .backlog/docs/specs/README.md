@@ -8,7 +8,7 @@ it is verified; rationale belongs in [`../adr`](../adr), scheduling in
 |---|------|--------|----------------|
 | [0001](./0001-fixture-engine.md) | Fixture engine — scopes, teardown, DI (`params` removed by ADR 0020) | implemented | `packages/core/src/plugin.ts` |
 | [0002](./0002-discovery-and-merge.md) | Legacy preload discovery + directory merge | superseded | removed; use `test.extend()` |
-| [0003](./0003-cli-init.md) | CLI `init` | implemented | `packages/core/src/cli.ts` |
+| [0003](./0003-cli-init.md) | CLI `init` | implemented | `packages/cli/src/{commands,init,prompts}.ts` |
 | [0004](./0004-public-api-and-types.md) | Public API + types | implemented | `packages/bun-test-utils/src/plugin.ts`, `packages/core/src/plugin.ts`, `packages/core/src/types.ts`, `packages/pbt/src/index.ts` |
 | [0005](./0005-packaging-and-release.md) | Packaging and release | in progress | `packages/*/package.json`, `.changeset/` |
 | [0006](./0006-behavioural-test-suite.md) | Behavioural (Gherkin) test suite | implemented | `packages/*/e2e/bdd/`, `packages/config/bdd/presets.ts` |

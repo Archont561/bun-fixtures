@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32" role="img" aria-label="bun-test-utils logo">
+  <title>bun-test-utils logo</title>
+  <rect width="100" height="100" rx="20" fill="#f43f5e" />
+  <path d="M30 25 L70 25 L70 45 L48 45 L48 55 L65 55 L65 75 L30 75 Z" fill="#ffffff" />
+  <circle cx="75" cy="75" r="8" fill="#fbbf24" />
+</svg>

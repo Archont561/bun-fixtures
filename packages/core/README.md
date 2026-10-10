@@ -1,6 +1,6 @@
 # Core fixture engine (internal)
 
-`@bun-test-utils/core` is the private workspace that powers the published `@archont561/bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed schema and scenario-step helpers are limited to `@archont561/bun-test-utils/pbt` and `@archont561/bun-test-utils/bdd`. Core helpers and fixture-pack helpers remain internal implementation details.
+`@bun-test-utils/core` is the private workspace that powers the published `@archont561/bun-test-utils` package. End users import the runner values `describe`, `test`, and `expect` from the root; the typed definition and serializer helpers are limited to `@archont561/bun-test-utils/pbt`, `@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and `@archont561/bun-test-utils/vcr`. Core helpers and fixture-pack helpers remain internal implementation details.
 
 ## Explicit composition only
 

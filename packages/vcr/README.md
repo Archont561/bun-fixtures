@@ -1,6 +1,6 @@
 # HTTP cassette fixtures (internal)
 
-The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. There is no public `@archont561/bun-test-utils/vcr` subpath.
+The VCR `cassette` fixture is an internal workspace fixture bundled into the public root `test` from `@archont561/bun-test-utils`. The helper-only `@archont561/bun-test-utils/vcr` subpath exposes `defineCallbackSerializer` and `CallbackSerializer`; it does not expose a runner or fixture pack.
 
 The stable release surface is intentionally small: `record(callback)`,
 `replay(callback)`, `addSerializer(serializer)`, and HTTP replay matching by

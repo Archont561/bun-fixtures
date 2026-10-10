@@ -12,7 +12,7 @@ bun add -d @archont561/bun-test-utils
 bunx test-utils init
 ```
 
-The `init` command adds the preload plugin to `bunfig.toml`. It does not auto-load fixture files; create an extendable `test.ts` module for explicit composition.
+The `init` command adds the preload plugin to `bunfig.toml` (confirming first in an interactive terminal unless `--yes` is passed). It does not auto-load fixture files; create an extendable `test.ts` module for explicit composition. To reset recorded HTTP cassettes or snapshots later, run `bunx test-utils cache clear --file <path> [--test <name>]` or `--all`.
 
 ## 2. Compose Fixtures
 

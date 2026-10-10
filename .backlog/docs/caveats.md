@@ -14,7 +14,7 @@ and in `task_042`. The difference matters: a non-goal is closed, a deferral is w
 | Parsing or running Gherkin `.feature` files | separate concern — see [`@aboviq/bun-test-cucumber`](https://www.npmjs.com/package/@aboviq/bun-test-cucumber), which this repo may use for its own behavioural suite. End users write BDD-style flows with `test.scenario(...)`. |
 | Implicit fixture discovery | removed. `fixtures.ts` and `conftest.ts` are ordinary module names and are not automatically loaded. |
 | Public capability runner/fixture subpaths | Not exposed. The public helper subpaths are `@archont561/bun-test-utils/pbt`, `@archont561/bun-test-utils/bdd`, `@archont561/bun-test-utils/snap`, and `@archont561/bun-test-utils/vcr`; they export typed definition wrappers and serializer contracts, while capabilities are built into the root `test` context or `test.*` methods. |
-| Stable VCR matcher DSL, configurable redaction, or cassette migration | deferred until post-release demand establishes the right API; `0.1.x` freezes only callback record/replay and exact method-plus-full-URL matching. |
+| Stable VCR matcher DSL, configurable redaction, or cassette migration | deferred until post-release demand establishes the right API; `0.1.x` freezes only callback record/replay/addSerializer and exact method-plus-full-URL matching. |
 | Windows support in `0.1.x` | deferred until POSIX `URL.pathname` assumptions are removed and a Windows CI lane exists. |
 
 ## Explicit composition only

@@ -33,7 +33,7 @@ delivered but remain implementation details behind the root `test` API:
 | Package | Spec | Task | Status |
 |---------|------|------|--------|
 | `@bun-test-utils/config` | [0008](./specs/0008-typescript-config-package.md) | `task_010` | ✅ done |
-| `apps/docs` (Starlight) | [0007](./specs/0007-apps-docs-starlight.md) | `task_009` | ✅ done |
+| `apps/docs` (Starlight) | [0007](./specs/0007-apps-docs-starlight.md) | `task_009`, `task_089` | ✅ done — `0.1.0` pre-release docs audit: public exports (`/pbt`, `/bdd`, `/snap`, `/vcr`), stable VCR surface, `VCR_MODE=auto` and `test-utils cache clear` CLI flags, pre-release versioning wording, and `/bun-test-utils` internal links verified (`task_089`) |
 | `@bun-test-utils/std` | [0009](./specs/0009-standard-fixtures-std.md) | `task_011`, `task_058` | ✅ done |
 | `@bun-test-utils/pbt` | [0010](./specs/0010-property-based-testing-fastcheck.md) | `task_012`, `task_048` | ✅ done (`task_048` closed 2026-10-08 — its design-note-before-code criterion was waived, not met) |
 | `@bun-test-utils/bdd` | [0014](./specs/0014-bdd-fixture-bridge.md) | `task_021`, `task_048` | ✅ done (`task_048` sequencing waiver recorded 2026-10-08; experimental) |
@@ -75,4 +75,4 @@ turbo.json           Turborepo monorepo pipeline configuration
 
 > Explicit composition only: `fixtures.ts` and `conftest.ts` are ordinary
 > module names and are not automatically loaded. Tests import the runner from
-> the root `@archont561/bun-test-utils` package and typed definition helpers from `/pbt` or `/bdd`.
+> the root `@archont561/bun-test-utils` package and typed definition/serializer helpers from `/pbt`, `/bdd`, `/snap`, or `/vcr`.

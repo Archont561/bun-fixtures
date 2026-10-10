@@ -23,6 +23,7 @@ package is published; private workspaces are assembled into Bunup-built ESM and 
 - [x] Publication-readiness audit is complete (`task_016`).
 - [x] Release stability tiers, flat fixture-key precedence, contractual error messages,
       and Linux/macOS support are defined (`task_041`, ADR 0018).
+- [x] Pre-release documentation and README audit is complete (`task_089`).
 - [ ] `v0.1.0` git tag.
 - [ ] Publish `@archont561/bun-test-utils@0.1.0` (or configure trusted publishing).
 - [ ] Re-run the installed-consumer harness against the registry package.
